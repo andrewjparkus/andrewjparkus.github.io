@@ -1,0 +1,13 @@
+1:0:d=2026061315:HGT:surface:anl:
+2:7490118:d=2026061315:PRES:surface:anl:
+3:14980236:d=2026061315:TMP:2 m above ground:anl:
+4:21065993:d=2026061315:DPT:2 m above ground:anl:
+5:27151750:d=2026061315:UGRD:10 m above ground:anl:
+6:32769386:d=2026061315:VGRD:10 m above ground:anl:
+7:38387022:d=2026061315:SPFH:2 m above ground:anl:
+8:45409020:d=2026061315:WDIR:10 m above ground:anl:
+9:51026656:d=2026061315:WIND:10 m above ground:anl:
+10:56176171:d=2026061315:GUST:10 m above ground:anl:
+11:61793807:d=2026061315:VIS:surface:anl:
+12:68347684:d=2026061315:CEIL:cloud ceiling:anl:
+13:76774044:d=2026061315:TCDC:entire atmosphere (considered as a single layer):anl:
