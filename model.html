@@ -33,10 +33,7 @@
   <a href="index.html" class="tab">Explorer</a>
   <a href="model.html" class="tab active">Model</a>
 </div></nav>
-<div class="doc"><h1>A daily, multi-league six-factor RAPM — a reader's guide</h1>
-<p><em>For someone who already knows the traditional six-factor RAPM decomposition. This explains what's
-new here, how it works, and what it says — with numbers.</em></p>
-<hr />
+<div class="doc"><h1>A daily, multi-league six-factor RAPM</h1>
 <h2>The one-liner</h2>
 <p>Traditional six-factor RAPM gives you <strong>one number per player per season</strong> (or per rolling window):
 the six factors — <strong>oTS, oTOV, oREB</strong> on offense and <strong>dTS, dTOV, dREB</strong> on defense, in points per
@@ -45,27 +42,18 @@ every single game-day</strong>, for <strong>three leagues at once</strong> (NBA,
 NBA-equivalent scale</strong>, each value carrying a <strong>confidence interval</strong>.</p>
 <p>So instead of "Jokić was +8 in 2025-26," you get Jokić's +8 as a <strong>daily curve</strong> stretching back
 through his career, next to a college freshman's daily curve on the <em>same axis</em>, each with error bars.</p>
-<hr />
 <h2>Three things that are different</h2>
 <p><strong>1. It's daily, not seasonal.</strong> Every day a game was played, the model re-solves the entire ridge
-regression from scratch, as of that day. A player's rating is a smooth curve, not a step function.</p>
+regression from scratch, as of that day.</p>
 <p><strong>2. It's multi-league and self-consistent.</strong> College and G-League players are translated onto the
-NBA scale, so a sophomore at Duke and an All-NBA center are directly comparable. (More on how, below
-— it's the most interesting part.)</p>
+NBA scale, so a sophomore at Duke and an All-NBA center are directly comparable.</p>
 <p><strong>3. Everything has error bars.</strong> Each factor, each day, carries a confidence interval that widens
-when a player has few possessions (early career, a cup of coffee, a recent call-up) and narrows as
+when a player has few possessions and narrows as
 the sample grows. Cross-league numbers carry an extra, <em>non-shrinkable</em> uncertainty for the leap
 between leagues.</p>
-<p>A fourth, subtler property matters a lot: <strong>the daily curve is smooth, with no between-season
-jumps.</strong> Day-to-day the median change in net is <strong>0.02 points</strong>; across an entire offseason it's
-under <strong>0.8</strong>. (An earlier attempt that filtered cheap box-score signals between sparse anchors
-produced curves that "jumped like crazy" between seasons — this one doesn't, by construction.)</p>
-<hr />
-<h2>How a "daily re-solve" works — and isn't that an absurd number of solves?</h2>
+<h2>How a "daily re-solve" works</h2>
 <p>Each day's value is an honest, full RAPM: a <strong>time-decayed ridge regression</strong> over <strong>every
-possession in the trailing ~6 years</strong>, with recent games weighted more (a 700-day half-life — a game
-from two years ago counts about half as much as one from yesterday). To get "as of day D," you
-simply feed it the games dated ≤ D. There is <strong>no carried-over state</strong> — each day stands alone.</p>
+possession in the trailing ~6 years</strong>, with recent games weighted more (a 700-day half-life).</p>
 <p>Yes, it's a lot of solves. The NBA alone has <strong>~4,750 game-days</strong> from 1996-97 to 2025-26; with
 G-League and college it's <strong>~6,640 league-days</strong>, and each one runs five ridge regressions (the four
 factor sub-models plus a net model) — on the order of <strong>33,000 ridge solves</strong>, each over roughly a
@@ -78,11 +66,9 @@ thing is <strong>embarrassingly parallel</strong>. What made it tractable on a l
 <li><strong>A 6-year trailing window</strong> (which is also the reference's window) keeps each solve to ~1.5M
   rows instead of all 30 years — about a 10-second solve.</li>
 <li><strong>Run many days at once, but pin each worker to one CPU thread.</strong> The bottleneck is memory
-  bandwidth, not arithmetic; ~12 single-threaded workers saturate it without thrashing (un-pinned,
-  they spawn hundreds of fighting threads and grind to a halt — a lesson learned the hard way).</li>
+  bandwidth, not arithmetic; ~12 single-threaded workers saturate it without thrashing.</li>
 </ul>
 <p>Net result: the full 30-year NBA daily backfill runs in <strong>about an hour</strong>.</p>
-<hr />
 <h2>Does it match a known reference?</h2>
 <p>The NBA scale is tuned to reproduce <strong>DataBallR's six-factor RAPM</strong> (the public 6-year, time-decay,
 pure-lineup ridge). Solving as of the end of 2025-26 and comparing to their published board:</p>
@@ -148,9 +134,8 @@ pure-lineup ridge). Solving as of the end of 2025-26 and comparing to their publ
 </table>
 <p>Across the top targets the correlation is <strong>0.95</strong>, the slope is <strong>1.05</strong>, and the negative tail
 reaches <strong>−6.7</strong> (vs −6.9) — i.e. the full range and ordering are reproduced, not just the leaders.</p>
-<hr />
-<h2>The interesting part: what actually transfers between leagues?</h2>
-<p>This is where the multi-league model earns its keep. We don't assume college production means the
+<h2>What transfers between leagues?</h2>
+<p>We don't assume college production means the
 same thing as NBA production — we <strong>measure it</strong>, using ~1,000 players who appear in two leagues
 (786 G-League↔NBA, 250 college→NBA). For each of the six factors we fit how a player's value in the
 lower league predicts their NBA value. The slope is "how much it transfers"; the correlation R is
@@ -229,14 +214,13 @@ lower league predicts their NBA value. The slope is "how much it transfers"; the
 <li><strong>Defensive rebounding doesn't transfer at all from college</strong> (R = −0.01 — literal zero). Out-
   rebounding shorter, weaker college players tells you nothing about the NBA, where everyone is
   elite and box-outs are schemed. The model honestly maps every college player's dREB to the league
-  average. (We let the data decide this rather than hard-coding it; G-League dREB keeps a weak
+  average. (G-League dREB keeps a weak
   signal, R = 0.09.)</li>
 </ul>
 <p>Crucially, the translation also carries an <strong>irreducible uncertainty floor</strong> (<code>Var_translate</code>) for
 every factor — the leap between leagues is genuinely uncertain, so cross-league error bars are
-<em>wide and never shrink to zero</em> no matter how many college games a player has. That honesty is the
-point: the model says "here's our best NBA-equivalent guess, and here's how little we really know."</p>
-<hr />
+<em>wide and never shrink to zero</em> no matter how many college games a player has. The model says
+"here's our best NBA-equivalent guess, and here's how little we really know."</p>
 <h2>What it looks like for real players</h2>
 <p><strong>A full career as a smooth curve.</strong> LeBron James, net rating sampled across 23 seasons:</p>
 <table>
@@ -288,7 +272,6 @@ chart — NCAA → NBA with G-League assignments interleaved — every stint on 
 scale, hovering around replacement level, exactly where a fringe rotation player belongs.</p>
 <p>The current NBA leaders, as of 2025-26: <strong>Jokić +8.4, Gilgeous-Alexander +7.4, Wembanyama +6.9,
 Leonard +6.8, Antetokounmpo +6.3</strong> — the expected names, on the expected scale.</p>
-<hr />
 <h2>The system at a glance</h2>
 <table>
 <thead>
@@ -321,8 +304,8 @@ Leonard +6.8, Antetokounmpo +6.3</strong> — the expected names, on the expecte
 </tbody>
 </table>
 <p>That's <strong>~9.8 million player-day rows</strong> across <strong>~11,000 players</strong>, every one with six factors, a
-net, and confidence intervals, browsable in the interactive site (<code>site/</code>).</p>
-<p><strong>What it doesn't have yet</strong> (see <code>DATA_COVERAGE.md</code>): NBA <strong>playoffs</strong> (it's regular-season only,
+net, and confidence intervals.</p>
+<p><strong>What it doesn't have yet</strong>: NBA <strong>playoffs</strong> (it's regular-season only,
 so ratings freeze in April), and college before <strong>2021-22</strong> (so pre-2021 college careers — like
-SGA's Kentucky year — don't appear). Those two are the highest-value things to collect next.</p></div>
+SGA's Kentucky year — don't appear).</p></div>
 </body></html>
