@@ -258,7 +258,7 @@ back to <strong>2005-06</strong>, pre-2021 college→NBA careers (an SGA-at-Kent
 — NCAA → NBA with G-League stints interleaved — every leg on the same scale, hovering near
 replacement level, exactly where a fringe rotation player belongs.</p>
 <hr />
-<h2>Latent ability: one curve, no seam</h2>
+<h2>Latent ability: one reactive curve, fused across leagues</h2>
 <p>Look closely at a two-way player on the <strong>prior-informed</strong> view and you'll see something honest but
 ugly: the net <strong>steps 1–2 points</strong> between adjacent days depending on whether that day's game was NBA
 or G-League. LaRavia's jumps about <strong>1.8 points</strong> at each switch. A player's ability doesn't lurch two
@@ -273,19 +273,28 @@ read; for others it's below). The affine map is the right <em>between-player</em
 observation of <strong>one</strong> hidden ability <code>θ</code>, weighted by how reliable that league's read is (NBA tight,
 translated leagues wide). A state-space filter then draws a <strong>single continuous curve</strong> that:</p>
 <ul>
-<li><strong>relaxes to the measured NBA value</strong> on any stretch of real NBA play (so a pure-NBA career is
-  essentially unchanged — the hard-won DataBallR calibration is preserved, correlation <strong>0.99</strong>), and</li>
-<li><strong>blends by reliability</strong> through mixed stretches instead of stepping — LaRavia's switch jump
-  collapses from <strong>1.8 to about 0.02</strong>, and the three league colors become <strong>one line</strong>.</li>
+<li><strong>tracks the daily measurements</strong> within a league — a player's development is visible, not flattened.
+  A rookie's curve moves through the season; a college-to-NBA arc bends from the lower-league read down
+  to the measured NBA value rather than sitting on a dead horizontal line.</li>
+<li><strong>relaxes to the measured NBA value</strong> on a stretch of real NBA play (so a pure-NBA career is
+  essentially unchanged — the DataBallR calibration is preserved, correlation <strong>0.997</strong>), and</li>
+<li><strong>fuses the rapid back-and-forth</strong> of a two-way player: a G-League cameo a week before an NBA game is
+  the <em>same</em> ability, so the curve barely moves across that switch (mean jump ~0.03) instead of stepping
+  a full point. A genuine multi-season change of level — a player who falls from the NBA to the
+  G-League for good — does still bend, because that one <em>is</em> real.</li>
 </ul>
-<p><strong>Different factors learn at different speeds.</strong> Fitting how fast each factor's latent ability can
-actually move, <strong>scoring efficiency (<code>oTS</code>) is the most volatile</strong> — roughly 0.30 points/year of drift,
-a ~2.3-year memory — while <strong>defense and turnover factors are sticky</strong> (~0.10/year, 6–7-year memory).
-Offense is where players change; the defensive profile is closer to a fixed trait.</p>
+<p><strong>Honest confidence.</strong> The band is the model's actual uncertainty, and it is <strong>never drawn tighter than
+the daily measurement it's built from</strong> — the filter sees ~daily, heavily overlapping windows, so left
+unchecked it would fool itself into false precision (an MVP pinned to ±0.5 when the underlying RAPM is
+±1.7). The displayed interval is floored at the decomp's own error, so a star's band looks like a star's
+genuine uncertainty.</p>
+<p><strong>Different factors learn at different speeds.</strong> Relative to each other, <strong>scoring efficiency (<code>oTS</code>) is
+the most volatile</strong> latent — offense is where players change — while <strong>defense and turnover factors are
+sticky</strong>, closer to fixed traits. The overall responsiveness is tuned so the curve follows the real
+movement in the data without chasing single-game noise.</p>
 <p><strong>It looks forward, too.</strong> Past a player's last game the curve continues as a <strong>dashed projection</strong> with
-a <strong>widening confidence band</strong> — never a flat, falsely-certain line. On the (already smoothed) daily
-series a plain random walk forecasts the next window better than anything fancier, so that's what ships;
-the band grows across the off-season gap exactly as uncertainty should.</p>
+a <strong>widening confidence band</strong> — never a flat, falsely-certain line. The band grows across the off-season
+gap exactly as uncertainty should.</p>
 <p>The toggle is global: flip any chart between the <strong>prior-informed decomp</strong> (what each league actually
 solved, one line each) and <strong>latent ability</strong> (the fused curve), for any player.</p>
 <hr />

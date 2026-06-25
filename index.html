@@ -81,7 +81,7 @@
 </div></nav>
 <div class="wrap">
   <h1 style="margin-top:6px">Six-factor RAPM, <b>every game-day</b></h1>
-  <p class="sub">Search any player across NCAA, G-League &amp; NBA. Toggle each chart between the <b>prior-informed decomp</b> (the as-of daily solve, one line per league) and <b>latent ability</b> (one seam-free curve fused across leagues, with a forward projection). Values are on the DataBallR scale; off-seasons collapsed (game-day axis); each league trimmed to the player's last game.</p>
+  <p class="sub">Search any player across NCAA, G-League &amp; NBA. Toggle each chart between the <b>prior-informed decomp</b> (the as-of daily solve, one line per league) and <b>latent ability</b> (one reactive curve fused across leagues — it tracks development, fuses two-way switches, and projects forward). Values are on the DataBallR scale; off-seasons collapsed (game-day axis); each league trimmed to the player's last game.</p>
   <div class="searchbox">
     <input id="q" autocomplete="off" placeholder="Search a player…  (e.g. LeBron James, Cooper Flagg)">
     <div id="drop"></div>
@@ -154,7 +154,7 @@ function paint(){if(!curOpts.length){drop.style.display='none';return}
 // seam-free curve + CI + projection); 'prior' = the prior-informed daily decomp (per-league lines).
 let LAT=null, MODE=(localStorage.getItem('rapm_mode')||'latent');
 const MODEHINT={
-  latent:'Latent ability — one reliability-weighted curve fused across NCAA → G-League → NBA (seam removed), with a 1-sigma band and a dashed forward projection.',
+  latent:'Latent ability — one reliability-weighted curve fused across NCAA → G-League → NBA: it tracks within-league development, fuses two-way back-and-forth, carries a 1-sigma band floored at the daily measurement error, and projects forward (dashed).',
   prior:'Prior-informed RAPM decomp — the as-of daily six-factor solve (box-prior-informed), one line per league.'};
 function load(id,name){drop.style.display='none';q.value=name;history.replaceState(null,'','?p='+id);
   Promise.all([
