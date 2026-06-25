@@ -56,6 +56,13 @@
   .gl{color:var(--gleague);font-weight:700}.nb{color:var(--nba);font-weight:700}.co{color:var(--college);font-weight:700}
   .crosshair{stroke:#3a4862;stroke-width:1;stroke-dasharray:3 3;pointer-events:none}
   .hdot{pointer-events:none;stroke:#0b0f16;stroke-width:1.2}
+  .modeseg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:#0c1118}
+  .modeseg button{font:inherit;font-size:12px;font-weight:600;color:var(--muted);background:none;border:none;
+    padding:5px 11px;cursor:pointer;transition:background .12s,color .12s;white-space:nowrap}
+  .modeseg button:hover{color:var(--text)}
+  .modeseg button.on{color:#06121f;background:var(--accent)}
+  .modeseg button.latent.on{background:#e6b84a;color:#1a1206}
+  .modehint{font-size:11.5px;color:#5d6b7e;margin:7px 0 -4px}
   .topnav{border-bottom:1px solid var(--line);background:#0a0e16;position:sticky;top:0;z-index:50}
   .navinner{max-width:1000px;margin:0 auto;padding:0 22px;display:flex;align-items:center;gap:8px;height:52px}
   .brand{font-size:16px;font-weight:700;letter-spacing:-.2px;margin-right:18px}
@@ -74,7 +81,7 @@
 </div></nav>
 <div class="wrap">
   <h1 style="margin-top:6px">Six-factor RAPM, <b>every game-day</b></h1>
-  <p class="sub">Search any of 11,003 players. Each value is re-solved as-of that day (6-year time-decay, 700-day half-life) on the DataBallR scale; college &amp; G-League pulled to NBA-equivalence. Off-seasons are collapsed (game-day axis); each league trimmed to the player's last game.</p>
+  <p class="sub">Search any player across NCAA, G-League &amp; NBA. Toggle each chart between the <b>prior-informed decomp</b> (the as-of daily solve, one line per league) and <b>latent ability</b> (one seam-free curve fused across leagues, with a forward projection). Values are on the DataBallR scale; off-seasons collapsed (game-day axis); each league trimmed to the player's last game.</p>
   <div class="searchbox">
     <input id="q" autocomplete="off" placeholder="Search a player…  (e.g. LeBron James, Cooper Flagg)">
     <div id="drop"></div>
@@ -86,7 +93,12 @@
       <span class="pname" id="pname"></span>
       <span class="pmeta" id="pmeta"></span>
       <span class="readout" id="readout"></span>
+      <div id="modeseg" class="modeseg" style="margin-left:auto;display:none">
+        <button data-mode="prior" type="button">Prior-informed</button>
+        <button data-mode="latent" type="button" class="latent">Latent ability</button>
+      </div>
     </div>
+    <div class="modehint" id="modehint"></div>
     <div class="netcard">
       <div class="ctitle"><span>Net RAPM <span style="color:#5d6b7e;font-weight:400">· ORAPM + DRAPM</span></span><span class="v" id="v_net"></span></div>
       <div id="c_net"></div>
@@ -138,8 +150,25 @@ function paint(){if(!curOpts.length){drop.style.display='none';return}
     el.onclick=()=>load(o.id,o.n);drop.appendChild(el);});
   drop.style.display='block';}
 
+// Global data mode, persisted across players. 'latent' = fused state-space ability (single
+// seam-free curve + CI + projection); 'prior' = the prior-informed daily decomp (per-league lines).
+let LAT=null, MODE=(localStorage.getItem('rapm_mode')||'latent');
+const MODEHINT={
+  latent:'Latent ability — one reliability-weighted curve fused across NCAA → G-League → NBA (seam removed), with a 1-sigma band and a dashed forward projection.',
+  prior:'Prior-informed RAPM decomp — the as-of daily six-factor solve (box-prior-informed), one line per league.'};
 function load(id,name){drop.style.display='none';q.value=name;history.replaceState(null,'','?p='+id);
-  fetch('data/'+id+'.json').then(r=>r.json()).then(show);}
+  Promise.all([
+    fetch('data/'+id+'.json').then(r=>r.json()),
+    fetch('data/'+id+'_latent.json').then(r=>r.ok?r.json():null).catch(()=>null)
+  ]).then(([d,lat])=>{LAT=lat;show(d);});}
+function setMode(m){
+  if(m==='latent'&&!LAT)m='prior';                       // fall back if a player has no latent series
+  MODE=m; localStorage.setItem('rapm_mode',m);
+  document.querySelectorAll('#modeseg button').forEach(b=>b.classList.toggle('on',b.dataset.mode===m));
+  document.getElementById('modehint').textContent=MODEHINT[m];
+  if(SER)show_rerender();
+}
+document.querySelectorAll('#modeseg button').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
 
 // collapse off-seasons: one row per date (primary league = max weff that day), sorted
 function prep(d){
@@ -158,38 +187,52 @@ function el(t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAt
 
 function Chart(mount,ser,key){
   const W=mount.clientWidth||320, H=mount===document.getElementById('c_net')?190:150;
-  const padL=30,padR=7,padT=8,padB=15, pw=W-padL-padR, ph=H-padT-padB, n=ser.length;
-  const v=ser.map(s=>s[key]), se=ser.map(s=>s[key+'_se']);
-  // tight, centred y-range from the LINE (not the CI extremes) so movement is visible
-  let lo=Math.min(...v), hi=Math.max(...v), c=(lo+hi)/2, half=Math.max((hi-lo)/2*1.28,0.55);
+  const padL=30,padR=7,padT=8,padB=15, pw=W-padL-padR, ph=H-padT-padB;
+  const isLat = MODE==='latent' && ser.some(s=>s.L);
+  // latent mode appends the dashed forward projection to the x-axis; prior mode is history only
+  const all = isLat ? ser.concat(PROJ) : ser, n=all.length, nh=ser.length;
+  const v   = all.map(s=> isLat ? (s.L?s.L[key]:s[key]) : s[key]);
+  const se  = all.map(s=> isLat ? (s.L?s.L[key+'_se']:s[key+'_se']) : s[key+'_se']);
+  let pool=v.filter(x=>x!=null);
+  let lo=Math.min(...pool), hi=Math.max(...pool), c=(lo+hi)/2, half=Math.max((hi-lo)/2*1.28,0.55);
   const ymin=c-half, ymax=c+half;
   const X=i=>padL+(n>1?i/(n-1):.5)*pw;
   const Y=val=>padT+ph-(Math.max(ymin,Math.min(ymax,val))-ymin)/(ymax-ymin)*ph;
   const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,preserveAspectRatio:'none'});
-  // grid + y labels
   [0,.5,1].forEach(f=>{const yv=ymin+(ymax-ymin)*f, y=Y(yv);
     svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'var(--grid)','stroke-width':1}));
     const t=el('text',{x:padL-4,y:y+3,'font-size':9,fill:'#5a6a7e','text-anchor':'end'});t.textContent=(yv>=0?'+':'')+yv.toFixed(1);svg.appendChild(t);});
   if(ymin<0&&ymax>0){const y=Y(0);svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'#2b3a51','stroke-width':1}));}
-  // x year labels (game-day index where the year flips)
-  let py=ser[0].date.slice(0,4);
-  for(let i=1;i<n;i++){const yr=ser[i].date.slice(0,4);if(yr!==py){
+  let py=all[0].date.slice(0,4);
+  for(let i=1;i<n;i++){const yr=all[i].date.slice(0,4);if(yr!==py){
     svg.appendChild(el('line',{x1:X(i),y1:padT,x2:X(i),y2:padT+ph,stroke:'#121b27','stroke-width':1}));
     const t=el('text',{x:X(i),y:H-4,'font-size':8.5,fill:'#566377','text-anchor':'middle'});t.textContent="’"+yr.slice(2);svg.appendChild(t);py=yr;}}
-  // CI band (clamped, faint)
-  let up='',dn='';
-  for(let i=0;i<n;i++){up+=`${X(i).toFixed(1)},${Y(v[i]+1.96*se[i]).toFixed(1)} `;}
-  for(let i=n-1;i>=0;i--){dn+=`${X(i).toFixed(1)},${Y(v[i]-1.96*se[i]).toFixed(1)} `;}
-  svg.appendChild(el('polygon',{points:up+dn,fill:'#8aa0bb','fill-opacity':.07,stroke:'none'}));
-  // one continuous line PER league (connect that league's points in order; no cross-league
-  // bridge) so sequential moves don't loop back and concurrent two-way stints stay separate.
-  const leagues=[...new Set(ser.map(s=>s.lg))];
-  leagues.forEach(lg=>{
-    const idx=[];for(let i=0;i<n;i++)if(ser[i].lg===lg)idx.push(i);
-    if(idx.length>1){const pts=idx.map(i=>`${X(i).toFixed(1)},${Y(v[i]).toFixed(1)}`).join(' ');
-      svg.appendChild(el('polyline',{points:pts,fill:'none',stroke:LC[lg]||'#888','stroke-width':1.6,'stroke-linejoin':'round','stroke-linecap':'round'}));}
-  });
-  // crosshair + hover dot (hidden)
+  // CI band (clamped, faint) — latent 1-sigma incl projection, or the decomp's de-shrunk SE
+  {let up='',dn='';
+    for(let i=0;i<n;i++)up+=`${X(i).toFixed(1)},${Y(v[i]+1.96*se[i]).toFixed(1)} `;
+    for(let i=n-1;i>=0;i--)dn+=`${X(i).toFixed(1)},${Y(v[i]-1.96*se[i]).toFixed(1)} `;
+    svg.appendChild(el('polygon',{points:up+dn,fill:'#8aa0bb','fill-opacity':isLat?.09:.07,stroke:'none'}));}
+  if(isLat){
+    // LATENT: ONE continuous colour-switching curve (solid history, dashed projection). Runs of
+    // consecutive same-(league,projection) as polylines, connectors bridging them -> the seam is gone.
+    let i=0;
+    while(i<n){let j=i; const lg=all[i].lg, pj=!!all[i].proj;
+      while(j+1<n && all[j+1].lg===lg && !!all[j+1].proj===pj) j++;
+      const a={fill:'none',stroke:LC[lg]||'#888','stroke-width':2.1,'stroke-linejoin':'round','stroke-linecap':'round'};
+      const arr=[];for(let k=i;k<=j;k++)arr.push(`${X(k).toFixed(1)},${Y(v[k]).toFixed(1)}`);
+      a.points=arr.join(' '); if(pj)a['stroke-dasharray']='4 3';
+      if(arr.length>1)svg.appendChild(el('polyline',a));
+      if(j+1<n){const ln=all[j+1];const c2={x1:X(j),y1:Y(v[j]),x2:X(j+1),y2:Y(v[j+1]),stroke:LC[ln.lg]||'#888','stroke-width':2.1,'stroke-linecap':'round'};
+        if(ln.proj)c2['stroke-dasharray']='4 3';svg.appendChild(el('line',c2));}
+      i=j+1;
+    }
+  } else {
+    // PRIOR-INFORMED DECOMP: one line PER league (no cross-league bridge), as on the live site.
+    [...new Set(ser.map(s=>s.lg))].forEach(lg=>{
+      const idx=[];for(let i=0;i<nh;i++)if(ser[i].lg===lg)idx.push(i);
+      if(idx.length>1)svg.appendChild(el('polyline',{points:idx.map(i=>`${X(i).toFixed(1)},${Y(v[i]).toFixed(1)}`).join(' '),
+        fill:'none',stroke:LC[lg]||'#888','stroke-width':1.6,'stroke-linejoin':'round','stroke-linecap':'round'}));});
+  }
   const cross=el('line',{class:'crosshair',x1:0,y1:padT,x2:0,y2:padT+ph,visibility:'hidden'});svg.appendChild(cross);
   const dot=el('circle',{class:'hdot',r:3.2,visibility:'hidden'});svg.appendChild(dot);
   const ov=el('rect',{x:0,y:0,width:W,height:H,fill:'transparent'});svg.appendChild(ov);
@@ -197,32 +240,53 @@ function Chart(mount,ser,key){
   const obj={key,n,W,padL,pw,
     setHover(i,line){if(i<0||i>=n){cross.setAttribute('visibility','hidden');dot.setAttribute('visibility','hidden');return;}
       cross.setAttribute('x1',X(i));cross.setAttribute('x2',X(i));cross.setAttribute('visibility',line?'visible':'hidden');
-      dot.setAttribute('cx',X(i));dot.setAttribute('cy',Y(v[i]));dot.setAttribute('fill',LC[ser[i].lg]||'#888');dot.setAttribute('visibility','visible');},
+      dot.setAttribute('cx',X(i));dot.setAttribute('cy',Y(v[i]));dot.setAttribute('fill',LC[all[i].lg]||'#888');dot.setAttribute('visibility','visible');},
     valAt(i){return{v:v[i],se:se[i]};}};
   ov.addEventListener('pointermove',e=>{const r=svg.getBoundingClientRect();
     const sx=(e.clientX-r.left)/r.width*W; let i=Math.round((sx-padL)/pw*(n-1));
     i=Math.max(0,Math.min(n-1,i)); setHoverAll(i,true);});
-  ov.addEventListener('pointerleave',()=>setHoverAll(SER.length-1,false));  // default: most recent
+  ov.addEventListener('pointerleave',()=>setHoverAll(nh-1,false));  // default: last actual game
   return obj;
 }
 
 function setHoverAll(i,line){
   CHARTS.forEach(c=>c.setHover(i,line));
   const ro=document.getElementById('readout');
-  if(i<0||!SER){ro.innerHTML='';document.getElementById('v_net').innerHTML='';
+  const isLat = MODE==='latent' && SER && SER.some(s=>s.L);
+  const all = isLat ? SER.concat(PROJ) : SER;
+  if(i<0||!all||!all[i]){ro.innerHTML='';document.getElementById('v_net').innerHTML='';
     FAC.forEach(([f])=>{const e=document.getElementById('v_'+f);if(e)e.innerHTML='';});return;}
-  const s=SER[i];
-  ro.innerHTML=`${line?'':'<span style="color:#566377">latest&nbsp;</span>'}<b>${s.date}</b> · <span style="color:${LC[s.lg]}">${LNAME[s.lg]}</span>`;
-  const fmt=(val,sd)=>`<b>${val>=0?'+':''}${val.toFixed(2)}</b> <span style="color:#566377">±${(1.96*sd).toFixed(2)}</span>`;
-  document.getElementById('v_net').innerHTML=fmt(s.net,s.net_se);
-  FAC.forEach(([f])=>{const e=document.getElementById('v_'+f);if(e)e.innerHTML=fmt(s[f],s[f+'_se']);});
+  const s=all[i], src = isLat ? (s.L||(s.proj?s:null)||s) : s;   // latent row (or projection) vs prior row
+  const tag=isLat&&s.proj?' <span style="color:#566377">· projected</span>':'';
+  ro.innerHTML=`${line?'':'<span style="color:#566377">latest&nbsp;</span>'}<b>${s.date}</b> · <span style="color:${LC[s.lg]}">${LNAME[s.lg]}</span>${tag}`;
+  const fmt=(val,sd)=>val==null?'—':`<b>${val>=0?'+':''}${val.toFixed(2)}</b> <span style="color:#566377">±${(1.96*sd).toFixed(2)}</span>`;
+  document.getElementById('v_net').innerHTML=fmt(src.net,src.net_se);
+  FAC.forEach(([f])=>{const e=document.getElementById('v_'+f);if(e)e.innerHTML=fmt(src[f],src[f+'_se']);});
 }
 
+let PROJ=[];
+function attachLatent(){
+  PROJ=[];
+  if(!LAT){SER.forEach(s=>s.L=null);return;}
+  const m={};for(let i=0;i<LAT.d.length;i++){const o={net:LAT.net[i],net_se:LAT.net_se[i]};
+    for(const[f]of FAC){o[f]=LAT[f][i];o[f+'_se']=LAT[f+'_se'][i];} m[LAT.d[i]]=o;}
+  SER.forEach(s=>s.L=m[s.date]||null);
+  if(LAT.pd){for(let i=0;i<LAT.pd.length;i++){const o={date:LAT.pd[i],lg:SER[SER.length-1].lg,proj:true,
+    net:LAT.pnet[i],net_se:LAT.pnet_se[i]};
+    for(const[f]of FAC){o[f]=LAT['p_'+f][i];o[f+'_se']=LAT['p_'+f+'_se'][i];} PROJ.push(o);}}
+}
 function show(d){
   document.getElementById('empty').style.display='none';
   document.getElementById('player').style.display='block';
   document.getElementById('pname').textContent=d.name;
   SER=prep(d); const n=SER.length, last=SER[n-1];
+  attachLatent();
+  // global mode control: the Latent option is available only if this player has a latent sidecar
+  const seg=document.getElementById('modeseg');seg.style.display='inline-flex';
+  const latBtn=seg.querySelector('[data-mode="latent"]');latBtn.disabled=!LAT;latBtn.style.opacity=LAT?'':'.4';
+  if(MODE==='latent'&&!LAT)MODE='prior';
+  seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.mode===MODE));
+  document.getElementById('modehint').textContent=MODEHINT[MODE];
   const lgset=[...new Set(SER.map(s=>s.lg))];
   const badges=['nba','gleague','college'].filter(l=>lgset.includes(l)).map(l=>`<span style="color:${LC[l]};font-weight:700">${LNAME[l]}</span>`).join(' · ');
   document.getElementById('pmeta').innerHTML=`${SER[0].date} – ${last.date} · ${badges}`;

@@ -258,6 +258,37 @@ back to <strong>2005-06</strong>, pre-2021 college→NBA careers (an SGA-at-Kent
 — NCAA → NBA with G-League stints interleaved — every leg on the same scale, hovering near
 replacement level, exactly where a fringe rotation player belongs.</p>
 <hr />
+<h2>Latent ability: one curve, no seam</h2>
+<p>Look closely at a two-way player on the <strong>prior-informed</strong> view and you'll see something honest but
+ugly: the net <strong>steps 1–2 points</strong> between adjacent days depending on whether that day's game was NBA
+or G-League. LaRavia's jumps about <strong>1.8 points</strong> at each switch. A player's ability doesn't lurch two
+points overnight — so what is that step?</p>
+<p>It's the seam between two <em>different kinds of estimate</em>. An NBA game-day is <strong>directly measured</strong>
+RAPM. A G-League or college game-day is a <strong>translation</strong> — <code>E[NBA-equivalent | what they did in the
+lower league]</code> — and translation regresses toward the league average. The two numbers disagree by a
+player-specific amount (LaRavia's translated G-League read sits about a point <em>above</em> his measured NBA
+read; for others it's below). The affine map is the right <em>between-player</em> answer; the step is a
+<em>within-player</em> problem the three independent solves never modeled.</p>
+<p>The <strong>Latent ability</strong> toggle models it. Each league's daily estimate is treated as a noisy
+observation of <strong>one</strong> hidden ability <code>θ</code>, weighted by how reliable that league's read is (NBA tight,
+translated leagues wide). A state-space filter then draws a <strong>single continuous curve</strong> that:</p>
+<ul>
+<li><strong>relaxes to the measured NBA value</strong> on any stretch of real NBA play (so a pure-NBA career is
+  essentially unchanged — the hard-won DataBallR calibration is preserved, correlation <strong>0.99</strong>), and</li>
+<li><strong>blends by reliability</strong> through mixed stretches instead of stepping — LaRavia's switch jump
+  collapses from <strong>1.8 to about 0.02</strong>, and the three league colors become <strong>one line</strong>.</li>
+</ul>
+<p><strong>Different factors learn at different speeds.</strong> Fitting how fast each factor's latent ability can
+actually move, <strong>scoring efficiency (<code>oTS</code>) is the most volatile</strong> — roughly 0.30 points/year of drift,
+a ~2.3-year memory — while <strong>defense and turnover factors are sticky</strong> (~0.10/year, 6–7-year memory).
+Offense is where players change; the defensive profile is closer to a fixed trait.</p>
+<p><strong>It looks forward, too.</strong> Past a player's last game the curve continues as a <strong>dashed projection</strong> with
+a <strong>widening confidence band</strong> — never a flat, falsely-certain line. On the (already smoothed) daily
+series a plain random walk forecasts the next window better than anything fancier, so that's what ships;
+the band grows across the off-season gap exactly as uncertainty should.</p>
+<p>The toggle is global: flip any chart between the <strong>prior-informed decomp</strong> (what each league actually
+solved, one line each) and <strong>latent ability</strong> (the fused curve), for any player.</p>
+<hr />
 <h2>The system at a glance</h2>
 <table>
 <thead>
