@@ -34,79 +34,71 @@
   <a href="model.html" class="tab active">Model</a>
 </div></nav>
 <div class="doc"><h1>A daily, multi-league six-factor RAPM — a reader's guide</h1>
-<p><em>For someone who already knows the traditional six-factor RAPM decomposition. This explains what's
-new here, how it works, and what it says — with numbers.</em></p>
+<p><em>For readers who know the traditional six-factor RAPM decomposition: what's new here, how it
+works, and what it says — with numbers.</em></p>
 <hr />
 <h2>The one-liner</h2>
-<p>Traditional six-factor RAPM gives you <strong>one number per player per season</strong> (or per rolling window):
-the six factors — <strong>oTS, oTOV, oSC</strong> on offense and <strong>dTS, dTOV, dSC</strong> on defense, in points per
-100 possessions, summing to net. This model gives you that <strong>same decomposition re-computed as of
-every single game-day</strong>, for <strong>three leagues at once</strong> (NBA, G-League, NCAA), all placed on <strong>one
-NBA-equivalent scale</strong>, each value carrying a <strong>confidence interval</strong>.</p>
-<p>So instead of "Jokić was +8 in 2025-26," you get Jokić's +8 as a <strong>daily curve</strong> stretching back
-through his career and <em>through the playoffs</em>, next to a college freshman's daily curve on the
-<em>same axis</em>, each with error bars.</p>
+<p>Traditional six-factor RAPM gives <strong>one number per player per season</strong>: the six factors —
+<strong>oTS, oTOV, oSC</strong> on offense, <strong>dTS, dTOV, dSC</strong> on defense (points per 100, summing to net).
+This model re-computes that decomposition <strong>as of every game-day</strong>, for <strong>three leagues at once</strong>
+(NBA, G-League, NCAA) on <strong>one NBA-equivalent scale</strong>, each value with a <strong>confidence interval</strong>.</p>
+<p>So instead of "Jokić was +8 in 2025-26," you get his rating as a <strong>daily curve</strong> across his
+career and <em>through the playoffs</em>, beside a college freshman's curve on the <em>same axis</em> — each
+with error bars.</p>
 <blockquote>
-<p><strong>A note on the sixth factor.</strong> What older boards labeled "oREB/dREB" is, in this decomposition,
-<strong>second-chance value</strong> (<code>oSC</code>/<code>dSC</code>): the points a player adds <em>after the offense's own missed
-shot</em> — putbacks, kickouts off the offensive glass, and on defense the prevention of those same
-second chances. It is <em>not</em> a rebound rate. We label it <code>oSC</code>/<code>dSC</code> to match its actual
-construction (the RAPM DECOMP definition), where e.g. Jokić grades <strong>dSC +2.0</strong> and Wembanyama
-<strong>dSC +1.1</strong>.</p>
+<p><strong>The sixth factor.</strong> What older boards called "oREB/dREB" is here <strong>second-chance value</strong>
+(<code>oSC</code>/<code>dSC</code>): points added <em>after the offense's own miss</em> — putbacks, kickouts off the
+offensive glass, and on defense the prevention of those second chances. It is <em>not</em> a rebound
+rate (Jokić grades <strong>dSC +2.0</strong>, Wembanyama <strong>+1.1</strong>).</p>
 </blockquote>
 <hr />
-<h2>Three things that are different</h2>
-<p><strong>1. It's daily, not seasonal.</strong> Every day a game was played, the model re-solves the entire ridge
-regression from scratch, as of that day. A player's rating is a smooth curve, not a step function.
-The NBA series runs <strong>regular season <em>and</em> playoffs</strong>, so a star's curve flows continuously from
-April into June with no break (Jokić's net moves +7.98 on the last regular-season day to +7.98 on
-the first playoff day — zero discontinuity, because each day only sees games dated ≤ that day).</p>
-<p><strong>2. It's multi-league and self-consistent.</strong> College and G-League players are translated onto the
-NBA scale, so a sophomore at Duke and an All-NBA center are directly comparable. (More on how, below
-— it's the most interesting part.)</p>
-<p><strong>3. Everything has error bars.</strong> Each factor, each day, carries a confidence interval that widens
-when a player has few possessions (early career, a cup of coffee, a recent call-up) and narrows as
-the sample grows. Cross-league numbers carry an extra, <em>non-shrinkable</em> uncertainty for the leap
-between leagues.</p>
-<p>A fourth, subtler property matters a lot: <strong>the daily curve is smooth, with no between-season
-jumps.</strong> Day-to-day the median change in net is <strong>0.02 points</strong>; across an entire offseason it's
-under <strong>0.8</strong>. (An earlier attempt that filtered cheap box-score signals between sparse anchors
-produced curves that "jumped like crazy" between seasons — this one doesn't, by construction.)</p>
+<h2>Four things that are different</h2>
+<p><strong>Daily, not seasonal.</strong> Every game-day, the model re-solves the full ridge regression as of that
+day — a smooth curve, not a step function. The NBA series spans regular season <em>and</em> playoffs with
+no break: each day sees only games dated ≤ itself, so a star's net flows continuously from April
+into June.</p>
+<p><strong>Multi-league and self-consistent.</strong> College and G-League players are translated onto the NBA
+scale, so a Duke sophomore and an All-NBA center are directly comparable (more below — it's the
+most interesting part).</p>
+<p><strong>Error bars on everything.</strong> Each factor, each day, carries a confidence interval that widens
+with few possessions (early career, a cup of coffee, a recent call-up) and narrows as the sample
+grows. Cross-league numbers carry an extra, <em>non-shrinkable</em> uncertainty for the leap between
+leagues.</p>
+<p><strong>Smooth, no between-season jumps.</strong> Day-to-day the median change in net is <strong>0.02 points</strong>;
+across a full offseason, under <strong>0.8</strong> — by construction, not smoothing.</p>
 <hr />
-<h2>How a "daily re-solve" works — and isn't that an absurd number of solves?</h2>
-<p>Each day's value is an honest, full RAPM: a <strong>time-decayed ridge regression</strong> over <strong>every
-possession in the trailing ~6 years</strong>, with recent games weighted more (a 700-day half-life — a game
-from two years ago counts about half as much as one from yesterday). To get "as of day D," you
-simply feed it the games dated ≤ D. There is <strong>no carried-over state</strong> — each day stands alone.</p>
-<p>Yes, it's a lot of solves. The NBA alone has <strong>~6,080 game-days</strong> from 1996-97 to 2025-26 (regular
-season and playoffs); with G-League and college it's <strong>~10,200 league-days</strong>, and each one runs five
-ridge regressions (the four factor sub-models plus a net model) — on the order of <strong>51,000 ridge
-solves</strong>, each over roughly a million-plus possessions and ~6,000 player columns.</p>
-<p>The trick is that "no carried-over state" is also a <em>gift</em>: every day is independent, so the whole
-thing is <strong>embarrassingly parallel</strong>. What made it tractable on a laptop:</p>
-<ul>
-<li><strong>Build the design once, reuse it every day.</strong> Each league's giant sparse possession matrix is
-  built and cached a single time (the NBA design alone is ~7.1M possession-rows; the 21-season
-  college design ~14.7M); a given day just selects the rows dated ≤ D and re-weights them.</li>
-<li><strong>A 6-year trailing window</strong> (which is also the reference's window) keeps each solve to ~1.5M
-  rows instead of all 30 years — about a 10-second solve.</li>
-<li><strong>Run many days at once, but pin each worker to one CPU thread.</strong> The bottleneck is memory
-  bandwidth, not arithmetic; single-threaded workers saturate it without thrashing (un-pinned, they
-  spawn hundreds of fighting threads and grind to a halt — a lesson learned the hard way). How many
-  workers fit is set by RAM, since each holds a multi-GB design resident: on a 26 GB laptop that's
-  ~3 NBA workers and 1–2 college workers, scaling up with memory.</li>
-</ul>
+<h2>How a "daily re-solve" works</h2>
+<p>Each day's value is a full RAPM: a <strong>time-decayed ridge</strong> over <strong>every possession in the trailing
+~6 years</strong>, recent games weighted more (a 700-day half-life). "As of day D" just means feeding it
+games dated ≤ D — there is <strong>no carried-over state</strong>, so every day stands alone.</p>
+<p>That independence is a gift: the whole thing is <strong>embarrassingly parallel</strong>, and each league's
+giant possession matrix is built once and re-sliced per day. The NBA alone has ~6,080 game-days;
+with the other leagues it's ~10,200 league-days × five ridge solves each — on the order of
+<strong>51,000 solves</strong>, each over a million-plus possessions.</p>
+<hr />
+<h2>The box prior: sharpening low-data ratings</h2>
+<p>Pure RAPM shrinks a thin sample toward zero, so a rookie or fresh call-up sits near replacement
+level until the possessions accumulate. Here, three of the six factors instead shrink toward an
+<strong>informative box-score prior</strong> — a per-player skill estimate built from predictive box rates.
+With little on-court data the rating leans on that estimate; as possessions pile up, the lineup
+data takes over.</p>
+<p>The prior ships <strong>only where it provably helps</strong>. Each factor's prior was tuned and tested
+out-of-sample — does an end-of-season rating predict <em>next</em> season better? — and kept only if it
+lowered that error without hurting the established stars or the rest of the decomposition. Three
+passed: <strong>shooting (oTS), ball-security (oTOV), and forcing turnovers (dTOV)</strong>. The other three —
+second-chance value (oSC/dSC) and shot defense (dTS) — shrink to zero as before; their box priors
+didn't generalize forward, so we don't use them. The <strong>prior-free series stays the canonical,
+DataBallR-matched reference</strong>; the curves shown here are the prior-informed version.</p>
 <hr />
 <h2>Does it match a known reference?</h2>
-<p>The NBA scale is tuned to reproduce <strong>DataBallR's six-factor RAPM</strong> (the public 6-year, time-decay,
-pure-lineup ridge). The tuning is anchored at the <strong>end of the regular season</strong> (DataBallR is
-regular-season only); by causality that as-of solve is playoff-free, so the comparison stays clean
-even though our series continues into the playoffs. Solving as of the 2025-26 regular-season end:</p>
+<p>The NBA scale is tuned to reproduce <strong>DataBallR's six-factor RAPM</strong> (the public 6-year,
+time-decay, pure-lineup ridge), anchored at the regular-season end (DataBallR is regular-season
+only; by causality that solve is playoff-free). As of the 2025-26 regular-season end:</p>
 <table>
 <thead>
 <tr>
 <th>Player</th>
-<th style="text-align: right;">This model (net)</th>
+<th style="text-align: right;">This model</th>
 <th style="text-align: right;">DataBallR</th>
 <th></th>
 <th>Player</th>
@@ -117,60 +109,59 @@ even though our series continues into the playoffs. Solving as of the 2025-26 re
 <tbody>
 <tr>
 <td>Jokić</td>
-<td style="text-align: right;">+8.0</td>
+<td style="text-align: right;">+7.7</td>
 <td style="text-align: right;">+8.1</td>
 <td></td>
 <td>Gobert</td>
-<td style="text-align: right;">+4.7</td>
+<td style="text-align: right;">+4.5</td>
 <td style="text-align: right;">+4.9</td>
 </tr>
 <tr>
 <td>Gilgeous-Alexander</td>
-<td style="text-align: right;">+7.4</td>
+<td style="text-align: right;">+7.2</td>
 <td style="text-align: right;">+7.5</td>
 <td></td>
-<td>Caruso</td>
+<td>Mitchell</td>
 <td style="text-align: right;">+4.5</td>
 <td style="text-align: right;">+4.5</td>
 </tr>
 <tr>
 <td>Wembanyama</td>
-<td style="text-align: right;">+6.9</td>
+<td style="text-align: right;">+6.6</td>
 <td style="text-align: right;">+6.8</td>
 <td></td>
-<td>Mitchell</td>
-<td style="text-align: right;">+4.7</td>
+<td>Caruso</td>
+<td style="text-align: right;">+4.3</td>
 <td style="text-align: right;">+4.5</td>
 </tr>
 <tr>
 <td>Leonard</td>
-<td style="text-align: right;">+6.7</td>
+<td style="text-align: right;">+6.4</td>
 <td style="text-align: right;">+6.7</td>
 <td></td>
 <td>Curry</td>
-<td style="text-align: right;">+4.4</td>
+<td style="text-align: right;">+4.2</td>
 <td style="text-align: right;">+4.5</td>
 </tr>
 <tr>
 <td>Antetokounmpo</td>
-<td style="text-align: right;">+6.3</td>
+<td style="text-align: right;">+6.1</td>
 <td style="text-align: right;">+6.3</td>
 <td></td>
-<td><em>(tail)</em> Rayan Rupert</td>
-<td style="text-align: right;">−6.7</td>
+<td><em>(tail)</em> Rupert</td>
+<td style="text-align: right;">−7.0</td>
 <td style="text-align: right;">−6.9</td>
 </tr>
 </tbody>
 </table>
-<p>Across the top targets the correlation is <strong>0.99</strong>, the slope is <strong>0.98</strong>, and the negative tail
-reaches <strong>−6.7</strong> (vs −6.9) — i.e. the full range and ordering are reproduced, not just the leaders.</p>
+<p>Across these targets the correlation is <strong>0.99</strong> and the slope <strong>0.98</strong>, with the negative tail
+reaching <strong>−7.0</strong> (vs −6.9) — the full range and ordering, not just the leaders.</p>
 <hr />
-<h2>The interesting part: what actually transfers between leagues?</h2>
-<p>This is where the multi-league model earns its keep. We don't assume college production means the
-same thing as NBA production — we <strong>measure it</strong>, using ~1,570 players who appear in two leagues
-(786 G-League↔NBA, 788 college→NBA). For each of the six factors we fit how a player's value in the
-lower league predicts their NBA value. The slope is "how much it transfers"; the correlation R is
-"how reliably."</p>
+<h2>The interesting part: what transfers between leagues?</h2>
+<p>Here the multi-league model earns its keep. We don't assume college production means the same
+thing as NBA production — we <strong>measure it</strong>, using ~1,570 two-league players (786 G-League↔NBA,
+788 college→NBA). For each factor we fit how lower-league value predicts NBA value: the slope is
+<em>how much</em> transfers, the correlation R <em>how reliably</em>.</p>
 <table>
 <thead>
 <tr>
@@ -192,7 +183,7 @@ lower league predicts their NBA value. The slope is "how much it transfers"; the
 <td style="text-align: right;">0.11</td>
 </tr>
 <tr>
-<td>oTOV (offense, ball security)</td>
+<td>oTOV (ball security)</td>
 <td style="text-align: right;">0.17</td>
 <td style="text-align: right;">0.22</td>
 <td></td>
@@ -200,7 +191,7 @@ lower league predicts their NBA value. The slope is "how much it transfers"; the
 <td style="text-align: right;">0.38</td>
 </tr>
 <tr>
-<td>oSC (offensive second-chance)</td>
+<td>oSC (offensive 2nd-chance)</td>
 <td style="text-align: right;">0.22</td>
 <td style="text-align: right;">0.22</td>
 <td></td>
@@ -208,7 +199,7 @@ lower league predicts their NBA value. The slope is "how much it transfers"; the
 <td style="text-align: right;">0.32</td>
 </tr>
 <tr>
-<td>dTS (defense, shot defense)</td>
+<td>dTS (shot defense)</td>
 <td style="text-align: right;">0.26</td>
 <td style="text-align: right;">0.22</td>
 <td></td>
@@ -224,7 +215,7 @@ lower league predicts their NBA value. The slope is "how much it transfers"; the
 <td style="text-align: right;">0.47</td>
 </tr>
 <tr>
-<td><strong>dSC (defensive second-chance)</strong></td>
+<td><strong>dSC (defensive 2nd-chance)</strong></td>
 <td style="text-align: right;"><strong>0.14</strong></td>
 <td style="text-align: right;"><strong>0.11</strong></td>
 <td></td>
@@ -233,44 +224,37 @@ lower league predicts their NBA value. The slope is "how much it transfers"; the
 </tr>
 </tbody>
 </table>
-<p>Read this table and the model's whole personality falls out:</p>
+<p>The model's whole personality is in this table:</p>
 <ul>
-<li><strong>Every slope is well below 1.</strong> Dominating a lower league barely budges your NBA number — the
+<li><strong>Every slope is well below 1.</strong> Dominating a lower league barely moves your NBA number — the
   competition gap is enormous. A college player who is +5 in true shooting projects to roughly
   <em>average</em> NBA shooting.</li>
-<li><strong>Shooting transfers weakly from the G-League</strong> (R ≈ 0.1) and only modestly from college. Being
-  efficient against lower-league defenses says little about scoring against NBA defenses.</li>
-<li><strong>The hustle/instinct channels carry over best</strong> — forcing turnovers (G-League R 0.47) and
-  generating offensive second chances (oSC R ≈ 0.3) reflect motor more than skill-against-weaker-
-  competition, so they survive the jump better.</li>
-<li><strong>Defensive second-chance barely transfers from college</strong> (dSC R = 0.11). Out-working shorter,
-  weaker college bigs on the defensive glass tells you little about the NBA, where everyone is elite
-  and box-outs are schemed. (We let the data decide this rather than hard-coding it.)</li>
+<li><strong>Shooting transfers weakly</strong> (G-League R ≈ 0.1, college only modestly): efficiency against
+  lower-league defenses says little about scoring on NBA ones.</li>
+<li><strong>Hustle/instinct carries over best</strong> — forcing turnovers (G-League R 0.47) and generating
+  offensive second chances (oSC R ≈ 0.3) reflect motor more than skill-against-weaker-competition.</li>
+<li><strong>Defensive second-chance barely transfers from college</strong> (dSC R = 0.11): out-working weaker
+  college bigs on the glass tells you little about the NBA. We let the data decide this.</li>
 </ul>
-<p>Crucially, the translation also carries an <strong>irreducible uncertainty floor</strong> (<code>Var_translate</code>) for
-every factor — the leap between leagues is genuinely uncertain, so cross-league error bars are
-<em>wide and never shrink to zero</em> no matter how many college games a player has. That honesty is the
-point: the model says "here's our best NBA-equivalent guess, and here's how little we really know."
-(It is why, e.g., a future MVP's lone college season can sit near replacement level on the NBA axis
-and still be "consistent" with stardom — the band is that wide.)</p>
+<p>The translation also carries an <strong>irreducible uncertainty floor</strong> (<code>Var_translate</code>) per factor —
+the league jump is genuinely uncertain, so cross-league error bars are <em>wide and never shrink to
+zero</em>, however many college games a player has. That honesty is the point: it's why a future MVP's
+lone college season can sit near replacement level on the NBA axis and still be "consistent" with
+stardom — the band is that wide.</p>
 <hr />
 <h2>What it looks like for real players</h2>
-<p><strong>A full career as a smooth curve.</strong> LeBron James, net rating across 23 seasons, rises from a
-replacement-level rookie (very wide CI) through a Miami-era peak near <strong>+7</strong>, then a gentle age-41
-decline toward <strong>+1</strong> — no season boundaries, no jumps, the error band tightening as his minutes
-pile up and widening again as his role shrinks.</p>
-<p><strong>The cross-league reality check.</strong> Cooper Flagg, the 2025 No. 1 pick, was an elite college player —
-his Duke season translates to about <strong>+0.2 NBA-equivalent</strong> (already heavily discounted by the
-translation). His <em>actual</em> NBA rookie season has hovered around <strong>−1</strong>. The picture tells the true
-story a single number hides: dominant college production maps to "promising NBA prospect," and the
-real NBA learning curve is steep — all on one continuous axis, purple (NCAA) handing off to blue
-(NBA). And because college now reaches back to <strong>2005-06</strong>, sequential college→NBA careers that span
-the pre-2021 era (an SGA-at-Kentucky type) appear in full.</p>
-<p><strong>A three-league journey.</strong> A two-way player like Jake LaRavia appears in all three colors on one
-chart — NCAA → NBA with G-League assignments interleaved — every stint on the same NBA-equivalent
-scale, hovering around replacement level, exactly where a fringe rotation player belongs.</p>
-<p>The current NBA leaders, as of 2025-26: <strong>Jokić +8.0, Gilgeous-Alexander +7.4, Wembanyama +6.9,
-Leonard +6.7, Antetokounmpo +6.3</strong> — the expected names, on the expected scale.</p>
+<p><strong>A full career as a smooth curve.</strong> LeBron James across 23 seasons rises from a replacement-level
+rookie (wide CI) through a Miami-era peak, then a gentle age-41 decline — no season boundaries, no
+jumps, the error band tightening as his minutes pile up and widening as his role shrinks.</p>
+<p><strong>The cross-league reality check.</strong> Cooper Flagg, the 2025 No. 1 pick, was elite in college — yet
+his Duke season translates to about <strong>+0.2 NBA-equivalent</strong> (heavily discounted by the
+translation), and his actual NBA rookie year has hovered near <strong>−1</strong>. The picture tells the story a
+single number hides: dominant college production maps to "promising prospect," and the real NBA
+learning curve is steep — all on one axis, NCAA handing off to NBA. Because college now reaches
+back to <strong>2005-06</strong>, pre-2021 college→NBA careers (an SGA-at-Kentucky type) appear in full.</p>
+<p><strong>A three-league journey.</strong> A two-way player like Jake LaRavia shows all three colors on one chart
+— NCAA → NBA with G-League stints interleaved — every leg on the same scale, hovering near
+replacement level, exactly where a fringe rotation player belongs.</p>
 <hr />
 <h2>The system at a glance</h2>
 <table>
@@ -303,11 +287,11 @@ Leonard +6.7, Antetokounmpo +6.3</strong> — the expected names, on the expecte
 </tr>
 </tbody>
 </table>
-<p>That's <strong>~42 million player-day rows</strong>, every one with six factors, a net, and confidence intervals,
-browsable in the interactive site. College seasons 2005-06 through 2012-13 have thinner historical
-play-by-play coverage (21–67% of scheduled games) and are flagged <code>reduced_sample</code> so they can be
-down-weighted rather than trusted blindly; coverage is full (≥85%) from 2013-14 on.</p>
-<p><strong>What's next</strong> (lower-value, not yet in): NBA pre-1996 and pre-2005 college exist only as box-score
-priors (no public play-by-play), so the possession-level RAPM can't extend there — those eras are
-covered approximately by box-only strength priors rather than the daily series.</p></div>
+<p>That's <strong>~42 million player-day rows</strong>, each with six factors, a net, and confidence intervals.
+College seasons 2005-06 through 2012-13 have thinner play-by-play coverage (21–67% of scheduled
+games) and are flagged <code>reduced_sample</code> to be down-weighted, not trusted blindly; coverage is full
+(≥85%) from 2013-14 on.</p>
+<p><strong>What's next</strong> (lower-value): NBA pre-1996 and pre-2005 college have no public play-by-play, so
+the possession-level RAPM can't extend there — those eras would need box-only strength priors
+rather than the daily series.</p></div>
 </body></html>
