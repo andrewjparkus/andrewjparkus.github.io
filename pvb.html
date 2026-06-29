@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pure vs Box — Daily RAPM</title>
+<style>
+  :root{
+    --bg:#080b11; --panel:#0e141d; --line:#1b2532; --text:#e7eef7; --muted:#7c8ca2;
+    --accent:#56b6ff; --pure:#56b6ff; --box:#f2a154; --amp:#2dd4bf;
+    --nba:#4aa8ff; --gleague:#2dd4bf; --college:#b27bff;
+  }
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:var(--bg);color:var(--text);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  svg,svg text{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif}
+  .wrap{max-width:1000px;margin:0 auto;padding:24px 22px 70px}
+  h1{font-size:20px;margin:6px 0 4px;font-weight:650;letter-spacing:-.2px} h1 b{color:var(--accent);font-weight:750}
+  .sub{color:var(--muted);font-size:12.5px;margin:6px 0 0;line-height:1.55;max-width:780px}
+  .searchbox{position:relative;max-width:480px;margin:16px 0 6px}
+  #q{width:100%;padding:11px 14px;font-size:14.5px;background:var(--panel);border:1px solid var(--line);color:var(--text);outline:none}
+  #q:focus{border-color:var(--accent)}
+  #drop{position:absolute;top:42px;left:0;right:0;background:#0c121b;border:1px solid var(--line);z-index:30;max-height:330px;overflow-y:auto;display:none}
+  .opt{padding:8px 13px;cursor:pointer;display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #121a25;align-items:center}
+  .opt:hover,.opt.active{background:#141e2b}
+  .opt .nm{font-size:13.5px;font-weight:600}
+  .opt .meta{font-size:11px;color:var(--muted);display:flex;gap:7px;align-items:center}
+  .badge{font-size:9.5px;padding:1px 5px;font-weight:700;letter-spacing:.3px}
+  .b-n{background:rgba(74,168,255,.16);color:#9fccff} .b-g{background:rgba(45,212,191,.16);color:#7fe9d8} .b-c{background:rgba(178,123,255,.16);color:#cfb0ff}
+  #player{display:none;margin-top:20px}
+  .phead{display:flex;align-items:baseline;gap:13px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:11px}
+  .pname{font-size:25px;font-weight:800;letter-spacing:-.5px}
+  .pmeta{color:var(--muted);font-size:12.5px}
+  .netrow{display:flex;gap:24px;flex-wrap:wrap;margin:16px 0 4px;font-variant-numeric:tabular-nums}
+  .netbox{background:var(--panel);border:1px solid var(--line);padding:10px 16px;min-width:140px}
+  .netbox .k{font-size:11px;color:var(--muted);font-weight:600} .netbox .v{font-size:22px;font-weight:800;margin-top:2px}
+  .sectitle{font-size:13px;font-weight:700;color:#aebccd;margin:24px 0 8px;letter-spacing:.2px}
+  .frow{display:flex;align-items:center;gap:10px;margin:9px 0}
+  .frow .lab{width:46px;font-size:12.5px;font-weight:700;color:#cdd9e6}
+  .pair{flex:1;min-width:160px}
+  .deco{flex:1.2;min-width:200px}
+  .frow .delta{width:64px;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}
+  .cap{font-size:12.5px;color:#cfdae7;background:var(--panel);border-left:3px solid var(--accent);padding:9px 13px;margin:14px 0;line-height:1.55;max-width:780px}
+  .legend{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.6;max-width:780px}
+  .empty{color:var(--muted);text-align:center;padding:80px 0;font-size:14.5px}
+  .swatch{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:middle}
+  .foot{color:#566377;font-size:11px;margin-top:26px;line-height:1.7;max-width:780px}
+  .topnav{border-bottom:1px solid var(--line);background:#0a0e16;position:sticky;top:0;z-index:50}
+  .navinner{max-width:1000px;margin:0 auto;padding:0 22px;display:flex;align-items:center;gap:8px;height:52px;flex-wrap:wrap}
+  .brand{font-size:16px;font-weight:700;letter-spacing:-.2px;margin-right:18px}.brand b{color:var(--accent)}
+  .tab{font-size:13.5px;color:var(--muted);text-decoration:none;padding:16px 12px;border-bottom:2px solid transparent}
+  .tab:hover{color:var(--text)} .tab.active{color:var(--text);border-bottom-color:var(--accent)}
+  svg{display:block}
+</style></head>
+<body>
+<nav id="topnav" data-active="pvb"></nav>
+<script src="nav.js"></script>
+<div class="wrap">
+  <h1>Pure <b>vs Box</b> — why the box prior reads lower</h1>
+  <p class="sub">The box prior reads <b>lower</b> than pure RAPM for stars (e.g. Jokić pure ≈ +7.6 but box ≈ +1.4).
+    This is <b>correct, intentional shrinkage — not a bug</b>. The box prior is a <i>conservative</i> estimate built
+    from box-score stats, which simply can't see a lot of impact (especially defense). This page shows the gap per
+    factor and decomposes <i>why</i>: each factor's box retention is <b>box-mapping skill × cross-league translation</b>
+    (plus a per-player early-career reliability ramp). It is <b>not</b> one uniform contraction, and the cross-league
+    translate step can even <i>amplify</i> some factors.</p>
+  <div class="searchbox">
+    <input id="q" autocomplete="off" placeholder="Search a player…  (e.g. Nikola Jokic, Victor Wembanyama)">
+    <div id="drop"></div>
+  </div>
+
+  <div id="player">
+    <div class="phead"><span class="pname" id="pname"></span><span class="pmeta" id="pmeta"></span></div>
+    <div class="netrow" id="netrow"></div>
+    <div class="sectitle">Per-factor: pure vs box, and what drives the gap</div>
+    <div style="display:flex;gap:14px;font-size:11px;color:var(--muted);margin-bottom:6px;flex-wrap:wrap">
+      <span><span class="swatch" style="background:var(--pure)"></span>pure RAPM</span>
+      <span><span class="swatch" style="background:var(--box)"></span>box prior</span>
+      <span><span class="swatch" style="background:var(--amp)"></span>translate amplifies (slope&gt;1)</span>
+    </div>
+    <div id="factors"></div>
+    <div class="cap" id="cap"></div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="empty" id="empty">Search for a player to see their pure-vs-box per-factor explainability.</div>
+  <p class="foot">Descriptive — the player's already-measured latest values. No projection. <b>ridge_R</b> = √(median OOF R²)
+    of the box-score→impact mapping (well below 1 for every factor; defense lowest because the box has no tracking data
+    to see rim protection). <b>translate_slope</b> = cross-league box-translate (NBA = 1.0 identity; several college/G-League
+    slopes &gt;1, i.e. they amplify). The translate slopes carry a documented bounded in-sample leak. Box mode is unavailable
+    on game-days lacking a box sidecar (the 6 corrupt NBA seasons) — the panel degrades gracefully.</p>
+</div>
+
+<script>
+const FAC=["oTS","oTOV","oSC","dTS","dTOV","dSC"];
+const LC={nba:'#4aa8ff',gleague:'#2dd4bf',college:'#b27bff'};
+const LNAME={nba:'NBA',gleague:'G-League',college:'NCAA'};
+const NS='http://www.w3.org/2000/svg';
+function elns(t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e;}
+const q=document.getElementById('q'), drop=document.getElementById('drop');
+let INDEX=[], curOpts=[], active=-1, CONTR=null;
+
+Promise.all([
+  fetch('players.json').then(r=>r.json()),
+  fetch('box_contraction.json').then(r=>r.json())
+]).then(([idx,C])=>{
+  INDEX=idx; CONTR=C;
+  const u=new URLSearchParams(location.search), pid=u.get('p'), nq=u.get('q');
+  let hit=pid?INDEX.find(x=>x.id===pid):(nq?INDEX.find(x=>x.n.toLowerCase()===nq.toLowerCase()):null);
+  if(hit)load(hit.id,hit.n);
+});
+
+q.addEventListener('input',()=>filt(q.value.trim()));
+q.addEventListener('focus',()=>{if(q.value.trim())filt(q.value.trim())});
+q.addEventListener('keydown',e=>{if(!curOpts.length)return;
+  if(e.key==='ArrowDown'){active=Math.min(active+1,curOpts.length-1);paint()}
+  else if(e.key==='ArrowUp'){active=Math.max(active-1,0);paint()}
+  else if(e.key==='Enter'){const o=curOpts[active<0?0:active];if(o)load(o.id,o.n)}
+  else if(e.key==='Escape')drop.style.display='none';});
+document.addEventListener('click',e=>{if(!e.target.closest('.searchbox'))drop.style.display='none'});
+
+function filt(query){if(!query){drop.style.display='none';return}
+  const ql=query.toLowerCase();
+  curOpts=INDEX.filter(x=>x.n.toLowerCase().includes(ql))
+    .sort((a,b)=>{const ai=a.n.toLowerCase().startsWith(ql),bi=b.n.toLowerCase().startsWith(ql);return ai!==bi?(bi-ai):(b.net-a.net)}).slice(0,12);
+  active=-1;paint();}
+function paint(){if(!curOpts.length){drop.style.display='none';return}
+  drop.innerHTML='';
+  curOpts.forEach((o,i)=>{const badges=[...o.lg].map(c=>`<span class="badge b-${c}">${c==='n'?'NBA':c==='g'?'GL':'NCAA'}</span>`).join('');
+    const el=document.createElement('div');el.className='opt'+(i===active?' active':'');
+    el.innerHTML=`<span class="nm">${o.n}</span><span class="meta">${badges}<span>${o.s}–${o.e}</span><span style="color:#cbd5e1;font-weight:700">${o.net>=0?'+':''}${o.net}</span></span>`;
+    el.onclick=()=>load(o.id,o.n);drop.appendChild(el);});
+  drop.style.display='block';}
+
+function load(id,name){
+  drop.style.display='none'; q.value=name; history.replaceState(null,'','?p='+id);
+  Promise.all([
+    fetch('data/'+id+'_pure.json').then(r=>r.ok?r.json():null).catch(()=>null),
+    fetch('data/'+id+'_box.json').then(r=>r.ok?r.json():null).catch(()=>null)
+  ]).then(([pure,box])=>render(pure,box,name));
+}
+
+// horizontal pure/box paired bars centered at 0, shared symmetric scale
+function pairBar(pure,box){
+  const W=170,H=34,mid=W/2;
+  const mag=Math.max(0.55,Math.abs(pure),Math.abs(box))*1.15;
+  const x=v=>mid+(v/mag)*(W/2-2);
+  const svg=elns('svg',{viewBox:`0 0 ${W} ${H}`,width:'100%',height:H,role:'img',
+    'aria-label':`pure ${pure.toFixed(2)}, box ${box.toFixed(2)}`});
+  svg.appendChild(elns('line',{x1:mid,y1:0,x2:mid,y2:H,stroke:'#2b3a51','stroke-width':1}));
+  [[pure,'var(--pure)',6],[box,'var(--box)',19]].forEach(([v,c,y])=>{
+    const xv=x(v),x0=Math.min(mid,xv),w=Math.abs(xv-mid);
+    svg.appendChild(elns('rect',{x:x0,y:y,width:Math.max(w,1.5),height:9,fill:c,rx:2}));
+  });
+  return svg;
+}
+// decomposition bar: ridge_R (0..1 shrink) then translate_slope (may exceed 1 = amplify)
+function decoBar(c){
+  const W=210,H=34,unit=W*0.46; // pixels per 1.0 of multiplier
+  const svg=elns('svg',{viewBox:`0 0 ${W} ${H}`,width:'100%',height:H,role:'img',
+    'aria-label':`box-mapping skill ridge_R ${c.ridge_R}; translate slope ${c.translate_slope}`});
+  // axis line at multiplier=1.0
+  const one=unit; svg.appendChild(elns('line',{x1:one,y1:0,x2:one,y2:H,stroke:'#2b3a51','stroke-width':1,'stroke-dasharray':'2 2'}));
+  // ridge_R segment (always <=1, shrink) — pure->retained
+  svg.appendChild(elns('rect',{x:0,y:5,width:Math.max(c.ridge_R*unit,2),height:9,fill:'#7c8ca2',rx:2}));
+  const t1=elns('text',{x:2,y:3,'font-size':9,fill:'#aebccd'}); t1.textContent='R='+c.ridge_R; svg.appendChild(t1);
+  // translate segment — amplify (>1) drawn in teal, shrink (<1) in muted
+  const amp=c.translate_slope>1.0001;
+  svg.appendChild(elns('rect',{x:0,y:19,width:Math.max(c.translate_slope*unit,2),height:9,
+    fill:amp?'var(--amp)':'#7c8ca2',rx:2}));
+  const t2=elns('text',{x:2,y:33,'font-size':9,fill:amp?'#7fe9d8':'#aebccd'});
+  t2.textContent=(amp?'↑ ':'')+'tr='+c.translate_slope; svg.appendChild(t2);
+  return svg;
+}
+
+function render(pure,box,name){
+  document.getElementById('empty').style.display='none';
+  document.getElementById('player').style.display='block';
+  document.getElementById('pname').textContent=(pure&&pure.name)||(box&&box.name)||name;
+  const meta=document.getElementById('pmeta');
+  if(!pure||!box){
+    meta.innerHTML='<span style="color:#f2a154">Pure-vs-box unavailable</span> — '+
+      (!pure?'no pure series':'')+(!pure&&!box?'; ':'')+(!box?'no box series (box prior is NBA-only / missing on the 6 corrupt NBA seasons)':'')+'.';
+    document.getElementById('netrow').innerHTML='';
+    document.getElementById('factors').innerHTML='';
+    document.getElementById('cap').innerHTML=''; document.getElementById('legend').innerHTML='';
+    return;
+  }
+  const ip=pure.d.length-1, ib=box.d.length-1, lg=pure.lg[ip];
+  meta.innerHTML=`${pure.d[ip]} · <span style="color:${LC[lg]};font-weight:700">${LNAME[lg]}</span>`;
+  const pnet=FAC.reduce((s,f)=>s+pure[f][ip],0), bnet=FAC.reduce((s,f)=>s+box[f][ib],0);
+  document.getElementById('netrow').innerHTML=
+    `<div class="netbox"><div class="k">pure net</div><div class="v" style="color:var(--pure)">${pnet>=0?'+':''}${pnet.toFixed(2)}</div></div>`+
+    `<div class="netbox"><div class="k">box net</div><div class="v" style="color:var(--box)">${bnet>=0?'+':''}${bnet.toFixed(2)}</div></div>`+
+    `<div class="netbox"><div class="k">compression Δ</div><div class="v">${(pnet-bnet>=0?'−':'+')}${Math.abs(pnet-bnet).toFixed(2)}</div></div>`;
+
+  const C=CONTR[lg]||CONTR.nba;
+  const mount=document.getElementById('factors'); mount.innerHTML='';
+  // header
+  const head=document.createElement('div'); head.className='frow';
+  head.innerHTML='<span class="lab" style="color:#7c8ca2;font-weight:600">factor</span>'+
+    '<span class="pair" style="font-size:10.5px;color:#7c8ca2">pure vs box</span>'+
+    '<span class="deco" style="font-size:10.5px;color:#7c8ca2">retention: ridge_R · translate</span>'+
+    '<span class="delta" style="color:#7c8ca2">Δ</span>';
+  mount.appendChild(head);
+  FAC.forEach(f=>{
+    const dp=pure[f][ip], db=box[f][ib], delta=dp-db, c=C[f];
+    const row=document.createElement('div'); row.className='frow';
+    const lab=document.createElement('span'); lab.className='lab'; lab.textContent=f;
+    const pair=document.createElement('div'); pair.className='pair'; pair.appendChild(pairBar(dp,db));
+    const deco=document.createElement('div'); deco.className='deco'; deco.appendChild(decoBar(c));
+    const del=document.createElement('span'); del.className='delta'; del.textContent=(delta>=0?'−':'+')+Math.abs(delta).toFixed(2);
+    row.appendChild(lab); row.appendChild(pair); row.appendChild(deco); row.appendChild(del);
+    mount.appendChild(row);
+  });
+
+  // honest caption, league-aware
+  const dSC=C.dSC.ridge_R, oTS=C.oTS.ridge_R;
+  let cap;
+  if(lg==='nba'){
+    cap=`For an established NBA player the compression is essentially the <b>box-mapping skill (ridge_R) alone</b> — `+
+        `the cross-league translate is identity (1.0). ridge_R ranges from <b>${oTS}</b> (oTS) down to <b>${dSC}</b> (dSC): `+
+        `defense compresses most because the box prior has no tracking data to see rim protection. This is intentional `+
+        `conservatism, not your pure RAPM.`;
+  } else {
+    const amped=FAC.filter(f=>C[f].translate_slope>1.0001);
+    cap=`For a ${LNAME[lg]} player, retention is box-mapping skill <b>and</b> a cross-league translate. ridge_R is below 1 `+
+        `for every factor (oTS ${oTS} … dSC ${dSC}), but the translate step <b>amplifies</b> `+
+        (amped.length?`${amped.map(f=>f+' '+C[f].translate_slope).join(', ')} `:'')+`— it does not uniformly contract. `+
+        `Plus a per-player early-career reliability ramp (not shown numerically). The box prior is intentionally conservative.`;
+  }
+  document.getElementById('cap').innerHTML=cap;
+  document.getElementById('legend').innerHTML=
+    `The box prior intentionally shrinks toward league average where box stats can't see your impact; it is <b>not</b> your pure RAPM. `+
+    `The gap is per-factor (no single uniform retention number), and the cross-league translate can amplify as well as shrink.`;
+  window.scrollTo({top:90,behavior:'smooth'});
+}
+</script>
+</body></html>

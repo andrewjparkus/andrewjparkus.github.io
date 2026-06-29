@@ -83,13 +83,8 @@
   .foot{color:#566377;font-size:11px;margin-top:30px;line-height:1.7}
 </style></head>
 <body>
-<nav class="topnav"><div class="navinner">
-  <span class="brand">Daily <b>RAPM</b></span>
-  <a href="index.html" class="tab">Explorer</a>
-  <a href="model.html" class="tab">Model</a>
-  <a href="teams.html" class="tab active">Teams</a>
-  <a href="table.html" class="tab">Tables</a>
-</div></nav>
+<nav id="topnav" data-active="teams"></nav>
+<script src="nav.js"></script>
 <div class="wrap">
   <h1 style="margin-top:6px">Projected standings, <b id="season">2025-26</b></h1>
   <p class="sub">Minute-weighted six-factor team RAPM (pts/100), leakage-safe. Projected wins = mean of a 10,000-season Monte-Carlo (HCA 1.56, sigma 14.3). Click a team for its roster decomposition.</p>
@@ -260,7 +255,7 @@ function buildDetail(detail, row){
     + '</div>';
 
   html += '<div class="scroll"><table class="roster"><thead><tr>'
-    + '<th class="l">Player</th><th>MPG</th><th>GP</th>';
+    + '<th class="l">Player</th><th title="Minutes per game — hover a cell for total season minutes">MPG</th><th>GP</th>';
   FACS.forEach(f=>{ html += '<th class="f" title="'+esc(FAC_TIP[f])+' — contribution">'+f+'</th>'; });
   html += '<th class="net">Net</th></tr></thead><tbody>';
 
@@ -272,7 +267,7 @@ function buildDetail(detail, row){
       + (FACS.map(f=>' · '+f+' '+num(own[f],1)).join(''));
     html += '<tr class="prow">'
       + '<td class="l pl" title="'+esc(tip)+'">'+esc(p.name||'')+'</td>'
-      + '<td class="mpg">'+num(p.mpg,1)+'</td>'
+      + '<td class="mpg" title="'+(p.min_total==null?'':esc(num(p.min_total,1)+' total min')) +'">'+num(p.mpg,1)+'</td>'
       + '<td class="gp">'+(p.gp==null?'–':num(p.gp,0))+'</td>';
     FACS.forEach(f=>{ html += cell(c[f]); });
     html += cell(c.net,'net');

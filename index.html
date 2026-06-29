@@ -73,13 +73,8 @@
   .tab.active{color:var(--text);border-bottom-color:var(--accent)}
 </style></head>
 <body>
-<nav class="topnav"><div class="navinner">
-  <span class="brand">Daily <b>RAPM</b></span>
-  <a href="index.html" class="tab active">Explorer</a>
-  <a href="model.html" class="tab">Model</a>
-  <a href="teams.html" class="tab">Teams</a>
-  <a href="table.html" class="tab">Tables</a>
-</div></nav>
+<nav id="topnav" data-active="explorer"></nav>
+<script src="nav.js"></script>
 <div class="wrap">
   <h1 style="margin-top:6px">Six-factor RAPM, <b>every game-day</b></h1>
   <p class="sub">Search any player across NCAA, G-League &amp; NBA. Toggle each chart between three daily series: <b>Pure RAPM</b> (the prior-free, DataBallR-matched solve), <b>Prior-informed</b> (the same solve with three factors sharpened by a daily box-score prior — the default), and <b>Box prior</b> (that prior on its own — a daily, multi-league curve with a confidence band). Values are on the DataBallR scale; off-seasons collapsed (game-day axis); each league trimmed to the player's last game.</p>
@@ -92,6 +87,7 @@
   <div id="player">
     <div class="phead">
       <span class="pname" id="pname"></span>
+      <a id="profilelink" href="#" style="display:none;font-size:12.5px;color:var(--accent);text-decoration:none;margin-left:10px">Full profile →</a>
       <span class="pmeta" id="pmeta"></span>
       <span class="readout" id="readout"></span>
       <div id="modeseg" class="modeseg" style="margin-left:auto;display:none">
@@ -126,6 +122,9 @@ fetch('players.json').then(r=>r.json()).then(d=>{
   picks.forEach(nm=>{const p=INDEX.find(x=>x.n===nm);if(!p)return;
     const c=document.createElement('span');c.className='chip';c.textContent=nm;c.onclick=()=>load(p.id,nm);sg.appendChild(c);});
   const u=new URLSearchParams(location.search),pid=u.get('p'),nq=u.get('q');
+  // Multi-player comparison overlay: ?p=id1,id2,... (2-4 players). One id -> normal single view.
+  const ids=(pid||'').split(',').map(s=>s.trim()).filter(Boolean);
+  if(ids.length>1){loadMulti(ids.slice(0,4));return;}
   let hit=pid?INDEX.find(x=>x.id===pid):(nq?INDEX.find(x=>x.n.toLowerCase()===nq.toLowerCase())||INDEX.find(x=>x.n.toLowerCase().includes(nq.toLowerCase())):null);
   if(hit)load(hit.id,hit.n);
 });
@@ -160,6 +159,7 @@ const MODEHINT={
   box:'Box prior — the daily, multi-league box-score skill estimate that informs the prior-informed solve. A real fitted curve (not a flat reference) with a confidence band, built from box stats across NCAA, G-League & NBA up to each day. All six factors are shown.'};
 let SERIES={}, MODE=(localStorage.getItem('rapm_mode')||'prior'), PNAME='';
 function load(id,name){drop.style.display='none';q.value=name;history.replaceState(null,'','?p='+id);
+  {const pl=document.getElementById('profilelink');if(pl){pl.href='profile.html?p='+encodeURIComponent(id);pl.style.display='inline';}}
   const opt=u=>fetch(u).then(r=>r.ok?r.json():null).catch(()=>null);
   Promise.all([
     fetch('data/'+id+'.json').then(r=>r.json()),     // prior-informed (base; carries name)
@@ -285,7 +285,92 @@ function renderActive(){
     setHoverAll(SER.length-1,false);                 // default readout = most recent day
   });
 }
-window.addEventListener('resize',()=>{if(SER)show_rerender();});
-let rt;function show_rerender(){clearTimeout(rt);rt=setTimeout(()=>{if(SER)renderActive();},150);}
+window.addEventListener('resize',()=>{if(SER||MULTI)show_rerender();});
+let rt;function show_rerender(){clearTimeout(rt);rt=setTimeout(()=>{if(MULTI)renderMulti();else if(SER)renderActive();},150);}
+
+// ===== Multi-player comparison overlay (Step 4) =====================================
+// ?p=id1,id2,...  overlays 2-4 players' prior-informed series on net + each factor. Distinct
+// CVD-safe (Okabe-Ito) colors AND a legend label per player — color is never the sole encoder.
+// Zero new data: reuses the existing prior sidecars + prep(). Descriptive only, no projection.
+const OKABE=['#0072B2','#E69F00','#009E73','#CC79A7'];   // CVD-distinct, labeled
+let MULTI=null;   // [{id,name,ser}], MAXES set after load
+function loadMulti(ids){
+  Promise.all(ids.map(id=>fetch('data/'+id+'.json').then(r=>r.ok?r.json():null).catch(()=>null)))
+    .then(arr=>{
+      MULTI=arr.map((d,k)=>d?{id:ids[k],name:d.name||ids[k],ser:prep(d),color:OKABE[k%OKABE.length]}:null)
+               .filter(Boolean);
+      if(MULTI.length<2){if(MULTI.length===1)load(MULTI[0].id,MULTI[0].name);return;}
+      history.replaceState(null,'','?p='+MULTI.map(m=>m.id).join(','));
+      showMulti();
+    });
+}
+function showMulti(){
+  document.getElementById('empty').style.display='none';
+  document.getElementById('player').style.display='block';
+  document.getElementById('modeseg').style.display='none';
+  document.getElementById('modehint').textContent='Comparison overlay — prior-informed net + 6 factors for '+MULTI.length+' players. Each player has a distinct color and legend label.';
+  document.getElementById('pname').textContent='Comparison';
+  document.getElementById('pmeta').innerHTML=MULTI.map(m=>`<span style="color:${m.color};font-weight:700">${m.name}</span>`).join(' · ');
+  document.getElementById('readout').innerHTML='';
+  const grid=document.getElementById('grid');grid.innerHTML='';
+  FAC.forEach(([f,t])=>{const cell=document.createElement('div');cell.className='cell';
+    cell.innerHTML=`<div class="ctitle"><span>${t}</span><span class="v" id="vm_${f}"></span></div><div id="cm_${f}"></div>`;
+    grid.appendChild(cell);});
+  renderMulti();
+  window.scrollTo({top:90,behavior:'smooth'});
+}
+let MCHARTS=[], MDATES=[];
+function renderMulti(){
+  // unified sorted date axis across all players
+  const set=new Set();MULTI.forEach(m=>m.ser.forEach(s=>set.add(s.date)));
+  MDATES=[...set].sort();
+  MULTI.forEach(m=>{m.map={};m.ser.forEach(s=>m.map[s.date]=s);});
+  requestAnimationFrame(()=>{
+    MCHARTS=[ChartMulti(document.getElementById('c_net'),'net')];
+    FAC.forEach(([f])=>MCHARTS.push(ChartMulti(document.getElementById('cm_'+f),f)));
+    setHoverMulti(MDATES.length-1,false);
+  });
+}
+function ChartMulti(mount,key){
+  const W=mount.clientWidth||320, H=mount===document.getElementById('c_net')?190:150;
+  const padL=30,padR=7,padT=8,padB=15, pw=W-padL-padR, ph=H-padT-padB;
+  const n=MDATES.length;
+  let pool=[];MULTI.forEach(m=>MDATES.forEach(d=>{const s=m.map[d];if(s&&s[key]!=null)pool.push(s[key]);}));
+  let lo=Math.min(...pool), hi=Math.max(...pool), c=(lo+hi)/2, half=Math.max((hi-lo)/2*1.28,0.55);
+  const ymin=c-half, ymax=c+half;
+  const X=i=>padL+(n>1?i/(n-1):.5)*pw;
+  const Y=val=>padT+ph-(Math.max(ymin,Math.min(ymax,val))-ymin)/(ymax-ymin)*ph;
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,preserveAspectRatio:'none'});
+  [0,.5,1].forEach(f=>{const yv=ymin+(ymax-ymin)*f, y=Y(yv);
+    svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'var(--grid)','stroke-width':1}));
+    const t=el('text',{x:padL-4,y:y+3,'font-size':9,fill:'#5a6a7e','text-anchor':'end'});t.textContent=(yv>=0?'+':'')+yv.toFixed(1);svg.appendChild(t);});
+  if(ymin<0&&ymax>0){const y=Y(0);svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'#2b3a51','stroke-width':1}));}
+  let py=MDATES[0].slice(0,4);
+  for(let i=1;i<n;i++){const yr=MDATES[i].slice(0,4);if(yr!==py){
+    svg.appendChild(el('line',{x1:X(i),y1:padT,x2:X(i),y2:padT+ph,stroke:'#121b27','stroke-width':1}));
+    const t=el('text',{x:X(i),y:H-4,'font-size':8.5,fill:'#566377','text-anchor':'middle'});t.textContent="’"+yr.slice(2);svg.appendChild(t);py=yr;}}
+  // one polyline per player, broken across gaps (missing dates)
+  MULTI.forEach(m=>{let seg=[];const flush=()=>{if(seg.length>1)svg.appendChild(el('polyline',{points:seg.join(' '),fill:'none',stroke:m.color,'stroke-width':1.6,'stroke-linejoin':'round','stroke-linecap':'round'}));seg=[];};
+    for(let i=0;i<n;i++){const s=m.map[MDATES[i]];if(s&&s[key]!=null)seg.push(`${X(i).toFixed(1)},${Y(s[key]).toFixed(1)}`);else flush();}flush();});
+  const cross=el('line',{class:'crosshair',x1:0,y1:padT,x2:0,y2:padT+ph,visibility:'hidden'});svg.appendChild(cross);
+  const dots=MULTI.map(()=>{const c=el('circle',{class:'hdot',r:3.2,visibility:'hidden'});svg.appendChild(c);return c;});
+  const ov=el('rect',{x:0,y:0,width:W,height:H,fill:'transparent'});svg.appendChild(ov);
+  mount.innerHTML='';mount.appendChild(svg);
+  const obj={key,n,setHover(i,line){if(i<0||i>=n){cross.setAttribute('visibility','hidden');dots.forEach(d=>d.setAttribute('visibility','hidden'));return;}
+    cross.setAttribute('x1',X(i));cross.setAttribute('x2',X(i));cross.setAttribute('visibility',line?'visible':'hidden');
+    MULTI.forEach((m,k)=>{const s=m.map[MDATES[i]];if(s&&s[key]!=null){dots[k].setAttribute('cx',X(i));dots[k].setAttribute('cy',Y(s[key]));dots[k].setAttribute('fill',m.color);dots[k].setAttribute('visibility','visible');}else dots[k].setAttribute('visibility','hidden');});}};
+  ov.addEventListener('pointermove',e=>{const r=svg.getBoundingClientRect();const sx=(e.clientX-r.left)/r.width*W;let i=Math.round((sx-padL)/pw*(n-1));i=Math.max(0,Math.min(n-1,i));setHoverMulti(i,true);});
+  ov.addEventListener('pointerleave',()=>setHoverMulti(n-1,false));
+  return obj;
+}
+function setHoverMulti(i,line){
+  MCHARTS.forEach(c=>c.setHover(i,line));
+  const date=MDATES[i];
+  document.getElementById('readout').innerHTML=`${line?'':'<span style="color:#566377">latest&nbsp;</span>'}<b>${date}</b>`;
+  const put=(id,key)=>{const e=document.getElementById(id);if(!e)return;
+    e.innerHTML=MULTI.map(m=>{const s=m.map[date];const v=s?s[key]:null;
+      return `<span style="color:${m.color}">${v==null?'—':(v>=0?'+':'')+v.toFixed(2)}</span>`;}).join(' ');};
+  put('v_net','net'); FAC.forEach(([f])=>put('vm_'+f,f));
+}
 </script>
 </body></html>

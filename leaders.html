@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Leaders — Daily RAPM</title>
+<style>
+  :root{
+    --bg:#080b11; --panel:#0e141d; --line:#1b2532; --text:#e7eef7; --muted:#7c8ca2;
+    --accent:#56b6ff; --grid:#161f2c;
+    --nba:#4aa8ff; --gleague:#2dd4bf; --college:#b27bff;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--text);
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  svg,svg text{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif}
+  .wrap{max-width:1000px;margin:0 auto;padding:24px 22px 70px}
+  h1{font-size:20px;margin:0 0 4px;font-weight:650;letter-spacing:-.2px}
+  h1 b{color:var(--accent);font-weight:750}
+  .sub{color:var(--muted);font-size:12.5px;margin:6px 0 0;line-height:1.5;max-width:760px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 6px;align-items:center}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:#0c1118}
+  .seg button{font:inherit;font-size:12px;font-weight:600;color:var(--muted);background:none;border:none;
+    padding:6px 12px;cursor:pointer;transition:background .12s,color .12s;white-space:nowrap}
+  .seg button:hover{color:var(--text)}
+  .seg button.on{color:#06121f;background:var(--accent)}
+  .seglab{font-size:11.5px;color:#5d6b7e;margin-right:2px}
+  .asof{font-size:11.5px;color:#5d6b7e;margin-left:auto}
+  .boards{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:14px}
+  @media(max-width:680px){.boards{grid-template-columns:1fr}}
+  .board{border:1px solid var(--line);background:var(--panel)}
+  .bhead{font-size:12px;font-weight:700;color:#aebccd;padding:8px 11px;border-bottom:1px solid var(--line);letter-spacing:.2px}
+  table{border-collapse:collapse;width:100%;font-size:12.5px;font-variant-numeric:tabular-nums}
+  th,td{padding:5px 9px;text-align:left;border-bottom:1px solid #121a25}
+  thead th{color:#7c8ca2;font-weight:600;font-size:11px}
+  td.num,th.num{text-align:right}
+  tbody tr:hover{background:#0d1420}
+  td a{color:var(--text);text-decoration:none}
+  td a:hover{color:var(--accent)}
+  .spark{display:inline-block;vertical-align:middle}
+  .empty{color:var(--muted);text-align:center;padding:80px 0;font-size:14.5px}
+  .foot{color:#566377;font-size:11px;margin-top:26px;line-height:1.7}
+  .topnav{border-bottom:1px solid var(--line);background:#0a0e16;position:sticky;top:0;z-index:50}
+  .navinner{max-width:1000px;margin:0 auto;padding:0 22px;display:flex;align-items:center;gap:8px;height:52px}
+  .brand{font-size:16px;font-weight:700;letter-spacing:-.2px;margin-right:18px}.brand b{color:var(--accent)}
+  .tab{font-size:13.5px;color:var(--muted);text-decoration:none;padding:16px 12px;border-bottom:2px solid transparent}
+  .tab:hover{color:var(--text)} .tab.active{color:var(--text);border-bottom-color:var(--accent)}
+</style></head>
+<body>
+<nav id="topnav" data-active="leaders"></nav>
+<script src="nav.js"></script>
+<div class="wrap">
+  <h1 style="margin-top:6px">League <b>leaderboards</b></h1>
+  <p class="sub">Top &amp; bottom 20 per factor, within each league, above the exposure floor (weff &ge; 500, so thin-sample flukes are excluded). Each row carries a 90-day net <b>sparkline</b> — purely historical, descriptive only. Click a name to open the Explorer.</p>
+  <div class="controls">
+    <span class="seglab">League</span>
+    <div class="seg" id="lgseg"></div>
+    <span class="seglab" style="margin-left:8px">Factor</span>
+    <div class="seg" id="facseg"></div>
+    <span class="asof" id="asof"></span>
+  </div>
+  <div class="boards" id="boards"></div>
+  <div class="empty" id="empty">Loading leaderboards…</div>
+  <p class="foot">Sparkline = last-90-days net, downsampled (every 3rd game-day + the last). It looks backward only; nothing is projected forward.</p>
+</div>
+
+<script>
+const FAC=["oTS","oTOV","oSC","dTS","dTOV","dSC"];
+const LGS=["nba","gleague","college"];
+const LNAME={nba:'NBA',gleague:'G-League',college:'NCAA'};
+const LC={nba:'#4aa8ff',gleague:'#2dd4bf',college:'#b27bff'};
+let LB=null, LG='nba', FACSEL='oTS';
+
+const NS='http://www.w3.org/2000/svg';
+function elns(t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e;}
+
+function spark(vals, color){
+  const W=72,H=18,pad=2;
+  if(!vals||vals.length<2){const s=elns('svg',{viewBox:`0 0 ${W} ${H}`,width:W,height:H,class:'spark'});return s;}
+  const lo=Math.min(...vals),hi=Math.max(...vals),span=(hi-lo)||1;
+  const n=vals.length;
+  const X=i=>pad+(n>1?i/(n-1):.5)*(W-2*pad);
+  const Y=v=>pad+(H-2*pad)-(v-lo)/span*(H-2*pad);
+  const svg=elns('svg',{viewBox:`0 0 ${W} ${H}`,width:W,height:H,class:'spark',role:'img',
+    'aria-label':`90-day net trend, ${vals[0].toFixed(1)} to ${vals[n-1].toFixed(1)}`});
+  const pts=vals.map((v,i)=>`${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+  svg.appendChild(elns('polyline',{points:pts,fill:'none',stroke:color,'stroke-width':1.3,'stroke-linejoin':'round'}));
+  svg.appendChild(elns('circle',{cx:X(n-1),cy:Y(vals[n-1]),r:1.6,fill:color}));
+  return svg;
+}
+
+function boardTable(title, rows){
+  const div=document.createElement('div'); div.className='board';
+  const h=document.createElement('div'); h.className='bhead'; h.textContent=title; div.appendChild(h);
+  const tbl=document.createElement('table');
+  tbl.innerHTML=`<thead><tr><th>#</th><th>Player</th><th class="num">${FACSEL}</th><th class="num">net</th><th>90d</th></tr></thead>`;
+  const tb=document.createElement('tbody');
+  rows.forEach((r,i)=>{
+    const tr=document.createElement('tr');
+    const sp=LB.sparklines[r.id]||[];
+    tr.innerHTML=`<td>${i+1}</td><td><a href="profile.html?p=${r.id}">${r.name}</a></td>`+
+      `<td class="num">${r.v>=0?'+':''}${r.v.toFixed(2)}</td>`+
+      `<td class="num">${r.net>=0?'+':''}${r.net.toFixed(2)}</td><td></td>`;
+    tr.lastChild.appendChild(spark(sp, LC[LG]));
+    tb.appendChild(tr);
+  });
+  tbl.appendChild(tb); div.appendChild(tbl); return div;
+}
+
+function renderBoards(){
+  const wrap=document.getElementById('boards'); wrap.innerHTML='';
+  const b=LB.boards[`${LG}:${FACSEL}`];
+  if(!b){document.getElementById('empty').style.display='block';
+    document.getElementById('empty').textContent='No board for this league/factor.';return;}
+  document.getElementById('empty').style.display='none';
+  wrap.appendChild(boardTable(`Top 20 · ${FACSEL} · ${LNAME[LG]}`, b.top));
+  wrap.appendChild(boardTable(`Bottom 20 · ${FACSEL} · ${LNAME[LG]}`, b.bottom));
+}
+
+function buildSeg(id, items, getLabel, cur, onpick){
+  const seg=document.getElementById(id); seg.innerHTML='';
+  items.forEach(it=>{const btn=document.createElement('button');btn.type='button';
+    btn.textContent=getLabel(it); btn.classList.toggle('on',it===cur);
+    btn.onclick=()=>onpick(it); seg.appendChild(btn);});
+}
+
+fetch('league_leaderboards.json').then(r=>r.json()).then(d=>{
+  LB=d;
+  document.getElementById('asof').textContent=`as of ${d.as_of} · weff ≥ ${d.weff_min}`;
+  refresh();
+});
+function refresh(){
+  buildSeg('lgseg',LGS,l=>LNAME[l],LG,l=>{LG=l;refresh();});
+  buildSeg('facseg',FAC,f=>f,FACSEL,f=>{FACSEL=f;refresh();});
+  renderBoards();
+}
+</script>
+</body></html>

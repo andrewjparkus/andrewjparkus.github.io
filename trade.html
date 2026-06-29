@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trade Simulator · Daily RAPM</title>
+<style>
+  :root{
+    --bg:#080b11; --panel:#0e141d; --line:#1b2532; --text:#e7eef7; --muted:#7c8ca2;
+    --accent:#56b6ff; --grid:#161f2c;
+    --pos:#3ddc97; --neg:#ff6b6b; --zero:#5d6b7e; --amber:#f0b429;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg);color:var(--text);
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1040px;margin:0 auto;padding:24px 22px 70px}
+  h1{font-size:20px;margin:0;font-weight:650;letter-spacing:-.2px}
+  h1 b{color:var(--accent);font-weight:750}
+  .sub{color:var(--muted);font-size:12.5px;margin:6px 0 0;line-height:1.5;max-width:820px}
+  .note{color:#566377;font-size:11.5px;margin:8px 0 0;line-height:1.6;max-width:820px}
+  .topnav{border-bottom:1px solid var(--line);background:#0a0e16;position:sticky;top:0;z-index:50}
+  .navinner{max-width:1040px;margin:0 auto;padding:0 22px;display:flex;align-items:center;gap:8px;height:52px}
+  .brand{font-size:16px;font-weight:700;letter-spacing:-.2px;margin-right:18px}
+  .brand b{color:var(--accent)}
+  .tab{font-size:13.5px;color:var(--muted);text-decoration:none;padding:16px 12px;border-bottom:2px solid transparent}
+  .tab:hover{color:var(--text)}
+  .tab.active{color:var(--text);border-bottom-color:var(--accent)}
+  .pos{color:var(--pos)} .neg{color:var(--neg)} .zero{color:var(--zero)}
+  /* controls */
+  .cols{display:flex;gap:18px;margin-top:22px;flex-wrap:wrap}
+  .col{flex:1 1 320px;min-width:280px;border:1px solid var(--line);background:var(--panel)}
+  .col h2{font-size:14px;font-weight:700;margin:0;padding:11px 13px;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:9px}
+  .col h2 select{background:#0c121b;color:var(--text);border:1px solid var(--line);
+    font-size:13px;font-weight:700;padding:3px 6px;border-radius:4px}
+  .col .strg{margin-left:auto;font-size:12px;color:var(--muted);font-weight:500}
+  .rosterlist{max-height:430px;overflow-y:auto}
+  .prow{display:flex;align-items:center;gap:8px;padding:6px 12px;border-bottom:1px solid #121a25;
+    font-size:12.5px;cursor:grab;user-select:none}
+  .prow:hover{background:#121b27}
+  .prow.sel{background:#15202e;outline:1px solid var(--accent)}
+  .prow.moved{opacity:.45;font-style:italic}
+  .prow .pn{flex:1 1 auto;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .prow .pm{color:#aebccd;font-size:11px;width:54px;text-align:right;flex:0 0 auto}
+  .prow .pnet{font-weight:700;width:52px;text-align:right;flex:0 0 auto}
+  .prow .cold{color:var(--amber);font-size:10px}
+  .dropzone.over{outline:2px dashed var(--accent);outline-offset:-4px}
+  /* results */
+  .results{margin-top:24px;display:flex;gap:18px;flex-wrap:wrap}
+  .rcard{flex:1 1 320px;min-width:280px;border:1px solid var(--line);background:var(--panel);padding:14px}
+  .rcard h3{font-size:14px;margin:0 0 4px;font-weight:700}
+  .rcard .dw{font-size:26px;font-weight:750;letter-spacing:-.5px}
+  .rcard .band{font-size:12px;color:var(--muted);margin-left:8px;font-weight:500}
+  .rcard .sd{font-size:11px;color:#566377;margin-top:2px}
+  .bars{margin-top:12px}
+  .bar{display:flex;align-items:center;gap:8px;font-size:11.5px;margin:3px 0}
+  .bar .bl{width:42px;color:var(--muted);text-align:right;flex:0 0 auto}
+  .bar .bt{flex:1 1 auto;position:relative;height:14px;background:#0c121b;border-radius:2px}
+  .bar .bf{position:absolute;top:0;height:14px;border-radius:2px}
+  .bar .bf.pos{background:var(--pos)} .bar .bf.neg{background:var(--neg)}
+  .bar .bf.resid{background:var(--zero)}
+  .bar .bv{width:52px;text-align:right;flex:0 0 auto;font-variant-numeric:tabular-nums}
+  .banner{margin-top:16px;padding:10px 13px;border-radius:5px;font-size:12.5px;line-height:1.5}
+  .banner.ok{background:#0d2018;border:1px solid #1f4d38;color:var(--pos)}
+  .banner.warn{background:#241c08;border:1px solid #5c4912;color:var(--amber)}
+  .msg{color:var(--muted);text-align:center;padding:70px 0;font-size:14px}
+  .cap{color:#566377;font-size:10.5px;margin-top:16px;line-height:1.55;max-width:820px}
+  .foot{color:#566377;font-size:11px;margin-top:30px;line-height:1.7}
+  .reset{background:#0c121b;color:var(--muted);border:1px solid var(--line);font-size:12px;
+    padding:5px 11px;border-radius:4px;cursor:pointer;margin-top:14px}
+  .reset:hover{color:var(--text)}
+</style></head>
+<body>
+<nav id="topnav" data-active="trade"></nav>
+<script src="nav.js"></script>
+<div class="wrap">
+  <h1 style="margin-top:6px">Trade <b>simulator</b></h1>
+  <p class="sub">Pick two franchises, then drag a player across (or tap a player, then tap the other column). Each affected
+    team's expected win change <b>Δwins ± 80% band</b> updates live, with a six-factor attribution of the strength shift.</p>
+  <p class="note" id="meta"></p>
+
+  <div class="cols" id="cols" style="display:none">
+    <div class="col dropzone" id="colA" data-side="A">
+      <h2><select id="selA"></select><span class="strg" id="strgA"></span></h2>
+      <div class="rosterlist" id="listA"></div>
+    </div>
+    <div class="col dropzone" id="colB" data-side="B">
+      <h2><select id="selB"></select><span class="strg" id="strgB"></span></h2>
+      <div class="rosterlist" id="listB"></div>
+    </div>
+  </div>
+  <button class="reset" id="reset" style="display:none">Reset trade</button>
+
+  <div class="results" id="results"></div>
+  <div class="banner" id="banner" style="display:none"></div>
+
+  <p class="cap" id="cap" style="display:none">Ratings are <b>as-of</b> the snapshot date below — this is a what-if on
+    current season-to-date ratings, <b>not a forecast</b>. Minutes are reallocated pro-rata across the surviving roster
+    (a known simplification for high-usage swaps; flagged when relevant). The 80% band is game-flip sampling noise under a
+    fixed strength shift (it is not rating uncertainty). The residual bar is the part of the strength change not captured
+    by the six factors (per-player RESID and any cold-start fill).</p>
+  <div class="msg" id="msg">Loading rosters…</div>
+  <div class="foot">Daily multi-league RAPM · trade simulator runs entirely in your browser off one static export.</div>
+</div>
+
+<script src="trade.js"></script>
+<script>
+"use strict";
+let R = null;                       // rosters_2025_26.json
+let ROSTERS = {};                   // {fr: [record...]} current (mutated by trades)
+let MOVES = [];                     // [[pid, fromFr, toFr]]
+let frA = null, frB = null;         // the two selected franchises
+let selected = null;                // {pid, fr} for tap-to-move fallback
+const FAC_TIP = {oTS:"true-shooting value",oTOV:"ball security",oSC:"second-chance value",
+  dTS:"defensive shot value",dTOV:"defensive ball pressure",dSC:"defensive second-chance"};
+
+fetch('rosters_2025_26.json').then(r=>r.json()).then(d=>{
+  R = d; init();
+}).catch(e=>{ document.getElementById('msg').textContent = 'Failed to load rosters_2025_26.json'; });
+
+function init(){
+  initRosters();
+  const frs = Object.keys(ROSTERS).sort();
+  const selAe = document.getElementById('selA'), selBe = document.getElementById('selB');
+  for(const f of frs){
+    selAe.add(new Option(f, f));
+    selBe.add(new Option(f, f));
+  }
+  frA = frs.includes('OKC') ? 'OKC' : frs[0];
+  frB = frs.includes('WAS') ? 'WAS' : frs[1];
+  selAe.value = frA; selBe.value = frB;
+  selAe.onchange = ()=>{ frA = selAe.value; resetTrade(); };
+  selBe.onchange = ()=>{ frB = selBe.value; resetTrade(); };
+  document.getElementById('reset').onclick = resetTrade;
+  const m = R.meta;
+  document.getElementById('meta').innerHTML =
+    `Ratings snapshot ordinal <b>${m.snapshot_ord}</b> · HCA ${m.hca} · sigma ${m.sigma} · scale ×${m.scale} · `+
+    `replacement net ${m.repl_net.toFixed(2)}.`;
+  document.getElementById('msg').style.display = 'none';
+  document.getElementById('cols').style.display = 'flex';
+  document.getElementById('reset').style.display = 'inline-block';
+  document.getElementById('cap').style.display = 'block';
+  wireDrop();
+  render();
+}
+
+function initRosters(){            // group the LIST of (fr,pid) records by franchise
+  ROSTERS = {};
+  for(const p of R.players){ (ROSTERS[p.franchise] ||= []).push({...p}); }
+}
+
+function resetTrade(){
+  initRosters(); MOVES = []; selected = null; render();
+}
+
+function baseStrengthOf(){
+  const s = {}; for(const fr in ROSTERS) s[fr] = strength(ROSTERS[fr], R.meta).strength; return s;
+}
+
+// ---- minutes/usage helpers ----
+function teamMin(fr){ return ROSTERS[fr].reduce((s,q)=>s+q.min,0); }
+function isHighUsage(pid, fr){
+  const rec = ROSTERS[fr].find(q=>q.pid===pid); if(!rec) return false;
+  return rec.min / teamMin(fr) >= R.meta.high_usage_frac_threshold;   // 0.10 == 0.20*0.5 (trade_sim line 304)
+}
+
+// ---- moving ----
+function moveTo(pid, fromFr, toFr){
+  if(fromFr === toFr) return;
+  // mutate the live ROSTERS via applyTrade-style surgery on a single move, then record it
+  const single = [[pid, fromFr, toFr]];
+  ROSTERS = applyTrade(ROSTERS, single);
+  MOVES.push([pid, fromFr, toFr]);
+  selected = null; render();
+}
+
+// ---- rendering ----
+function render(){
+  document.getElementById('strgA').textContent = '';  // filled in renderCol
+  renderCol('A', frA, 'listA', 'selA', 'strgA');
+  renderCol('B', frB, 'listB', 'selB', 'strgB');
+  document.getElementById('selA').value = frA;
+  document.getElementById('selB').value = frB;
+  recompute();
+}
+
+function renderCol(side, fr, listId, selId, strgId){
+  const list = document.getElementById(listId);
+  list.innerHTML = '';
+  const roster = (ROSTERS[fr]||[]).slice().sort((a,b)=>b.min-a.min);
+  const st = strength(ROSTERS[fr]||[], R.meta);
+  document.getElementById(strgId).innerHTML = `str <b class="${cls(st.strength)}">${fmt(st.strength)}</b>`;
+  for(const p of roster){
+    const row = document.createElement('div');
+    row.className = 'prow';
+    row.draggable = true;
+    row.dataset.pid = p.pid; row.dataset.fr = fr;
+    const cold = (p.net == null);
+    const net = cold ? R.meta.repl_net : p.net;
+    row.innerHTML =
+      `<span class="pn">${escapeHtml(p.name)}${cold?' <span class="cold">CS</span>':''}</span>`+
+      `<span class="pm">${Math.round(p.min)}m</span>`+
+      `<span class="pnet ${cls(net)}">${fmt(net)}</span>`;
+    if(selected && selected.pid===p.pid && selected.fr===fr) row.classList.add('sel');
+    row.addEventListener('dragstart', ev=>{
+      ev.dataTransfer.setData('text/plain', JSON.stringify({pid:p.pid, fr}));
+    });
+    row.addEventListener('click', ()=>{
+      // tap-to-move fallback: tap a player then tap the OTHER column header/body
+      if(selected && selected.pid===p.pid && selected.fr===fr){ selected=null; render(); return; }
+      selected = {pid:p.pid, fr}; render();
+    });
+    list.appendChild(row);
+  }
+}
+
+function wireDrop(){
+  for(const side of ['A','B']){
+    const col = document.getElementById('col'+side);
+    col.addEventListener('dragover', ev=>{ ev.preventDefault(); col.classList.add('over'); });
+    col.addEventListener('dragleave', ()=> col.classList.remove('over'));
+    col.addEventListener('drop', ev=>{
+      ev.preventDefault(); col.classList.remove('over');
+      const toFr = side==='A'?frA:frB;
+      let payload;
+      try{ payload = JSON.parse(ev.dataTransfer.getData('text/plain')); }catch(_){ return; }
+      moveTo(payload.pid, payload.fr, toFr);
+    });
+    // tap fallback: clicking a column with a selected player moves it here
+    col.addEventListener('click', ev=>{
+      if(!selected) return;
+      if(ev.target.closest('.prow')) return;        // a player row handles its own click
+      const toFr = side==='A'?frA:frB;
+      moveTo(selected.pid, selected.fr, toFr);
+    });
+  }
+}
+
+function recompute(){
+  const resDiv = document.getElementById('results');
+  const banner = document.getElementById('banner');
+  resDiv.innerHTML = '';
+  if(MOVES.length === 0){ banner.style.display='none'; return; }
+
+  const base = baseStrengthOf();   // PRE-trade strengths *of the current ROSTERS pre this batch*?
+  // NOTE: ROSTERS already reflects applied moves. To get a clean pre/post for the
+  // accumulated trade, replay from the original export each recompute.
+  const orig = {}; for(const p of R.players){ (orig[p.franchise] ||= []).push({...p}); }
+  const baseStr = {}; for(const fr in orig) baseStr[fr] = strength(orig[fr], R.meta).strength;
+  const post = applyTrade(orig, MOVES);
+
+  const affected = [...new Set(MOVES.flatMap(([_,ff,tf])=>[ff,tf]))].sort();
+  for(const fr of affected){
+    const pre = strength(orig[fr], R.meta), pst = strength(post[fr], R.meta);
+    const dStrength = pst.strength - pre.strength;
+    const mus = teamMargins(fr, R.schedule, baseStr, R.meta.hca);   // pre-trade margins, this team's games
+    const wd  = winDelta(mus, dStrength, R.meta.sigma);             // CRN flip-variance band, NO se_net
+    const attr = FACTORS.map((k,i)=> pst.factors[i]-pre.factors[i]);
+    const resid = dStrength - attr.reduce((s,v)=>s+v,0);            // RESID/cold-start bucket (often != 0)
+    resDiv.appendChild(drawTeamResult(fr, wd, attr, resid, dStrength));
+  }
+
+  // reliability flag: >=2 moved players each high-usage on their donor (orig)
+  const origMin = {}; for(const fr in orig) origMin[fr] = orig[fr].reduce((s,q)=>s+q.min,0);
+  const nHi = MOVES.filter(([pid,ff])=>{
+    const rec = orig[ff].find(q=>q.pid===pid); return rec && rec.min/origMin[ff] >= R.meta.high_usage_frac_threshold;
+  }).length;
+  const unreliable = nHi >= 2;
+  banner.style.display = 'block';
+  banner.className = 'banner ' + (unreliable ? 'warn' : 'ok');
+  banner.textContent = unreliable
+    ? 'Multiple high-usage players moved: the linear minute-weighted model ignores fit and rotation effects here — treat these deltas as a rough guide only.'
+    : 'Single-player or low-usage move: linear additivity is a reasonable approximation.';
+}
+
+function drawTeamResult(fr, wd, attr, resid, dStrength){
+  const card = document.createElement('div'); card.className='rcard';
+  const [lo,hi] = wd.band80;
+  card.innerHTML =
+    `<h3>${fr}</h3>`+
+    `<div><span class="dw ${cls(wd.dwins)}">${signed(wd.dwins,1)} wins</span>`+
+    `<span class="band">80% [${signed(lo,1)}, ${signed(hi,1)}]</span></div>`+
+    `<div class="sd">strength ${signed(dStrength,2)} pts/100</div>`;
+  const bars = document.createElement('div'); bars.className='bars';
+  // scale bars to the max absolute component (incl. residual)
+  const comps = attr.concat([resid]);
+  const mx = Math.max(0.001, ...comps.map(Math.abs));
+  FACTORS.forEach((k,i)=> bars.appendChild(barRow(k, attr[i], mx, FAC_TIP[k])));
+  if(Math.abs(resid) > 0.01) bars.appendChild(barRow('resid', resid, mx, 'unattributed (RESID + cold-start)'));
+  card.appendChild(bars);
+  return card;
+}
+
+function barRow(label, val, mx, tip){
+  const row = document.createElement('div'); row.className='bar'; if(tip) row.title=tip;
+  const w = Math.min(50, 50*Math.abs(val)/mx);
+  const pos = val >= 0;
+  const kind = label==='resid' ? 'resid' : (pos?'pos':'neg');
+  // center the track; positive grows right of center, negative grows left
+  row.innerHTML =
+    `<span class="bl">${label}</span>`+
+    `<span class="bt"><span class="bf ${kind}" style="left:${pos?50:50-w}%;width:${w}%"></span></span>`+
+    `<span class="bv ${label==='resid'?'zero':cls(val)}">${signed(val,2)}</span>`;
+  return row;
+}
+
+// ---- formatting helpers (teams.html idioms) ----
+function fmt(x){ return (x>=0?'+':'') + x.toFixed(2); }
+function signed(x,d){ return (x>=0?'+':'') + x.toFixed(d); }
+function cls(x){ return x>0.005?'pos':(x<-0.005?'neg':'zero'); }
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+</script>
+</body></html>

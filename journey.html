@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cross-league journey — Daily RAPM</title>
+<style>
+  :root{
+    --bg:#080b11; --panel:#0e141d; --line:#1b2532; --text:#e7eef7; --muted:#7c8ca2;
+    --accent:#56b6ff; --grid:#161f2c;
+    --nba:#4aa8ff; --gleague:#2dd4bf; --college:#b27bff;
+  }
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:var(--bg);color:var(--text);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  svg,svg text{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif}
+  .wrap{max-width:1000px;margin:0 auto;padding:24px 22px 70px}
+  h1{font-size:20px;margin:6px 0 4px;font-weight:650;letter-spacing:-.2px} h1 b{color:var(--accent);font-weight:750}
+  .sub{color:var(--muted);font-size:12.5px;margin:6px 0 14px;line-height:1.55;max-width:780px}
+  .searchbox{position:relative;max-width:480px;margin:6px 0}
+  #q{width:100%;padding:11px 14px;font-size:14.5px;background:var(--panel);border:1px solid var(--line);color:var(--text);outline:none}
+  #q:focus{border-color:var(--accent)}
+  #drop{position:absolute;top:42px;left:0;right:0;background:#0c121b;border:1px solid var(--line);z-index:30;max-height:330px;overflow-y:auto;display:none}
+  .opt{padding:8px 13px;cursor:pointer;display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #121a25;align-items:center}
+  .opt:hover,.opt.active{background:#141e2b}
+  .opt .nm{font-size:13.5px;font-weight:600} .opt .meta{font-size:11px;color:var(--muted)}
+  .phead{display:flex;align-items:baseline;gap:13px;flex-wrap:wrap;margin:14px 0 4px}
+  .pname{font-size:23px;font-weight:800;letter-spacing:-.5px}
+  .pmeta{color:var(--muted);font-size:12.5px}
+  #plot{margin-top:8px}
+  .seamnote{font-size:12px;color:#cfdae7;background:var(--panel);border-left:3px solid var(--accent);padding:9px 13px;margin:12px 0;line-height:1.55;max-width:780px}
+  .legend{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.6;max-width:780px}
+  .empty{color:var(--muted);text-align:center;padding:80px 0;font-size:14.5px}
+  .foot{color:#566377;font-size:11px;margin-top:22px;line-height:1.7;max-width:780px}
+  .topnav{border-bottom:1px solid var(--line);background:#0a0e16;position:sticky;top:0;z-index:50}
+  .navinner{max-width:1000px;margin:0 auto;padding:0 22px;display:flex;align-items:center;gap:8px;height:52px;flex-wrap:wrap}
+  .brand{font-size:16px;font-weight:700;letter-spacing:-.2px;margin-right:18px}.brand b{color:var(--accent)}
+  .tab{font-size:13.5px;color:var(--muted);text-decoration:none;padding:16px 12px;border-bottom:2px solid transparent}
+  .tab:hover{color:var(--text)} .tab.active{color:var(--text);border-bottom-color:var(--accent)}
+  svg{display:block}
+</style></head>
+<body>
+<nav id="topnav" data-active="journey"></nav>
+<script src="nav.js"></script>
+<div class="wrap">
+  <h1>Cross-league <b>journey</b></h1>
+  <p class="sub">For a player who moved leagues (NCAA → G-League → NBA), this shows one timeline with <b>league-band shading</b>
+    and a <b>marker at each switch</b>. The level shift at a seam is <b>real</b> — it's the cross-league translation residual,
+    not a bug — so it is <b>annotated, not smoothed</b>. No fabricated bridge across the seam, and no forward extrapolation.</p>
+  <div class="searchbox">
+    <input id="q" autocomplete="off" placeholder="Search a multi-league player…  (e.g. a recent NCAA→NBA draftee)">
+    <div id="drop"></div>
+  </div>
+  <div class="phead"><span class="pname" id="pname"></span><span class="pmeta" id="pmeta"></span></div>
+  <div id="plot"></div>
+  <div id="seam"></div>
+  <div class="empty" id="empty">Search a player to see their cross-league net journey.</div>
+  <div class="legend">Net (NBA-equivalent pts/100) per game-day. <span style="color:var(--college)">NCAA</span> /
+    <span style="color:var(--gleague)">G-League</span> / <span style="color:var(--nba)">NBA</span> bands shade the background;
+    each league's curve is drawn separately (no cross-league bridge). G-League curves end at the regular season
+    (spring playoffs are not in the dataset).</div>
+  <p class="foot">The cross-league translation slopes (e.g. NCAA→NBA oTS ≈ 0.24) carry a documented bounded in-sample leak.
+    The latent/Kalman seam-fusion was removed from the system; the seam is shown as information, not error.</p>
+</div>
+
+<script>
+const NS='http://www.w3.org/2000/svg';
+function elns(t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e;}
+const LC={nba:'#4aa8ff',gleague:'#2dd4bf',college:'#b27bff'};
+const LBAND={nba:'rgba(74,168,255,.07)',gleague:'rgba(45,212,191,.07)',college:'rgba(178,123,255,.07)'};
+const LNAME={nba:'NBA',gleague:'G-League',college:'NCAA'};
+// RAPM-factor cross-league translation oTS slope (var_translate_v5.json, verified) — for the seam annotation.
+const SEAM_OTS={'college→nba':0.2409,'college→gleague':null,'gleague→nba':null}; // oTS slope NCAA→NBA = 0.2409
+const q=document.getElementById('q'), drop=document.getElementById('drop');
+let INDEX=[], curOpts=[], active=-1;
+
+fetch('players.json').then(r=>r.json()).then(idx=>{
+  INDEX=idx;
+  const u=new URLSearchParams(location.search), pid=u.get('p'), nq=u.get('q');
+  let hit=pid?INDEX.find(x=>x.id===pid):(nq?INDEX.find(x=>x.n.toLowerCase()===nq.toLowerCase()):null);
+  if(hit)load(hit.id,hit.n);
+});
+q.addEventListener('input',()=>filt(q.value.trim()));
+q.addEventListener('focus',()=>{if(q.value.trim())filt(q.value.trim())});
+q.addEventListener('keydown',e=>{if(!curOpts.length)return;
+  if(e.key==='ArrowDown'){active=Math.min(active+1,curOpts.length-1);paint()}
+  else if(e.key==='ArrowUp'){active=Math.max(active-1,0);paint()}
+  else if(e.key==='Enter'){const o=curOpts[active<0?0:active];if(o)load(o.id,o.n)}
+  else if(e.key==='Escape')drop.style.display='none';});
+document.addEventListener('click',e=>{if(!e.target.closest('.searchbox'))drop.style.display='none'});
+function filt(query){if(!query){drop.style.display='none';return}
+  const ql=query.toLowerCase();
+  curOpts=INDEX.filter(x=>x.n.toLowerCase().includes(ql))
+    .sort((a,b)=>{const ai=a.n.toLowerCase().startsWith(ql),bi=b.n.toLowerCase().startsWith(ql);return ai!==bi?(bi-ai):(b.net-a.net)}).slice(0,12);
+  active=-1;paint();}
+function paint(){if(!curOpts.length){drop.style.display='none';return}
+  drop.innerHTML='';
+  curOpts.forEach((o,i)=>{const el=document.createElement('div');el.className='opt'+(i===active?' active':'');
+    el.innerHTML=`<span class="nm">${o.n}</span><span class="meta">${[...o.lg].map(c=>c==='n'?'NBA':c==='g'?'GL':'NCAA').join('·')}</span>`;
+    el.onclick=()=>load(o.id,o.n);drop.appendChild(el);});
+  drop.style.display='block';}
+
+function load(id,name){drop.style.display='none'; q.value=name; history.replaceState(null,'','?p='+id);
+  fetch('data/'+id+'.json').then(r=>r.json()).then(d=>render(d,name));}
+
+// collapse to one row per date (keep the row's league), preserving order
+function prep(d){
+  const out=[],seen={};
+  for(let i=0;i<d.d.length;i++){const k=d.d[i]; if(seen[k]!==undefined){out[seen[k]]={date:k,net:d.net[i],lg:d.lg[i]};}
+    else{seen[k]=out.length; out.push({date:k,net:d.net[i],lg:d.lg[i]});}}
+  return out;
+}
+
+function render(d,name){
+  document.getElementById('empty').style.display='none';
+  document.getElementById('pname').textContent=d.name||name;
+  const rows=prep(d);
+  const leagues=[...new Set(rows.map(r=>r.lg))];
+  document.getElementById('pmeta').innerHTML=leagues.map(l=>`<span style="color:${LC[l]};font-weight:700">${LNAME[l]}</span>`).join(' → ');
+  plot(rows);
+  // seam annotation: find league switches
+  const seams=[];
+  for(let i=1;i<rows.length;i++) if(rows[i].lg!==rows[i-1].lg) seams.push([rows[i-1].lg,rows[i].lg,rows[i].date]);
+  const sm=document.getElementById('seam');
+  if(!seams.length){sm.innerHTML='<div class="legend">Single-league player — no cross-league seam.</div>';}
+  else{
+    sm.innerHTML=seams.map(([a,b,dt])=>{
+      const key=a+'→'+b, slope=SEAM_OTS[key];
+      const note=slope!=null?` The RAPM-factor translation here scales the leading factor (oTS) by ≈ <b>${slope}</b> — `
+        +`a college number maps to a much smaller NBA-scale impact, so a level step is expected.`:'';
+      return `<div class="seamnote"><b>Translation step:</b> ${LNAME[a]} → ${LNAME[b]} at ${dt}.${note} The step is the per-player `
+        +`translation residual — shown, not smoothed.</div>`;
+    }).join('');
+  }
+  window.scrollTo({top:80,behavior:'smooth'});
+}
+
+function plot(rows){
+  const mount=document.getElementById('plot'); mount.innerHTML='';
+  if(!rows.length)return;
+  const W=920,H=300,ml=42,mr=12,mt=12,mb=26,pw=W-ml-mr,ph=H-mt-mb;
+  const nets=rows.map(r=>r.net); let lo=Math.min(...nets,-1),hi=Math.max(...nets,1);
+  const half=Math.max((hi-lo)/2*1.15,0.55),mid=(hi+lo)/2; lo=mid-half; hi=mid+half;
+  const X=i=>ml+(rows.length<2?pw/2:(i/(rows.length-1))*pw);
+  const Y=v=>mt+ph-((v-lo)/(hi-lo))*ph;
+  const svg=elns('svg',{viewBox:`0 0 ${W} ${H}`,width:'100%',role:'img',
+    'aria-label':'cross-league net journey with league bands and seam markers; values listed in the seam notes below'});
+  // league band shading (vertical spans where each league is active)
+  let st=0;
+  for(let i=1;i<=rows.length;i++){
+    if(i===rows.length||rows[i].lg!==rows[st].lg){
+      const x0=X(st)-(st>0?(X(st)-X(st-1))/2:0), x1=X(i-1)+(i<rows.length?(X(i)-X(i-1))/2:0);
+      svg.appendChild(elns('rect',{x:x0,y:mt,width:Math.max(x1-x0,1),height:ph,fill:LBAND[rows[st].lg]}));
+      st=i;
+    }
+  }
+  // 0-line
+  svg.appendChild(elns('line',{x1:ml,y1:Y(0),x2:W-mr,y2:Y(0),stroke:'#2b3a51','stroke-width':1}));
+  // y ticks
+  [lo,mid,hi].forEach(v=>{const t=elns('text',{x:ml-6,y:Y(v)+3,'font-size':9.5,fill:'#566377','text-anchor':'end'});
+    t.textContent=(v>0?'+':'')+v.toFixed(1); svg.appendChild(t);});
+  // per-league polylines (no bridge across leagues)
+  let seg=[]; let curLg=rows[0].lg;
+  const flush=()=>{ if(seg.length>1){const pts=seg.map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+      svg.appendChild(elns('polyline',{points:pts,fill:'none',stroke:LC[curLg],'stroke-width':1.8}));}
+    else if(seg.length===1){svg.appendChild(elns('circle',{cx:seg[0].x,cy:seg[0].y,r:2.2,fill:LC[curLg]}));} };
+  rows.forEach((r,i)=>{ if(r.lg!==curLg){flush(); seg=[]; curLg=r.lg;
+      // seam marker
+      svg.appendChild(elns('line',{x1:X(i),y1:mt,x2:X(i),y2:mt+ph,stroke:'#5d6b7e','stroke-width':1,'stroke-dasharray':'3 3'}));}
+    seg.push({x:X(i),y:Y(r.net)}); });
+  flush();
+  mount.appendChild(svg);
+}
+</script>
+</body></html>
