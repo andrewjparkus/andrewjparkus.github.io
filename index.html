@@ -64,6 +64,13 @@
   .projdot{fill:var(--box)}
   .projsep{stroke:var(--box);stroke-width:1;stroke-dasharray:2 3;opacity:.5}
   #projcallout b{color:var(--box)}
+  /* the 6 projected factors (secondary detail under the net lines) */
+  .projfacs{margin-top:var(--sp-2)}
+  .projfacrow{display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-top:var(--sp-1)}
+  .projfac{display:inline-flex;align-items:baseline;gap:4px;font-size:var(--fs-2);white-space:nowrap}
+  .projfac .pf-l{color:var(--faint)}
+  .projfac .pf-v{font-weight:700;font-variant-numeric:tabular-nums}
+  #projcallout .projfacs b{color:inherit}
 </style></head>
 <body>
 <nav id="topnav" data-active="explorer"></nav>
@@ -431,7 +438,26 @@ function renderProjCallout(){
     `<span style="color:var(--muted)">(80% ${f(lo)}…${f(hi)})</span> · `+
     `<b>${p.yr3[0]-1}-${String(p.yr3[0]).slice(2)}</b> net <b>${f(y3)}</b> `+
     `<span style="color:var(--muted)">(80% ${f(y3lo)}…${f(y3hi)})</span>. `+
-    `<span style="color:var(--faint)">Carry-forward + aging; bands widen with horizon.</span>`;
+    `<span style="color:var(--faint)">Carry-forward + aging; bands widen with horizon.</span>`+
+    projFactorRow(p);
+}
+// the 6 projected factors for the 'next' horizon (these sum to that year's net).
+// graceful: returns '' when the player carries no per-factor projection (older JSON).
+function projFactorRow(p){
+  const nf=p&&p.next_f, af=p&&p.anchor_f;
+  if(!Array.isArray(nf)||nf.length!==FACK.length)return '';
+  const sgn=v=>v>0.005?'var(--pos)':v<-0.005?'var(--neg)':'var(--zero)';
+  const f=x=>(x>=0?'+':'')+x.toFixed(2);
+  const cells=FACK.map((name,i)=>{
+    const v=nf[i];
+    const d=Array.isArray(af)&&af.length===FACK.length?v-af[i]:null;   // anchor→next aging
+    const dtip=d==null?'':` (${(d>=0?'+':'')+d.toFixed(2)} vs prior)`;
+    return `<span class="projfac" title="${name} projected ${f(v)}${dtip}">`+
+      `<span class="pf-l">${name}</span>`+
+      `<span class="pf-v" style="color:${sgn(v)}">${f(v)}</span></span>`;
+  }).join('');
+  return `<div class="projfacs"><span class="cap" style="color:var(--faint)">projected factors · ${p.next[0]-1}-${String(p.next[0]).slice(2)} (sum = net)</span>`+
+    `<div class="projfacrow">${cells}</div></div>`;
 }
 function renderActive(){
   SER=SERIES[activeMode()]; const last=SER[SER.length-1];

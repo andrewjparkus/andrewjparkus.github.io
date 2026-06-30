@@ -162,8 +162,8 @@ function buildLedgerConf(title, rows){
     // net as a plain colored number (red/green via the sign class; no chip)
     body+='<td class="net '+signCls(r.net)+'">'+fmt(r.net)+'</td>';
     const lo=r.band80[0], hi=r.band80[1];
-    // 80% band: ascii hyphen-minus + " - " separator, e.g. "-4.41 - +0.24"
-    const bandStr=(fmt(lo,2)+' - '+fmt(hi,2)).replace(/−/g,'-');
+    // 80% band: bracketed, comma-separated, ascii hyphen-minus, e.g. "[-0.80, +0.32]"
+    const bandStr='['+(fmt(lo,2)+', '+fmt(hi,2)).replace(/−/g,'-')+']';
     body+='<td class="band">'+bandStr+'</td>';
     body+='</tr>';
   }
