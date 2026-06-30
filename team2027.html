@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Team · 2026-27 Projection · Daily RAPM</title>
+<link rel="stylesheet" href="site.css">
+<link rel="icon" href="favicon.svg"><link rel="manifest" href="manifest.webmanifest">
+<style>
+  /* page-unique: forward-team header, the wins-contributed bar cell, cold-start badge */
+  .thead{display:flex;align-items:center;gap:14px;margin:8px 0 2px;flex-wrap:wrap}
+  .thead img{width:46px;height:46px;object-fit:contain;flex:0 0 auto}
+  .thead .tn h1{margin:0;display:flex;align-items:center;flex-wrap:wrap;gap:4px}
+  .thead .tn .conf{color:var(--muted);font-size:12.5px;margin-top:3px}
+  .thead .tn .conf b{color:var(--text);font-weight:600}
+  /* the only forward page-family tag — copied from projection.html so it reads identically */
+  .forwardtag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.5px;
+    color:var(--accent-ink);background:var(--accent);padding:2px 8px;border-radius:999px;
+    vertical-align:middle;margin-left:8px;text-transform:uppercase}
+  /* roster name link (mirrors team.html) */
+  table.tbl td.pl{font-size:12.5px;font-weight:600}
+  table.tbl td.pl a{color:var(--accent)}
+  table.tbl td.pl a:hover{color:var(--text)}
+  table.tbl td.mpg,table.tbl td.gp{color:#aebccd}
+  :root[data-theme=light] table.tbl td.mpg,:root[data-theme=light] table.tbl td.gp{color:#33425a}
+  /* cold-start rookie badge: small "R" pill next to a name with no Explorer link */
+  .rk{display:inline-block;margin-left:6px;font-size:9.5px;font-weight:800;letter-spacing:.3px;
+    color:var(--amber);border:1px solid var(--amber);border-radius:3px;padding:0 4px;vertical-align:middle;
+    cursor:help}
+  /* red->green net cell: high-contrast number + a colored swatch (same as team.html) */
+  table.tbl td.rg{white-space:nowrap}
+  table.tbl td.rg .sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;
+    vertical-align:baseline;border:1px solid rgba(0,0,0,.18)}
+  :root[data-theme=light] table.tbl td.rg .sw{border-color:rgba(0,0,0,.22)}
+  table.tbl td.rg .nv{font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+  /* WINS CONTRIBUTED — the headline column: number + a horizontal bar of each player's share */
+  table.tbl td.wins{white-space:nowrap;min-width:118px}
+  .winwrap{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+  .winwrap .wn{font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;min-width:34px;text-align:right}
+  .winbar{position:relative;flex:1 1 auto;height:9px;min-width:42px;border-radius:3px;
+    background:var(--grid);border:1px solid var(--line);overflow:hidden}
+  .winbar .fill{position:absolute;top:0;bottom:0;left:0;background:var(--accent);opacity:.55}
+  table.tbl tr.total td.wins .winwrap .wn{color:var(--accent)}
+  /* tiny 6-factor strip in a player tooltip is handled via title= attrs; no extra CSS needed */
+</style></head>
+<body>
+<nav id="topnav" data-active="proj"></nav>
+<script src="charts.js"></script>
+<script src="nav.js"></script>
+<div class="wrap" id="wrap">
+  <div class="msg" id="msg">Loading 2026-27 team…</div>
+</div>
+
+<script>
+"use strict";
+
+const DEFAULT_ABBR = "OKC";
+
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,
+  c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function num(v,dec){ return (v==null||isNaN(v))?"–":Number(v).toFixed(dec==null?1:dec); }
+function fmt(v,dec){
+  dec = (dec==null)?1:dec;
+  if(v==null || isNaN(v)) return {txt:"–",cls:"zero"};
+  const n = Number(v);
+  const txt = (n>=0?"+":"−") + Math.abs(n).toFixed(dec);
+  let cls = "zero";
+  if(n >= 0.05) cls = "pos"; else if(n <= -0.05) cls = "neg";
+  return {txt,cls};
+}
+// red->green NBA-net ramp cell: t = (net+5)/10 clipped to [0,1]; number stays high-contrast.
+function rgCell(v,extraCls){
+  const f = fmt(v,1);
+  if(v==null||isNaN(v)) return '<td class="rg '+(extraCls||"")+' zero">'+f.txt+'</td>';
+  const t = Math.max(0, Math.min(1, (Number(v)+5)/10));
+  return '<td class="rg '+(extraCls||"")+'"><span class="sw" style="background:'+RC.redGreen(t)
+    + '"></span><span class="nv">'+f.txt+'</span></td>';
+}
+function qparam(k){ return new URLSearchParams(location.search).get(k); }
+
+/* ESPN team logo from the franchise abbr (no extra fetch).
+   ESPN slug exceptions (confirmed against teams.json); all others = lowercase abbr. */
+function logoURL(abbr){
+  const M={UTA:'utah',NOP:'no',GSW:'gs',SAS:'sa',NYK:'ny',WAS:'wsh'};
+  const k=String(abbr||'').toUpperCase();
+  return "https://a.espncdn.com/i/teamlogos/nba/500/"+(M[k]||k.toLowerCase())+".png";
+}
+
+function kpi(k,v,x,vcls){
+  return '<div class="kpi"><div class="k">'+esc(k)+'</div><div class="v '+(vcls||'')+'">'+esc(v)
+    +'</div><div class="x">'+esc(x||'')+'</div></div>';
+}
+
+let DATA = null;
+
+fetch('projection_2026_27_teams.json')
+  .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+  .then(d=>{ DATA=d; render(d); })
+  .catch(err=>{
+    document.getElementById('msg').innerHTML =
+      "Couldn't load the 2026-27 team projection (projection_2026_27_teams.json). "+esc(err.message)+
+      '<br><a href="projection.html">← back to the 2026-27 standings</a>';
+  });
+
+function friendly(htmlMsg){
+  document.getElementById('wrap').innerHTML =
+    '<div class="empty">'+htmlMsg+
+    '<br><a href="projection.html" style="font-size:13px">← back to the 2026-27 projected standings</a></div>';
+}
+
+// conference rank (1-based) of `abbr` within d.conferences[conf], which is pre-sorted by proj_wins desc.
+function confRank(d, conf, abbr){
+  const list = (d && d.conferences && Array.isArray(d.conferences[conf])) ? d.conferences[conf] : [];
+  const i = list.findIndex(r=>r && r.abbr===abbr);
+  return { rank:(i<0?null:i+1), size:list.length };
+}
+function ord(n){
+  if(n==null) return "";
+  const s=["th","st","nd","rd"], v=n%100;
+  return n + (s[(v-20)%10] || s[v] || s[0]);
+}
+
+function render(d){
+  const abbrRaw = qparam('abbr');
+  const abbr = String(abbrRaw || DEFAULT_ABBR).toUpperCase();
+  const team = (d && d.teams && d.teams[abbr]) ? d.teams[abbr] : null;
+  if(!team){ friendly("No 2026-27 projection found for <b>"+esc(abbrRaw||abbr)+"</b>."); return; }
+
+  const meta = d.meta || {};
+  const FAC = Array.isArray(meta.factors) && meta.factors.length===6
+    ? meta.factors : ["oTS","oTOV","oSC","dTS","dTOV","dSC"];
+  document.title = (team.name||abbr) + " · 2026-27 Projection · Daily RAPM";
+
+  // conference rank from the pre-sorted conference list
+  const cr = confRank(d, team.conf, abbr);
+  const confLabel = (team.conf||"") + (cr.rank ? " · "+ord(cr.rank) : "")
+    + (cr.rank && cr.size ? " of "+cr.size : "");
+
+  // ---- header: logo + name + forward tag + conference rank ----
+  const logoSrc = team.logo || logoURL(abbr);
+  const logo = '<img src="'+esc(logoSrc)+'" alt="" onerror="this.src=\''+esc(logoURL(abbr))
+    +'\';this.onerror=function(){this.style.visibility=\'hidden\'}">';
+  let html = '<div class="thead">'+logo
+    + '<div class="tn"><h1>'+esc(team.name||abbr)
+    + '<span class="forwardtag">2026-27 projected</span></h1>'
+    + '<div class="conf"><b>'+esc(abbr)+'</b>'+(confLabel?' · '+esc(confLabel):'')+'</div></div></div>';
+  html += '<p class="sub">Forward 2026-27 per-team projection — the only forward-looking view of this roster. '
+    + 'Wins are split across the roster so each player\'s contribution sums to the team total. '
+    + 'See the full <a href="projection.html">2026-27 standings</a>.</p>';
+
+  // ---- KPI strip ----
+  const projW = num(team.proj_wins,1);
+  const band = (team.p10!=null && team.p90!=null) ? num(team.p10,0)+'–'+num(team.p90,0) : '–';
+  const po = (team.playoff_prob!=null) ? Math.round(team.playoff_prob*100)+'%' : '–';
+  const strF = fmt(team.strength,1);
+  html += '<div class="kpis">';
+  html += kpi('Projected wins', projW, '82-game season');
+  html += kpi('80% range', band, 'p10–p90 wins');
+  html += kpi('Playoff odds', po, 'from the projection');
+  html += '<div class="kpi"><div class="k">Projected net</div><div class="v '+strF.cls+'">'+strF.txt
+    + '</div><div class="x">pts/100, six factors</div></div>';
+  html += kpi('Rookies', (team.n_rookies==null?'–':String(team.n_rookies)), 'cold-start (R)');
+  html += '</div>';
+  html += '<div class="cap">A <b>forward projection</b>, not a measured result. '
+    + 'Player ratings are carried forward and aged to 2026-27 (per-factor aging). '
+    + 'Wins, band, and playoff odds come from the same model as the standings.</div>';
+
+  // ---- ROSTER table (the centerpiece) — already sorted by wins contributed desc ----
+  const roster = Array.isArray(team.roster) ? team.roster : [];
+  const teamW = (team.proj_wins!=null) ? Number(team.proj_wins) : 0;
+  // bar scale: each player's share of the team's projected wins (top contributor ≈ full bar)
+  let maxW = 0; roster.forEach(p=>{ if(p && p.proj_wins!=null && p.proj_wins>maxW) maxW=p.proj_wins; });
+  if(!(maxW>0)) maxW = 1;
+
+  html += '<div class="sectitle">Roster <span style="font-weight:400;color:var(--faint)">· '
+    + roster.length + ' players · sorted by wins contributed</span></div>';
+  html += '<div class="scroll"><table class="tbl" style="min-width:760px"><thead><tr>'
+    + '<th class="l">Player</th>'
+    + '<th class="l">Role</th>'
+    + '<th title="Projected minutes per game when active">MPG</th>'
+    + '<th title="Expected games played (availability model)">Exp GP</th>'
+    + '<th class="grp">Proj net <span class="help" title="Player\'s projected on-court net rating (pts/100), aged to 2026-27. Cold-start rookies use a replacement-level prior.">?</span></th>'
+    + '<th class="grp">Wins contributed <span class="help" title="Each player\'s exact-additive share of the team\'s projected wins; the column sums to the team total.">?</span></th>'
+    + '</tr></thead><tbody>';
+
+  roster.forEach(p=>{
+    p = p || {};
+    const f = Array.isArray(p.f) ? p.f : [];
+    const ftip = f.length===6 ? (' · ' + FAC.map((nm,i)=>nm+' '+num(f[i],1)).join(' · ')) : '';
+    const ntip = 'Projected net '+num(p.net,1)+' pts/100'
+      + (p.age!=null ? ' · age '+num(p.age,0) : '')
+      + (p.n_seasons ? ' · '+p.n_seasons+' prior season'+(p.n_seasons===1?'':'s') : '')
+      + ftip;
+    // cold-start rookies have no pid -> plain text + an "R" badge; everyone else links to the Explorer
+    let nm;
+    if(!p.cold && p.pid!=null){
+      nm = '<a href="index.html?p='+encodeURIComponent(p.pid)+'" title="'+esc(ntip)+'">'+esc(p.name||'')+'</a>';
+    } else {
+      nm = '<span title="'+esc(ntip)+'">'+esc(p.name||'')+'</span>'
+        + '<span class="rk" title="Cold-start rookie — net is a replacement-level prior, no rated history yet.">R</span>';
+    }
+    const wins = (p.proj_wins!=null) ? Number(p.proj_wins) : null;
+    const sharePct = (wins!=null && maxW>0) ? Math.max(0, Math.min(100, (wins/maxW)*100)) : 0;
+    const shareTip = (wins!=null && teamW>0) ? num((wins/teamW)*100,0)+'% of the team\'s projected wins' : '';
+    const winCell = '<td class="wins grp"><div class="winwrap" title="'+esc(shareTip)+'">'
+      + '<span class="winbar"><span class="fill" style="width:'+sharePct.toFixed(1)+'%"></span></span>'
+      + '<span class="wn">'+num(wins,1)+'</span></div></td>';
+    html += '<tr>'
+      + '<td class="l pl">'+nm+'</td>'
+      + '<td class="l">'+esc((p.role||'').replace(/^\w/,c=>c.toUpperCase()))+'</td>'
+      + '<td class="mpg">'+num(p.mpg,1)+'</td>'
+      + '<td class="gp">'+(p.exp_gp==null?'–':num(p.exp_gp,0))+'</td>'
+      + rgCell(p.net,'grp')
+      + winCell
+      + '</tr>';
+  });
+
+  // TOTAL row: wins-contributed cell equals the team's proj_wins (it sums exactly)
+  const winsSum = roster.reduce((a,p)=>a+((p && p.proj_wins!=null && !isNaN(p.proj_wins))?Number(p.proj_wins):0),0);
+  const totalWins = (team.proj_wins!=null) ? Number(team.proj_wins) : winsSum;
+  html += '<tr class="total">'
+    + '<td class="l pl">TOTAL</td>'
+    + '<td class="l">–</td>'
+    + '<td class="mpg">–</td>'
+    + '<td class="gp">–</td>'
+    + rgCell(team.strength,'grp')
+    + '<td class="wins grp"><div class="winwrap"><span class="winbar"><span class="fill" '
+      + 'style="width:100%"></span></span><span class="wn">'+num(totalWins,1)+'</span></div></td>'
+    + '</tr>';
+  html += '</tbody></table></div>';
+
+  // ---- captions (terse, honest) ----
+  html += '<div class="cap">'
+    + '<b>MPG</b> = curated depth-chart minutes (projected per game when active). '
+    + '<b>Exp GP</b> = expected games-played model (availability), 0–82. '
+    + '<b>Wins contributed</b> = each player\'s exact-additive share of the team\'s projected wins — '
+    + 'the column sums to ' + num(totalWins,1) + ' (the projected total). '
+    + 'Net colored red→green on a fixed −5…+5 NBA-net scale. '
+    + 'Named players link to the <a href="index.html">Explorer</a>; '
+    + '<span class="rk">R</span> marks a cold-start rookie (replacement-level prior, no history yet). '
+    + 'The schedule is synthetic / balanced, so there is no strength-of-schedule detail here.'
+    + '</div>';
+
+  if(meta.note){
+    html += '<div class="cap" style="margin-top:6px;color:var(--faint)">'+esc(meta.note)+'</div>';
+  }
+
+  document.getElementById('wrap').innerHTML = html;
+}
+</script>
+</body></html>

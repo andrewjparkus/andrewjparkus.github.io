@@ -114,8 +114,9 @@ function buildConf(name, teams){
       'onerror="this.style.visibility=\'hidden\'">';
     body += '<tr>'+
       '<td class="l rank">'+(i+1)+'</td>'+
-      '<td class="l"><div class="teamcell">'+logo+
-        '<span class="ab">'+esc(t.franchise)+'</span>'+csMark+'</div></td>'+
+      '<td class="l"><a href="team2027.html?abbr='+encodeURIComponent(t.franchise)+'" '+
+        'class="teamcell" title="2026-27 team detail">'+logo+
+        '<span class="ab">'+esc(t.franchise)+'</span>'+csMark+'</a></td>'+
       '<td class="projw cb" data-w="'+t.mc_mean_wins+'">'+t.mc_mean_wins.toFixed(1)+'</td>'+
       '<td class="l range" data-p10="'+t.p10_wins+'" data-p90="'+t.p90_wins+'" data-mean="'+t.mc_mean_wins+'"></td>'+
       '<td class="po cb" data-p="'+t.make_playoffs_prob+'">'+Math.round(t.make_playoffs_prob*100)+'%</td>'+
