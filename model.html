@@ -115,6 +115,7 @@
         <a href="#transfer">Cross-league transfer</a>
         <a href="#ci">Confidence intervals</a>
         <a href="#accuracy">Model accuracy</a>
+        <a href="#ewa">Trade grades (EWA)</a>
         <a href="#guide">Using the site</a>
       </nav>
     </aside>
@@ -268,11 +269,11 @@
   </div>
   <p>The blend is exposure-weighted, <code>(1−M)·lineup + M·box</code> with
   <code>M = α/(weff+α)</code>: with little on-court data a rating leans on the box estimate; as
-  possessions pile up the lineup data takes over. The prior touches only the three factors a daily
-  box predicts well out-of-sample — <strong>oSC, dTS, dTOV</strong> — leaving shooting (oTS),
-  ball-security (oTOV) and defensive second-chance (dSC) at the pure solve. It is a deliberately
-  modest adjustment: for established players it barely moves the rating. <strong>Prior-informed and
-  pure are identical on oTS, oTOV, dSC, and on the headline net.</strong></p>
+  possessions pile up the lineup data takes over. It touches only the three factors a daily box predicts
+  well out-of-sample — <strong>oSC, dTS, dTOV</strong> — leaving shooting (oTS), ball-security (oTOV)
+  and defensive second-chance (dSC) at the pure solve. A deliberately modest adjustment: for established
+  players it barely moves the rating, and <strong>prior-informed and pure are identical on oTS, oTOV,
+  dSC, and on the headline net.</strong></p>
 
   <h2 id="ref">Does it match a known reference?</h2>
   <p>The pure NBA scale is tuned to reproduce <strong>DataBallR's six-factor RAPM</strong> (the
@@ -298,13 +299,13 @@
       </tbody>
     </table>
   </div>
-  <p>Across these targets the correlation is <strong>0.99</strong> and the slope <strong>0.98</strong>,
-  the negative tail reaching <strong>−7.0</strong> (vs −6.9) — the full range and ordering, not just
-  the leaders. The prior-free series sits a touch higher (Jokic +8.0, SGA +7.4) and is the one
-  literally calibrated to the public board. DataBallR uses a fixed ~6-year window; this model uses an
-  open-ended all-history decay, yet the two still agree at <strong>correlation ≈ 0.99</strong> — the
-  half-life discounts old games so steeply that "6 years" versus "all history" barely changes a
-  current rating, while letting one curve run cleanly across a 20-season career.</p>
+  <p>Across these targets the correlation is <strong>0.99</strong>, the slope <strong>0.98</strong>,
+  and the negative tail reaches <strong>−7.0</strong> (vs −6.9) — the full range and ordering, not just
+  the leaders. The prior-free series sits a touch higher (Jokic +8.0, SGA +7.4) and is the one literally
+  calibrated to the public board. DataBallR uses a fixed ~6-year window and this model an open-ended
+  all-history decay, yet they still agree at <strong>r ≈ 0.99</strong>: the half-life discounts old
+  games so steeply that "6 years" vs "all history" barely changes a current rating — while letting one
+  curve run cleanly across a 20-season career.</p>
 
   <h2 id="transfer">The interesting part: what transfers between leagues?</h2>
   <p>We don't assume college production means the same thing as NBA production — we
@@ -353,11 +354,10 @@
     doesn't carry.
   </div>
   <p>Each translation also carries an <strong>irreducible uncertainty floor</strong>
-  (<code>Var_translate</code>): the league jump is genuinely uncertain, so cross-league error bars are
+  (<code>Var_translate</code>): the league jump is genuinely uncertain, so cross-league error bars stay
   <em>wide and never shrink to zero</em>, however many college games a player has. That honesty is the
-  point — it's why a future MVP's lone college season can sit near replacement level on the NBA axis
-  and still be "consistent" with stardom. You can see it on the <a href="draft.html">Draft board</a>,
-  where every prospect's at-draft translation carries that wide band by construction.</p>
+  point — it's why a future MVP's lone college season can sit near replacement level on the NBA axis and
+  still be "consistent" with stardom, as you can see on the <a href="draft.html">Draft board</a>.</p>
 
   <h2 id="ci">Confidence intervals</h2>
   <p>Every factor on every day carries a standard error, <code>se = 100·√σ̂² / √Weff</code>, where
@@ -391,11 +391,11 @@
   extend there.</p>
 
   <h2 id="accuracy">Model accuracy — the out-of-sample scorecard</h2>
-  <p>Everything above is <strong>descriptive</strong> by design, but two fair questions follow: how
-  well do the day-of-game ratings predict <em>games</em>, and how well does a rating travel to
-  <em>next season</em>? Both are answered by <code>daily_v5/oos_harness.py</code>, a
-  <strong>walk-forward, leakage-free</strong> evaluation: every prediction is made using only data
-  available <em>before</em> the event it scores, so nothing below has seen its own answer.</p>
+  <p>Everything above is <strong>descriptive</strong> by design, but two fair questions follow: how well
+  do the day-of-game ratings predict <em>games</em>, and how well does a rating travel to <em>next
+  season</em>? Both come from <code>daily_v5/oos_harness.py</code>, a <strong>walk-forward,
+  leakage-free</strong> evaluation — every prediction uses only data available <em>before</em> the event
+  it scores, so nothing below has seen its own answer.</p>
 
   <div id="acc_msg" class="callout" style="display:none">Loading the accuracy scorecard…</div>
 
@@ -429,11 +429,10 @@
   </div>
 
   <h3>How far does today's rating travel to next season?</h3>
-  <p>The other test of a descriptive rating: take a player's rating as of a given day and ask how well
-  it predicts that player's RAPM <em>next season</em>. This is pure carry-forward — no aging, no
-  minutes model, no projection — so it is the <strong>baseline a real forward model must beat</strong>.
-  Per factor: the carry-forward RMSE (pts/100 on the NBA scale) and the correlation with next year's
-  measured value.</p>
+  <p>The other test of a descriptive rating: take a player's rating today and ask how well it predicts
+  his RAPM <em>next season</em>. Pure carry-forward — no aging, no minutes model, no projection — so it
+  is the <strong>baseline a real forward model must beat</strong>. Per factor: the carry-forward RMSE
+  (pts/100, NBA scale) and the correlation with next year's measured value.</p>
   <div class="scroll" style="max-width:520px">
     <table class="tbl" id="acc_next">
       <thead><tr>
@@ -453,6 +452,49 @@
     full year of aging, role change and roster churn adds variance the within-season SE never tried to
     model. A genuine forward model would shrink those bands; that's plan 17's job, and this is the
     bar it has to clear.</p>
+  </div>
+
+  <h2 id="ewa">Trade grades — Expected Wins Added (EWA)</h2>
+  <p>The <a href="grades.html">Grades</a> page scores every in-season trade by
+  <strong>Expected Wins Added</strong>: the win-probability a moved player added for his
+  <strong>new</strong> team above a replacement-level fill, <strong>over the games he actually played
+  there</strong>. It is a <strong>descriptive grade of how the move played out</strong> — not a
+  long-term verdict.</p>
+  <div class="scroll">
+    <table class="tbl">
+      <thead><tr><th class="l">Property</th><th class="l">EWA</th></tr></thead>
+      <tbody>
+        <tr><td class="l lead">Unit</td>
+            <td class="l">Wins. Small numbers — a moved bench player is worth fractions of a win over a
+            partial season.</td></tr>
+        <tr><td class="l lead">Baseline</td>
+            <td class="l">A replacement-level fill (<code>repl_net ≈ −1.4</code> pts/100), not zero — so
+            an exactly-replacement player grades ≈ 0.</td></tr>
+        <tr><td class="l lead">Sign</td>
+            <td class="l"><span class="pos">+</span> to the acquirer, <span class="neg">−</span> to the
+            sender. Zero-sum on a clean 1-for-1 swap (modulo schedule).</td></tr>
+        <tr><td class="l lead">Window</td>
+            <td class="l">Only the games the player logged for the new team — retrospective, not a
+            projection.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Each game's contribution is a win-probability shift. The player's net-above-replacement, scaled by
+  his share of that night's minutes, becomes a margin nudge <code>Δμ</code>; EWA sums the resulting
+  per-game <code>Δp</code> over the games he played:</p>
+  <p style="text-align:center;margin:14px 0">
+    <code>Δp = Φ((m + Δμ)/σ) − Φ(m/σ)</code>,&nbsp;&nbsp;
+    <code>Δμ = 5·(mᵢ/M)·(netᵢ − repl_net)</code>,&nbsp;&nbsp;
+    <code>EWA = Σ Δp</code>
+  </p>
+  <p>where <code>m</code> is the team's actual margin that game, <code>σ ≈ 14.3</code> is the game-model
+  margin SD (same as the <a href="#accuracy">accuracy</a> section), <code>mᵢ/M</code> the player's
+  minute share, and <code>netᵢ</code> his daily net RAPM.</p>
+  <div class="callout">
+    <strong>Worked example.</strong> CJ McCollum (WAS → ATL, 41 games) grades <code>+0.78</code> wins:
+    summed over those 41 games, his minutes-weighted edge over a replacement wing added about
+    three-quarters of a win to Atlanta's expected total — credited <span class="pos">+0.78</span> to
+    ATL, <span class="neg">−0.78</span> to Washington on that leg.
   </div>
 
   <h2 id="guide">Using the site</h2>
