@@ -5,30 +5,44 @@
 <link rel="stylesheet" href="site.css">
 <link rel="icon" href="favicon.svg"><link rel="manifest" href="manifest.webmanifest">
 <style>
-  /* page-unique: trade-grades cards + diverging EWA bar */
+  /* page-unique: trades table caret + expandable detail + diverging EWA bar */
   th.l .help,th .help{margin-left:3px}
   table.tbl thead th .arr{font-size:9px;color:var(--accent);margin-left:3px}
   .band{color:var(--faint);font-variant-numeric:tabular-nums}
-  .tradelist{display:flex;flex-direction:column;gap:12px;margin-top:10px}
-  .tcard{padding:12px 14px 6px}
-  .thead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px}
-  .tdate{font-size:11px;color:var(--faint);font-variant-numeric:tabular-nums;font-weight:600}
-  .tteams{font-size:var(--fs-3);font-weight:700;letter-spacing:.2px}
-  .tteams .x{color:var(--faint);font-weight:500;margin:0 4px}
-  .ambflag{font-size:9.5px;padding:1px 6px;border-radius:3px;font-weight:700;letter-spacing:.3px;
-    background:rgba(240,180,41,.16);color:var(--amber)}
+
+  /* the trades table — each summary row is a button-row, with a caret */
+  #trades tbody tr.trow{cursor:pointer}
+  #trades tbody tr.trow:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .caret{display:inline-block;width:12px;color:var(--faint);transition:transform .12s;font-size:10px}
+  #trades tbody tr.trow.open .caret{transform:rotate(90deg);color:var(--accent)}
+  .tteams{font-weight:700;letter-spacing:.2px}
+  .tteams .x{color:var(--faint);font-weight:500;margin:0 3px}
+  .tteams .more{color:var(--faint);font-weight:500;font-size:11px;margin-left:4px}
+  .winchip{font-weight:700}
+  .ambflag{font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;letter-spacing:.3px;
+    background:rgba(240,180,41,.16);color:var(--amber);margin-left:6px;vertical-align:middle}
   :root[data-theme=light] .ambflag{background:rgba(217,128,47,.16);color:var(--box)}
-  .divbar{margin:2px 0 8px}
-  .divrow{display:flex;align-items:center;gap:8px;font-size:11.5px;margin:3px 0}
+
+  /* detail row */
+  #trades tr.detrow>td{padding:0;background:var(--panel-2)}
+  .detwrap{padding:12px 14px 14px}
+  .detgrid{display:grid;grid-template-columns:minmax(220px,1.1fr) minmax(220px,1fr);gap:18px 26px}
+  @media(max-width:680px){ .detgrid{grid-template-columns:1fr} }
+  .deth{font-size:10.5px;font-weight:700;color:var(--muted);letter-spacing:.3px;margin:0 0 6px;text-transform:uppercase}
+
+  /* diverging EWA bars per team */
+  .divrow{display:flex;align-items:center;gap:8px;font-size:11.5px;margin:4px 0}
   .divrow .tm{width:38px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;flex:0 0 auto}
-  .divrow .val{width:54px;font-variant-numeric:tabular-nums;flex:0 0 auto}
+  .divrow .val{width:50px;font-variant-numeric:tabular-nums;flex:0 0 auto;text-align:left}
   .divrow svg{flex:1 1 auto}
+
+  /* per-player mini table */
   .pmini{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
   .pmini th,.pmini td{padding:4px 7px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line-2)}
   .pmini th{font-size:10px;color:var(--muted);font-weight:600;text-align:right}
   .pmini th.l,.pmini td.l{text-align:left}
   .pmini td.l{font-weight:600}
-  .pmini td .mv{color:var(--faint);font-size:10.5px;font-weight:400;margin-left:6px}
+  .pmini td .mv{color:var(--faint);font-size:10.5px;font-weight:400;margin:0 4px}
   .pmini tr:last-child td{border-bottom:none}
 </style></head>
 <body>
@@ -45,7 +59,8 @@
   <div class="scroll"><table class="tbl" id="ledger"></table></div>
 
   <h2 class="sectitle">Every trade</h2>
-  <div class="tradelist" id="trades"></div>
+  <p class="cap">One row per trade — click a row (or press Enter) to expand the per-player detail. Sortable; default sort by date.</p>
+  <div class="scroll"><table class="tbl" id="trades"></table></div>
 
   <div class="empty" id="empty">Loading trade grades…</div>
 
@@ -57,7 +72,9 @@
 const TIP={
   ewa:"Expected Wins Added — per-game win-probability the player added for his NEW team above a replacement-level fill, summed over the games he actually played there. Positive = the move helped the acquirer.",
   band:"80% interval on the team's net EWA — the spread of plausible win-impact given how few games most moved players logged.",
-  net:"Net EWA = wins acquired − wins sent across all of this franchise's moves. Zero-sum on a clean 1-for-1 swap (modulo schedule)."
+  net:"Net EWA = wins acquired − wins sent across all of this franchise's moves. Zero-sum on a clean 1-for-1 swap (modulo schedule).",
+  winner:"The team that came out ahead on the floor — the highest team EWA in the trade — and the wins it added.",
+  margin:"Spread between the best and worst team in the trade (best EWA − worst EWA). Bigger = more lopsided on the floor."
 };
 
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
@@ -69,6 +86,7 @@ function helpTip(k){ return ' <span class="help" data-tip="'+esc(TIP[k])+'">?</s
 
 let DATA=null;
 let sortKey='net', sortDir=-1;          // ledger sort (default net desc)
+let tSortKey='date', tSortDir=-1;       // trades sort (default date desc → most recent first)
 
 /* ---- season ledger (sortable .tbl) -------------------------------------- */
 const LCOLS=[
@@ -139,7 +157,7 @@ function renderLedger(){
 /* ---- diverging EWA bar (inline SVG; one bar per team) -------------------- */
 // dom = symmetric max magnitude across this trade's teams (>=0.5 floor)
 function divBar(ewa, dom){
-  const W=260, H=14, cx=W/2;
+  const W=240, H=14, cx=W/2;
   const px=(dom<=0?0:Math.min(1,Math.abs(ewa)/dom)*(W/2));
   const pos=ewa>=0;
   const color=pos?'var(--pos)':'var(--neg)';
@@ -151,52 +169,158 @@ function divBar(ewa, dom){
          '</svg>';
 }
 
-/* ---- per-trade cards ----------------------------------------------------- */
-function renderTrades(){
-  const trades=DATA.trades.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
-  let html='';
-  for(const t of trades){
-    const teamKeys=Object.keys(t.team);
-    // symmetric domain for the diverging bar (floor at 0.5 wins so tiny moves don't fill the bar)
-    let dom=0.5;
-    teamKeys.forEach(k=>{ dom=Math.max(dom, Math.abs(t.team[k].ewa)); });
+/* ---- trades table (one row per trade, expandable) ----------------------- */
+// derive a stable summary view of one trade: winner / loser / margin / count.
+function tradeView(t){
+  const keys=Object.keys(t.team);
+  let bestK=null, worstK=null, bestE=-Infinity, worstE=Infinity;
+  keys.forEach(k=>{
+    const e=t.team[k].ewa;
+    if(e>bestE){ bestE=e; bestK=k; }
+    if(e<worstE){ worstE=e; worstK=k; }
+  });
+  return {
+    date:t.date,
+    teams:t.teams||keys,
+    nTeams:keys.length,
+    nPlayers:t.players.length,
+    ambiguous:!!t.ambiguous,
+    winner:bestK, winEwa:bestE,
+    margin:(isFinite(bestE)&&isFinite(worstE))?(bestE-worstE):0
+  };
+}
 
-    html+='<div class="card tcard">';
-    html+='<div class="thead">';
-    html+='<span class="tdate">'+esc(t.date)+'</span>';
-    html+='<span class="tteams">'+t.teams.map(esc).join('<span class="x">↔</span>')+'</span>';
-    if(t.ambiguous) html+='<span class="ambflag" title="multi-team / package deal — credit split is approximate">AMBIGUOUS</span>';
-    html+='</div>';
+const TCOLS=[
+  {key:'date',     label:'Date', left:true},
+  {key:'teams',    label:'Teams', left:true, txt:true},
+  {key:'nPlayers', label:'Players'},
+  {key:'winner',   label:'Winner', tip:'winner'},
+  {key:'margin',   label:'Margin', tip:'margin'}
+];
 
-    // diverging EWA bars, one per team, sorted best -> worst
-    html+='<div class="divbar">';
-    teamKeys.slice().sort((a,b)=>t.team[b].ewa-t.team[a].ewa).forEach(k=>{
-      const e=t.team[k].ewa;
-      html+='<div class="divrow">'+
-        '<span class="tm">'+esc(k)+'</span>'+
-        divBar(e,dom)+
-        '<span class="val '+signCls(e)+'">'+fmt(e,2)+'w</span>'+
-        '</div>';
-    });
-    html+='</div>';
-
-    // players sub-table
-    html+='<div class="scroll" style="border:none;background:none"><table class="pmini">';
-    html+='<thead><tr><th class="l">Player</th><th class="l">Move</th>'+
-          '<th>EWA'+helpTip('ewa')+'</th><th>G</th></tr></thead><tbody>';
-    t.players.forEach(p=>{
-      const e=p.ewa;
-      html+='<tr>'+
-        '<td class="l">'+esc(p.name)+'</td>'+
-        '<td class="l" style="color:var(--muted)">'+esc(p.from)+' <span class="mv">→</span> '+esc(p.to)+'</td>'+
-        '<td class="'+signCls(e)+'">'+fmt(e,2)+'</td>'+
-        '<td style="color:var(--muted)">'+(p.n_games!=null?p.n_games:'–')+'</td>'+
-        '</tr>';
-    });
-    html+='</tbody></table></div>';
-    html+='</div>';
+function teamsLabel(v){
+  // up to 2 teams inline with ↔; for multi-team show first two + "+N"
+  const ts=v.teams||[];
+  if(ts.length<=2){
+    return ts.map(esc).join('<span class="x">↔</span>');
   }
-  document.getElementById('trades').innerHTML=html;
+  return esc(ts[0])+'<span class="x">↔</span>'+esc(ts[1])+
+         '<span class="more">+'+(ts.length-2)+'</span>';
+}
+
+function tradeRows(){
+  const views=DATA.trades.map((t,i)=>({v:tradeView(t),i:i}));
+  views.sort((A,B)=>{
+    const a=A.v, b=B.v;
+    let av=a[tSortKey], bv=b[tSortKey];
+    if(tSortKey==='teams'){ av=(a.teams||[])[0]||''; bv=(b.teams||[])[0]||''; }
+    if(tSortKey==='winner'){ av=a.winEwa; bv=b.winEwa; }
+    if(typeof av==='string' || typeof bv==='string'){
+      const c=String(av).localeCompare(String(bv))*tSortDir;
+      if(c!==0) return c;
+      return String(a.date).localeCompare(String(b.date))*tSortDir; // tiebreak by date
+    }
+    const an=(av==null||isNaN(av)), bn=(bv==null||isNaN(bv));
+    if(an&&bn) return 0; if(an) return 1; if(bn) return -1;
+    if(av!==bv) return (av-bv)*tSortDir;
+    return String(a.date).localeCompare(String(b.date))*tSortDir;
+  });
+  return views;
+}
+
+// the expandable detail (per-player mini table + diverging team bars)
+function detailHTML(t){
+  const teamKeys=Object.keys(t.team);
+  let dom=0.5;
+  teamKeys.forEach(k=>{ dom=Math.max(dom, Math.abs(t.team[k].ewa)); });
+
+  let bars='<div class="deth">Team impact (EWA, wins)</div>';
+  teamKeys.slice().sort((a,b)=>t.team[b].ewa-t.team[a].ewa).forEach(k=>{
+    const e=t.team[k].ewa;
+    bars+='<div class="divrow">'+
+      '<span class="tm">'+esc(k)+'</span>'+
+      divBar(e,dom)+
+      '<span class="val '+signCls(e)+'">'+fmt(e,2)+'w</span>'+
+      '</div>';
+  });
+
+  let tbl='<div class="deth">Players moved'+helpTip('ewa')+'</div>';
+  tbl+='<table class="pmini"><thead><tr><th class="l">Player</th><th class="l">Move</th>'+
+       '<th>EWA</th><th>G</th></tr></thead><tbody>';
+  t.players.forEach(p=>{
+    const e=p.ewa;
+    tbl+='<tr>'+
+      '<td class="l">'+esc(p.name)+'</td>'+
+      '<td class="l" style="color:var(--muted)">'+esc(p.from)+'<span class="mv">→</span>'+esc(p.to)+'</td>'+
+      '<td class="'+signCls(e)+'">'+fmt(e,2)+'</td>'+
+      '<td style="color:var(--muted)">'+(p.n_games!=null?p.n_games:'–')+'</td>'+
+      '</tr>';
+  });
+  tbl+='</tbody></table>';
+
+  return '<div class="detwrap"><div class="detgrid">'+
+         '<div>'+tbl+'</div><div>'+bars+'</div>'+
+         '</div></div>';
+}
+
+function renderTrades(){
+  const views=tradeRows();
+  let head='<thead><tr><th class="l" style="width:18px"></th>';
+  TCOLS.forEach(c=>{
+    const active=(tSortKey===c.key);
+    const arr=active?'<span class="arr">'+(tSortDir<0?'▼':'▲')+'</span>':'';
+    const tip=c.tip?helpTip(c.tip):'';
+    head+='<th class="sortable'+((c.left)?' l':'')+'" data-k="'+c.key+'">'+c.label+tip+arr+'</th>';
+  });
+  head+='</tr></thead>';
+
+  let body='';
+  views.forEach(({v,i})=>{
+    const wbg=RC.redGreen(Math.max(0,Math.min(1,(v.winEwa+3)/6)));
+    const wink=RC.inkOn(wbg);
+    body+='<tr class="trow" data-i="'+i+'" tabindex="0" role="button" aria-expanded="false" '+
+          'aria-label="Trade '+esc(v.date)+', '+esc((v.teams||[]).join(' and '))+'. Press Enter to expand.'+'">';
+    body+='<td class="l"><span class="caret">▶</span></td>';
+    body+='<td class="l" style="color:var(--muted);font-variant-numeric:tabular-nums">'+esc(v.date)+'</td>';
+    body+='<td class="l tteams">'+teamsLabel(v)+
+          (v.ambiguous?'<span class="ambflag" title="multi-team / package deal — credit split is approximate">MULTI</span>':'')+'</td>';
+    body+='<td style="color:var(--muted)">'+v.nPlayers+'</td>';
+    // winner: team code + its +EWA on a colored chip
+    body+='<td class="winchip"><span style="background:'+wbg+';color:'+wink+';padding:1px 6px;border-radius:3px">'+
+          esc(v.winner)+' '+fmt(v.winEwa,2)+'</span></td>';
+    body+='<td class="band" style="color:var(--text);font-weight:600">'+v.margin.toFixed(2)+'w</td>';
+    body+='</tr>';
+    // detail row (hidden until expanded)
+    body+='<tr class="detrow" data-for="'+i+'" hidden><td colspan="6">'+detailHTML(DATA.trades[i])+'</td></tr>';
+  });
+
+  const el=document.getElementById('trades');
+  el.innerHTML=head+'<tbody>'+body+'</tbody>';
+
+  // header sorting
+  el.querySelectorAll('thead th.sortable').forEach(th=>{
+    th.onclick=()=>{
+      const k=th.getAttribute('data-k');
+      if(tSortKey===k){ tSortDir=-tSortDir; }
+      else { tSortKey=k; tSortDir=(k==='teams')?1:-1; }
+      renderTrades();
+    };
+  });
+
+  // expand / collapse a row
+  function toggle(tr){
+    const i=tr.getAttribute('data-i');
+    const det=el.querySelector('tr.detrow[data-for="'+i+'"]');
+    const open=tr.classList.toggle('open');
+    tr.setAttribute('aria-expanded', open?'true':'false');
+    if(det) det.hidden=!open;
+  }
+  el.querySelectorAll('tbody tr.trow').forEach(tr=>{
+    tr.addEventListener('click', ()=>toggle(tr));
+    tr.addEventListener('keydown', ev=>{
+      if(ev.key==='Enter' || ev.key===' '){ ev.preventDefault(); toggle(tr); }
+    });
+  });
 }
 
 /* ---- load ---------------------------------------------------------------- */

@@ -22,6 +22,8 @@
   .tablebox th .help[data-tip]:hover::before{bottom:auto;top:calc(100% + 1px);
     border-top-color:transparent;border-bottom-color:var(--line)}
   table.tbl thead th .arr{font-size:9px;color:var(--accent);margin-left:3px}
+  /* emphasize the header of the currently-sorted column to match its bold body cells */
+  table.tbl thead th.net{font-weight:700;color:var(--text)}
   td.pn{font-weight:600}
   td.pn .sub2{color:var(--muted);font-size:11px;font-weight:400;margin-left:7px}
   td.trend{text-align:center;padding-top:3px;padding-bottom:3px}
@@ -117,6 +119,10 @@ const OCOLS=[
   {key:'dTOV',  label:'dTOV',  grp:false},
   {key:'dSC',   label:'dSC',   grp:false}
 ];
+// Each category tab is inherently sorted by its headline metric (Offense->ORAPM,
+// Defense->DRAPM, everything else->Net). Selecting a tab sets sortKey to that column so
+// BOTH the sort and the bold/emphasis land on the column the user came to look at.
+const DEFSORT={nba:'net', off:'ORAPM', def:'DRAPM', rookies:'net', draft:'net', gleague:'net', college:'net'};
 
 function curTable(){ return TBL.tables.find(t=>t.key===tableKey); }
 
@@ -157,9 +163,10 @@ function renderOverall(){
     '<th class="l">Player</th>';
   OCOLS.forEach(c=>{
     const active=(sortKey===c.key);
+    const emph=(sortKey?active:c.net);   // bold the active sort header; default = net (file order)
     const arr=active?'<span class="arr">'+(sortDir<0?'▼':'▲')+'</span>':'';
     const tip=TIP[c.key]?' <span class="help" data-tip="'+esc(TIP[c.key])+'">?</span>':'';
-    head+='<th class="sortable'+(c.grp?' grp':'')+'" data-k="'+c.key+'">'+c.label+tip+arr+'</th>';
+    head+='<th class="sortable'+(c.grp?' grp':'')+(emph?' net':'')+'" data-k="'+c.key+'">'+c.label+tip+arr+'</th>';
   });
   head+='<th class="l">Trend</th>';
   head+='</tr></thead>';
@@ -176,7 +183,8 @@ function renderOverall(){
           (r.sub?'<span class="sub2">'+esc(r.sub)+'</span>':'')+'</td>';
       OCOLS.forEach(c=>{
         const v=r[c.key];
-        body+='<td class="'+(c.net?'net ':'')+(c.grp?'grp ':'')+signCls(v)+'">'+fmt(v)+'</td>';
+        const act=(sortKey?(sortKey===c.key):c.net);   // emphasize the active sort col; default = net (file order)
+        body+='<td class="'+(act?'net ':'')+(c.grp?'grp ':'')+signCls(v)+'">'+fmt(v)+'</td>';
       });
       body+='<td class="trend"></td>';
       body+='</tr>';
@@ -227,7 +235,7 @@ function refresh(){
   if(!TBL) return;
   buildSeg('tableseg', TBL.tables.map(t=>t.key),
     k=>(TBL.tables.find(t=>t.key===k)||{}).title||k, tableKey,
-    k=>{ tableKey=k; showAll=false; sortKey=null; sortDir=-1; query=''; document.getElementById('find').value=''; renderOverall(); refresh(); });
+    k=>{ tableKey=k; showAll=false; sortKey=DEFSORT[k]||'net'; sortDir=-1; query=''; document.getElementById('find').value=''; renderOverall(); refresh(); });
   renderOverall();
 }
 
@@ -244,7 +252,7 @@ document.getElementById('find').addEventListener('input',e=>{
    ========================================================================= */
 fetch('table.json').then(r=>{ if(!r.ok) throw new Error('table.json '+r.status); return r.json(); })
   .then(t=>{
-    TBL=t; tableKey=TBL.tables[0]&&TBL.tables[0].key;
+    TBL=t; tableKey=TBL.tables[0]&&TBL.tables[0].key; sortKey=DEFSORT[tableKey]||'net'; sortDir=-1;
     document.getElementById('empty').style.display='none';
     refresh();
   })
