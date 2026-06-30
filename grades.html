@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Grades · Daily RAPM</title>
+<link rel="stylesheet" href="site.css">
+<link rel="icon" href="favicon.svg"><link rel="manifest" href="manifest.webmanifest">
+<style>
+  /* page-unique: trade-grades cards + diverging EWA bar */
+  th.l .help,th .help{margin-left:3px}
+  table.tbl thead th .arr{font-size:9px;color:var(--accent);margin-left:3px}
+  .band{color:var(--faint);font-variant-numeric:tabular-nums}
+  .tradelist{display:flex;flex-direction:column;gap:12px;margin-top:10px}
+  .tcard{padding:12px 14px 6px}
+  .thead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+  .tdate{font-size:11px;color:var(--faint);font-variant-numeric:tabular-nums;font-weight:600}
+  .tteams{font-size:var(--fs-3);font-weight:700;letter-spacing:.2px}
+  .tteams .x{color:var(--faint);font-weight:500;margin:0 4px}
+  .ambflag{font-size:9.5px;padding:1px 6px;border-radius:3px;font-weight:700;letter-spacing:.3px;
+    background:rgba(240,180,41,.16);color:var(--amber)}
+  :root[data-theme=light] .ambflag{background:rgba(217,128,47,.16);color:var(--box)}
+  .divbar{margin:2px 0 8px}
+  .divrow{display:flex;align-items:center;gap:8px;font-size:11.5px;margin:3px 0}
+  .divrow .tm{width:38px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;flex:0 0 auto}
+  .divrow .val{width:54px;font-variant-numeric:tabular-nums;flex:0 0 auto}
+  .divrow svg{flex:1 1 auto}
+  .pmini{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+  .pmini th,.pmini td{padding:4px 7px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line-2)}
+  .pmini th{font-size:10px;color:var(--muted);font-weight:600;text-align:right}
+  .pmini th.l,.pmini td.l{text-align:left}
+  .pmini td.l{font-weight:600}
+  .pmini td .mv{color:var(--faint);font-size:10.5px;font-weight:400;margin-left:6px}
+  .pmini tr:last-child td{border-bottom:none}
+</style></head>
+<body>
+<nav id="topnav" data-active="grades"></nav>
+<script src="charts.js"></script>
+<script src="nav.js"></script>
+<div class="wrap">
+  <h1>Trade <b>grades</b> <small id="seasonlbl"></small></h1>
+  <p class="sub" id="sub">Every in-season trade graded by the Expected Wins Added (EWA) the moved players actually delivered for their new team.</p>
+  <p class="legend" id="legend"></p>
+
+  <h2 class="sectitle">Season ledger — by franchise</h2>
+  <p class="cap">Net EWA from all moves this team made: wins acquired minus wins sent. Sortable; default sort by net.</p>
+  <div class="scroll"><table class="tbl" id="ledger"></table></div>
+
+  <h2 class="sectitle">Every trade</h2>
+  <div class="tradelist" id="trades"></div>
+
+  <div class="empty" id="empty">Loading trade grades…</div>
+
+  <p class="foot" id="foot"></p>
+</div>
+
+<script>
+"use strict";
+const TIP={
+  ewa:"Expected Wins Added — per-game win-probability the player added for his NEW team above a replacement-level fill, summed over the games he actually played there. Positive = the move helped the acquirer.",
+  band:"80% interval on the team's net EWA — the spread of plausible win-impact given how few games most moved players logged.",
+  net:"Net EWA = wins acquired − wins sent across all of this franchise's moves. Zero-sum on a clean 1-for-1 swap (modulo schedule)."
+};
+
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function signCls(n){ if(n==null||isNaN(n)) return "zero"; if(n>=0.005) return "pos"; if(n<=-0.005) return "neg"; return "zero"; }
+function fmt(v,dec){ dec=(dec==null)?2:dec;
+  if(v==null||isNaN(v)) return "–";
+  const n=Number(v); return (n>=0?"+":"−")+Math.abs(n).toFixed(dec); }
+function helpTip(k){ return ' <span class="help" data-tip="'+esc(TIP[k])+'">?</span>'; }
+
+let DATA=null;
+let sortKey='net', sortDir=-1;          // ledger sort (default net desc)
+
+/* ---- season ledger (sortable .tbl) -------------------------------------- */
+const LCOLS=[
+  {key:'franchise', label:'Franchise', txt:true, left:true},
+  {key:'conf',      label:'Conf',      txt:true, left:true},
+  {key:'acquired',  label:'Acquired'},
+  {key:'sent',      label:'Sent'},
+  {key:'net',       label:'Net', tip:'net', netcol:true},
+  {key:'band80',    label:'80% band', band:true, tip:'band'}
+];
+
+function ledgerRows(){
+  const rows=DATA.season_ledger.slice();
+  rows.sort((a,b)=>{
+    if(sortKey==='band80'){
+      const aw=(a.band80[1]-a.band80[0]), bw=(b.band80[1]-b.band80[0]);
+      return (aw-bw)*sortDir;
+    }
+    const av=a[sortKey], bv=b[sortKey];
+    if(typeof av==='string' || typeof bv==='string'){
+      return String(av).localeCompare(String(bv))*sortDir;
+    }
+    const an=(av==null||isNaN(av)), bn=(bv==null||isNaN(bv));
+    if(an&&bn) return 0; if(an) return 1; if(bn) return -1;
+    return (av-bv)*sortDir;
+  });
+  return rows;
+}
+
+function renderLedger(){
+  const rows=ledgerRows();
+  let head='<thead><tr>';
+  LCOLS.forEach(c=>{
+    const active=(sortKey===c.key);
+    const arr=active?'<span class="arr">'+(sortDir<0?'▼':'▲')+'</span>':'';
+    const tip=c.tip?helpTip(c.tip):'';
+    head+='<th class="sortable'+((c.left)?' l':'')+'" data-k="'+c.key+'">'+c.label+tip+arr+'</th>';
+  });
+  head+='</tr></thead>';
+
+  let body='';
+  for(const r of rows){
+    body+='<tr>';
+    body+='<td class="l" style="font-weight:700">'+esc(r.franchise)+'</td>';
+    body+='<td class="l" style="color:var(--muted)">'+esc(r.conf)+'</td>';
+    body+='<td class="'+signCls(r.acquired)+'">'+fmt(r.acquired)+'</td>';
+    body+='<td class="'+signCls(r.sent)+'">'+fmt(r.sent)+'</td>';
+    // net: colored cell background via RC.redGreen on a symmetric ramp
+    const t=Math.max(0,Math.min(1,(r.net+3)/6));
+    const bg=RC.redGreen(t), ink=RC.inkOn(bg);
+    body+='<td class="net" style="background:'+bg+';color:'+ink+';font-weight:700">'+fmt(r.net)+'</td>';
+    const lo=r.band80[0], hi=r.band80[1];
+    body+='<td class="band">'+fmt(lo,2)+' ‥ '+fmt(hi,2)+'</td>';
+    body+='</tr>';
+  }
+  document.getElementById('ledger').innerHTML=head+'<tbody>'+body+'</tbody>';
+
+  document.querySelectorAll('#ledger th.sortable').forEach(th=>{
+    th.onclick=()=>{
+      const k=th.getAttribute('data-k');
+      if(sortKey===k){ sortDir=-sortDir; }
+      else { sortKey=k; sortDir=(k==='franchise'||k==='conf')?1:-1; }
+      renderLedger();
+    };
+  });
+}
+
+/* ---- diverging EWA bar (inline SVG; one bar per team) -------------------- */
+// dom = symmetric max magnitude across this trade's teams (>=0.5 floor)
+function divBar(ewa, dom){
+  const W=260, H=14, cx=W/2;
+  const px=(dom<=0?0:Math.min(1,Math.abs(ewa)/dom)*(W/2));
+  const pos=ewa>=0;
+  const color=pos?'var(--pos)':'var(--neg)';
+  const x=pos?cx:cx-px;
+  return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" height="'+H+'" preserveAspectRatio="none" '+
+         'role="img" aria-label="EWA '+ewa.toFixed(2)+' wins">'+
+         '<line x1="'+cx+'" y1="0" x2="'+cx+'" y2="'+H+'" stroke="var(--line)" stroke-width="1"/>'+
+         '<rect x="'+x.toFixed(1)+'" y="2" width="'+px.toFixed(1)+'" height="'+(H-4)+'" rx="2" fill="'+color+'"/>'+
+         '</svg>';
+}
+
+/* ---- per-trade cards ----------------------------------------------------- */
+function renderTrades(){
+  const trades=DATA.trades.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  let html='';
+  for(const t of trades){
+    const teamKeys=Object.keys(t.team);
+    // symmetric domain for the diverging bar (floor at 0.5 wins so tiny moves don't fill the bar)
+    let dom=0.5;
+    teamKeys.forEach(k=>{ dom=Math.max(dom, Math.abs(t.team[k].ewa)); });
+
+    html+='<div class="card tcard">';
+    html+='<div class="thead">';
+    html+='<span class="tdate">'+esc(t.date)+'</span>';
+    html+='<span class="tteams">'+t.teams.map(esc).join('<span class="x">↔</span>')+'</span>';
+    if(t.ambiguous) html+='<span class="ambflag" title="multi-team / package deal — credit split is approximate">AMBIGUOUS</span>';
+    html+='</div>';
+
+    // diverging EWA bars, one per team, sorted best -> worst
+    html+='<div class="divbar">';
+    teamKeys.slice().sort((a,b)=>t.team[b].ewa-t.team[a].ewa).forEach(k=>{
+      const e=t.team[k].ewa;
+      html+='<div class="divrow">'+
+        '<span class="tm">'+esc(k)+'</span>'+
+        divBar(e,dom)+
+        '<span class="val '+signCls(e)+'">'+fmt(e,2)+'w</span>'+
+        '</div>';
+    });
+    html+='</div>';
+
+    // players sub-table
+    html+='<div class="scroll" style="border:none;background:none"><table class="pmini">';
+    html+='<thead><tr><th class="l">Player</th><th class="l">Move</th>'+
+          '<th>EWA'+helpTip('ewa')+'</th><th>G</th></tr></thead><tbody>';
+    t.players.forEach(p=>{
+      const e=p.ewa;
+      html+='<tr>'+
+        '<td class="l">'+esc(p.name)+'</td>'+
+        '<td class="l" style="color:var(--muted)">'+esc(p.from)+' <span class="mv">→</span> '+esc(p.to)+'</td>'+
+        '<td class="'+signCls(e)+'">'+fmt(e,2)+'</td>'+
+        '<td style="color:var(--muted)">'+(p.n_games!=null?p.n_games:'–')+'</td>'+
+        '</tr>';
+    });
+    html+='</tbody></table></div>';
+    html+='</div>';
+  }
+  document.getElementById('trades').innerHTML=html;
+}
+
+/* ---- load ---------------------------------------------------------------- */
+function render(){
+  const m=DATA.meta||{};
+  document.getElementById('seasonlbl').textContent=m.season||'';
+  document.getElementById('legend').textContent=
+    (m.note||'')+' EWA is in wins (small numbers — a moved bench player is worth fractions of a win over a partial season).';
+  document.getElementById('foot').textContent=
+    (m.n_trades!=null?m.n_trades+' trades, ':'')+
+    (m.n_moves!=null?m.n_moves+' player moves graded. ':'')+
+    'Retrospective and descriptive — this grades what already happened on the floor, not future value. '+
+    (m.repl_net!=null?'Replacement baseline net = '+fmt(m.repl_net,2)+' pts/100; ':'')+
+    (m.sigma!=null?'margin σ = '+Number(m.sigma).toFixed(1)+' pts.':'');
+  renderLedger();
+  renderTrades();
+}
+
+fetch('trade_grades_2025_26.json')
+  .then(r=>{ if(!r.ok) throw new Error('trade_grades '+r.status); return r.json(); })
+  .then(d=>{
+    DATA=d;
+    document.getElementById('empty').style.display='none';
+    render();
+  })
+  .catch(()=>{
+    document.getElementById('empty').textContent="Couldn't load trade grades (trade_grades_2025_26.json).";
+  });
+</script>
+</body></html>

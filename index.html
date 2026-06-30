@@ -1,132 +1,210 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Daily RAPM Explorer</title>
+<title>Explorer · Daily RAPM</title>
+<link rel="stylesheet" href="site.css">
+<link rel="icon" href="favicon.svg"><link rel="manifest" href="manifest.webmanifest">
 <style>
-  :root{
-    --bg:#080b11; --panel:#0e141d; --line:#1b2532; --text:#e7eef7; --muted:#7c8ca2;
-    --accent:#56b6ff; --grid:#161f2c;
-    --nba:#4aa8ff; --gleague:#2dd4bf; --college:#b27bff;
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0}
-  body{background:var(--bg);color:var(--text);
-    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
-    -webkit-font-smoothing:antialiased}
-  svg,svg text{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif}
-  .wrap{max-width:1000px;margin:0 auto;padding:24px 22px 70px}
-  h1{font-size:20px;margin:0;font-weight:650;letter-spacing:-.2px}
-  h1 b{color:var(--accent);font-weight:750}
-  h1 small{font-size:12px;color:var(--muted);font-weight:500;margin-left:6px}
-  .sub{color:var(--muted);font-size:12.5px;margin:6px 0 0;line-height:1.5;max-width:760px}
-  .searchbox{position:relative;max-width:480px;margin:16px 0 6px}
-  #q{width:100%;padding:11px 14px;font-size:14.5px;background:var(--panel);
-    border:1px solid var(--line);color:var(--text);outline:none}
-  #q:focus{border-color:var(--accent)}
-  #drop{position:absolute;top:42px;left:0;right:0;background:#0c121b;border:1px solid var(--line);
-    z-index:30;max-height:330px;overflow-y:auto;display:none}
-  .opt{padding:8px 13px;cursor:pointer;display:flex;justify-content:space-between;gap:10px;
-    border-bottom:1px solid #121a25;align-items:center}
-  .opt:hover,.opt.active{background:#141e2b}
-  .opt .nm{font-size:13.5px;font-weight:600}
-  .opt .meta{font-size:11px;color:var(--muted);display:flex;gap:7px;align-items:center}
-  .badge{font-size:9.5px;padding:1px 5px;font-weight:700;letter-spacing:.3px}
-  .b-n{background:rgba(74,168,255,.16);color:#9fccff}
-  .b-g{background:rgba(45,212,191,.16);color:#7fe9d8}
-  .b-c{background:rgba(178,123,255,.16);color:#cfb0ff}
-  .suggest{display:flex;gap:7px;flex-wrap:wrap;margin-top:2px}
-  .chip{font-size:12px;padding:5px 11px;background:var(--panel);border:1px solid var(--line);
-    color:var(--muted);cursor:pointer}
-  .chip:hover{color:var(--text);border-color:var(--accent)}
+  /* ── page-unique CSS only (tokens/nav/search/grid/cell/seg live in site.css) ── */
   #player{display:none;margin-top:20px}
   .phead{display:flex;align-items:baseline;gap:13px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:11px}
-  .pname{font-size:25px;font-weight:800;letter-spacing:-.5px}
-  .pmeta{color:var(--muted);font-size:12.5px}
+  .pname{font-size:var(--fs-6);font-weight:800;letter-spacing:-.5px}
+  .pmeta{color:var(--muted);font-size:var(--fs-2)}
   .readout{margin-left:auto;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:150px;text-align:right}
   .readout b{color:var(--text)}
-  .netcard{border:1px solid var(--line);background:var(--panel);margin:14px 0;padding:6px 8px 2px}
-  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
-  .cell{border:1px solid var(--line);background:var(--panel);padding:5px 7px 2px}
-  .ctitle{font-size:11.5px;font-weight:700;color:#aebccd;display:flex;justify-content:space-between;align-items:baseline;padding:1px 2px 3px}
-  .ctitle .v{font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
-  .ctitle .v b{color:var(--text)}
-  svg{display:block;width:100%;height:auto;touch-action:none}
-  .empty{color:var(--muted);text-align:center;padding:80px 0;font-size:14.5px}
-  .foot{color:#566377;font-size:11px;margin-top:26px;line-height:1.7}
-  .gl{color:var(--gleague);font-weight:700}.nb{color:var(--nba);font-weight:700}.co{color:var(--college);font-weight:700}
+  .modehint{font-size:11.5px;color:var(--faint);margin:7px 0 -4px;line-height:1.55;max-width:840px}
+  /* bespoke interactive crosshair charts (owned locally) */
   .crosshair{stroke:#3a4862;stroke-width:1;stroke-dasharray:3 3;pointer-events:none}
-  .hdot{pointer-events:none;stroke:#0b0f16;stroke-width:1.2}
-  .modeseg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:#0c1118}
-  .modeseg button{font:inherit;font-size:12px;font-weight:600;color:var(--muted);background:none;border:none;
-    padding:5px 11px;cursor:pointer;transition:background .12s,color .12s;white-space:nowrap}
-  .modeseg button:hover{color:var(--text)}
-  .modeseg button.on{color:#06121f;background:var(--accent)}
-  .modeseg button:disabled{opacity:.32;cursor:not-allowed}
-  .modeseg button:disabled:hover{color:var(--muted)}
-  .modehint{font-size:11.5px;color:#5d6b7e;margin:7px 0 -4px}
-  .topnav{border-bottom:1px solid var(--line);background:#0a0e16;position:sticky;top:0;z-index:50}
-  .navinner{max-width:1000px;margin:0 auto;padding:0 22px;display:flex;align-items:center;gap:8px;height:52px}
-  .brand{font-size:16px;font-weight:700;letter-spacing:-.2px;margin-right:18px}
-  .brand b{color:var(--accent)}
-  .tab{font-size:13.5px;color:var(--muted);text-decoration:none;padding:16px 12px;border-bottom:2px solid transparent}
-  .tab:hover{color:var(--text)}
-  .tab.active{color:var(--text);border-bottom-color:var(--accent)}
+  .hdot{pointer-events:none;stroke:var(--bg);stroke-width:1.2}
+  .grid svg,.netcard svg{touch-action:none}
+  /* add-to-compare affordance in the player header */
+  .cmpadd{font-size:12px;font-weight:600;color:var(--muted);background:var(--panel);border:1px solid var(--line);
+    padding:5px 11px;cursor:pointer;border-radius:var(--r-1)}
+  .cmpadd:hover{color:var(--text);border-color:var(--accent)}
+  .cmptray{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0 0}
+  .cmptray .seglab{align-self:center}
+  .cmpchip{display:inline-flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);
+    padding:4px 9px;font-size:12px;border-radius:var(--r-1)}
+  .cmpchip .sw{width:10px;height:10px;border-radius:2px}
+  .cmpchip .x{cursor:pointer;color:var(--muted);font-weight:700;margin-left:1px}
+  .cmpchip .x:hover{color:var(--neg)}
+  .cmpgo{font-size:12px;font-weight:700;color:var(--accent-ink);background:var(--accent);border:none;
+    padding:5px 12px;cursor:pointer;border-radius:var(--r-1)}
+  .cmpgo:disabled{opacity:.4;cursor:not-allowed}
+  /* ── production profile section ── */
+  #profile{display:none;margin-top:28px;border-top:1px solid var(--line);padding-top:6px}
+  .barrow{display:flex;align-items:center;gap:10px;margin:7px 0}
+  .barrow .lab{width:48px;font-size:12.5px;font-weight:700;color:#cdd9e6;font-variant-numeric:tabular-nums}
+  :root[data-theme=light] .barrow .lab{color:#33425a}
+  .barrow .val{width:60px;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}
+  .barrow .pctlab{width:38px;font-size:11.5px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+  .barwrap{flex:1;min-width:120px}
+  /* two balanced columns: percentile bars (left) + radar (right), vertically centered to each other */
+  .profcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px 30px;align-items:center}
+  .radarwrap{max-width:330px;margin:0 auto;width:100%}
+  /* ── pure-vs-box explainer ── */
+  #pvb{display:none;margin-top:28px;border-top:1px solid var(--line);padding-top:6px}
+  .netrow{display:flex;gap:24px;flex-wrap:wrap;margin:12px 0 4px;font-variant-numeric:tabular-nums}
+  .swatch{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:middle}
+  .frow{display:flex;align-items:center;gap:10px;margin:9px 0}
+  .frow .flab{width:46px;font-size:12.5px;font-weight:700;color:#cdd9e6}
+  :root[data-theme=light] .frow .flab{color:#33425a}
+  .pair{flex:1;min-width:160px}
+  .deco{flex:1.2;min-width:200px}
+  .frow .delta{width:64px;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}
+  /* ── density compare sub-view ── */
+  #density{display:none;margin-top:24px}
+  #densplot{margin-top:4px}
+  /* offense row 1, defense row 2 (FAC order is fixed) */
+  #grid{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:640px){#grid{grid-template-columns:repeat(2,1fr)}}
+  /* forward projection overlay (opt-in, dashed = NOT measured) — distinct muted color (--box ramp) */
+  .projline{stroke:var(--box);stroke-width:1.6;fill:none;stroke-dasharray:4 2;stroke-linejoin:round;stroke-linecap:round}
+  .projband{fill:var(--box);fill-opacity:.10;stroke:none}
+  .projdot{fill:var(--box)}
+  .projsep{stroke:var(--box);stroke-width:1;stroke-dasharray:2 3;opacity:.5}
+  #projcallout b{color:var(--box)}
 </style></head>
 <body>
 <nav id="topnav" data-active="explorer"></nav>
+<script src="charts.js"></script>
 <script src="nav.js"></script>
 <div class="wrap">
   <h1 style="margin-top:6px">Six-factor RAPM, <b>every game-day</b></h1>
-  <p class="sub">Search any player across NCAA, G-League &amp; NBA. Toggle each chart between three daily series: <b>Pure RAPM</b> (the prior-free, DataBallR-matched solve), <b>Prior-informed</b> (the same solve with three factors sharpened by a daily box-score prior — the default), and <b>Box prior</b> (that prior on its own — a daily, multi-league curve with a confidence band). Values are on the DataBallR scale; off-seasons collapsed (game-day axis); each league trimmed to the player's last game.</p>
+  <p class="sub">Six-factor RAPM for any NCAA, G-League or NBA player — every game-day. Toggle <b>Pure</b> · <b>Prior-informed</b> · <b>Box prior</b>.</p>
   <div class="searchbox">
     <input id="q" autocomplete="off" placeholder="Search a player…  (e.g. LeBron James, Cooper Flagg)">
-    <div id="drop"></div>
+    <div class="drop" id="drop"></div>
   </div>
-  <div class="suggest" id="suggest"></div>
+  <div class="cmptray" id="suggest"></div>
 
   <div id="player">
     <div class="phead">
       <span class="pname" id="pname"></span>
-      <a id="profilelink" href="#" style="display:none;font-size:12.5px;color:var(--accent);text-decoration:none;margin-left:10px">Full profile →</a>
       <span class="pmeta" id="pmeta"></span>
       <span class="readout" id="readout"></span>
-      <div id="modeseg" class="modeseg" style="margin-left:auto;display:none">
+      <div id="modeseg" class="seg" style="margin-left:auto;display:none">
         <button data-mode="pure" type="button">Pure RAPM</button>
         <button data-mode="prior" type="button">Prior-informed</button>
         <button data-mode="box" type="button">Box prior</button>
       </div>
     </div>
     <div class="modehint" id="modehint"></div>
+
+    <!-- add-to-compare affordance (single view only) — above the charts for easy access -->
+    <div class="cmptray" id="cmptray" style="display:none">
+      <span class="seglab">Compare:</span>
+      <button class="cmpadd" id="cmpadd" type="button">+ Add this player</button>
+      <span id="cmplist"></span>
+      <button class="cmpgo" id="cmpgo" type="button" disabled>Compare →</button>
+    </div>
+
     <div class="netcard">
-      <div class="ctitle"><span>Net RAPM <span style="color:#5d6b7e;font-weight:400">· ORAPM + DRAPM</span></span><span class="v" id="v_net"></span></div>
+      <div class="ctitle"><span>Net RAPM <span style="color:var(--faint);font-weight:400">· ORAPM + DRAPM</span> <span class="help" data-tip="Net RAPM = ORAPM (oTS+oTOV+oSC) + DRAPM (dTS+dTOV+dSC), points/100 on the NBA-equivalent scale.">?</span></span>
+        <span style="display:inline-flex;align-items:center;gap:8px;margin-left:auto">
+          <span id="projseg" class="seg" style="display:none" title="Overlay a forward, age-adjusted projection (off by default)">
+            <button data-proj="off" type="button" class="on">Descriptive</button>
+            <button data-proj="on"  type="button">+ Projection</button>
+          </span>
+          <span class="v" id="v_net"></span>
+        </span></div>
       <div id="c_net"></div>
+      <div class="callout" id="projcallout" style="display:none;border-left-color:var(--box)"></div>
     </div>
     <div class="grid" id="grid"></div>
+
+    <!-- ── PRODUCTION PROFILE (single-player only) ── -->
+    <div id="profile">
+      <div class="sectitle">Production profile <span style="font-weight:400;color:var(--faint)">· within-league percentiles, latest game-day</span></div>
+      <div class="profcols">
+        <div>
+          <div class="sectitle" style="margin-top:0">Offense</div>
+          <div id="off"></div>
+          <div class="sectitle">Defense</div>
+          <div id="def"></div>
+          <div class="legend" id="proflegend"></div>
+        </div>
+        <div>
+          <div class="sectitle" style="margin-top:0">Profile shape <span style="font-weight:400;color:var(--faint)">· fixed axis order</span></div>
+          <div class="radarwrap" id="radar"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PURE-vs-BOX EXPLAINER (box mode only) ── -->
+    <div id="pvb">
+      <div class="sectitle">Pure vs box — why the box prior reads lower
+        <span style="font-weight:400;color:var(--faint)">· per-factor retention</span></div>
+      <div class="netrow" id="netrow"></div>
+      <div style="display:flex;gap:14px;font-size:11px;color:var(--muted);margin-bottom:6px;flex-wrap:wrap">
+        <span><span class="swatch" style="background:var(--pure)"></span>pure RAPM</span>
+        <span><span class="swatch" style="background:var(--box)"></span>box prior</span>
+        <span><span class="swatch" style="background:var(--amp)"></span>translate amplifies (slope&gt;1)</span>
+      </div>
+      <div id="factors"></div>
+      <div class="callout" id="pvbcap"></div>
+      <div class="legend" id="pvblegend"></div>
+    </div>
+
+    <!-- ── DENSITY COMPARE sub-view (compare mode only) ── -->
+    <div id="density">
+      <div class="sectitle">True-talent densities
+        <span style="font-weight:400;color:var(--faint)">· N(net, se²) at each player's latest game-day</span></div>
+      <div id="densplot"></div>
+      <div class="legend">Each curve is the published <b>se_net</b> as a Gaussian: a thin-sample rookie is visibly <b>wide</b>,
+        an established star is <b>tight</b>. Overlapping curves make "we don't actually know who's better yet" obvious.
+        The 0-line marks league-average impact. Descriptive — no projection.</div>
+    </div>
   </div>
 
   <div class="empty" id="empty">Search for a player to see their daily 6-factor RAPM trajectory.</div>
+
+  <p class="foot">Descriptive — already-measured daily RAPM, never a projection. Off-seasons collapsed (game-day axis);
+    DataBallR scale; box mode degrades gracefully where a box sidecar is missing.</p>
 </div>
 
 <script>
 const FAC=[["oTS","oTS"],["oTOV","oTOV"],["oSC","oSC"],["dTS","dTS"],["dTOV","dTOV"],["dSC","dSC"]];
-const LC={nba:'#4aa8ff',gleague:'#2dd4bf',college:'#b27bff'};
+const TIP={
+  oTS:"Offensive true-shooting RAPM — points/100 from shot-making efficiency (NBA scale).",
+  oTOV:"Offensive turnover RAPM — ball-security value (fewer turnovers = positive).",
+  oSC:"Offensive second-chance RAPM — value from offensive rebounding / extra possessions.",
+  dTS:"Defensive true-shooting RAPM — suppressing opponent shot efficiency.",
+  dTOV:"Defensive turnover RAPM — forcing turnovers / ball pressure.",
+  dSC:"Defensive second-chance RAPM — limiting opponent offensive rebounds."};
+const FACK=["oTS","oTOV","oSC","dTS","dTOV","dSC"];
+const OFFF=["oTS","oTOV","oSC"], DEFF=["dTS","dTOV","dSC"];
+const LC={nba:'var(--nba)',gleague:'var(--gleague)',college:'var(--college)'};
 const LNAME={nba:'NBA',gleague:'G-League',college:'NCAA'};
 const q=document.getElementById('q'), drop=document.getElementById('drop');
 let INDEX=[], curOpts=[], active=-1, CHARTS=[], SER=null;
 
+// ── lazy-loaded, cached secondary data files ────────────────────────────────
+let QUANT=null, CONTR=null;
+function lazy(file, cache){ return cache.p || (cache.p = fetch(file).then(r=>r.ok?r.json():null).catch(()=>null)); }
+const _q={}, _c={};
+const getQuant = ()=>lazy('quantiles.json',_q).then(d=>QUANT=d);
+const getContr = ()=>lazy('box_contraction.json',_c).then(d=>CONTR=d);
+
+// ── forward-projection overlay (opt-in; fetched ONCE, cached) ─────────────────
+// projection_series.json: { meta:{model,kappa}, players:{ "<pid>":{ last_season,
+// anchor:[net,se], next:[season,net,se], yr3:[season,net,se] } } }. OFF by default.
+let PROJ=null; const _p={};
+const Z80=1.2816;                                  // 80% two-sided band half-width
+let PROJON=(localStorage.getItem('rapm_proj')==='on');
+const getProj = ()=>lazy('projection_series.json',_p).then(d=>PROJ=d);
+function projFor(){ return (PROJON && PROJ && PROJ.players && CURID && PROJ.players[CURID]) || null; }
+
 fetch('players.json').then(r=>r.json()).then(d=>{
   INDEX=d;
-  const picks=['LeBron James','Shai Gilgeous-Alexander','Nikola Jokic','Cooper Flagg','Victor Wembanyama','Jake LaRavia'];
-  const sg=document.getElementById('suggest');
-  sg.innerHTML='<span style="color:#566377;font-size:12px;align-self:center">Try:</span>';
-  picks.forEach(nm=>{const p=INDEX.find(x=>x.n===nm);if(!p)return;
-    const c=document.createElement('span');c.className='chip';c.textContent=nm;c.onclick=()=>load(p.id,nm);sg.appendChild(c);});
   const u=new URLSearchParams(location.search),pid=u.get('p'),nq=u.get('q');
   // Multi-player comparison overlay: ?p=id1,id2,... (2-4 players). One id -> normal single view.
   const ids=(pid||'').split(',').map(s=>s.trim()).filter(Boolean);
   if(ids.length>1){loadMulti(ids.slice(0,4));return;}
   let hit=pid?INDEX.find(x=>x.id===pid):(nq?INDEX.find(x=>x.n.toLowerCase()===nq.toLowerCase())||INDEX.find(x=>x.n.toLowerCase().includes(nq.toLowerCase())):null);
-  if(hit)load(hit.id,hit.n);
+  if(hit){load(hit.id,hit.n);return;}
+  // DEFAULT: open populated on Jayson Tatum so the home page is never empty.
+  load('1628369','Jayson Tatum');
 });
 
 q.addEventListener('input',()=>filt(q.value.trim()));
@@ -157,9 +235,10 @@ const MODEHINT={
   pure:'Pure RAPM — the prior-free six-factor decomp, calibrated to the public DataBallR ridge. One line per league.',
   prior:'Prior-informed RAPM — the same daily solve, with three factors (oSC, dTS, dTOV) shrunk toward a daily box-score prior. Shrinkage is strongest where lineup data is thin (rookies, early season) and fades as exposure grows. The default.',
   box:'Box prior — the daily, multi-league box-score skill estimate that informs the prior-informed solve. A real fitted curve (not a flat reference) with a confidence band, built from box stats across NCAA, G-League & NBA up to each day. All six factors are shown.'};
-let SERIES={}, MODE=(localStorage.getItem('rapm_mode')||'prior'), PNAME='';
+let SERIES={}, MODE=(localStorage.getItem('rapm_mode')||'prior'), PNAME='', CURID=null;
 function load(id,name){drop.style.display='none';q.value=name;history.replaceState(null,'','?p='+id);
-  {const pl=document.getElementById('profilelink');if(pl){pl.href='profile.html?p='+encodeURIComponent(id);pl.style.display='inline';}}
+  CURID=id; MULTI=null;
+  document.getElementById('density').style.display='none';
   const opt=u=>fetch(u).then(r=>r.ok?r.json():null).catch(()=>null);
   Promise.all([
     fetch('data/'+id+'.json').then(r=>r.json()),     // prior-informed (base; carries name)
@@ -168,14 +247,16 @@ function load(id,name){drop.style.display='none';q.value=name;history.replaceSta
   ]).then(([prior,pure,box])=>{
     PNAME=prior.name||name;
     SERIES={prior:prep(prior), pure:pure?prep(pure):null, box:box?prep(box):null};
+    RAW={prior, pure, box};
     show();
   });}
+let RAW={};
 
 function activeMode(){return SERIES[MODE]?MODE:'prior';}  // honor preference; fall back per-player without dropping it
 function setMode(m){
   if(!SERIES[m])return;                              // ignore unavailable mode (button disabled anyway)
   MODE=m; localStorage.setItem('rapm_mode',m);
-  syncSeg(); renderActive();
+  syncSeg(); renderActive(); renderPVB();
 }
 function syncSeg(){
   const am=activeMode();
@@ -186,6 +267,20 @@ function syncSeg(){
   document.getElementById('modehint').textContent=MODEHINT[am];
 }
 document.querySelectorAll('#modeseg button').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
+
+// ── projection toggle (opt-in forward overlay on the NET chart) ──────────────
+function syncProjSeg(){
+  document.querySelectorAll('#projseg button').forEach(b=>b.classList.toggle('on',(b.dataset.proj==='on')===PROJON));
+}
+function setProj(on){
+  if(PROJON===on)return;
+  PROJON=on; localStorage.setItem('rapm_proj',on?'on':'off');
+  syncProjSeg();
+  if(MULTI)return;                                 // projection overlay is single-player only
+  if(on) getProj().then(()=>{renderActive();renderProjCallout();});
+  else   {renderActive();renderProjCallout();}
+}
+document.querySelectorAll('#projseg button').forEach(b=>b.addEventListener('click',()=>setProj(b.dataset.proj==='on')));
 
 // collapse off-seasons: one row per date, sorted; d may be null (mode unavailable) -> null series
 function prep(d){
@@ -200,29 +295,42 @@ function prep(d){
   return Object.values(byDate).sort((a,b)=>a.date<b.date?-1:1);
 }
 
-const NS='http://www.w3.org/2000/svg';
-function el(t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e;}
+const el=RC.el;
+// resolve a CSS var to a concrete color for raw SVG attributes (lines/fills the helpers don't take vars for)
+function cssvar(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim()||'#888';}
+function lgColor(lg){return cssvar(lg==='nba'?'--nba':lg==='gleague'?'--gleague':lg==='college'?'--college':'--accent');}
 
-function Chart(mount,ser,key){
+function Chart(mount,ser,key,proj){
   const W=mount.clientWidth||320, H=mount===document.getElementById('c_net')?190:150;
   const padL=30,padR=7,padT=8,padB=15, pw=W-padL-padR, ph=H-padT-padB;
   const n=ser.length;
   const v   = ser.map(s=>s[key]);
   const se  = ser.map(s=>s[key+'_se']);
   let pool=v.filter(x=>x!=null);
-  let lo=Math.min(...pool), hi=Math.max(...pool), c=(lo+hi)/2, half=Math.max((hi-lo)/2*1.28,0.55);
+  // forward projection (net only): 3 points anchor->next->yr3, each [net,se]; widen y-domain so the
+  // dashed segment + 80% band fit, and reserve a right-hand slice (~28%) of the plot for the future.
+  let PP=null;
+  if(proj){
+    PP=[[proj.anchor[0],proj.anchor[1]],[proj.next[1],proj.next[2]],[proj.yr3[1],proj.yr3[2]]];
+    PP.forEach(p=>{pool.push(p[0]+Z80*p[1]);pool.push(p[0]-Z80*p[1]);});
+  }
+  let lo=Math.min(...pool), hi=Math.max(...pool), c=(lo+hi)/2, half=Math.max((hi-lo)/2*1.06,0.15);
   const ymin=c-half, ymax=c+half;
-  const X=i=>padL+(n>1?i/(n-1):.5)*pw;
+  const histW=PP?pw*0.72:pw;                          // history occupies the left; future the right
+  const X=i=>padL+(n>1?i/(n-1):.5)*histW;
   const Y=val=>padT+ph-(Math.max(ymin,Math.min(ymax,val))-ymin)/(ymax-ymin)*ph;
+  // forward x: anchor sits at the last historical x; next/yr3 march into the reserved right slice.
+  const projGap=PP?(W-padR-(padL+histW)):0;           // px available to the right of history
+  const XP=k=>padL+histW+projGap*(k/(PP.length-1||1)); // k=0 anchor (=last hist x via projGap*0) … last=edge
   const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,preserveAspectRatio:'none'});
   [0,.5,1].forEach(f=>{const yv=ymin+(ymax-ymin)*f, y=Y(yv);
     svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'var(--grid)','stroke-width':1}));
-    const t=el('text',{x:padL-4,y:y+3,'font-size':9,fill:'#5a6a7e','text-anchor':'end'});t.textContent=(yv>=0?'+':'')+yv.toFixed(1);svg.appendChild(t);});
-  if(ymin<0&&ymax>0){const y=Y(0);svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'#2b3a51','stroke-width':1}));}
+    const t=el('text',{x:padL-4,y:y+3,'font-size':9,fill:'var(--faint)','text-anchor':'end'});t.textContent=(yv>=0?'+':'')+yv.toFixed(1);svg.appendChild(t);});
+  if(ymin<0&&ymax>0){const y=Y(0);svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'var(--zero)','stroke-width':1}));}
   let py=ser[0].date.slice(0,4);
   for(let i=1;i<n;i++){const yr=ser[i].date.slice(0,4);if(yr!==py){
-    svg.appendChild(el('line',{x1:X(i),y1:padT,x2:X(i),y2:padT+ph,stroke:'#121b27','stroke-width':1}));
-    const t=el('text',{x:X(i),y:H-4,'font-size':8.5,fill:'#566377','text-anchor':'middle'});t.textContent="’"+yr.slice(2);svg.appendChild(t);py=yr;}}
+    svg.appendChild(el('line',{x1:X(i),y1:padT,x2:X(i),y2:padT+ph,stroke:'var(--line-2)','stroke-width':1}));
+    const t=el('text',{x:X(i),y:H-4,'font-size':8.5,fill:'var(--faint)','text-anchor':'middle'});t.textContent="’"+yr.slice(2);svg.appendChild(t);py=yr;}}
   // CI band (clamped, faint): the de-shrunk daily SE; the box prior now carries a real band too
   {let up='',dn='';
     for(let i=0;i<n;i++)up+=`${X(i).toFixed(1)},${Y(v[i]+1.96*se[i]).toFixed(1)} `;
@@ -232,7 +340,25 @@ function Chart(mount,ser,key){
   [...new Set(ser.map(s=>s.lg))].forEach(lg=>{
     const idx=[];for(let i=0;i<n;i++)if(ser[i].lg===lg)idx.push(i);
     if(idx.length>1)svg.appendChild(el('polyline',{points:idx.map(i=>`${X(i).toFixed(1)},${Y(v[i]).toFixed(1)}`).join(' '),
-      fill:'none',stroke:LC[lg]||'#888','stroke-width':1.6,'stroke-linejoin':'round','stroke-linecap':'round'}));});
+      fill:'none',stroke:lgColor(lg),'stroke-width':1.6,'stroke-linejoin':'round','stroke-linecap':'round'}));});
+  // ── FORWARD projection overlay (net only, opt-in, dashed = NOT measured) ──────
+  if(PP){
+    // anchor x = last historical point's x so the dashed segment grows out of the live curve
+    const lastX=X(n-1), px=k=>k===0?lastX:XP(k);
+    // widening 80% band (net ± 1.2816·se), grown from the anchor outward
+    let up='',dn='';
+    for(let k=0;k<PP.length;k++)up+=`${px(k).toFixed(1)},${Y(PP[k][0]+Z80*PP[k][1]).toFixed(1)} `;
+    for(let k=PP.length-1;k>=0;k--)dn+=`${px(k).toFixed(1)},${Y(PP[k][0]-Z80*PP[k][1]).toFixed(1)} `;
+    svg.appendChild(el('polygon',{class:'projband',points:up+dn}));
+    // vertical separator at the live/forward seam
+    svg.appendChild(el('line',{class:'projsep',x1:lastX,y1:padT,x2:lastX,y2:padT+ph}));
+    // dashed forward centerline from the last live point through next & yr3
+    svg.appendChild(el('polyline',{class:'projline',
+      points:PP.map((p,k)=>`${px(k).toFixed(1)},${Y(p[0]).toFixed(1)}`).join(' ')}));
+    PP.forEach((p,k)=>{if(k>0)svg.appendChild(el('circle',{class:'projdot',cx:px(k),cy:Y(p[0]),r:2.6}));});
+    // forward-year ticks
+    [proj.next[0],proj.yr3[0]].forEach((yr,k)=>{const t=el('text',{x:px(k+1),y:H-4,'font-size':8.5,fill:'var(--box)','text-anchor':'middle'});t.textContent="’"+String(yr).slice(2);svg.appendChild(t);});
+  }
   const cross=el('line',{class:'crosshair',x1:0,y1:padT,x2:0,y2:padT+ph,visibility:'hidden'});svg.appendChild(cross);
   const dot=el('circle',{class:'hdot',r:3.2,visibility:'hidden'});svg.appendChild(dot);
   const ov=el('rect',{x:0,y:0,width:W,height:H,fill:'transparent'});svg.appendChild(ov);
@@ -240,7 +366,7 @@ function Chart(mount,ser,key){
   const obj={key,n,W,padL,pw,
     setHover(i,line){if(i<0||i>=n){cross.setAttribute('visibility','hidden');dot.setAttribute('visibility','hidden');return;}
       cross.setAttribute('x1',X(i));cross.setAttribute('x2',X(i));cross.setAttribute('visibility',line?'visible':'hidden');
-      dot.setAttribute('cx',X(i));dot.setAttribute('cy',Y(v[i]));dot.setAttribute('fill',LC[ser[i].lg]||'#888');dot.setAttribute('visibility','visible');},
+      dot.setAttribute('cx',X(i));dot.setAttribute('cy',Y(v[i]));dot.setAttribute('fill',lgColor(ser[i].lg));dot.setAttribute('visibility','visible');},
     valAt(i){return{v:v[i],se:se[i]};}};
   ov.addEventListener('pointermove',e=>{const r=svg.getBoundingClientRect();
     const sx=(e.clientX-r.left)/r.width*W; let i=Math.round((sx-padL)/pw*(n-1));
@@ -255,8 +381,8 @@ function setHoverAll(i,line){
   if(i<0||!SER||!SER[i]){ro.innerHTML='';document.getElementById('v_net').innerHTML='';
     FAC.forEach(([f])=>{const e=document.getElementById('v_'+f);if(e)e.innerHTML='';});return;}
   const s=SER[i];
-  ro.innerHTML=`${line?'':'<span style="color:#566377">latest&nbsp;</span>'}<b>${s.date}</b> · <span style="color:${LC[s.lg]}">${LNAME[s.lg]}</span>`;
-  const fmt=(val,sd)=>val==null?'—':`<b>${val>=0?'+':''}${val.toFixed(2)}</b> <span style="color:#566377">±${(1.96*sd).toFixed(2)}</span>`;
+  ro.innerHTML=`${line?'':'<span style="color:var(--faint)">latest&nbsp;</span>'}<b>${s.date}</b> · <span style="color:${LC[s.lg]}">${LNAME[s.lg]}</span>`;
+  const fmt=(val,sd)=>val==null?'—':`<b>${val>=0?'+':''}${val.toFixed(2)}</b> <span style="color:var(--faint)">±${(1.96*sd).toFixed(2)}</span>`;
   document.getElementById('v_net').innerHTML=fmt(s.net,s.net_se);
   FAC.forEach(([f])=>{const e=document.getElementById('v_'+f);if(e)e.innerHTML=fmt(s[f],s[f+'_se']);});
 }
@@ -266,41 +392,225 @@ function show(){
   document.getElementById('player').style.display='block';
   document.getElementById('pname').textContent=PNAME;
   document.getElementById('modeseg').style.display='inline-flex';
+  document.getElementById('cmptray').style.display='flex';
   // build the 6-factor grid cells once
   const grid=document.getElementById('grid');grid.innerHTML='';
   FAC.forEach(([f,t])=>{const cell=document.createElement('div');cell.className='cell';
-    cell.innerHTML=`<div class="ctitle"><span>${t}</span><span class="v" id="v_${f}"></span></div><div id="c_${f}"></div>`;
+    cell.innerHTML=`<div class="ctitle"><span>${t} <span class="help" data-tip="${TIP[f]}">?</span></span><span class="v" id="v_${f}"></span></div><div id="c_${f}"></div>`;
     grid.appendChild(cell);});
-  syncSeg(); renderActive();
+  document.getElementById('projseg').style.display='inline-flex';
+  syncProjSeg();
+  syncSeg();
+  // if the toggle is already ON (persisted), load the projection data BEFORE the first paint
+  // so the overlay appears immediately; otherwise paint now and lazily attach the callout.
+  if(PROJON){ getProj().then(()=>{renderActive();renderProjCallout();}); }
+  else { renderActive(); renderProjCallout(); }
+  renderProfile();   // production profile (single-player, latest day)
+  renderPVB();       // pure-vs-box explainer (shown only in box mode)
+  syncCmpList();
   window.scrollTo({top:90,behavior:'smooth'});
+}
+// labelled FORWARD callout under the net chart (graceful: shows even when the dashed overlay is off)
+function renderProjCallout(){
+  const box=document.getElementById('projcallout');
+  if(MULTI){box.style.display='none';return;}
+  if(!PROJON){box.style.display='none';return;}      // only when the user opts in
+  const p=PROJ&&PROJ.players&&CURID&&PROJ.players[CURID];
+  if(!p){
+    box.style.display='block';
+    box.innerHTML='<b>Forward projection</b> — no projection available for this player '+
+      '(projections cover NBA players carried forward from their most recent season).';
+    return;
+  }
+  const f=(x)=>(x>=0?'+':'')+x.toFixed(2);
+  const nn=p.next[1], ns=p.next[2], lo=nn-Z80*ns, hi=nn+Z80*ns;
+  const y3=p.yr3[1], y3s=p.yr3[2], y3lo=y3-Z80*y3s, y3hi=y3+Z80*y3s;
+  box.style.display='block';
+  box.innerHTML=
+    `<b>FORWARD · projected</b> (not measured) — `+
+    `<b>${p.next[0]-1}-${String(p.next[0]).slice(2)}</b> net <b>${f(nn)}</b> `+
+    `<span style="color:var(--muted)">(80% ${f(lo)}…${f(hi)})</span>; `+
+    `<b>${p.yr3[0]-1}-${String(p.yr3[0]).slice(2)}</b> net <b>${f(y3)}</b> `+
+    `<span style="color:var(--muted)">(80% ${f(y3lo)}…${f(y3hi)})</span>. `+
+    `<span style="color:var(--faint)">Carry-forward + aging; bands widen with the horizon. `+
+    `The rest of this page is descriptive (already-measured).</span>`;
 }
 function renderActive(){
   SER=SERIES[activeMode()]; const last=SER[SER.length-1];
   const lgset=[...new Set(SER.map(s=>s.lg))];
   const badges=['nba','gleague','college'].filter(l=>lgset.includes(l)).map(l=>`<span style="color:${LC[l]};font-weight:700">${LNAME[l]}</span>`).join(' · ');
   document.getElementById('pmeta').innerHTML=`${SER[0].date} – ${last.date} · ${badges}`;
+  const proj=projFor();                              // null unless toggle ON + pid has a projection
   requestAnimationFrame(()=>{
-    CHARTS=[Chart(document.getElementById('c_net'),SER,'net')];
+    CHARTS=[Chart(document.getElementById('c_net'),SER,'net',proj)];
     FAC.forEach(([f])=>CHARTS.push(Chart(document.getElementById('c_'+f),SER,f)));
     setHoverAll(SER.length-1,false);                 // default readout = most recent day
   });
 }
 window.addEventListener('resize',()=>{if(SER||MULTI)show_rerender();});
-let rt;function show_rerender(){clearTimeout(rt);rt=setTimeout(()=>{if(MULTI)renderMulti();else if(SER)renderActive();},150);}
+let rt;function show_rerender(){clearTimeout(rt);rt=setTimeout(()=>{if(MULTI)renderMulti();else if(SER){renderActive();renderProfile();}},150);}
 
-// ===== Multi-player comparison overlay (Step 4) =====================================
+// ===== Production profile (ported from profile.html, uses RC helpers) ================
+function renderProfile(){
+  const box=document.getElementById('profile');
+  if(MULTI){box.style.display='none';return;}
+  box.style.display='block';
+  // use the prior-informed series' latest day for percentiles
+  const ser=SERIES.prior; if(!ser){box.style.display='none';return;}
+  const last=ser[ser.length-1], lg=last.lg;
+  getQuant().then(()=>{
+    const lq=QUANT&&QUANT.leagues&&QUANT.leagues[lg];
+    if(!lq){
+      document.getElementById('off').innerHTML='';document.getElementById('def').innerHTML='';
+      document.getElementById('radar').innerHTML='';
+      document.getElementById('proflegend').innerHTML=`<span style="color:var(--box)">No quantile reference for ${LNAME[lg]||lg}.</span> Percentile bars hidden for this league.`;
+      return;
+    }
+    const accent=lgColor(lg);
+    renderBars(document.getElementById('off'),OFFF,last,lq.q,lg);
+    renderBars(document.getElementById('def'),DEFF,last,lq.q,lg);
+    const pcts={}; FACK.forEach(f=>pcts[f]=RC.pctile(lq.q[f],last[f]));
+    RC.radar(document.getElementById('radar'),FACK,pcts,accent);
+    document.getElementById('proflegend').innerHTML=`Within-${LNAME[lg]} percentile (pool n=${lq.n}) on ${last.date}. The value and percentile are always shown as text, never hue alone.`;
+  });
+}
+function renderBars(mount,factors,row,q,lg){
+  mount.innerHTML='';
+  factors.forEach(f=>{
+    const v=row[f], pct=RC.pctile(q[f],v);
+    const r=document.createElement('div'); r.className='barrow';
+    const lab=document.createElement('span'); lab.className='lab'; lab.textContent=f;
+    const val=document.createElement('span'); val.className='val'; val.textContent=(v>=0?'+':'')+v.toFixed(2);
+    const wrap=document.createElement('div'); wrap.className='barwrap'; wrap.appendChild(RC.pctBar(v,pct,RC.redGreen(pct),f+' '+LNAME[lg]));
+    const pl=document.createElement('span'); pl.className='pctlab'; pl.textContent=Math.round(pct*100)+'%';
+    r.appendChild(lab);r.appendChild(val);r.appendChild(wrap);r.appendChild(pl);
+    mount.appendChild(r);
+  });
+}
+// ===== Pure-vs-box explainer (ported from pvb.html, box mode only) ==================
+// horizontal pure/box paired bars centered at 0, shared symmetric scale
+function pairBar(pure,box){
+  const W=170,H=34,mid=W/2;
+  const mag=Math.max(0.55,Math.abs(pure),Math.abs(box))*1.15;
+  const x=v=>mid+(v/mag)*(W/2-2);
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,width:'100%',height:H,role:'img',
+    'aria-label':`pure ${pure.toFixed(2)}, box ${box.toFixed(2)}`});
+  svg.appendChild(el('line',{x1:mid,y1:0,x2:mid,y2:H,stroke:'var(--zero)','stroke-width':1}));
+  [[pure,'var(--pure)',6],[box,'var(--box)',19]].forEach(([v,c,y])=>{
+    const xv=x(v),x0=Math.min(mid,xv),w=Math.abs(xv-mid);
+    svg.appendChild(el('rect',{x:x0,y:y,width:Math.max(w,1.5),height:9,fill:c,rx:2}));
+  });
+  return svg;
+}
+// decomposition bar: ridge_R (0..1 shrink) then translate_slope (may exceed 1 = amplify)
+function decoBar(c){
+  const W=210,H=34,unit=W*0.46;
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,width:'100%',height:H,role:'img',
+    'aria-label':`box-mapping skill ridge_R ${c.ridge_R}; translate slope ${c.translate_slope}`});
+  const one=unit; svg.appendChild(el('line',{x1:one,y1:0,x2:one,y2:H,stroke:'var(--zero)','stroke-width':1,'stroke-dasharray':'2 2'}));
+  svg.appendChild(el('rect',{x:0,y:5,width:Math.max(c.ridge_R*unit,2),height:9,fill:'var(--muted)',rx:2}));
+  const t1=el('text',{x:2,y:3,'font-size':9,fill:'#aebccd'}); t1.textContent='R='+c.ridge_R; svg.appendChild(t1);
+  const amp=c.translate_slope>1.0001;
+  svg.appendChild(el('rect',{x:0,y:19,width:Math.max(c.translate_slope*unit,2),height:9,fill:amp?'var(--amp)':'var(--muted)',rx:2}));
+  const t2=el('text',{x:2,y:33,'font-size':9,fill:amp?'#7fe9d8':'#aebccd'});
+  t2.textContent=(amp?'↑ ':'')+'tr='+c.translate_slope; svg.appendChild(t2);
+  return svg;
+}
+function renderPVB(){
+  const box=document.getElementById('pvb');
+  if(MULTI||activeMode()!=='box'){box.style.display='none';return;}
+  const pure=RAW.pure, bx=RAW.box;
+  if(!pure||!bx){
+    box.style.display='block';
+    document.getElementById('netrow').innerHTML=
+      '<span class="legend" style="color:var(--box)">Pure-vs-box unavailable — '+
+      (!pure?'no pure series':'')+(!pure&&!bx?'; ':'')+(!bx?'no box series (box prior is NBA-only / missing on the 6 corrupt NBA seasons)':'')+'.</span>';
+    document.getElementById('factors').innerHTML='';
+    document.getElementById('pvbcap').innerHTML=''; document.getElementById('pvblegend').innerHTML='';
+    return;
+  }
+  box.style.display='block';
+  getContr().then(()=>{
+    const ip=pure.d.length-1, ib=bx.d.length-1, lg=pure.lg[ip];
+    const pnet=FACK.reduce((s,f)=>s+pure[f][ip],0), bnet=FACK.reduce((s,f)=>s+bx[f][ib],0);
+    document.getElementById('netrow').innerHTML=
+      `<div class="kpi"><div class="k">pure net</div><div class="v" style="color:var(--pure)">${pnet>=0?'+':''}${pnet.toFixed(2)}</div></div>`+
+      `<div class="kpi"><div class="k">box net</div><div class="v" style="color:var(--box)">${bnet>=0?'+':''}${bnet.toFixed(2)}</div></div>`+
+      `<div class="kpi"><div class="k">compression Δ</div><div class="v">${(pnet-bnet>=0?'−':'+')}${Math.abs(pnet-bnet).toFixed(2)}</div></div>`;
+    const C=(CONTR&&(CONTR[lg]||CONTR.nba));
+    const mount=document.getElementById('factors'); mount.innerHTML='';
+    if(!C){document.getElementById('factors').innerHTML='<span class="legend">No retention decomposition for this league.</span>';
+      document.getElementById('pvbcap').innerHTML='';document.getElementById('pvblegend').innerHTML='';return;}
+    const head=document.createElement('div'); head.className='frow';
+    head.innerHTML='<span class="flab" style="color:var(--muted);font-weight:600">factor</span>'+
+      '<span class="pair" style="font-size:10.5px;color:var(--muted)">pure vs box</span>'+
+      '<span class="deco" style="font-size:10.5px;color:var(--muted)">retention: ridge_R · translate</span>'+
+      '<span class="delta" style="color:var(--muted)">Δ</span>';
+    mount.appendChild(head);
+    FACK.forEach(f=>{
+      const dp=pure[f][ip], db=bx[f][ib], delta=dp-db, c=C[f];
+      const row=document.createElement('div'); row.className='frow';
+      const lab=document.createElement('span'); lab.className='flab'; lab.textContent=f;
+      const pair=document.createElement('div'); pair.className='pair'; pair.appendChild(pairBar(dp,db));
+      const deco=document.createElement('div'); deco.className='deco'; deco.appendChild(decoBar(c));
+      const del=document.createElement('span'); del.className='delta'; del.textContent=(delta>=0?'−':'+')+Math.abs(delta).toFixed(2);
+      row.appendChild(lab);row.appendChild(pair);row.appendChild(deco);row.appendChild(del);
+      mount.appendChild(row);
+    });
+    const dSC=C.dSC.ridge_R, oTS=C.oTS.ridge_R;
+    let cap;
+    if(lg==='nba'){
+      cap=`For an established NBA player the compression is essentially the <b>box-mapping skill (ridge_R) alone</b> — `+
+          `the cross-league translate is identity (1.0). ridge_R ranges from <b>${oTS}</b> (oTS) down to <b>${dSC}</b> (dSC): `+
+          `defense compresses most because the box prior has no tracking data to see rim protection. This is intentional `+
+          `conservatism, not your pure RAPM.`;
+    } else {
+      const amped=FACK.filter(f=>C[f].translate_slope>1.0001);
+      cap=`For a ${LNAME[lg]} player, retention is box-mapping skill <b>and</b> a cross-league translate. ridge_R is below 1 `+
+          `for every factor (oTS ${oTS} … dSC ${dSC}), but the translate step <b>amplifies</b> `+
+          (amped.length?`${amped.map(f=>f+' '+C[f].translate_slope).join(', ')} `:'')+`— it does not uniformly contract. `+
+          `Plus a per-player early-career reliability ramp (not shown numerically). The box prior is intentionally conservative.`;
+    }
+    document.getElementById('pvbcap').innerHTML=cap;
+    document.getElementById('pvblegend').innerHTML=
+      `The box prior intentionally shrinks toward league average where box stats can't see your impact; it is <b>not</b> your pure RAPM. `+
+      `The gap is per-factor (no single uniform retention number), and the cross-league translate can amplify as well as shrink.`;
+  });
+}
+
+// ===== Add-to-compare tray (single-player) ==========================================
+const OKABE=['#0072B2','#E69F00','#009E73','#CC79A7'];
+let CMP=[];   // [{id,name}] staged for comparison
+function syncCmpList(){
+  const wrap=document.getElementById('cmplist'); wrap.innerHTML='';
+  CMP.forEach((c,k)=>{const sp=document.createElement('span'); sp.className='cmpchip';
+    sp.innerHTML=`<span class="sw" style="background:${OKABE[k%OKABE.length]}"></span><span>${c.name}</span><span class="x" title="remove">×</span>`;
+    sp.querySelector('.x').onclick=()=>{CMP=CMP.filter(x=>x.id!==c.id);syncCmpList();};
+    wrap.appendChild(sp);});
+  document.getElementById('cmpgo').disabled = CMP.length<2;
+}
+document.getElementById('cmpadd').addEventListener('click',()=>{
+  if(!CURID||CMP.find(c=>c.id===CURID)||CMP.length>=4)return;
+  CMP.push({id:CURID,name:PNAME}); syncCmpList();
+});
+document.getElementById('cmpgo').addEventListener('click',()=>{
+  if(CMP.length<2)return;
+  loadMulti(CMP.map(c=>c.id));
+});
+
+// ===== Multi-player comparison overlay ==============================================
 // ?p=id1,id2,...  overlays 2-4 players' prior-informed series on net + each factor. Distinct
 // CVD-safe (Okabe-Ito) colors AND a legend label per player — color is never the sole encoder.
-// Zero new data: reuses the existing prior sidecars + prep(). Descriptive only, no projection.
-const OKABE=['#0072B2','#E69F00','#009E73','#CC79A7'];   // CVD-distinct, labeled
-let MULTI=null;   // [{id,name,ser}], MAXES set after load
+let MULTI=null;   // [{id,name,ser,net,se}]
 function loadMulti(ids){
   Promise.all(ids.map(id=>fetch('data/'+id+'.json').then(r=>r.ok?r.json():null).catch(()=>null)))
     .then(arr=>{
-      MULTI=arr.map((d,k)=>d?{id:ids[k],name:d.name||ids[k],ser:prep(d),color:OKABE[k%OKABE.length]}:null)
+      MULTI=arr.map((d,k)=>d?{id:ids[k],name:d.name||ids[k],ser:prep(d),color:OKABE[k%OKABE.length],
+                              net:d.net[d.net.length-1],se:d.net_se[d.net_se.length-1]||0.3}:null)
                .filter(Boolean);
-      if(MULTI.length<2){if(MULTI.length===1)load(MULTI[0].id,MULTI[0].name);return;}
+      if(MULTI.length<2){if(MULTI.length===1){const m=MULTI[0];MULTI=null;load(m.id,m.name);}return;}
       history.replaceState(null,'','?p='+MULTI.map(m=>m.id).join(','));
+      CMP=MULTI.map(m=>({id:m.id,name:m.name}));
       showMulti();
     });
 }
@@ -308,20 +618,25 @@ function showMulti(){
   document.getElementById('empty').style.display='none';
   document.getElementById('player').style.display='block';
   document.getElementById('modeseg').style.display='none';
-  document.getElementById('modehint').textContent='Comparison overlay — prior-informed net + 6 factors for '+MULTI.length+' players. Each player has a distinct color and legend label.';
+  document.getElementById('projseg').style.display='none';
+  document.getElementById('projcallout').style.display='none';
+  document.getElementById('cmptray').style.display='none';
+  document.getElementById('profile').style.display='none';
+  document.getElementById('pvb').style.display='none';
+  document.getElementById('modehint').textContent='Comparison overlay — prior-informed net + 6 factors for '+MULTI.length+' players. Each player has a distinct color and legend label. The density panel below overlays their true-talent uncertainty.';
   document.getElementById('pname').textContent='Comparison';
-  document.getElementById('pmeta').innerHTML=MULTI.map(m=>`<span style="color:${m.color};font-weight:700">${m.name}</span>`).join(' · ');
+  document.getElementById('pmeta').innerHTML=MULTI.map(m=>`<a href="index.html?p=${m.id}" style="color:${m.color};font-weight:700">${m.name}</a>`).join(' · ');
   document.getElementById('readout').innerHTML='';
   const grid=document.getElementById('grid');grid.innerHTML='';
   FAC.forEach(([f,t])=>{const cell=document.createElement('div');cell.className='cell';
-    cell.innerHTML=`<div class="ctitle"><span>${t}</span><span class="v" id="vm_${f}"></span></div><div id="cm_${f}"></div>`;
+    cell.innerHTML=`<div class="ctitle"><span>${t} <span class="help" data-tip="${TIP[f]}">?</span></span><span class="v" id="vm_${f}"></span></div><div id="cm_${f}"></div>`;
     grid.appendChild(cell);});
   renderMulti();
+  renderDensity();
   window.scrollTo({top:90,behavior:'smooth'});
 }
 let MCHARTS=[], MDATES=[];
 function renderMulti(){
-  // unified sorted date axis across all players
   const set=new Set();MULTI.forEach(m=>m.ser.forEach(s=>set.add(s.date)));
   MDATES=[...set].sort();
   MULTI.forEach(m=>{m.map={};m.ser.forEach(s=>m.map[s.date]=s);});
@@ -336,41 +651,75 @@ function ChartMulti(mount,key){
   const padL=30,padR=7,padT=8,padB=15, pw=W-padL-padR, ph=H-padT-padB;
   const n=MDATES.length;
   let pool=[];MULTI.forEach(m=>MDATES.forEach(d=>{const s=m.map[d];if(s&&s[key]!=null)pool.push(s[key]);}));
-  let lo=Math.min(...pool), hi=Math.max(...pool), c=(lo+hi)/2, half=Math.max((hi-lo)/2*1.28,0.55);
+  let lo=Math.min(...pool), hi=Math.max(...pool), c=(lo+hi)/2, half=Math.max((hi-lo)/2*1.06,0.15);
   const ymin=c-half, ymax=c+half;
   const X=i=>padL+(n>1?i/(n-1):.5)*pw;
   const Y=val=>padT+ph-(Math.max(ymin,Math.min(ymax,val))-ymin)/(ymax-ymin)*ph;
   const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,preserveAspectRatio:'none'});
   [0,.5,1].forEach(f=>{const yv=ymin+(ymax-ymin)*f, y=Y(yv);
     svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'var(--grid)','stroke-width':1}));
-    const t=el('text',{x:padL-4,y:y+3,'font-size':9,fill:'#5a6a7e','text-anchor':'end'});t.textContent=(yv>=0?'+':'')+yv.toFixed(1);svg.appendChild(t);});
-  if(ymin<0&&ymax>0){const y=Y(0);svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'#2b3a51','stroke-width':1}));}
+    const t=el('text',{x:padL-4,y:y+3,'font-size':9,fill:'var(--faint)','text-anchor':'end'});t.textContent=(yv>=0?'+':'')+yv.toFixed(1);svg.appendChild(t);});
+  if(ymin<0&&ymax>0){const y=Y(0);svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'var(--zero)','stroke-width':1}));}
   let py=MDATES[0].slice(0,4);
   for(let i=1;i<n;i++){const yr=MDATES[i].slice(0,4);if(yr!==py){
-    svg.appendChild(el('line',{x1:X(i),y1:padT,x2:X(i),y2:padT+ph,stroke:'#121b27','stroke-width':1}));
-    const t=el('text',{x:X(i),y:H-4,'font-size':8.5,fill:'#566377','text-anchor':'middle'});t.textContent="’"+yr.slice(2);svg.appendChild(t);py=yr;}}
-  // one polyline per player, broken across gaps (missing dates)
-  MULTI.forEach(m=>{let seg=[];const flush=()=>{if(seg.length>1)svg.appendChild(el('polyline',{points:seg.join(' '),fill:'none',stroke:m.color,'stroke-width':1.6,'stroke-linejoin':'round','stroke-linecap':'round'}));seg=[];};
-    for(let i=0;i<n;i++){const s=m.map[MDATES[i]];if(s&&s[key]!=null)seg.push(`${X(i).toFixed(1)},${Y(s[key]).toFixed(1)}`);else flush();}flush();});
+    svg.appendChild(el('line',{x1:X(i),y1:padT,x2:X(i),y2:padT+ph,stroke:'var(--line-2)','stroke-width':1}));
+    const t=el('text',{x:X(i),y:H-4,'font-size':8.5,fill:'var(--faint)','text-anchor':'middle'});t.textContent="’"+yr.slice(2);svg.appendChild(t);py=yr;}}
+  // Draw each player's OWN consecutive points (break only on a league change). Players are
+  // downsampled independently, so their absolute dates rarely align — iterating the union and
+  // flushing on every interleaved date shattered each line into invisible 1-point segments.
+  // Connecting a player's own points (skipping union indices another player owns) keeps it whole.
+  MULTI.forEach(m=>{let seg=[],lastLg=null;
+    const flush=()=>{if(seg.length>1)svg.appendChild(el('polyline',{points:seg.join(' '),fill:'none',stroke:m.color,'stroke-width':1.6,'stroke-linejoin':'round','stroke-linecap':'round'}));seg=[];};
+    for(let i=0;i<n;i++){const s=m.map[MDATES[i]];if(!s||s[key]==null)continue;
+      if(lastLg!==null&&s.lg!==lastLg)flush();
+      seg.push(`${X(i).toFixed(1)},${Y(s[key]).toFixed(1)}`);lastLg=s.lg;}
+    flush();});
   const cross=el('line',{class:'crosshair',x1:0,y1:padT,x2:0,y2:padT+ph,visibility:'hidden'});svg.appendChild(cross);
   const dots=MULTI.map(()=>{const c=el('circle',{class:'hdot',r:3.2,visibility:'hidden'});svg.appendChild(c);return c;});
   const ov=el('rect',{x:0,y:0,width:W,height:H,fill:'transparent'});svg.appendChild(ov);
   mount.innerHTML='';mount.appendChild(svg);
-  const obj={key,n,setHover(i,line){if(i<0||i>=n){cross.setAttribute('visibility','hidden');dots.forEach(d=>d.setAttribute('visibility','hidden'));return;}
-    cross.setAttribute('x1',X(i));cross.setAttribute('x2',X(i));cross.setAttribute('visibility',line?'visible':'hidden');
-    MULTI.forEach((m,k)=>{const s=m.map[MDATES[i]];if(s&&s[key]!=null){dots[k].setAttribute('cx',X(i));dots[k].setAttribute('cy',Y(s[key]));dots[k].setAttribute('fill',m.color);dots[k].setAttribute('visibility','visible');}else dots[k].setAttribute('visibility','hidden');});}};
+  // each player's last union-index with a value for this key (the default "latest" marker)
+  const lastIdx=MULTI.map(m=>{for(let i=n-1;i>=0;i--){const s=m.map[MDATES[i]];if(s&&s[key]!=null)return i;}return -1;});
+  const showDot=(k,i)=>{const s=m_at(k,i);if(s&&s[key]!=null){dots[k].setAttribute('cx',X(i));dots[k].setAttribute('cy',Y(s[key]));dots[k].setAttribute('fill',MULTI[k].color);dots[k].setAttribute('visibility','visible');}else dots[k].setAttribute('visibility','hidden');};
+  const m_at=(k,i)=>MULTI[k].map[MDATES[i]];
+  const obj={key,n,setHover(i,line){
+    if(line){
+      if(i<0||i>=n){cross.setAttribute('visibility','hidden');dots.forEach(d=>d.setAttribute('visibility','hidden'));return;}
+      cross.setAttribute('x1',X(i));cross.setAttribute('x2',X(i));cross.setAttribute('visibility','visible');
+      MULTI.forEach((m,k)=>showDot(k,i));
+    }else{                                    // default: each player's OWN latest point (not one shared date)
+      cross.setAttribute('visibility','hidden');
+      MULTI.forEach((m,k)=>{lastIdx[k]<0?dots[k].setAttribute('visibility','hidden'):showDot(k,lastIdx[k]);});
+    }}};
   ov.addEventListener('pointermove',e=>{const r=svg.getBoundingClientRect();const sx=(e.clientX-r.left)/r.width*W;let i=Math.round((sx-padL)/pw*(n-1));i=Math.max(0,Math.min(n-1,i));setHoverMulti(i,true);});
   ov.addEventListener('pointerleave',()=>setHoverMulti(n-1,false));
   return obj;
 }
 function setHoverMulti(i,line){
   MCHARTS.forEach(c=>c.setHover(i,line));
-  const date=MDATES[i];
-  document.getElementById('readout').innerHTML=`${line?'':'<span style="color:#566377">latest&nbsp;</span>'}<b>${date}</b>`;
-  const put=(id,key)=>{const e=document.getElementById(id);if(!e)return;
-    e.innerHTML=MULTI.map(m=>{const s=m.map[date];const v=s?s[key]:null;
+  const lastVal=(m,key)=>{for(let j=m.ser.length-1;j>=0;j--){if(m.ser[j][key]!=null)return m.ser[j][key];}return null;};
+  const swatch=m=>`<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${m.color};margin-right:3px;vertical-align:middle"></span>`;
+  const put=(id,key,fn)=>{const e=document.getElementById(id);if(!e)return;
+    e.innerHTML=MULTI.map(m=>{const v=fn(m,key);
       return `<span style="color:${m.color}">${v==null?'—':(v>=0?'+':'')+v.toFixed(2)}</span>`;}).join(' ');};
-  put('v_net','net'); FAC.forEach(([f])=>put('vm_'+f,f));
+  if(line){                                              // hover: snap to one shared date
+    const date=MDATES[i];
+    document.getElementById('readout').innerHTML=`<b>${date}</b>`;
+    const at=(m,key)=>{const s=m.map[date];return s?s[key]:null;};
+    put('v_net','net',at); FAC.forEach(([f])=>put('vm_'+f,f,at));
+  }else{                                                 // default: each player's OWN latest
+    document.getElementById('readout').innerHTML='<span style="color:var(--faint)">latest per player&nbsp;</span>'+MULTI.map(m=>swatch(m)+m.name).join(' · ');
+    put('v_net','net',lastVal); FAC.forEach(([f])=>put('vm_'+f,f,lastVal));
+  }
+}
+
+// ===== Density compare sub-view (folded in from density.html) ========================
+function renderDensity(){
+  const box=document.getElementById('density');
+  if(!MULTI||MULTI.length<2){box.style.display='none';return;}
+  box.style.display='block';
+  const sel=MULTI.map(m=>({net:m.net,se:m.se||0.3,color:m.color,name:m.name}));
+  requestAnimationFrame(()=>RC.densityPlot(document.getElementById('densplot'),sel));
 }
 </script>
 </body></html>

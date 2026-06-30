@@ -1,0 +1,207 @@
+/* ============================================================================
+   site.css — the ONE shared stylesheet for every Daily RAPM page (Plan 15).
+   Replaces the copy-pasted :root blocks + per-page component CSS. Every page
+   does <link rel="stylesheet" href="site.css"> and uses the classes below.
+   Tokens + components + the unified table + responsive rules live here so the
+   interface is consistent and can never drift per-page again.
+   ========================================================================== */
+
+/* ---- Tokens ---------------------------------------------------------------- */
+:root{
+  /* dark palette (default) */
+  --bg:#080b11; --panel:#0e141d; --panel-2:#0c121b; --panel-3:#141e2b;
+  --line:#1b2532; --line-2:#121a25; --navbg:#0a0e16;
+  --text:#e7eef7; --muted:#7c8ca2; --faint:#566377;
+  --accent:#56b6ff; --accent-ink:#06121f; --grid:#161f2c;
+  /* league colors */
+  --nba:#4aa8ff; --gleague:#2dd4bf; --college:#b27bff;
+  /* status / sign colors */
+  --pos:#3ddc97; --neg:#ff6b6b; --zero:#5d6b7e;
+  /* page-specific accents kept as tokens so they theme too */
+  --pure:#56b6ff; --box:#f2a154; --amp:#2dd4bf; --amber:#f0b429; --whisk:#56b6ff;
+  /* type scale */
+  --fs-1:11px; --fs-2:12.5px; --fs-3:13.5px; --fs-4:15px; --fs-5:20px; --fs-6:25px;
+  /* spacing scale (4px base) */
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:36px;
+  /* radius + layout */
+  --r-1:4px; --r-2:7px; --maxw:1040px;
+  --font:"Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+/* light theme: token-only override (toggle in nav.js, persisted in localStorage) */
+:root[data-theme=light]{
+  --bg:#f5f8fc; --panel:#ffffff; --panel-2:#eef3f9; --panel-3:#e3ebf5;
+  --line:#d7e0ec; --line-2:#e6edf5; --navbg:#ffffff;
+  --text:#0e1828; --muted:#566476; --faint:#8a98ab;
+  --accent:#1f7ae0; --accent-ink:#ffffff; --grid:#e6edf5;
+  --nba:#1f7ae0; --gleague:#0e9e8c; --college:#7a45d6;
+  --pos:#11a06a; --neg:#d4393a; --zero:#7a8aa0;
+  --pure:#1f7ae0; --box:#d9802f; --amp:#0e9e8c;
+}
+
+/* ---- Base ------------------------------------------------------------------ */
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);
+  -webkit-font-smoothing:antialiased;line-height:1.5}
+svg,svg text{font-family:var(--font)}
+svg{display:block;width:100%;height:auto}
+a{color:var(--accent);text-decoration:none}
+a:hover{color:var(--text)}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:var(--sp-5) 22px 70px}
+
+/* page headings */
+h1{font-size:var(--fs-5);margin:6px 0 0;font-weight:650;letter-spacing:-.2px}
+h1 b{color:var(--accent);font-weight:750}
+h1 small{font-size:12px;color:var(--muted);font-weight:500;margin-left:6px}
+.sub{color:var(--muted);font-size:var(--fs-2);margin:6px 0 0;line-height:1.5;max-width:840px}
+.note{color:var(--faint);font-size:11.5px;margin:8px 0 0;line-height:1.6;max-width:840px}
+.sectitle{font-size:var(--fs-3);font-weight:700;color:#aebccd;margin:22px 0 8px;letter-spacing:.2px}
+:root[data-theme=light] .sectitle{color:#33425a}
+.legend{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.6;max-width:840px}
+.foot{color:var(--faint);font-size:11px;margin-top:28px;line-height:1.7;max-width:840px}
+.cap{color:var(--faint);font-size:10.5px;margin-top:var(--sp-3);line-height:1.55;max-width:840px}
+.empty,.msg{color:var(--muted);text-align:center;padding:72px 0;font-size:14.5px}
+
+/* ---- Nav (moved out of nav.js so it themes + can't drift) ------------------ */
+.topnav{border-bottom:1px solid var(--line);background:var(--navbg);position:sticky;top:0;z-index:50}
+.topnav .navinner{max-width:var(--maxw);margin:0 auto;padding:0 22px;display:flex;
+  align-items:center;gap:6px;height:52px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.topnav .brand{font-size:16px;font-weight:700;letter-spacing:-.2px;margin-right:14px;
+  color:var(--text);text-decoration:none;white-space:nowrap}
+.topnav .brand b{color:var(--accent)}
+.topnav .tab{font-size:var(--fs-3);color:var(--muted);text-decoration:none;padding:16px 11px;
+  border-bottom:2px solid transparent;white-space:nowrap}
+.topnav .tab:hover{color:var(--text)}
+.topnav .tab.active{color:var(--text);border-bottom-color:var(--accent)}
+.topnav .navspace{flex:1 1 auto}
+.topnav .themebtn{cursor:pointer;background:none;border:1px solid var(--line);color:var(--muted);
+  font:inherit;font-size:13px;line-height:1;padding:6px 9px;border-radius:var(--r-1);white-space:nowrap}
+.topnav .themebtn:hover{color:var(--text);border-color:var(--accent)}
+
+/* ---- Search box (Explorer / compare) -------------------------------------- */
+.searchbox{position:relative;max-width:480px;margin:16px 0 6px}
+.searchbox input{width:100%;padding:11px 14px;font-size:14.5px;background:var(--panel);
+  border:1px solid var(--line);color:var(--text);outline:none;border-radius:var(--r-1)}
+.searchbox input:focus{border-color:var(--accent)}
+.drop{position:absolute;top:46px;left:0;right:0;background:var(--panel-2);border:1px solid var(--line);
+  z-index:30;max-height:330px;overflow-y:auto;display:none;border-radius:var(--r-1)}
+.opt{padding:8px 13px;cursor:pointer;display:flex;justify-content:space-between;gap:10px;
+  border-bottom:1px solid var(--line-2);align-items:center}
+.opt:hover,.opt.active{background:var(--panel-3)}
+.opt .nm{font-size:var(--fs-3);font-weight:600}
+.opt .meta{font-size:var(--fs-1);color:var(--muted);display:flex;gap:7px;align-items:center}
+
+/* ---- Badges (league) + chips ---------------------------------------------- */
+.badge{font-size:9.5px;padding:1px 5px;font-weight:700;letter-spacing:.3px;border-radius:3px}
+.b-n{background:rgba(74,168,255,.16);color:#9fccff}
+.b-g{background:rgba(45,212,191,.16);color:#7fe9d8}
+.b-c{background:rgba(178,123,255,.16);color:#cfb0ff}
+.chip{font-size:12px;padding:5px 11px;background:var(--panel);border:1px solid var(--line);
+  color:var(--muted);cursor:pointer;border-radius:var(--r-1)}
+.chip:hover{color:var(--text);border-color:var(--accent)}
+
+/* ---- Cards / panels / KPIs ------------------------------------------------- */
+.card{border:1px solid var(--line);background:var(--panel);border-radius:var(--r-1)}
+.netcard{border:1px solid var(--line);background:var(--panel);margin:14px 0;padding:6px 8px 2px;border-radius:var(--r-1)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:10px}
+.cell{border:1px solid var(--line);background:var(--panel);padding:5px 7px 2px;border-radius:var(--r-1)}
+.ctitle{font-size:11.5px;font-weight:700;color:#aebccd;display:flex;justify-content:space-between;
+  align-items:baseline;padding:1px 2px 3px}
+:root[data-theme=light] .ctitle{color:#33425a}
+.ctitle .v{font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+.ctitle .v b{color:var(--text)}
+/* KPI block — big number stat for team/player headers */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:14px 0}
+.kpi{border:1px solid var(--line);background:var(--panel);padding:10px 14px;border-radius:var(--r-1)}
+.kpi .k{font-size:11px;color:var(--muted);font-weight:600}
+.kpi .v{font-size:22px;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.kpi .x{font-size:11px;color:var(--faint);margin-top:1px}
+
+/* ---- Segmented control + buttons ------------------------------------------ */
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--r-2);overflow:hidden;background:var(--panel-2)}
+.seg button{font:inherit;font-size:12px;font-weight:600;color:var(--muted);background:none;border:none;
+  padding:6px 12px;cursor:pointer;transition:background .12s,color .12s;white-space:nowrap}
+.seg button:hover{color:var(--text)}
+.seg button.on{color:var(--accent-ink);background:var(--accent)}
+.seg button:disabled{opacity:.32;cursor:not-allowed}
+.seg button:disabled:hover{color:var(--muted)}
+.seglab{font-size:11.5px;color:var(--faint);margin-right:2px}
+.btn{font-size:12px;font-weight:600;color:var(--muted);background:var(--panel);border:1px solid var(--line);
+  padding:6px 12px;cursor:pointer;border-radius:var(--r-1)}
+.btn:hover{color:var(--text);border-color:var(--accent)}
+.btn.active{color:var(--text);border-color:var(--accent);background:var(--panel-3)}
+
+/* ---- The ONE table (Tables / Teams / Trade / Draft) ----------------------- */
+.scroll{overflow-x:auto;border:1px solid var(--line);background:var(--panel);border-radius:var(--r-1)}
+table.tbl{border-collapse:collapse;width:100%;
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+table.tbl th,table.tbl td{padding:7px 8px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line-2)}
+table.tbl thead th{font-size:11px;color:var(--muted);font-weight:600;background:var(--panel-2);
+  border-bottom:1px solid var(--line);position:sticky;top:0;z-index:1}
+table.tbl thead th.sortable{cursor:pointer;user-select:none}
+table.tbl thead th.sortable:hover{color:var(--text)}
+table.tbl th.l,table.tbl td.l{text-align:left}
+table.tbl td.rank{color:var(--muted);font-size:12px;width:28px}
+table.tbl tbody tr:hover>td{background:var(--panel-3)}
+table.tbl th.grp{color:#9fb0c4;border-left:1px solid var(--line)}
+table.tbl td.grp{border-left:1px solid var(--line-2)}
+table.tbl td.net{font-weight:700}
+table.tbl tr.total td{border-top:1px solid var(--line);border-bottom:none;font-weight:700;background:var(--panel-2)}
+/* sign colors (shared everywhere) */
+.pos{color:var(--pos)} .neg{color:var(--neg)} .zero{color:var(--zero)}
+/* league name spans */
+.gl{color:var(--gleague);font-weight:700}.nb{color:var(--nba);font-weight:700}.co{color:var(--college);font-weight:700}
+
+/* ---- Banners / callouts --------------------------------------------------- */
+.banner{margin-top:16px;padding:10px 13px;border-radius:var(--r-1);font-size:var(--fs-2);line-height:1.5}
+.banner.ok{background:#0d2018;border:1px solid #1f4d38;color:var(--pos)}
+.banner.warn{background:#241c08;border:1px solid #5c4912;color:var(--amber)}
+.callout{font-size:var(--fs-2);color:#cfdae7;background:var(--panel);border-left:3px solid var(--accent);
+  padding:9px 13px;margin:14px 0;line-height:1.55;max-width:840px;border-radius:0 var(--r-1) var(--r-1) 0}
+:root[data-theme=light] .callout{color:#2a3a52}
+
+/* ---- Chart helpers (used by charts.js output) ----------------------------- */
+.crosshair{stroke:#3a4862;stroke-width:1;stroke-dasharray:3 3;pointer-events:none}
+.hdot{pointer-events:none;stroke:var(--bg);stroke-width:1.2}
+.spark{display:inline-block;vertical-align:middle}
+
+/* ---- Inline methodology tooltip ( ? next to a factor ) -------------------- */
+.help{display:inline-block;width:13px;height:13px;line-height:11px;text-align:center;font-size:9px;
+  font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:50%;cursor:help;
+  vertical-align:middle;position:relative;top:-1px}
+.help:hover{color:var(--text);border-color:var(--accent)}
+/* CSS-only hover tooltip driven by data-tip (avoids the slow/unstyled native title= popup).
+   ponytail: edge-clips at the viewport right for v1; max-width keeps it small. */
+.help[data-tip]:hover::after{
+  content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);
+  background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:var(--r-1);
+  padding:6px 9px;font-size:11.5px;font-weight:400;line-height:1.4;width:max-content;max-width:240px;
+  white-space:normal;text-align:left;z-index:60;box-shadow:0 6px 18px rgba(0,0,0,.4);pointer-events:none}
+.help[data-tip]:hover::before{
+  content:'';position:absolute;left:50%;bottom:calc(100% + 1px);transform:translateX(-50%);
+  border:5px solid transparent;border-top-color:var(--line);z-index:60}
+
+/* ---- Command palette (Cmd-K / "/" global search; built by nav.js) --------- */
+.navsearch{cursor:pointer;background:none;border:1px solid var(--line);color:var(--muted);font:inherit;
+  font-size:12px;line-height:1;padding:6px 9px;border-radius:var(--r-1);white-space:nowrap;margin-right:6px}
+.navsearch:hover{color:var(--text);border-color:var(--accent)}
+.navsearch b{color:var(--faint);font-weight:600;margin-left:6px;letter-spacing:.3px}
+.pal-bg{position:fixed;inset:0;background:rgba(4,7,12,.55);z-index:100;display:none;
+  align-items:flex-start;justify-content:center;padding-top:11vh}
+.pal-bg.open{display:flex}
+.pal{width:min(560px,92vw);background:var(--panel);border:1px solid var(--line);border-radius:var(--r-2);
+  box-shadow:0 18px 60px rgba(0,0,0,.5);overflow:hidden}
+.pal>input{width:100%;padding:14px 16px;font-size:15px;background:var(--panel);border:none;
+  border-bottom:1px solid var(--line);color:var(--text);outline:none}
+.pal-list{max-height:48vh;overflow-y:auto}
+.pal-list .opt{border-bottom:1px solid var(--line-2)}
+.pal-empty{padding:18px;color:var(--muted);font-size:13px;text-align:center}
+.pal-hint{display:flex;gap:14px;padding:7px 14px;border-top:1px solid var(--line-2);font-size:10.5px;color:var(--faint)}
+.pal-hint b{color:var(--muted);font-weight:600}
+
+/* ---- Responsive ----------------------------------------------------------- */
+@media(max-width:560px){
+  .wrap{padding:18px 14px 60px}
+  h1{font-size:18px}
+  .kpis{grid-template-columns:repeat(auto-fit,minmax(110px,1fr))}
+}

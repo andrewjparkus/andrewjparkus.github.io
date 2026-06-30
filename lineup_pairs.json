@@ -1,0 +1,3433 @@
+{
+  "meta": {
+    "season": "2025-26",
+    "snapshot_ord": 739780,
+    "min_shared_games": 10,
+    "top_k": 6,
+    "scale": 5.0,
+    "n_franchises": 30,
+    "note": "DESCRIPTIVE co-occurrence, NOT causal synergy. The score is the shared-minutes-weighted sum of each player's OWN net rating, averaged over the games the two were rostered together. It reflects how much net value two players carried while sharing a roster \u2014 it does not isolate how they interact (no lineup +/-, on/off, or fit term). High score = two good players who logged minutes together; low = weak/low-minute pairs."
+  },
+  "teams": {
+    "ATL": {
+      "best": [
+        {
+          "a_pid": 1629638,
+          "a_name": "Nickeil Alexander-Walker",
+          "b_pid": 1630700,
+          "b_name": "Dyson Daniels",
+          "score": 3.3077,
+          "shared_games": 73,
+          "avg_combined_minutes": 64.34
+        },
+        {
+          "a_pid": 1628379,
+          "a_name": "Luke Kennard",
+          "b_pid": 1630700,
+          "b_name": "Dyson Daniels",
+          "score": 2.5754,
+          "shared_games": 44,
+          "avg_combined_minutes": 52.36
+        },
+        {
+          "a_pid": 1630168,
+          "a_name": "Onyeka Okongwu",
+          "b_pid": 1630700,
+          "b_name": "Dyson Daniels",
+          "score": 2.5624,
+          "shared_games": 70,
+          "avg_combined_minutes": 62.1
+        },
+        {
+          "a_pid": 204001,
+          "a_name": "Kristaps Porzingis",
+          "b_pid": 1630700,
+          "b_name": "Dyson Daniels",
+          "score": 2.4871,
+          "shared_games": 17,
+          "avg_combined_minutes": 55.63
+        },
+        {
+          "a_pid": 203468,
+          "a_name": "CJ McCollum",
+          "b_pid": 1630700,
+          "b_name": "Dyson Daniels",
+          "score": 2.4549,
+          "shared_games": 37,
+          "avg_combined_minutes": 58.47
+        },
+        {
+          "a_pid": 1630700,
+          "a_name": "Dyson Daniels",
+          "b_pid": 1631243,
+          "b_name": "Mouhamed Gueye",
+          "score": 2.3716,
+          "shared_games": 73,
+          "avg_combined_minutes": 46.79
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 1630249,
+          "a_name": "Vit Krejci",
+          "b_pid": 1642258,
+          "b_name": "Zaccharie Risacher",
+          "score": -3.0579,
+          "shared_games": 32,
+          "avg_combined_minutes": 47.43
+        },
+        {
+          "a_pid": 1630557,
+          "a_name": "Corey Kispert",
+          "b_pid": 1642258,
+          "b_name": "Zaccharie Risacher",
+          "score": -2.5788,
+          "shared_games": 28,
+          "avg_combined_minutes": 37.73
+        },
+        {
+          "a_pid": 1630811,
+          "a_name": "Keaton Wallace",
+          "b_pid": 1642258,
+          "b_name": "Zaccharie Risacher",
+          "score": -2.2118,
+          "shared_games": 42,
+          "avg_combined_minutes": 33.16
+        },
+        {
+          "a_pid": 1642258,
+          "a_name": "Zaccharie Risacher",
+          "b_pid": 1642854,
+          "b_name": "Asa Newell",
+          "score": -2.09,
+          "shared_games": 35,
+          "avg_combined_minutes": 33.8
+        },
+        {
+          "a_pid": 1630249,
+          "a_name": "Vit Krejci",
+          "b_pid": 1630557,
+          "b_name": "Corey Kispert",
+          "score": -1.9314,
+          "shared_games": 10,
+          "avg_combined_minutes": 33.81
+        },
+        {
+          "a_pid": 1631216,
+          "a_name": "Caleb Houstan",
+          "b_pid": 1642258,
+          "b_name": "Zaccharie Risacher",
+          "score": -1.8389,
+          "shared_games": 15,
+          "avg_combined_minutes": 25.73
+        }
+      ]
+    },
+    "BKN": {
+      "best": [
+        {
+          "a_pid": 1629008,
+          "a_name": "Michael Porter Jr.",
+          "b_pid": 1630549,
+          "b_name": "Day'Ron Sharpe",
+          "score": 0.5309,
+          "shared_games": 49,
+          "avg_combined_minutes": 49.24
+        },
+        {
+          "a_pid": 1630549,
+          "a_name": "Day'Ron Sharpe",
+          "b_pid": 1630604,
+          "b_name": "E.J. Liddell",
+          "score": 0.3357,
+          "shared_games": 11,
+          "avg_combined_minutes": 24.41
+        },
+        {
+          "a_pid": 1630549,
+          "a_name": "Day'Ron Sharpe",
+          "b_pid": 1642856,
+          "b_name": "Egor D\u00ebmin",
+          "score": 0.1603,
+          "shared_games": 51,
+          "avg_combined_minutes": 42.11
+        },
+        {
+          "a_pid": 1630534,
+          "a_name": "Ochai Agbaji",
+          "b_pid": 1630549,
+          "b_name": "Day'Ron Sharpe",
+          "score": -0.0666,
+          "shared_games": 11,
+          "avg_combined_minutes": 33.69
+        },
+        {
+          "a_pid": 1629611,
+          "a_name": "Terance Mann",
+          "b_pid": 1630549,
+          "b_name": "Day'Ron Sharpe",
+          "score": -0.1198,
+          "shared_games": 53,
+          "avg_combined_minutes": 41.79
+        },
+        {
+          "a_pid": 1630549,
+          "a_name": "Day'Ron Sharpe",
+          "b_pid": 1630592,
+          "b_name": "Jalen Wilson",
+          "score": -0.2342,
+          "shared_games": 40,
+          "avg_combined_minutes": 31.21
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 1642879,
+          "a_name": "Ben Saraf",
+          "b_pid": 1642962,
+          "b_name": "Drake Powell",
+          "score": -4.6826,
+          "shared_games": 30,
+          "avg_combined_minutes": 42.84
+        },
+        {
+          "a_pid": 1641869,
+          "a_name": "Malachi Smith",
+          "b_pid": 1642962,
+          "b_name": "Drake Powell",
+          "score": -4.3164,
+          "shared_games": 12,
+          "avg_combined_minutes": 47.59
+        },
+        {
+          "a_pid": 1630623,
+          "a_name": "Tyson Etienne",
+          "b_pid": 1642962,
+          "b_name": "Drake Powell",
+          "score": -4.2602,
+          "shared_games": 19,
+          "avg_combined_minutes": 39.59
+        },
+        {
+          "a_pid": 1641730,
+          "a_name": "Noah Clowney",
+          "b_pid": 1642962,
+          "b_name": "Drake Powell",
+          "score": -4.2113,
+          "shared_games": 49,
+          "avg_combined_minutes": 45.36
+        },
+        {
+          "a_pid": 1629651,
+          "a_name": "Nicolas Claxton",
+          "b_pid": 1642962,
+          "b_name": "Drake Powell",
+          "score": -4.0859,
+          "shared_games": 53,
+          "avg_combined_minutes": 46.78
+        },
+        {
+          "a_pid": 1641869,
+          "a_name": "Malachi Smith",
+          "b_pid": 1642879,
+          "b_name": "Ben Saraf",
+          "score": -3.967,
+          "shared_games": 13,
+          "avg_combined_minutes": 52.09
+        }
+      ]
+    },
+    "BOS": {
+      "best": [
+        {
+          "a_pid": 1628369,
+          "a_name": "Jayson Tatum",
+          "b_pid": 1628401,
+          "b_name": "Derrick White",
+          "score": 5.45,
+          "shared_games": 15,
+          "avg_combined_minutes": 64.78
+        },
+        {
+          "a_pid": 1628401,
+          "a_name": "Derrick White",
+          "b_pid": 1629674,
+          "b_name": "Neemias Queta",
+          "score": 4.5297,
+          "shared_games": 73,
+          "avg_combined_minutes": 57.0
+        },
+        {
+          "a_pid": 1628401,
+          "a_name": "Derrick White",
+          "b_pid": 1630202,
+          "b_name": "Payton Pritchard",
+          "score": 4.2329,
+          "shared_games": 75,
+          "avg_combined_minutes": 63.99
+        },
+        {
+          "a_pid": 1628401,
+          "a_name": "Derrick White",
+          "b_pid": 1630573,
+          "b_name": "Sam Hauser",
+          "score": 4.1628,
+          "shared_games": 74,
+          "avg_combined_minutes": 56.05
+        },
+        {
+          "a_pid": 1628369,
+          "a_name": "Jayson Tatum",
+          "b_pid": 1629674,
+          "b_name": "Neemias Queta",
+          "score": 4.1317,
+          "shared_games": 16,
+          "avg_combined_minutes": 58.71
+        },
+        {
+          "a_pid": 1628401,
+          "a_name": "Derrick White",
+          "b_pid": 1642864,
+          "b_name": "Hugo Gonz\u00e1lez",
+          "score": 3.725,
+          "shared_games": 70,
+          "avg_combined_minutes": 46.75
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 1627759,
+          "a_name": "Jaylen Brown",
+          "b_pid": 1629014,
+          "b_name": "Anfernee Simons",
+          "score": -1.6275,
+          "shared_games": 45,
+          "avg_combined_minutes": 57.12
+        },
+        {
+          "a_pid": 1629014,
+          "a_name": "Anfernee Simons",
+          "b_pid": 1642873,
+          "b_name": "Amari Williams",
+          "score": -1.2923,
+          "shared_games": 13,
+          "avg_combined_minutes": 30.79
+        },
+        {
+          "a_pid": 1629014,
+          "a_name": "Anfernee Simons",
+          "b_pid": 1631169,
+          "b_name": "Josh Minott",
+          "score": -1.2797,
+          "shared_games": 32,
+          "avg_combined_minutes": 38.45
+        },
+        {
+          "a_pid": 1629014,
+          "a_name": "Anfernee Simons",
+          "b_pid": 1630214,
+          "b_name": "Xavier Tillman",
+          "score": -1.1987,
+          "shared_games": 13,
+          "avg_combined_minutes": 32.99
+        },
+        {
+          "a_pid": 1627759,
+          "a_name": "Jaylen Brown",
+          "b_pid": 1631169,
+          "b_name": "Josh Minott",
+          "score": -1.127,
+          "shared_games": 29,
+          "avg_combined_minutes": 48.57
+        },
+        {
+          "a_pid": 1627759,
+          "a_name": "Jaylen Brown",
+          "b_pid": 1642873,
+          "b_name": "Amari Williams",
+          "score": -1.0749,
+          "shared_games": 19,
+          "avg_combined_minutes": 39.35
+        }
+      ]
+    },
+    "CHA": {
+      "best": [
+        {
+          "a_pid": 1631217,
+          "a_name": "Moussa Diabate",
+          "b_pid": 1642851,
+          "b_name": "Kon Knueppel",
+          "score": 3.0391,
+          "shared_games": 72,
+          "avg_combined_minutes": 54.66
+        },
+        {
+          "a_pid": 1630163,
+          "a_name": "LaMelo Ball",
+          "b_pid": 1631217,
+          "b_name": "Moussa Diabate",
+          "score": 2.6588,
+          "shared_games": 64,
+          "avg_combined_minutes": 52.17
+        },
+        {
+          "a_pid": 1630163,
+          "a_name": "LaMelo Ball",
+          "b_pid": 1642851,
+          "b_name": "Kon Knueppel",
+          "score": 2.6176,
+          "shared_games": 71,
+          "avg_combined_minutes": 56.14
+        },
+        {
+          "a_pid": 1642851,
+          "a_name": "Kon Knueppel",
+          "b_pid": 1642883,
+          "b_name": "Sion James",
+          "score": 2.242,
+          "shared_games": 81,
+          "avg_combined_minutes": 51.55
+        },
+        {
+          "a_pid": 1631217,
+          "a_name": "Moussa Diabate",
+          "b_pid": 1642883,
+          "b_name": "Sion James",
+          "score": 2.2192,
+          "shared_games": 73,
+          "avg_combined_minutes": 46.36
+        },
+        {
+          "a_pid": 1631217,
+          "a_name": "Moussa Diabate",
+          "b_pid": 1641706,
+          "b_name": "Brandon Miller",
+          "score": 2.2088,
+          "shared_games": 56,
+          "avg_combined_minutes": 54.55
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 1629012,
+          "a_name": "Collin Sexton",
+          "b_pid": 1630544,
+          "b_name": "Tre Mann",
+          "score": -2.9566,
+          "shared_games": 26,
+          "avg_combined_minutes": 38.71
+        },
+        {
+          "a_pid": 1629012,
+          "a_name": "Collin Sexton",
+          "b_pid": 1642275,
+          "b_name": "Tidjane Sala\u00fcn",
+          "score": -2.6317,
+          "shared_games": 24,
+          "avg_combined_minutes": 35.85
+        },
+        {
+          "a_pid": 1630544,
+          "a_name": "Tre Mann",
+          "b_pid": 1642275,
+          "b_name": "Tidjane Sala\u00fcn",
+          "score": -2.5074,
+          "shared_games": 23,
+          "avg_combined_minutes": 28.18
+        },
+        {
+          "a_pid": 1628970,
+          "a_name": "Miles Bridges",
+          "b_pid": 1642354,
+          "b_name": "KJ Simpson",
+          "score": -2.2545,
+          "shared_games": 14,
+          "avg_combined_minutes": 49.34
+        },
+        {
+          "a_pid": 1628970,
+          "a_name": "Miles Bridges",
+          "b_pid": 1629012,
+          "b_name": "Collin Sexton",
+          "score": -2.1782,
+          "shared_games": 41,
+          "avg_combined_minutes": 52.41
+        },
+        {
+          "a_pid": 1641750,
+          "a_name": "Ryan Kalkbrenner",
+          "b_pid": 1642354,
+          "b_name": "KJ Simpson",
+          "score": -2.0583,
+          "shared_games": 13,
+          "avg_combined_minutes": 40.01
+        }
+      ]
+    },
+    "CHI": {
+      "best": [
+        {
+          "a_pid": 1628989,
+          "a_name": "Kevin Huerter",
+          "b_pid": 1630188,
+          "b_name": "Jalen Smith",
+          "score": 1.8811,
+          "shared_games": 39,
+          "avg_combined_minutes": 42.62
+        },
+        {
+          "a_pid": 1628989,
+          "a_name": "Kevin Huerter",
+          "b_pid": 1629632,
+          "b_name": "Coby White",
+          "score": 1.8325,
+          "shared_games": 23,
+          "avg_combined_minutes": 49.85
+        },
+        {
+          "a_pid": 1629632,
+          "a_name": "Coby White",
+          "b_pid": 1630188,
+          "b_name": "Jalen Smith",
+          "score": 1.4971,
+          "shared_games": 25,
+          "avg_combined_minutes": 48.66
+        },
+        {
+          "a_pid": 1628975,
+          "a_name": "Jevon Carter",
+          "b_pid": 1628989,
+          "b_name": "Kevin Huerter",
+          "score": 1.0399,
+          "shared_games": 18,
+          "avg_combined_minutes": 32.72
+        },
+        {
+          "a_pid": 1628989,
+          "a_name": "Kevin Huerter",
+          "b_pid": 1641763,
+          "b_name": "Julian Phillips",
+          "score": 1.0383,
+          "shared_games": 28,
+          "avg_combined_minutes": 31.1
+        },
+        {
+          "a_pid": 202696,
+          "a_name": "Nikola Vucevic",
+          "b_pid": 1628989,
+          "b_name": "Kevin Huerter",
+          "score": 0.8101,
+          "shared_games": 42,
+          "avg_combined_minutes": 53.78
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 1630172,
+          "a_name": "Patrick Williams",
+          "b_pid": 1630208,
+          "b_name": "Nick Richards",
+          "score": -4.0606,
+          "shared_games": 14,
+          "avg_combined_minutes": 41.94
+        },
+        {
+          "a_pid": 1630208,
+          "a_name": "Nick Richards",
+          "b_pid": 1641824,
+          "b_name": "Matas Buzelis",
+          "score": -4.0362,
+          "shared_games": 19,
+          "avg_combined_minutes": 51.9
+        },
+        {
+          "a_pid": 1629012,
+          "a_name": "Collin Sexton",
+          "b_pid": 1630208,
+          "b_name": "Nick Richards",
+          "score": -3.8925,
+          "shared_games": 16,
+          "avg_combined_minutes": 44.79
+        },
+        {
+          "a_pid": 1630208,
+          "a_name": "Nick Richards",
+          "b_pid": 1642265,
+          "b_name": "Rob Dillingham",
+          "score": -3.7688,
+          "shared_games": 20,
+          "avg_combined_minutes": 42.08
+        },
+        {
+          "a_pid": 1629012,
+          "a_name": "Collin Sexton",
+          "b_pid": 1630172,
+          "b_name": "Patrick Williams",
+          "score": -3.5416,
+          "shared_games": 21,
+          "avg_combined_minutes": 47.48
+        },
+        {
+          "a_pid": 1630172,
+          "a_name": "Patrick Williams",
+          "b_pid": 1642265,
+          "b_name": "Rob Dillingham",
+          "score": -3.3348,
+          "shared_games": 23,
+          "avg_combined_minutes": 43.44
+        }
+      ]
+    },
+    "CLE": {
+      "best": [
+        {
+          "a_pid": 1628378,
+          "a_name": "Donovan Mitchell",
+          "b_pid": 1628386,
+          "b_name": "Jarrett Allen",
+          "score": 4.1752,
+          "shared_games": 48,
+          "avg_combined_minutes": 57.32
+        },
+        {
+          "a_pid": 1628378,
+          "a_name": "Donovan Mitchell",
+          "b_pid": 1629731,
+          "b_name": "Dean Wade",
+          "score": 3.85,
+          "shared_games": 52,
+          "avg_combined_minutes": 53.87
+        },
+        {
+          "a_pid": 1628378,
+          "a_name": "Donovan Mitchell",
+          "b_pid": 1630596,
+          "b_name": "Evan Mobley",
+          "score": 3.5417,
+          "shared_games": 57,
+          "avg_combined_minutes": 62.9
+        },
+        {
+          "a_pid": 1628378,
+          "a_name": "Donovan Mitchell",
+          "b_pid": 1630241,
+          "b_name": "Sam Merrill",
+          "score": 3.1385,
+          "shared_games": 44,
+          "avg_combined_minutes": 56.54
+        },
+        {
+          "a_pid": 201935,
+          "a_name": "James Harden",
+          "b_pid": 1628378,
+          "b_name": "Donovan Mitchell",
+          "score": 3.0188,
+          "shared_games": 22,
+          "avg_combined_minutes": 64.47
+        },
+        {
+          "a_pid": 1628378,
+          "a_name": "Donovan Mitchell",
+          "b_pid": 1629636,
+          "b_name": "Darius Garland",
+          "score": 2.8787,
+          "shared_games": 24,
+          "avg_combined_minutes": 61.49
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 203471,
+          "a_name": "Dennis Schroder",
+          "b_pid": 1642281,
+          "b_name": "Jaylon Tyson",
+          "score": -1.4355,
+          "shared_games": 19,
+          "avg_combined_minutes": 44.84
+        },
+        {
+          "a_pid": 1641854,
+          "a_name": "Craig Porter",
+          "b_pid": 1642281,
+          "b_name": "Jaylon Tyson",
+          "score": -1.2877,
+          "shared_games": 54,
+          "avg_combined_minutes": 43.9
+        },
+        {
+          "a_pid": 1629631,
+          "a_name": "De'Andre Hunter",
+          "b_pid": 1642281,
+          "b_name": "Jaylon Tyson",
+          "score": -1.265,
+          "shared_games": 37,
+          "avg_combined_minutes": 52.18
+        },
+        {
+          "a_pid": 1631247,
+          "a_name": "Luke Travers",
+          "b_pid": 1642281,
+          "b_name": "Jaylon Tyson",
+          "score": -1.2312,
+          "shared_games": 10,
+          "avg_combined_minutes": 36.51
+        },
+        {
+          "a_pid": 1628418,
+          "a_name": "Thomas Bryant",
+          "b_pid": 1642281,
+          "b_name": "Jaylon Tyson",
+          "score": -1.2035,
+          "shared_games": 47,
+          "avg_combined_minutes": 37.81
+        },
+        {
+          "a_pid": 1642281,
+          "a_name": "Jaylon Tyson",
+          "b_pid": 1642878,
+          "b_name": "Tyrese Proctor",
+          "score": -1.2022,
+          "shared_games": 39,
+          "avg_combined_minutes": 37.97
+        }
+      ]
+    },
+    "DAL": {
+      "best": [
+        {
+          "a_pid": 203076,
+          "a_name": "Anthony Davis",
+          "b_pid": 1626156,
+          "b_name": "D'Angelo Russell",
+          "score": 1.8819,
+          "shared_games": 12,
+          "avg_combined_minutes": 46.36
+        },
+        {
+          "a_pid": 203076,
+          "a_name": "Anthony Davis",
+          "b_pid": 1642948,
+          "b_name": "Ryan Nembhard",
+          "score": 1.6395,
+          "shared_games": 18,
+          "avg_combined_minutes": 51.37
+        },
+        {
+          "a_pid": 203076,
+          "a_name": "Anthony Davis",
+          "b_pid": 1629655,
+          "b_name": "Daniel Gafford",
+          "score": 1.5855,
+          "shared_games": 11,
+          "avg_combined_minutes": 47.86
+        },
+        {
+          "a_pid": 203076,
+          "a_name": "Anthony Davis",
+          "b_pid": 203939,
+          "b_name": "Dwight Powell",
+          "score": 1.5673,
+          "shared_games": 10,
+          "avg_combined_minutes": 38.58
+        },
+        {
+          "a_pid": 203076,
+          "a_name": "Anthony Davis",
+          "b_pid": 1630230,
+          "b_name": "Naji Marshall",
+          "score": 1.3842,
+          "shared_games": 20,
+          "avg_combined_minutes": 58.55
+        },
+        {
+          "a_pid": 203076,
+          "a_name": "Anthony Davis",
+          "b_pid": 1628997,
+          "b_name": "Caleb Martin",
+          "score": 1.2575,
+          "shared_games": 16,
+          "avg_combined_minutes": 38.12
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 1630314,
+          "a_name": "Brandon Williams",
+          "b_pid": 1631108,
+          "b_name": "Max Christie",
+          "score": -3.0009,
+          "shared_games": 61,
+          "avg_combined_minutes": 50.16
+        },
+        {
+          "a_pid": 1631108,
+          "a_name": "Max Christie",
+          "b_pid": 1642843,
+          "b_name": "Cooper Flagg",
+          "score": -2.4314,
+          "shared_games": 67,
+          "avg_combined_minutes": 60.39
+        },
+        {
+          "a_pid": 1631108,
+          "a_name": "Max Christie",
+          "b_pid": 1642358,
+          "b_name": "AJ Johnson",
+          "score": -2.4167,
+          "shared_games": 22,
+          "avg_combined_minutes": 37.77
+        },
+        {
+          "a_pid": 1628963,
+          "a_name": "Marvin Bagley III",
+          "b_pid": 1631108,
+          "b_name": "Max Christie",
+          "score": -2.3981,
+          "shared_games": 21,
+          "avg_combined_minutes": 48.23
+        },
+        {
+          "a_pid": 1630702,
+          "a_name": "Jaden Hardy",
+          "b_pid": 1631108,
+          "b_name": "Max Christie",
+          "score": -2.3736,
+          "shared_games": 30,
+          "avg_combined_minutes": 38.96
+        },
+        {
+          "a_pid": 1628963,
+          "a_name": "Marvin Bagley III",
+          "b_pid": 1630314,
+          "b_name": "Brandon Williams",
+          "score": -2.3388,
+          "shared_games": 16,
+          "avg_combined_minutes": 43.16
+        }
+      ]
+    },
+    "DEN": {
+      "best": [
+        {
+          "a_pid": 203932,
+          "a_name": "Aaron Gordon",
+          "b_pid": 203999,
+          "b_name": "Nikola Jokic",
+          "score": 7.142,
+          "shared_games": 26,
+          "avg_combined_minutes": 61.83
+        },
+        {
+          "a_pid": 203999,
+          "a_name": "Nikola Jokic",
+          "b_pid": 1627750,
+          "b_name": "Jamal Murray",
+          "score": 6.7597,
+          "shared_games": 63,
+          "avg_combined_minutes": 68.33
+        },
+        {
+          "a_pid": 203999,
+          "a_name": "Nikola Jokic",
+          "b_pid": 1629661,
+          "b_name": "Cameron Johnson",
+          "score": 6.5879,
+          "shared_games": 54,
+          "avg_combined_minutes": 63.81
+        },
+        {
+          "a_pid": 203999,
+          "a_name": "Nikola Jokic",
+          "b_pid": 1631128,
+          "b_name": "Christian Braun",
+          "score": 5.9959,
+          "shared_games": 41,
+          "avg_combined_minutes": 66.05
+        },
+        {
+          "a_pid": 202685,
+          "a_name": "Jonas Valanciunas",
+          "b_pid": 203999,
+          "b_name": "Nikola Jokic",
+          "score": 5.1831,
+          "shared_games": 60,
+          "avg_combined_minutes": 45.56
+        },
+        {
+          "a_pid": 203999,
+          "a_name": "Nikola Jokic",
+          "b_pid": 1626145,
+          "b_name": "Tyus Jones",
+          "score": 4.7646,
+          "shared_games": 10,
+          "avg_combined_minutes": 39.47
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 1628971,
+          "a_name": "Bruce Brown",
+          "b_pid": 1631124,
+          "b_name": "Julian Strawther",
+          "score": -2.4429,
+          "shared_games": 57,
+          "avg_combined_minutes": 38.81
+        },
+        {
+          "a_pid": 1628971,
+          "a_name": "Bruce Brown",
+          "b_pid": 1631212,
+          "b_name": "Peyton Watson",
+          "score": -2.4106,
+          "shared_games": 54,
+          "avg_combined_minutes": 52.43
+        },
+        {
+          "a_pid": 203501,
+          "a_name": "Tim Hardaway Jr.",
+          "b_pid": 1628971,
+          "b_name": "Bruce Brown",
+          "score": -2.3732,
+          "shared_games": 80,
+          "avg_combined_minutes": 49.32
+        },
+        {
+          "a_pid": 1628971,
+          "a_name": "Bruce Brown",
+          "b_pid": 1630192,
+          "b_name": "Zeke Nnaji",
+          "score": -2.3127,
+          "shared_games": 52,
+          "avg_combined_minutes": 35.82
+        },
+        {
+          "a_pid": 1628971,
+          "a_name": "Bruce Brown",
+          "b_pid": 1642461,
+          "b_name": "Spencer Jones",
+          "score": -2.2664,
+          "shared_games": 64,
+          "avg_combined_minutes": 44.73
+        },
+        {
+          "a_pid": 1628971,
+          "a_name": "Bruce Brown",
+          "b_pid": 1641816,
+          "b_name": "Hunter Tyson",
+          "score": -1.9595,
+          "shared_games": 21,
+          "avg_combined_minutes": 31.88
+        }
+      ]
+    },
+    "DET": {
+      "best": [
+        {
+          "a_pid": 202699,
+          "a_name": "Tobias Harris",
+          "b_pid": 1630595,
+          "b_name": "Cade Cunningham",
+          "score": 3.5781,
+          "shared_games": 51,
+          "avg_combined_minutes": 59.68
+        },
+        {
+          "a_pid": 202699,
+          "a_name": "Tobias Harris",
+          "b_pid": 1641709,
+          "b_name": "Ausar Thompson",
+          "score": 3.2949,
+          "shared_games": 58,
+          "avg_combined_minutes": 51.84
+        },
+        {
+          "a_pid": 202699,
+          "a_name": "Tobias Harris",
+          "b_pid": 1628989,
+          "b_name": "Kevin Huerter",
+          "score": 2.9042,
+          "shared_games": 21,
+          "avg_combined_minutes": 44.99
+        },
+        {
+          "a_pid": 1630595,
+          "a_name": "Cade Cunningham",
+          "b_pid": 1641709,
+          "b_name": "Ausar Thompson",
+          "score": 2.8243,
+          "shared_games": 58,
+          "avg_combined_minutes": 57.74
+        },
+        {
+          "a_pid": 202699,
+          "a_name": "Tobias Harris",
+          "b_pid": 1629750,
+          "b_name": "Javonte Green",
+          "score": 2.5147,
+          "shared_games": 62,
+          "avg_combined_minutes": 41.28
+        },
+        {
+          "a_pid": 202699,
+          "a_name": "Tobias Harris",
+          "b_pid": 1629130,
+          "b_name": "Duncan Robinson",
+          "score": 2.4104,
+          "shared_games": 59,
+          "avg_combined_minutes": 53.21
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 1630191,
+          "a_name": "Isaiah Stewart",
+          "b_pid": 1631093,
+          "b_name": "Jaden Ivey",
+          "score": -2.2376,
+          "shared_games": 31,
+          "avg_combined_minutes": 39.15
+        },
+        {
+          "a_pid": 1627747,
+          "a_name": "Caris LeVert",
+          "b_pid": 1631093,
+          "b_name": "Jaden Ivey",
+          "score": -1.5832,
+          "shared_games": 20,
+          "avg_combined_minutes": 35.4
+        },
+        {
+          "a_pid": 1631093,
+          "a_name": "Jaden Ivey",
+          "b_pid": 1631204,
+          "b_name": "Marcus Sasser",
+          "score": -1.4936,
+          "shared_games": 13,
+          "avg_combined_minutes": 27.43
+        },
+        {
+          "a_pid": 1631093,
+          "a_name": "Jaden Ivey",
+          "b_pid": 1631105,
+          "b_name": "Jalen Duren",
+          "score": -1.4905,
+          "shared_games": 27,
+          "avg_combined_minutes": 43.08
+        },
+        {
+          "a_pid": 1631093,
+          "a_name": "Jaden Ivey",
+          "b_pid": 1642450,
+          "b_name": "Daniss Jenkins",
+          "score": -1.4201,
+          "shared_games": 29,
+          "avg_combined_minutes": 30.89
+        },
+        {
+          "a_pid": 1631093,
+          "a_name": "Jaden Ivey",
+          "b_pid": 1641842,
+          "b_name": "Ronald Holland II",
+          "score": -1.2102,
+          "shared_games": 30,
+          "avg_combined_minutes": 34.76
+        }
+      ]
+    },
+    "GSW": {
+      "best": [
+        {
+          "a_pid": 201939,
+          "a_name": "Stephen Curry",
+          "b_pid": 202710,
+          "b_name": "Jimmy Butler",
+          "score": 4.9463,
+          "shared_games": 33,
+          "avg_combined_minutes": 61.05
+        },
+        {
+          "a_pid": 201939,
+          "a_name": "Stephen Curry",
+          "b_pid": 203110,
+          "b_name": "Draymond Green",
+          "score": 3.2573,
+          "shared_games": 39,
+          "avg_combined_minutes": 55.72
+        },
+        {
+          "a_pid": 201143,
+          "a_name": "Al Horford",
+          "b_pid": 201939,
+          "b_name": "Stephen Curry",
+          "score": 3.1922,
+          "shared_games": 27,
+          "avg_combined_minutes": 49.81
+        },
+        {
+          "a_pid": 201939,
+          "a_name": "Stephen Curry",
+          "b_pid": 1641764,
+          "b_name": "Brandin Podziemski",
+          "score": 3.1082,
+          "shared_games": 43,
+          "avg_combined_minutes": 55.8
+        },
+        {
+          "a_pid": 201939,
+          "a_name": "Stephen Curry",
+          "b_pid": 1629001,
+          "b_name": "De'Anthony Melton",
+          "score": 2.9462,
+          "shared_games": 25,
+          "avg_combined_minutes": 50.8
+        },
+        {
+          "a_pid": 202710,
+          "a_name": "Jimmy Butler",
+          "b_pid": 203110,
+          "b_name": "Draymond Green",
+          "score": 2.8917,
+          "shared_games": 34,
+          "avg_combined_minutes": 56.3
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 1630311,
+          "a_name": "Pat Spencer",
+          "b_pid": 1631466,
+          "b_name": "Jeenathan Williams",
+          "score": -2.3091,
+          "shared_games": 14,
+          "avg_combined_minutes": 40.78
+        },
+        {
+          "a_pid": 1630311,
+          "a_name": "Pat Spencer",
+          "b_pid": 1642954,
+          "b_name": "Will Richard",
+          "score": -2.1465,
+          "shared_games": 55,
+          "avg_combined_minutes": 37.67
+        },
+        {
+          "a_pid": 1630311,
+          "a_name": "Pat Spencer",
+          "b_pid": 1642502,
+          "b_name": "Malevy Leons",
+          "score": -2.1086,
+          "shared_games": 25,
+          "avg_combined_minutes": 33.72
+        },
+        {
+          "a_pid": 203552,
+          "a_name": "Seth Curry",
+          "b_pid": 1630311,
+          "b_name": "Pat Spencer",
+          "score": -2.0127,
+          "shared_games": 10,
+          "avg_combined_minutes": 37.18
+        },
+        {
+          "a_pid": 1627741,
+          "a_name": "Buddy Hield",
+          "b_pid": 1642954,
+          "b_name": "Will Richard",
+          "score": -2.0116,
+          "shared_games": 39,
+          "avg_combined_minutes": 36.71
+        },
+        {
+          "a_pid": 1627741,
+          "a_name": "Buddy Hield",
+          "b_pid": 1630311,
+          "b_name": "Pat Spencer",
+          "score": -1.9211,
+          "shared_games": 32,
+          "avg_combined_minutes": 32.23
+        }
+      ]
+    },
+    "HOU": {
+      "best": [
+        {
+          "a_pid": 201142,
+          "a_name": "Kevin Durant",
+          "b_pid": 1641708,
+          "b_name": "Amen Thompson",
+          "score": 4.0343,
+          "shared_games": 75,
+          "avg_combined_minutes": 71.32
+        },
+        {
+          "a_pid": 203500,
+          "a_name": "Steven Adams",
+          "b_pid": 1641708,
+          "b_name": "Amen Thompson",
+          "score": 3.6336,
+          "shared_games": 31,
+          "avg_combined_minutes": 57.63
+        },
+        {
+          "a_pid": 201142,
+          "a_name": "Kevin Durant",
+          "b_pid": 203500,
+          "b_name": "Steven Adams",
+          "score": 3.5857,
+          "shared_games": 30,
+          "avg_combined_minutes": 57.39
+        },
+        {
+          "a_pid": 1631106,
+          "a_name": "Tari Eason",
+          "b_pid": 1641708,
+          "b_name": "Amen Thompson",
+          "score": 2.9131,
+          "shared_games": 57,
+          "avg_combined_minutes": 60.65
+        },
+        {
+          "a_pid": 201142,
+          "a_name": "Kevin Durant",
+          "b_pid": 1631106,
+          "b_name": "Tari Eason",
+          "score": 2.8576,
+          "shared_games": 58,
+          "avg_combined_minutes": 60.2
+        },
+        {
+          "a_pid": 1627827,
+          "a_name": "Dorian Finney-Smith",
+          "b_pid": 1641708,
+          "b_name": "Amen Thompson",
+          "score": 2.6276,
+          "shared_games": 35,
+          "avg_combined_minutes": 51.99
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 201145,
+          "a_name": "Jeff Green",
+          "b_pid": 1642263,
+          "b_name": "Reed Sheppard",
+          "score": -1.9424,
+          "shared_games": 29,
+          "avg_combined_minutes": 30.82
+        },
+        {
+          "a_pid": 1642263,
+          "a_name": "Reed Sheppard",
+          "b_pid": 1642384,
+          "b_name": "Isaiah Crawford",
+          "score": -1.7573,
+          "shared_games": 14,
+          "avg_combined_minutes": 31.75
+        },
+        {
+          "a_pid": 1631120,
+          "a_name": "JD Davison",
+          "b_pid": 1642263,
+          "b_name": "Reed Sheppard",
+          "score": -1.6743,
+          "shared_games": 27,
+          "avg_combined_minutes": 31.61
+        },
+        {
+          "a_pid": 1630256,
+          "a_name": "Jae'Sean Tate",
+          "b_pid": 1642263,
+          "b_name": "Reed Sheppard",
+          "score": -1.6614,
+          "shared_games": 44,
+          "avg_combined_minutes": 33.09
+        },
+        {
+          "a_pid": 1630578,
+          "a_name": "Alperen Sengun",
+          "b_pid": 1642263,
+          "b_name": "Reed Sheppard",
+          "score": -1.6613,
+          "shared_games": 71,
+          "avg_combined_minutes": 57.54
+        },
+        {
+          "a_pid": 1631095,
+          "a_name": "Jabari Smith Jr.",
+          "b_pid": 1642263,
+          "b_name": "Reed Sheppard",
+          "score": -1.6463,
+          "shared_games": 76,
+          "avg_combined_minutes": 59.12
+        }
+      ]
+    },
+    "IND": {
+      "best": [
+        {
+          "a_pid": 1627783,
+          "a_name": "Pascal Siakam",
+          "b_pid": 1630174,
+          "b_name": "Aaron Nesmith",
+          "score": 2.4779,
+          "shared_games": 39,
+          "avg_combined_minutes": 61.29
+        },
+        {
+          "a_pid": 1627783,
+          "a_name": "Pascal Siakam",
+          "b_pid": 1630167,
+          "b_name": "Obi Toppin",
+          "score": 2.1153,
+          "shared_games": 13,
+          "avg_combined_minutes": 48.18
+        },
+        {
+          "a_pid": 204456,
+          "a_name": "T.J. McConnell",
+          "b_pid": 1627783,
+          "b_name": "Pascal Siakam",
+          "score": 1.8515,
+          "shared_games": 48,
+          "avg_combined_minutes": 48.04
+        },
+        {
+          "a_pid": 1627783,
+          "a_name": "Pascal Siakam",
+          "b_pid": 1630679,
+          "b_name": "Ethan Thompson",
+          "score": 1.8323,
+          "shared_games": 22,
+          "avg_combined_minutes": 46.54
+        },
+        {
+          "a_pid": 1627783,
+          "a_name": "Pascal Siakam",
+          "b_pid": 1628396,
+          "b_name": "Tony Bradley",
+          "score": 1.7214,
+          "shared_games": 36,
+          "avg_combined_minutes": 43.01
+        },
+        {
+          "a_pid": 1627783,
+          "a_name": "Pascal Siakam",
+          "b_pid": 1631245,
+          "b_name": "Quenton Jackson",
+          "score": 1.6959,
+          "shared_games": 33,
+          "avg_combined_minutes": 46.83
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 1641716,
+          "a_name": "Jarace Walker",
+          "b_pid": 1641738,
+          "b_name": "Kobe Brown",
+          "score": -5.9878,
+          "shared_games": 21,
+          "avg_combined_minutes": 51.41
+        },
+        {
+          "a_pid": 1630526,
+          "a_name": "Jeremiah Robinson-Earl",
+          "b_pid": 1641716,
+          "b_name": "Jarace Walker",
+          "score": -5.0812,
+          "shared_games": 17,
+          "avg_combined_minutes": 43.09
+        },
+        {
+          "a_pid": 1630643,
+          "a_name": "Jay Huff",
+          "b_pid": 1641716,
+          "b_name": "Jarace Walker",
+          "score": -4.2358,
+          "shared_games": 75,
+          "avg_combined_minutes": 45.29
+        },
+        {
+          "a_pid": 1641738,
+          "a_name": "Kobe Brown",
+          "b_pid": 1643007,
+          "b_name": "Taelon Peter",
+          "score": -4.22,
+          "shared_games": 14,
+          "avg_combined_minutes": 46.99
+        },
+        {
+          "a_pid": 1641716,
+          "a_name": "Jarace Walker",
+          "b_pid": 1642880,
+          "b_name": "Kam Jones",
+          "score": -4.1853,
+          "shared_games": 31,
+          "avg_combined_minutes": 41.01
+        },
+        {
+          "a_pid": 1641738,
+          "a_name": "Kobe Brown",
+          "b_pid": 1642880,
+          "b_name": "Kam Jones",
+          "score": -4.1361,
+          "shared_games": 20,
+          "avg_combined_minutes": 46.96
+        }
+      ]
+    },
+    "LAC": {
+      "best": [
+        {
+          "a_pid": 202695,
+          "a_name": "Kawhi Leonard",
+          "b_pid": 1627884,
+          "b_name": "Derrick Jones Jr.",
+          "score": 5.2126,
+          "shared_games": 39,
+          "avg_combined_minutes": 57.27
+        },
+        {
+          "a_pid": 202695,
+          "a_name": "Kawhi Leonard",
+          "b_pid": 1627826,
+          "b_name": "Ivica Zubac",
+          "score": 4.6817,
+          "shared_games": 30,
+          "avg_combined_minutes": 60.44
+        },
+        {
+          "a_pid": 202695,
+          "a_name": "Kawhi Leonard",
+          "b_pid": 203992,
+          "b_name": "Bogdan Bogdanovic",
+          "score": 4.6761,
+          "shared_games": 13,
+          "avg_combined_minutes": 46.34
+        },
+        {
+          "a_pid": 201935,
+          "a_name": "James Harden",
+          "b_pid": 202695,
+          "b_name": "Kawhi Leonard",
+          "score": 4.6364,
+          "shared_games": 32,
+          "avg_combined_minutes": 65.65
+        },
+        {
+          "a_pid": 202695,
+          "a_name": "Kawhi Leonard",
+          "b_pid": 1627739,
+          "b_name": "Kris Dunn",
+          "score": 4.4448,
+          "shared_games": 65,
+          "avg_combined_minutes": 56.82
+        },
+        {
+          "a_pid": 201572,
+          "a_name": "Brook Lopez",
+          "b_pid": 202695,
+          "b_name": "Kawhi Leonard",
+          "score": 4.4108,
+          "shared_games": 58,
+          "avg_combined_minutes": 53.28
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 1631097,
+          "a_name": "Bennedict Mathurin",
+          "b_pid": 1641757,
+          "b_name": "Jordan Miller",
+          "score": -2.1872,
+          "shared_games": 25,
+          "avg_combined_minutes": 50.84
+        },
+        {
+          "a_pid": 1628381,
+          "a_name": "John Collins",
+          "b_pid": 1631097,
+          "b_name": "Bennedict Mathurin",
+          "score": -1.9122,
+          "shared_games": 17,
+          "avg_combined_minutes": 51.21
+        },
+        {
+          "a_pid": 1630543,
+          "a_name": "Isaiah Jackson",
+          "b_pid": 1631097,
+          "b_name": "Bennedict Mathurin",
+          "score": -1.7953,
+          "shared_games": 13,
+          "avg_combined_minutes": 43.14
+        },
+        {
+          "a_pid": 1631097,
+          "a_name": "Bennedict Mathurin",
+          "b_pid": 1642920,
+          "b_name": "Kobe Sanders",
+          "score": -1.6226,
+          "shared_games": 21,
+          "avg_combined_minutes": 42.0
+        },
+        {
+          "a_pid": 1628381,
+          "a_name": "John Collins",
+          "b_pid": 1641738,
+          "b_name": "Kobe Brown",
+          "score": -1.596,
+          "shared_games": 33,
+          "avg_combined_minutes": 35.22
+        },
+        {
+          "a_pid": 1631097,
+          "a_name": "Bennedict Mathurin",
+          "b_pid": 1631102,
+          "b_name": "TyTy Washington Jr.",
+          "score": -1.4143,
+          "shared_games": 11,
+          "avg_combined_minutes": 28.68
+        }
+      ]
+    },
+    "LAL": {
+      "best": [
+        {
+          "a_pid": 203935,
+          "a_name": "Marcus Smart",
+          "b_pid": 1629029,
+          "b_name": "Luka Doncic",
+          "score": 4.0723,
+          "shared_games": 53,
+          "avg_combined_minutes": 62.53
+        },
+        {
+          "a_pid": 1629029,
+          "a_name": "Luka Doncic",
+          "b_pid": 1630559,
+          "b_name": "Austin Reaves",
+          "score": 3.9573,
+          "shared_games": 41,
+          "avg_combined_minutes": 69.05
+        },
+        {
+          "a_pid": 203935,
+          "a_name": "Marcus Smart",
+          "b_pid": 1630559,
+          "b_name": "Austin Reaves",
+          "score": 3.1083,
+          "shared_games": 35,
+          "avg_combined_minutes": 59.05
+        },
+        {
+          "a_pid": 2544,
+          "a_name": "LeBron James",
+          "b_pid": 1629029,
+          "b_name": "Luka Doncic",
+          "score": 3.0635,
+          "shared_games": 49,
+          "avg_combined_minutes": 66.6
+        },
+        {
+          "a_pid": 1629029,
+          "a_name": "Luka Doncic",
+          "b_pid": 1629060,
+          "b_name": "Rui Hachimura",
+          "score": 2.7648,
+          "shared_games": 51,
+          "avg_combined_minutes": 61.51
+        },
+        {
+          "a_pid": 1628379,
+          "a_name": "Luke Kennard",
+          "b_pid": 1629029,
+          "b_name": "Luka Doncic",
+          "score": 2.7418,
+          "shared_games": 22,
+          "avg_combined_minutes": 56.77
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 1629028,
+          "a_name": "Deandre Ayton",
+          "b_pid": 1641733,
+          "b_name": "Nick Smith Jr.",
+          "score": -2.633,
+          "shared_games": 26,
+          "avg_combined_minutes": 40.15
+        },
+        {
+          "a_pid": 1641733,
+          "a_name": "Nick Smith Jr.",
+          "b_pid": 1642261,
+          "b_name": "Dalton Knecht",
+          "score": -2.3805,
+          "shared_games": 29,
+          "avg_combined_minutes": 25.14
+        },
+        {
+          "a_pid": 1631222,
+          "a_name": "Jake LaRavia",
+          "b_pid": 1641733,
+          "b_name": "Nick Smith Jr.",
+          "score": -2.2445,
+          "shared_games": 30,
+          "avg_combined_minutes": 41.33
+        },
+        {
+          "a_pid": 1641733,
+          "a_name": "Nick Smith Jr.",
+          "b_pid": 1642876,
+          "b_name": "Adou Thiero",
+          "score": -2.2208,
+          "shared_games": 14,
+          "avg_combined_minutes": 23.44
+        },
+        {
+          "a_pid": 1641733,
+          "a_name": "Nick Smith Jr.",
+          "b_pid": 1642355,
+          "b_name": "Bronny James",
+          "score": -2.2146,
+          "shared_games": 23,
+          "avg_combined_minutes": 22.4
+        },
+        {
+          "a_pid": 1629637,
+          "a_name": "Jaxson Hayes",
+          "b_pid": 1641733,
+          "b_name": "Nick Smith Jr.",
+          "score": -2.002,
+          "shared_games": 21,
+          "avg_combined_minutes": 28.43
+        }
+      ]
+    },
+    "MEM": {
+      "best": [
+        {
+          "a_pid": 1641744,
+          "a_name": "Zach Edey",
+          "b_pid": 1642907,
+          "b_name": "Cedric Coward",
+          "score": 1.6451,
+          "shared_games": 11,
+          "avg_combined_minutes": 50.5
+        },
+        {
+          "a_pid": 1628991,
+          "a_name": "Jaren Jackson Jr.",
+          "b_pid": 1629630,
+          "b_name": "Ja Morant",
+          "score": 1.488,
+          "shared_games": 20,
+          "avg_combined_minutes": 55.99
+        },
+        {
+          "a_pid": 1628991,
+          "a_name": "Jaren Jackson Jr.",
+          "b_pid": 1642907,
+          "b_name": "Cedric Coward",
+          "score": 1.4154,
+          "shared_games": 42,
+          "avg_combined_minutes": 55.01
+        },
+        {
+          "a_pid": 1629630,
+          "a_name": "Ja Morant",
+          "b_pid": 1642907,
+          "b_name": "Cedric Coward",
+          "score": 1.2245,
+          "shared_games": 20,
+          "avg_combined_minutes": 52.93
+        },
+        {
+          "a_pid": 203484,
+          "a_name": "Kentavious Caldwell-Pope",
+          "b_pid": 1641744,
+          "b_name": "Zach Edey",
+          "score": 1.1416,
+          "shared_games": 11,
+          "avg_combined_minutes": 44.55
+        },
+        {
+          "a_pid": 1629111,
+          "a_name": "Jock Landale",
+          "b_pid": 1641744,
+          "b_name": "Zach Edey",
+          "score": 0.9507,
+          "shared_games": 11,
+          "avg_combined_minutes": 41.75
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 1641712,
+          "a_name": "Rayan Rupert",
+          "b_pid": 1642942,
+          "b_name": "Jahmai Mashack",
+          "score": -6.386,
+          "shared_games": 10,
+          "avg_combined_minutes": 53.8
+        },
+        {
+          "a_pid": 1641712,
+          "a_name": "Rayan Rupert",
+          "b_pid": 1641765,
+          "b_name": "Olivier-Maxence Prosper",
+          "score": -6.2215,
+          "shared_games": 12,
+          "avg_combined_minutes": 51.45
+        },
+        {
+          "a_pid": 1641712,
+          "a_name": "Rayan Rupert",
+          "b_pid": 1642383,
+          "b_name": "Walter Clayton Jr.",
+          "score": -5.9374,
+          "shared_games": 10,
+          "avg_combined_minutes": 54.86
+        },
+        {
+          "a_pid": 1641707,
+          "a_name": "Taylor Hendricks",
+          "b_pid": 1641712,
+          "b_name": "Rayan Rupert",
+          "score": -5.4557,
+          "shared_games": 10,
+          "avg_combined_minutes": 51.22
+        },
+        {
+          "a_pid": 1641712,
+          "a_name": "Rayan Rupert",
+          "b_pid": 1641713,
+          "b_name": "GG Jackson",
+          "score": -5.4058,
+          "shared_games": 12,
+          "avg_combined_minutes": 53.37
+        },
+        {
+          "a_pid": 1641712,
+          "a_name": "Rayan Rupert",
+          "b_pid": 1642914,
+          "b_name": "Javon Small",
+          "score": -4.7399,
+          "shared_games": 10,
+          "avg_combined_minutes": 53.41
+        }
+      ]
+    },
+    "MIA": {
+      "best": [
+        {
+          "a_pid": 1628389,
+          "a_name": "Bam Adebayo",
+          "b_pid": 1641796,
+          "b_name": "Pelle Larsson",
+          "score": 2.7252,
+          "shared_games": 61,
+          "avg_combined_minutes": 56.85
+        },
+        {
+          "a_pid": 1628389,
+          "a_name": "Bam Adebayo",
+          "b_pid": 1630558,
+          "b_name": "Davion Mitchell",
+          "score": 2.7222,
+          "shared_games": 61,
+          "avg_combined_minutes": 58.76
+        },
+        {
+          "a_pid": 1628389,
+          "a_name": "Bam Adebayo",
+          "b_pid": 1642857,
+          "b_name": "Kasparas Jaku\u010dionis",
+          "score": 2.6674,
+          "shared_games": 50,
+          "avg_combined_minutes": 48.91
+        },
+        {
+          "a_pid": 1626181,
+          "a_name": "Norman Powell",
+          "b_pid": 1628389,
+          "b_name": "Bam Adebayo",
+          "score": 2.6171,
+          "shared_games": 49,
+          "avg_combined_minutes": 58.87
+        },
+        {
+          "a_pid": 1628389,
+          "a_name": "Bam Adebayo",
+          "b_pid": 1642066,
+          "b_name": "Myron Gardner",
+          "score": 2.4506,
+          "shared_games": 43,
+          "avg_combined_minutes": 40.39
+        },
+        {
+          "a_pid": 1628389,
+          "a_name": "Bam Adebayo",
+          "b_pid": 1642352,
+          "b_name": "Keshad Johnson",
+          "score": 2.2947,
+          "shared_games": 28,
+          "avg_combined_minutes": 37.15
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 1631170,
+          "a_name": "Jaime Jaquez Jr.",
+          "b_pid": 1642276,
+          "b_name": "Kel'el Ware",
+          "score": -1.2486,
+          "shared_games": 70,
+          "avg_combined_minutes": 49.32
+        },
+        {
+          "a_pid": 1629639,
+          "a_name": "Tyler Herro",
+          "b_pid": 1631170,
+          "b_name": "Jaime Jaquez Jr.",
+          "score": -1.2077,
+          "shared_games": 28,
+          "avg_combined_minutes": 55.01
+        },
+        {
+          "a_pid": 1630696,
+          "a_name": "Dru Smith",
+          "b_pid": 1631170,
+          "b_name": "Jaime Jaquez Jr.",
+          "score": -1.197,
+          "shared_games": 63,
+          "avg_combined_minutes": 43.86
+        },
+        {
+          "a_pid": 1629639,
+          "a_name": "Tyler Herro",
+          "b_pid": 1642276,
+          "b_name": "Kel'el Ware",
+          "score": -1.1706,
+          "shared_games": 33,
+          "avg_combined_minutes": 50.32
+        },
+        {
+          "a_pid": 1630696,
+          "a_name": "Dru Smith",
+          "b_pid": 1642276,
+          "b_name": "Kel'el Ware",
+          "score": -1.1079,
+          "shared_games": 66,
+          "avg_combined_minutes": 36.97
+        },
+        {
+          "a_pid": 203952,
+          "a_name": "Andrew Wiggins",
+          "b_pid": 1631170,
+          "b_name": "Jaime Jaquez Jr.",
+          "score": -1.0988,
+          "shared_games": 63,
+          "avg_combined_minutes": 56.54
+        }
+      ]
+    },
+    "MIL": {
+      "best": [
+        {
+          "a_pid": 203507,
+          "a_name": "Giannis Antetokounmpo",
+          "b_pid": 1626167,
+          "b_name": "Myles Turner",
+          "score": 4.0517,
+          "shared_games": 34,
+          "avg_combined_minutes": 54.22
+        },
+        {
+          "a_pid": 203507,
+          "a_name": "Giannis Antetokounmpo",
+          "b_pid": 1631260,
+          "b_name": "A.J. Green",
+          "score": 3.7715,
+          "shared_games": 35,
+          "avg_combined_minutes": 55.2
+        },
+        {
+          "a_pid": 203507,
+          "a_name": "Giannis Antetokounmpo",
+          "b_pid": 1631157,
+          "b_name": "Ryan Rollins",
+          "score": 3.2903,
+          "shared_games": 36,
+          "avg_combined_minutes": 59.52
+        },
+        {
+          "a_pid": 203507,
+          "a_name": "Giannis Antetokounmpo",
+          "b_pid": 1629599,
+          "b_name": "Amir Coffey",
+          "score": 3.2462,
+          "shared_games": 16,
+          "avg_combined_minutes": 38.98
+        },
+        {
+          "a_pid": 203507,
+          "a_name": "Giannis Antetokounmpo",
+          "b_pid": 203648,
+          "b_name": "Thanasis Antetokounmpo",
+          "score": 3.1721,
+          "shared_games": 10,
+          "avg_combined_minutes": 29.23
+        },
+        {
+          "a_pid": 203507,
+          "a_name": "Giannis Antetokounmpo",
+          "b_pid": 1641748,
+          "b_name": "Andre Jackson Jr.",
+          "score": 3.1317,
+          "shared_games": 14,
+          "avg_combined_minutes": 31.51
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 1628398,
+          "a_name": "Kyle Kuzma",
+          "b_pid": 1629018,
+          "b_name": "Gary Trent Jr.",
+          "score": -4.0407,
+          "shared_games": 54,
+          "avg_combined_minutes": 45.6
+        },
+        {
+          "a_pid": 1628398,
+          "a_name": "Kyle Kuzma",
+          "b_pid": 1631172,
+          "b_name": "Ousmane Dieng",
+          "score": -4.0124,
+          "shared_games": 20,
+          "avg_combined_minutes": 46.89
+        },
+        {
+          "a_pid": 1630579,
+          "a_name": "Jericho Sims",
+          "b_pid": 1631172,
+          "b_name": "Ousmane Dieng",
+          "score": -3.8846,
+          "shared_games": 29,
+          "avg_combined_minutes": 50.64
+        },
+        {
+          "a_pid": 1627752,
+          "a_name": "Taurean Prince",
+          "b_pid": 1631172,
+          "b_name": "Ousmane Dieng",
+          "score": -3.5456,
+          "shared_games": 16,
+          "avg_combined_minutes": 53.21
+        },
+        {
+          "a_pid": 1629018,
+          "a_name": "Gary Trent Jr.",
+          "b_pid": 1631172,
+          "b_name": "Ousmane Dieng",
+          "score": -3.5301,
+          "shared_games": 18,
+          "avg_combined_minutes": 40.77
+        },
+        {
+          "a_pid": 1628398,
+          "a_name": "Kyle Kuzma",
+          "b_pid": 1630560,
+          "b_name": "Cam Thomas",
+          "score": -3.4338,
+          "shared_games": 16,
+          "avg_combined_minutes": 40.08
+        }
+      ]
+    },
+    "MIN": {
+      "best": [
+        {
+          "a_pid": 203497,
+          "a_name": "Rudy Gobert",
+          "b_pid": 203944,
+          "b_name": "Julius Randle",
+          "score": 3.573,
+          "shared_games": 75,
+          "avg_combined_minutes": 62.21
+        },
+        {
+          "a_pid": 201144,
+          "a_name": "Mike Conley",
+          "b_pid": 203497,
+          "b_name": "Rudy Gobert",
+          "score": 3.2016,
+          "shared_games": 49,
+          "avg_combined_minutes": 47.68
+        },
+        {
+          "a_pid": 203497,
+          "a_name": "Rudy Gobert",
+          "b_pid": 1629675,
+          "b_name": "Naz Reid",
+          "score": 3.1812,
+          "shared_games": 73,
+          "avg_combined_minutes": 55.82
+        },
+        {
+          "a_pid": 203497,
+          "a_name": "Rudy Gobert",
+          "b_pid": 1628978,
+          "b_name": "Donte DiVincenzo",
+          "score": 3.0736,
+          "shared_games": 75,
+          "avg_combined_minutes": 59.9
+        },
+        {
+          "a_pid": 203497,
+          "a_name": "Rudy Gobert",
+          "b_pid": 1630162,
+          "b_name": "Anthony Edwards",
+          "score": 3.0,
+          "shared_games": 57,
+          "avg_combined_minutes": 64.36
+        },
+        {
+          "a_pid": 203497,
+          "a_name": "Rudy Gobert",
+          "b_pid": 204060,
+          "b_name": "Joe Ingles",
+          "score": 2.8123,
+          "shared_games": 21,
+          "avg_combined_minutes": 32.99
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 203937,
+          "a_name": "Kyle Anderson",
+          "b_pid": 1630245,
+          "b_name": "Ayo Dosunmu",
+          "score": -2.3799,
+          "shared_games": 15,
+          "avg_combined_minutes": 48.0
+        },
+        {
+          "a_pid": 1630245,
+          "a_name": "Ayo Dosunmu",
+          "b_pid": 1630545,
+          "b_name": "Terrence Shannon Jr.",
+          "score": -2.3654,
+          "shared_games": 16,
+          "avg_combined_minutes": 37.72
+        },
+        {
+          "a_pid": 1630245,
+          "a_name": "Ayo Dosunmu",
+          "b_pid": 1630538,
+          "b_name": "Nah'Shon Hyland",
+          "score": -2.2978,
+          "shared_games": 23,
+          "avg_combined_minutes": 46.23
+        },
+        {
+          "a_pid": 1630183,
+          "a_name": "Jaden McDaniels",
+          "b_pid": 1630245,
+          "b_name": "Ayo Dosunmu",
+          "score": -2.0668,
+          "shared_games": 19,
+          "avg_combined_minutes": 56.68
+        },
+        {
+          "a_pid": 1630245,
+          "a_name": "Ayo Dosunmu",
+          "b_pid": 1642866,
+          "b_name": "Joan Beringer",
+          "score": -1.8609,
+          "shared_games": 12,
+          "avg_combined_minutes": 34.48
+        },
+        {
+          "a_pid": 1630245,
+          "a_name": "Ayo Dosunmu",
+          "b_pid": 1641740,
+          "b_name": "Jaylen Clark",
+          "score": -1.7385,
+          "shared_games": 14,
+          "avg_combined_minutes": 35.12
+        }
+      ]
+    },
+    "NOP": {
+      "best": [
+        {
+          "a_pid": 1630529,
+          "a_name": "Herbert Jones",
+          "b_pid": 1630631,
+          "b_name": "Jose Alvarado",
+          "score": 2.421,
+          "shared_games": 28,
+          "avg_combined_minutes": 47.83
+        },
+        {
+          "a_pid": 1626172,
+          "a_name": "Kevon Looney",
+          "b_pid": 1630529,
+          "b_name": "Herbert Jones",
+          "score": 2.3365,
+          "shared_games": 10,
+          "avg_combined_minutes": 42.73
+        },
+        {
+          "a_pid": 1629627,
+          "a_name": "Zion Williamson",
+          "b_pid": 1630529,
+          "b_name": "Herbert Jones",
+          "score": 2.1608,
+          "shared_games": 44,
+          "avg_combined_minutes": 56.25
+        },
+        {
+          "a_pid": 1626172,
+          "a_name": "Kevon Looney",
+          "b_pid": 1630631,
+          "b_name": "Jose Alvarado",
+          "score": 1.4397,
+          "shared_games": 13,
+          "avg_combined_minutes": 35.28
+        },
+        {
+          "a_pid": 1630529,
+          "a_name": "Herbert Jones",
+          "b_pid": 1631255,
+          "b_name": "Karlo Matkovic",
+          "score": 1.3423,
+          "shared_games": 48,
+          "avg_combined_minutes": 42.17
+        },
+        {
+          "a_pid": 1629627,
+          "a_name": "Zion Williamson",
+          "b_pid": 1630631,
+          "b_name": "Jose Alvarado",
+          "score": 1.3375,
+          "shared_games": 25,
+          "avg_combined_minutes": 48.42
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 1642274,
+          "a_name": "Yves Missi",
+          "b_pid": 1642852,
+          "b_name": "Derik Queen",
+          "score": -3.7898,
+          "shared_games": 65,
+          "avg_combined_minutes": 42.37
+        },
+        {
+          "a_pid": 1641722,
+          "a_name": "Jordan Hawkins",
+          "b_pid": 1642274,
+          "b_name": "Yves Missi",
+          "score": -3.3147,
+          "shared_games": 39,
+          "avg_combined_minutes": 30.67
+        },
+        {
+          "a_pid": 1642274,
+          "a_name": "Yves Missi",
+          "b_pid": 1642847,
+          "b_name": "Jeremiah Fears",
+          "score": -3.2901,
+          "shared_games": 66,
+          "avg_combined_minutes": 43.19
+        },
+        {
+          "a_pid": 1629673,
+          "a_name": "Jordan Poole",
+          "b_pid": 1642274,
+          "b_name": "Yves Missi",
+          "score": -3.2542,
+          "shared_games": 30,
+          "avg_combined_minutes": 41.88
+        },
+        {
+          "a_pid": 1641722,
+          "a_name": "Jordan Hawkins",
+          "b_pid": 1642852,
+          "b_name": "Derik Queen",
+          "score": -3.2265,
+          "shared_games": 50,
+          "avg_combined_minutes": 38.49
+        },
+        {
+          "a_pid": 1631121,
+          "a_name": "Bryce McGowens",
+          "b_pid": 1642274,
+          "b_name": "Yves Missi",
+          "score": -3.1586,
+          "shared_games": 34,
+          "avg_combined_minutes": 37.81
+        }
+      ]
+    },
+    "NYK": {
+      "best": [
+        {
+          "a_pid": 1626157,
+          "a_name": "Karl-Anthony Towns",
+          "b_pid": 1628969,
+          "b_name": "Mikal Bridges",
+          "score": 3.2193,
+          "shared_games": 75,
+          "avg_combined_minutes": 61.21
+        },
+        {
+          "a_pid": 1626157,
+          "a_name": "Karl-Anthony Towns",
+          "b_pid": 1628384,
+          "b_name": "OG Anunoby",
+          "score": 3.1886,
+          "shared_games": 62,
+          "avg_combined_minutes": 60.92
+        },
+        {
+          "a_pid": 1628384,
+          "a_name": "OG Anunoby",
+          "b_pid": 1628969,
+          "b_name": "Mikal Bridges",
+          "score": 3.0686,
+          "shared_games": 67,
+          "avg_combined_minutes": 62.98
+        },
+        {
+          "a_pid": 1626157,
+          "a_name": "Karl-Anthony Towns",
+          "b_pid": 1630540,
+          "b_name": "Miles McBride",
+          "score": 3.028,
+          "shared_games": 36,
+          "avg_combined_minutes": 55.43
+        },
+        {
+          "a_pid": 1628969,
+          "a_name": "Mikal Bridges",
+          "b_pid": 1630540,
+          "b_name": "Miles McBride",
+          "score": 2.9145,
+          "shared_games": 39,
+          "avg_combined_minutes": 57.3
+        },
+        {
+          "a_pid": 1626157,
+          "a_name": "Karl-Anthony Towns",
+          "b_pid": 1628973,
+          "b_name": "Jalen Brunson",
+          "score": 2.8108,
+          "shared_games": 68,
+          "avg_combined_minutes": 63.34
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 1630574,
+          "a_name": "Ariel Hukporti",
+          "b_pid": 1631110,
+          "b_name": "Jeremy Sochan",
+          "score": -0.9554,
+          "shared_games": 12,
+          "avg_combined_minutes": 15.54
+        },
+        {
+          "a_pid": 1631110,
+          "a_name": "Jeremy Sochan",
+          "b_pid": 1642885,
+          "b_name": "Mohamed Diawara",
+          "score": -0.8486,
+          "shared_games": 15,
+          "avg_combined_minutes": 19.76
+        },
+        {
+          "a_pid": 203903,
+          "a_name": "Jordan Clarkson",
+          "b_pid": 1631110,
+          "b_name": "Jeremy Sochan",
+          "score": -0.8015,
+          "shared_games": 10,
+          "avg_combined_minutes": 22.36
+        },
+        {
+          "a_pid": 1630574,
+          "a_name": "Ariel Hukporti",
+          "b_pid": 1641755,
+          "b_name": "Kevin McCullar Jr.",
+          "score": -0.7536,
+          "shared_games": 15,
+          "avg_combined_minutes": 18.91
+        },
+        {
+          "a_pid": 1630574,
+          "a_name": "Ariel Hukporti",
+          "b_pid": 1641998,
+          "b_name": "Trey Jemison",
+          "score": -0.7511,
+          "shared_games": 13,
+          "avg_combined_minutes": 21.78
+        },
+        {
+          "a_pid": 1627824,
+          "a_name": "Guerschon Yabusele",
+          "b_pid": 1630574,
+          "b_name": "Ariel Hukporti",
+          "score": -0.6292,
+          "shared_games": 27,
+          "avg_combined_minutes": 18.48
+        }
+      ]
+    },
+    "OKC": {
+      "best": [
+        {
+          "a_pid": 1628983,
+          "a_name": "Shai Gilgeous-Alexander",
+          "b_pid": 1631096,
+          "b_name": "Chet Holmgren",
+          "score": 7.5665,
+          "shared_games": 59,
+          "avg_combined_minutes": 60.06
+        },
+        {
+          "a_pid": 1628983,
+          "a_name": "Shai Gilgeous-Alexander",
+          "b_pid": 1642349,
+          "b_name": "Ajay Mitchell",
+          "score": 6.4338,
+          "shared_games": 54,
+          "avg_combined_minutes": 56.92
+        },
+        {
+          "a_pid": 1627936,
+          "a_name": "Alex Caruso",
+          "b_pid": 1628983,
+          "b_name": "Shai Gilgeous-Alexander",
+          "score": 6.277,
+          "shared_games": 47,
+          "avg_combined_minutes": 49.39
+        },
+        {
+          "a_pid": 1628392,
+          "a_name": "Isaiah Hartenstein",
+          "b_pid": 1628983,
+          "b_name": "Shai Gilgeous-Alexander",
+          "score": 6.0368,
+          "shared_games": 41,
+          "avg_combined_minutes": 55.09
+        },
+        {
+          "a_pid": 1628983,
+          "a_name": "Shai Gilgeous-Alexander",
+          "b_pid": 1641717,
+          "b_name": "Cason Wallace",
+          "score": 5.2833,
+          "shared_games": 65,
+          "avg_combined_minutes": 57.25
+        },
+        {
+          "a_pid": 1628983,
+          "a_name": "Shai Gilgeous-Alexander",
+          "b_pid": 1630198,
+          "b_name": "Isaiah Joe",
+          "score": 5.2169,
+          "shared_games": 59,
+          "avg_combined_minutes": 52.17
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 1629652,
+          "a_name": "Luguentz Dort",
+          "b_pid": 1642260,
+          "b_name": "Nikola Topi\u0107",
+          "score": -1.927,
+          "shared_games": 10,
+          "avg_combined_minutes": 40.69
+        },
+        {
+          "a_pid": 1629652,
+          "a_name": "Luguentz Dort",
+          "b_pid": 1642964,
+          "b_name": "Brooks Barnhizer",
+          "score": -1.8265,
+          "shared_games": 29,
+          "avg_combined_minutes": 37.05
+        },
+        {
+          "a_pid": 1631172,
+          "a_name": "Ousmane Dieng",
+          "b_pid": 1642964,
+          "b_name": "Brooks Barnhizer",
+          "score": -1.7459,
+          "shared_games": 20,
+          "avg_combined_minutes": 20.09
+        },
+        {
+          "a_pid": 1629652,
+          "a_name": "Luguentz Dort",
+          "b_pid": 1631172,
+          "b_name": "Ousmane Dieng",
+          "score": -1.7306,
+          "shared_games": 18,
+          "avg_combined_minutes": 36.55
+        },
+        {
+          "a_pid": 1642382,
+          "a_name": "Branden Carlson",
+          "b_pid": 1642964,
+          "b_name": "Brooks Barnhizer",
+          "score": -1.595,
+          "shared_games": 26,
+          "avg_combined_minutes": 22.61
+        },
+        {
+          "a_pid": 1631172,
+          "a_name": "Ousmane Dieng",
+          "b_pid": 1642382,
+          "b_name": "Branden Carlson",
+          "score": -1.5272,
+          "shared_games": 18,
+          "avg_combined_minutes": 22.6
+        }
+      ]
+    },
+    "ORL": {
+      "best": [
+        {
+          "a_pid": 1630217,
+          "a_name": "Desmond Bane",
+          "b_pid": 1630532,
+          "b_name": "Franz Wagner",
+          "score": 3.5275,
+          "shared_games": 33,
+          "avg_combined_minutes": 59.45
+        },
+        {
+          "a_pid": 1630532,
+          "a_name": "Franz Wagner",
+          "b_pid": 1630591,
+          "b_name": "Jalen Suggs",
+          "score": 3.1417,
+          "shared_games": 26,
+          "avg_combined_minutes": 53.34
+        },
+        {
+          "a_pid": 1628371,
+          "a_name": "Jonathan Isaac",
+          "b_pid": 1630532,
+          "b_name": "Franz Wagner",
+          "score": 2.6053,
+          "shared_games": 22,
+          "avg_combined_minutes": 40.46
+        },
+        {
+          "a_pid": 1629048,
+          "a_name": "Goga Bitadze",
+          "b_pid": 1630532,
+          "b_name": "Franz Wagner",
+          "score": 2.3895,
+          "shared_games": 30,
+          "avg_combined_minutes": 45.63
+        },
+        {
+          "a_pid": 1630532,
+          "a_name": "Franz Wagner",
+          "b_pid": 1641783,
+          "b_name": "Tristan da Silva",
+          "score": 2.1779,
+          "shared_games": 33,
+          "avg_combined_minutes": 50.89
+        },
+        {
+          "a_pid": 1630217,
+          "a_name": "Desmond Bane",
+          "b_pid": 1630591,
+          "b_name": "Jalen Suggs",
+          "score": 2.1475,
+          "shared_games": 56,
+          "avg_combined_minutes": 58.45
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 1626145,
+          "a_name": "Tyus Jones",
+          "b_pid": 1641710,
+          "b_name": "Anthony Black",
+          "score": -1.9726,
+          "shared_games": 47,
+          "avg_combined_minutes": 45.09
+        },
+        {
+          "a_pid": 1631094,
+          "a_name": "Paolo Banchero",
+          "b_pid": 1641710,
+          "b_name": "Anthony Black",
+          "score": -1.8189,
+          "shared_games": 54,
+          "avg_combined_minutes": 62.96
+        },
+        {
+          "a_pid": 1641710,
+          "a_name": "Anthony Black",
+          "b_pid": 1641724,
+          "b_name": "Jett Howard",
+          "score": -1.7413,
+          "shared_games": 38,
+          "avg_combined_minutes": 40.56
+        },
+        {
+          "a_pid": 1626145,
+          "a_name": "Tyus Jones",
+          "b_pid": 1631094,
+          "b_name": "Paolo Banchero",
+          "score": -1.6535,
+          "shared_games": 38,
+          "avg_combined_minutes": 48.64
+        },
+        {
+          "a_pid": 1641710,
+          "a_name": "Anthony Black",
+          "b_pid": 1642869,
+          "b_name": "Noah Penda",
+          "score": -1.602,
+          "shared_games": 44,
+          "avg_combined_minutes": 41.54
+        },
+        {
+          "a_pid": 1641710,
+          "a_name": "Anthony Black",
+          "b_pid": 1642859,
+          "b_name": "Jase Richardson",
+          "score": -1.5782,
+          "shared_games": 45,
+          "avg_combined_minutes": 40.69
+        }
+      ]
+    },
+    "PHI": {
+      "best": [
+        {
+          "a_pid": 202331,
+          "a_name": "Paul George",
+          "b_pid": 203954,
+          "b_name": "Joel Embiid",
+          "score": 4.0242,
+          "shared_games": 24,
+          "avg_combined_minutes": 64.68
+        },
+        {
+          "a_pid": 203954,
+          "a_name": "Joel Embiid",
+          "b_pid": 1642845,
+          "b_name": "VJ Edgecombe",
+          "score": 3.4917,
+          "shared_games": 37,
+          "avg_combined_minutes": 64.92
+        },
+        {
+          "a_pid": 203954,
+          "a_name": "Joel Embiid",
+          "b_pid": 1630178,
+          "b_name": "Tyrese Maxey",
+          "score": 2.9592,
+          "shared_games": 35,
+          "avg_combined_minutes": 69.27
+        },
+        {
+          "a_pid": 202331,
+          "a_name": "Paul George",
+          "b_pid": 1642845,
+          "b_name": "VJ Edgecombe",
+          "score": 2.6714,
+          "shared_games": 34,
+          "avg_combined_minutes": 63.91
+        },
+        {
+          "a_pid": 203954,
+          "a_name": "Joel Embiid",
+          "b_pid": 1642272,
+          "b_name": "Jared McCain",
+          "score": 2.1667,
+          "shared_games": 21,
+          "avg_combined_minutes": 46.3
+        },
+        {
+          "a_pid": 202331,
+          "a_name": "Paul George",
+          "b_pid": 1630178,
+          "b_name": "Tyrese Maxey",
+          "score": 2.0989,
+          "shared_games": 34,
+          "avg_combined_minutes": 66.77
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 1626162,
+          "a_name": "Kelly Oubre Jr.",
+          "b_pid": 1630570,
+          "b_name": "Trendon Watford",
+          "score": -2.7268,
+          "shared_games": 38,
+          "avg_combined_minutes": 45.25
+        },
+        {
+          "a_pid": 1630699,
+          "a_name": "MarJon Beauchamp",
+          "b_pid": 1642348,
+          "b_name": "Justin Edwards",
+          "score": -2.6969,
+          "shared_games": 14,
+          "avg_combined_minutes": 36.23
+        },
+        {
+          "a_pid": 1630570,
+          "a_name": "Trendon Watford",
+          "b_pid": 1642348,
+          "b_name": "Justin Edwards",
+          "score": -2.6841,
+          "shared_games": 41,
+          "avg_combined_minutes": 33.26
+        },
+        {
+          "a_pid": 1626162,
+          "a_name": "Kelly Oubre Jr.",
+          "b_pid": 1629656,
+          "b_name": "Quentin Grimes",
+          "score": -2.6331,
+          "shared_games": 46,
+          "avg_combined_minutes": 57.02
+        },
+        {
+          "a_pid": 1626162,
+          "a_name": "Kelly Oubre Jr.",
+          "b_pid": 1642348,
+          "b_name": "Justin Edwards",
+          "score": -2.6124,
+          "shared_games": 35,
+          "avg_combined_minutes": 41.68
+        },
+        {
+          "a_pid": 1631207,
+          "a_name": "Dalen Terry",
+          "b_pid": 1642348,
+          "b_name": "Justin Edwards",
+          "score": -2.5882,
+          "shared_games": 14,
+          "avg_combined_minutes": 32.93
+        }
+      ]
+    },
+    "PHX": {
+      "best": [
+        {
+          "a_pid": 1626164,
+          "a_name": "Devin Booker",
+          "b_pid": 1628415,
+          "b_name": "Dillon Brooks",
+          "score": 2.9293,
+          "shared_games": 42,
+          "avg_combined_minutes": 62.87
+        },
+        {
+          "a_pid": 1626164,
+          "a_name": "Devin Booker",
+          "b_pid": 1631221,
+          "b_name": "Collin Gillespie",
+          "score": 2.7911,
+          "shared_games": 64,
+          "avg_combined_minutes": 59.7
+        },
+        {
+          "a_pid": 1626164,
+          "a_name": "Devin Booker",
+          "b_pid": 1642345,
+          "b_name": "Oso Ighodaro",
+          "score": 2.6959,
+          "shared_games": 64,
+          "avg_combined_minutes": 54.16
+        },
+        {
+          "a_pid": 1626164,
+          "a_name": "Devin Booker",
+          "b_pid": 1642853,
+          "b_name": "Rasheer Fleming",
+          "score": 2.5374,
+          "shared_games": 41,
+          "avg_combined_minutes": 42.87
+        },
+        {
+          "a_pid": 1626164,
+          "a_name": "Devin Booker",
+          "b_pid": 1630692,
+          "b_name": "Jordan Goodwin",
+          "score": 2.405,
+          "shared_games": 57,
+          "avg_combined_minutes": 53.73
+        },
+        {
+          "a_pid": 1626164,
+          "a_name": "Devin Booker",
+          "b_pid": 1631123,
+          "b_name": "Jamaree Bouyea",
+          "score": 2.054,
+          "shared_games": 29,
+          "avg_combined_minutes": 41.74
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 1630224,
+          "a_name": "Jalen Green",
+          "b_pid": 1631109,
+          "b_name": "Mark Williams",
+          "score": -2.7235,
+          "shared_games": 16,
+          "avg_combined_minutes": 44.63
+        },
+        {
+          "a_pid": 1630208,
+          "a_name": "Nick Richards",
+          "b_pid": 1631109,
+          "b_name": "Mark Williams",
+          "score": -2.4648,
+          "shared_games": 23,
+          "avg_combined_minutes": 31.48
+        },
+        {
+          "a_pid": 1626220,
+          "a_name": "Royce O'Neale",
+          "b_pid": 1631109,
+          "b_name": "Mark Williams",
+          "score": -2.3262,
+          "shared_games": 60,
+          "avg_combined_minutes": 50.41
+        },
+        {
+          "a_pid": 1629599,
+          "a_name": "Amir Coffey",
+          "b_pid": 1630224,
+          "b_name": "Jalen Green",
+          "score": -2.1173,
+          "shared_games": 13,
+          "avg_combined_minutes": 37.35
+        },
+        {
+          "a_pid": 1626220,
+          "a_name": "Royce O'Neale",
+          "b_pid": 1630224,
+          "b_name": "Jalen Green",
+          "score": -2.0246,
+          "shared_games": 29,
+          "avg_combined_minutes": 49.66
+        },
+        {
+          "a_pid": 1628502,
+          "a_name": "Nigel Hayes",
+          "b_pid": 1631109,
+          "b_name": "Mark Williams",
+          "score": -1.9734,
+          "shared_games": 22,
+          "avg_combined_minutes": 29.8
+        }
+      ]
+    },
+    "POR": {
+      "best": [
+        {
+          "a_pid": 201950,
+          "a_name": "Jrue Holiday",
+          "b_pid": 1630166,
+          "b_name": "Deni Avdija",
+          "score": 3.0419,
+          "shared_games": 38,
+          "avg_combined_minutes": 59.01
+        },
+        {
+          "a_pid": 201950,
+          "a_name": "Jrue Holiday",
+          "b_pid": 1629057,
+          "b_name": "Robert Williams III",
+          "score": 2.9404,
+          "shared_games": 39,
+          "avg_combined_minutes": 44.75
+        },
+        {
+          "a_pid": 201950,
+          "a_name": "Jrue Holiday",
+          "b_pid": 1641739,
+          "b_name": "Toumani Camara",
+          "score": 2.8196,
+          "shared_games": 53,
+          "avg_combined_minutes": 60.22
+        },
+        {
+          "a_pid": 201950,
+          "a_name": "Jrue Holiday",
+          "b_pid": 1631200,
+          "b_name": "Kris Murray",
+          "score": 2.5721,
+          "shared_games": 34,
+          "avg_combined_minutes": 50.35
+        },
+        {
+          "a_pid": 201950,
+          "a_name": "Jrue Holiday",
+          "b_pid": 1642270,
+          "b_name": "Donovan Clingan",
+          "score": 2.4797,
+          "shared_games": 52,
+          "avg_combined_minutes": 53.48
+        },
+        {
+          "a_pid": 201950,
+          "a_name": "Jrue Holiday",
+          "b_pid": 1629680,
+          "b_name": "Matisse Thybulle",
+          "score": 2.2413,
+          "shared_games": 30,
+          "avg_combined_minutes": 45.28
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 203924,
+          "a_name": "Jerami Grant",
+          "b_pid": 1641712,
+          "b_name": "Rayan Rupert",
+          "score": -3.1052,
+          "shared_games": 32,
+          "avg_combined_minutes": 38.08
+        },
+        {
+          "a_pid": 1631126,
+          "a_name": "Caleb Love",
+          "b_pid": 1641712,
+          "b_name": "Rayan Rupert",
+          "score": -2.9847,
+          "shared_games": 42,
+          "avg_combined_minutes": 34.9
+        },
+        {
+          "a_pid": 203924,
+          "a_name": "Jerami Grant",
+          "b_pid": 1630703,
+          "b_name": "Scoot Henderson",
+          "score": -2.9436,
+          "shared_games": 21,
+          "avg_combined_minutes": 52.58
+        },
+        {
+          "a_pid": 203924,
+          "a_name": "Jerami Grant",
+          "b_pid": 1630249,
+          "b_name": "Vit Krejci",
+          "score": -2.8077,
+          "shared_games": 18,
+          "avg_combined_minutes": 49.64
+        },
+        {
+          "a_pid": 203924,
+          "a_name": "Jerami Grant",
+          "b_pid": 1631104,
+          "b_name": "Blake Wesley",
+          "score": -2.7317,
+          "shared_games": 24,
+          "avg_combined_minutes": 41.59
+        },
+        {
+          "a_pid": 203924,
+          "a_name": "Jerami Grant",
+          "b_pid": 1631126,
+          "b_name": "Caleb Love",
+          "score": -2.6635,
+          "shared_games": 30,
+          "avg_combined_minutes": 47.77
+        }
+      ]
+    },
+    "SAC": {
+      "best": [
+        {
+          "a_pid": 1631099,
+          "a_name": "Keegan Murray",
+          "b_pid": 1642363,
+          "b_name": "Nique Clifford",
+          "score": 0.1411,
+          "shared_games": 23,
+          "avg_combined_minutes": 53.18
+        },
+        {
+          "a_pid": 1628370,
+          "a_name": "Malik Monk",
+          "b_pid": 1631099,
+          "b_name": "Keegan Murray",
+          "score": 0.1333,
+          "shared_games": 19,
+          "avg_combined_minutes": 52.74
+        },
+        {
+          "a_pid": 203897,
+          "a_name": "Zach LaVine",
+          "b_pid": 1631099,
+          "b_name": "Keegan Murray",
+          "score": 0.0291,
+          "shared_games": 11,
+          "avg_combined_minutes": 66.5
+        },
+        {
+          "a_pid": 1631099,
+          "a_name": "Keegan Murray",
+          "b_pid": 1631165,
+          "b_name": "Keon Ellis",
+          "score": -0.0294,
+          "shared_games": 17,
+          "avg_combined_minutes": 50.46
+        },
+        {
+          "a_pid": 1628370,
+          "a_name": "Malik Monk",
+          "b_pid": 1642363,
+          "b_name": "Nique Clifford",
+          "score": -0.1759,
+          "shared_games": 54,
+          "avg_combined_minutes": 44.04
+        },
+        {
+          "a_pid": 1627734,
+          "a_name": "Domantas Sabonis",
+          "b_pid": 1642363,
+          "b_name": "Nique Clifford",
+          "score": -0.2087,
+          "shared_games": 15,
+          "avg_combined_minutes": 47.6
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 1630165,
+          "a_name": "Killian Hayes",
+          "b_pid": 1642875,
+          "b_name": "Maxime Raynaud",
+          "score": -4.5659,
+          "shared_games": 23,
+          "avg_combined_minutes": 48.49
+        },
+        {
+          "a_pid": 1631342,
+          "a_name": "Daeqwon Plowden",
+          "b_pid": 1642875,
+          "b_name": "Maxime Raynaud",
+          "score": -4.4867,
+          "shared_games": 32,
+          "avg_combined_minutes": 55.85
+        },
+        {
+          "a_pid": 201566,
+          "a_name": "Russell Westbrook",
+          "b_pid": 1642875,
+          "b_name": "Maxime Raynaud",
+          "score": -4.4635,
+          "shared_games": 56,
+          "avg_combined_minutes": 52.13
+        },
+        {
+          "a_pid": 203926,
+          "a_name": "Doug McDermott",
+          "b_pid": 1642875,
+          "b_name": "Maxime Raynaud",
+          "score": -4.3563,
+          "shared_games": 29,
+          "avg_combined_minutes": 44.64
+        },
+        {
+          "a_pid": 1630173,
+          "a_name": "Precious Achiuwa",
+          "b_pid": 1642875,
+          "b_name": "Maxime Raynaud",
+          "score": -4.0492,
+          "shared_games": 69,
+          "avg_combined_minutes": 49.68
+        },
+        {
+          "a_pid": 1642269,
+          "a_name": "Devin Carter",
+          "b_pid": 1642875,
+          "b_name": "Maxime Raynaud",
+          "score": -3.559,
+          "shared_games": 34,
+          "avg_combined_minutes": 47.73
+        }
+      ]
+    },
+    "SAS": {
+      "best": [
+        {
+          "a_pid": 1641705,
+          "a_name": "Victor Wembanyama",
+          "b_pid": 1642844,
+          "b_name": "Dylan Harper",
+          "score": 6.3542,
+          "shared_games": 55,
+          "avg_combined_minutes": 49.39
+        },
+        {
+          "a_pid": 1628368,
+          "a_name": "De'Aaron Fox",
+          "b_pid": 1641705,
+          "b_name": "Victor Wembanyama",
+          "score": 5.7169,
+          "shared_games": 54,
+          "avg_combined_minutes": 56.27
+        },
+        {
+          "a_pid": 1630577,
+          "a_name": "Julian Champagnie",
+          "b_pid": 1641705,
+          "b_name": "Victor Wembanyama",
+          "score": 5.6323,
+          "shared_games": 64,
+          "avg_combined_minutes": 53.97
+        },
+        {
+          "a_pid": 1630170,
+          "a_name": "Devin Vassell",
+          "b_pid": 1641705,
+          "b_name": "Victor Wembanyama",
+          "score": 4.9377,
+          "shared_games": 51,
+          "avg_combined_minutes": 57.87
+        },
+        {
+          "a_pid": 1628436,
+          "a_name": "Luke Kornet",
+          "b_pid": 1641705,
+          "b_name": "Victor Wembanyama",
+          "score": 4.8298,
+          "shared_games": 52,
+          "avg_combined_minutes": 45.86
+        },
+        {
+          "a_pid": 1641705,
+          "a_name": "Victor Wembanyama",
+          "b_pid": 1642264,
+          "b_name": "Stephon Castle",
+          "score": 4.5229,
+          "shared_games": 60,
+          "avg_combined_minutes": 56.87
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 1629640,
+          "a_name": "Keldon Johnson",
+          "b_pid": 1631110,
+          "b_name": "Jeremy Sochan",
+          "score": -2.3302,
+          "shared_games": 28,
+          "avg_combined_minutes": 35.66
+        },
+        {
+          "a_pid": 203084,
+          "a_name": "Harrison Barnes",
+          "b_pid": 1631110,
+          "b_name": "Jeremy Sochan",
+          "score": -2.003,
+          "shared_games": 28,
+          "avg_combined_minutes": 39.75
+        },
+        {
+          "a_pid": 203482,
+          "a_name": "Kelly Olynyk",
+          "b_pid": 1631110,
+          "b_name": "Jeremy Sochan",
+          "score": -1.8088,
+          "shared_games": 20,
+          "avg_combined_minutes": 22.58
+        },
+        {
+          "a_pid": 203084,
+          "a_name": "Harrison Barnes",
+          "b_pid": 1629640,
+          "b_name": "Keldon Johnson",
+          "score": -1.7453,
+          "shared_games": 77,
+          "avg_combined_minutes": 47.8
+        },
+        {
+          "a_pid": 202687,
+          "a_name": "Bismack Biyombo",
+          "b_pid": 1629640,
+          "b_name": "Keldon Johnson",
+          "score": -1.5571,
+          "shared_games": 25,
+          "avg_combined_minutes": 28.44
+        },
+        {
+          "a_pid": 203482,
+          "a_name": "Kelly Olynyk",
+          "b_pid": 1629640,
+          "b_name": "Keldon Johnson",
+          "score": -1.534,
+          "shared_games": 41,
+          "avg_combined_minutes": 31.84
+        }
+      ]
+    },
+    "TOR": {
+      "best": [
+        {
+          "a_pid": 1630193,
+          "a_name": "Immanuel Quickley",
+          "b_pid": 1630567,
+          "b_name": "Scottie Barnes",
+          "score": 1.7577,
+          "shared_games": 68,
+          "avg_combined_minutes": 62.73
+        },
+        {
+          "a_pid": 1630567,
+          "a_name": "Scottie Barnes",
+          "b_pid": 1642347,
+          "b_name": "Jamal Shead",
+          "score": 1.441,
+          "shared_games": 80,
+          "avg_combined_minutes": 54.27
+        },
+        {
+          "a_pid": 1627751,
+          "a_name": "Jakob Poeltl",
+          "b_pid": 1630567,
+          "b_name": "Scottie Barnes",
+          "score": 1.4165,
+          "shared_games": 45,
+          "avg_combined_minutes": 55.21
+        },
+        {
+          "a_pid": 1627751,
+          "a_name": "Jakob Poeltl",
+          "b_pid": 1630193,
+          "b_name": "Immanuel Quickley",
+          "score": 1.366,
+          "shared_games": 37,
+          "avg_combined_minutes": 54.26
+        },
+        {
+          "a_pid": 1630193,
+          "a_name": "Immanuel Quickley",
+          "b_pid": 1642347,
+          "b_name": "Jamal Shead",
+          "score": 1.3492,
+          "shared_games": 70,
+          "avg_combined_minutes": 51.58
+        },
+        {
+          "a_pid": 1630567,
+          "a_name": "Scottie Barnes",
+          "b_pid": 1630572,
+          "b_name": "Sandro Mamukelashvili",
+          "score": 1.2906,
+          "shared_games": 78,
+          "avg_combined_minutes": 53.42
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 1630534,
+          "a_name": "Ochai Agbaji",
+          "b_pid": 1641711,
+          "b_name": "Gradey Dick",
+          "score": -1.5771,
+          "shared_games": 42,
+          "avg_combined_minutes": 30.23
+        },
+        {
+          "a_pid": 1641711,
+          "a_name": "Gradey Dick",
+          "b_pid": 1642266,
+          "b_name": "Ja'Kobe Walter",
+          "score": -1.5512,
+          "shared_games": 66,
+          "avg_combined_minutes": 32.4
+        },
+        {
+          "a_pid": 1641711,
+          "a_name": "Gradey Dick",
+          "b_pid": 1642367,
+          "b_name": "Jonathan Mogbo",
+          "score": -1.4696,
+          "shared_games": 38,
+          "avg_combined_minutes": 20.11
+        },
+        {
+          "a_pid": 1642266,
+          "a_name": "Ja'Kobe Walter",
+          "b_pid": 1642367,
+          "b_name": "Jonathan Mogbo",
+          "score": -1.3772,
+          "shared_games": 30,
+          "avg_combined_minutes": 28.13
+        },
+        {
+          "a_pid": 1630639,
+          "a_name": "AJ Lawson",
+          "b_pid": 1642266,
+          "b_name": "Ja'Kobe Walter",
+          "score": -1.2499,
+          "shared_games": 18,
+          "avg_combined_minutes": 32.53
+        },
+        {
+          "a_pid": 1630534,
+          "a_name": "Ochai Agbaji",
+          "b_pid": 1642266,
+          "b_name": "Ja'Kobe Walter",
+          "score": -1.228,
+          "shared_games": 32,
+          "avg_combined_minutes": 31.77
+        }
+      ]
+    },
+    "UTA": {
+      "best": [
+        {
+          "a_pid": 203994,
+          "a_name": "Jusuf Nurkic",
+          "b_pid": 1628374,
+          "b_name": "Lauri Markkanen",
+          "score": 3.0387,
+          "shared_games": 34,
+          "avg_combined_minutes": 58.38
+        },
+        {
+          "a_pid": 1628374,
+          "a_name": "Lauri Markkanen",
+          "b_pid": 1629004,
+          "b_name": "Svi Mykhailiuk",
+          "score": 2.761,
+          "shared_games": 35,
+          "avg_combined_minutes": 56.62
+        },
+        {
+          "a_pid": 201567,
+          "a_name": "Kevin Love",
+          "b_pid": 1628374,
+          "b_name": "Lauri Markkanen",
+          "score": 2.5384,
+          "shared_games": 23,
+          "avg_combined_minutes": 49.44
+        },
+        {
+          "a_pid": 1628374,
+          "a_name": "Lauri Markkanen",
+          "b_pid": 1642271,
+          "b_name": "Kyle Filipowski",
+          "score": 2.0807,
+          "shared_games": 41,
+          "avg_combined_minutes": 53.0
+        },
+        {
+          "a_pid": 1628374,
+          "a_name": "Lauri Markkanen",
+          "b_pid": 1641707,
+          "b_name": "Taylor Hendricks",
+          "score": 1.7265,
+          "shared_games": 22,
+          "avg_combined_minutes": 47.88
+        },
+        {
+          "a_pid": 203937,
+          "a_name": "Kyle Anderson",
+          "b_pid": 1628374,
+          "b_name": "Lauri Markkanen",
+          "score": 1.7259,
+          "shared_games": 12,
+          "avg_combined_minutes": 49.98
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 1642262,
+          "a_name": "Cody Williams",
+          "b_pid": 1643016,
+          "b_name": "Bez Mbeng",
+          "score": -6.305,
+          "shared_games": 14,
+          "avg_combined_minutes": 65.22
+        },
+        {
+          "a_pid": 1641718,
+          "a_name": "Keyonte George",
+          "b_pid": 1642268,
+          "b_name": "Isaiah Collier",
+          "score": -5.6187,
+          "shared_games": 44,
+          "avg_combined_minutes": 55.32
+        },
+        {
+          "a_pid": 1642268,
+          "a_name": "Isaiah Collier",
+          "b_pid": 1642846,
+          "b_name": "Ace Bailey",
+          "score": -5.2374,
+          "shared_games": 51,
+          "avg_combined_minutes": 52.07
+        },
+        {
+          "a_pid": 1642262,
+          "a_name": "Cody Williams",
+          "b_pid": 1642268,
+          "b_name": "Isaiah Collier",
+          "score": -5.2285,
+          "shared_games": 49,
+          "avg_combined_minutes": 47.52
+        },
+        {
+          "a_pid": 1642846,
+          "a_name": "Ace Bailey",
+          "b_pid": 1643016,
+          "b_name": "Bez Mbeng",
+          "score": -5.2277,
+          "shared_games": 13,
+          "avg_combined_minutes": 59.56
+        },
+        {
+          "a_pid": 1641718,
+          "a_name": "Keyonte George",
+          "b_pid": 1642846,
+          "b_name": "Ace Bailey",
+          "score": -5.1856,
+          "shared_games": 47,
+          "avg_combined_minutes": 57.31
+        }
+      ]
+    },
+    "WAS": {
+      "best": [
+        {
+          "a_pid": 203468,
+          "a_name": "CJ McCollum",
+          "b_pid": 1642364,
+          "b_name": "Jamir Watkins",
+          "score": 0.3187,
+          "shared_games": 13,
+          "avg_combined_minutes": 43.36
+        },
+        {
+          "a_pid": 203468,
+          "a_name": "CJ McCollum",
+          "b_pid": 1630264,
+          "b_name": "Anthony Gill",
+          "score": 0.0621,
+          "shared_games": 13,
+          "avg_combined_minutes": 30.69
+        },
+        {
+          "a_pid": 203468,
+          "a_name": "CJ McCollum",
+          "b_pid": 1630551,
+          "b_name": "Justin Champagnie",
+          "score": -0.0998,
+          "shared_games": 32,
+          "avg_combined_minutes": 46.66
+        },
+        {
+          "a_pid": 203468,
+          "a_name": "CJ McCollum",
+          "b_pid": 1642358,
+          "b_name": "AJ Johnson",
+          "score": -0.1566,
+          "shared_games": 17,
+          "avg_combined_minutes": 33.36
+        },
+        {
+          "a_pid": 203114,
+          "a_name": "Khris Middleton",
+          "b_pid": 203468,
+          "b_name": "CJ McCollum",
+          "score": -0.2172,
+          "shared_games": 23,
+          "avg_combined_minutes": 54.65
+        },
+        {
+          "a_pid": 203468,
+          "a_name": "CJ McCollum",
+          "b_pid": 1642848,
+          "b_name": "Tre Johnson",
+          "score": -0.3985,
+          "shared_games": 27,
+          "avg_combined_minutes": 52.92
+        }
+      ],
+      "worst": [
+        {
+          "a_pid": 1642267,
+          "a_name": "Carlton Carrington",
+          "b_pid": 1642860,
+          "b_name": "Will Riley",
+          "score": -5.7458,
+          "shared_games": 73,
+          "avg_combined_minutes": 48.4
+        },
+        {
+          "a_pid": 1641731,
+          "a_name": "Bilal Coulibaly",
+          "b_pid": 1642267,
+          "b_name": "Carlton Carrington",
+          "score": -5.4366,
+          "shared_games": 55,
+          "avg_combined_minutes": 50.38
+        },
+        {
+          "a_pid": 1630702,
+          "a_name": "Jaden Hardy",
+          "b_pid": 1642267,
+          "b_name": "Carlton Carrington",
+          "score": -5.0776,
+          "shared_games": 23,
+          "avg_combined_minutes": 46.05
+        },
+        {
+          "a_pid": 1642259,
+          "a_name": "Alexandre Sarr",
+          "b_pid": 1642267,
+          "b_name": "Carlton Carrington",
+          "score": -5.0041,
+          "shared_games": 47,
+          "avg_combined_minutes": 54.0
+        },
+        {
+          "a_pid": 1642267,
+          "a_name": "Carlton Carrington",
+          "b_pid": 1642882,
+          "b_name": "Julian Reese",
+          "score": -4.9037,
+          "shared_games": 13,
+          "avg_combined_minutes": 54.34
+        },
+        {
+          "a_pid": 1630264,
+          "a_name": "Anthony Gill",
+          "b_pid": 1642267,
+          "b_name": "Carlton Carrington",
+          "score": -4.8948,
+          "shared_games": 54,
+          "avg_combined_minutes": 43.78
+        }
+      ]
+    }
+  }
+}

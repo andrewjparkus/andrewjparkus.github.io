@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Team · Daily RAPM</title>
+<link rel="stylesheet" href="site.css">
+<link rel="icon" href="favicon.svg"><link rel="manifest" href="manifest.webmanifest">
+<style>
+  /* page-unique: team header, factor-profile two-up, roster name link */
+  .thead{display:flex;align-items:center;gap:14px;margin:8px 0 2px;flex-wrap:wrap}
+  .thead img{width:46px;height:46px;object-fit:contain;flex:0 0 auto}
+  .thead .tn h1{margin:0}
+  .thead .tn .conf{color:var(--muted);font-size:12.5px;margin-top:3px}
+  .thead .tn .conf b{color:var(--text);font-weight:600}
+  .profile{display:grid;grid-template-columns:320px 1fr;gap:18px;align-items:start;margin-top:10px}
+  @media(max-width:680px){.profile{grid-template-columns:1fr}}
+  #radar{max-width:320px;margin:0 auto}
+  /* factor strip: diverging bar from league-avg center, colored RdBu by z */
+  .strip{display:flex;flex-direction:column;gap:6px;margin-top:2px}
+  .striprow{display:grid;grid-template-columns:46px 1fr 84px;align-items:center;gap:9px;font-size:12px}
+  .striprow .lab{font-weight:700;color:#aebccd;text-align:right;display:flex;align-items:center;justify-content:flex-end;gap:4px}
+  :root[data-theme=light] .striprow .lab{color:#33425a}
+  .striprow .cellbar{height:18px;border-radius:3px;position:relative;border:1px solid var(--line);background:var(--grid);overflow:hidden}
+  .striprow .cellbar .fill{position:absolute;top:0;bottom:0}
+  .striprow .cellbar .axis{position:absolute;top:0;bottom:0;left:50%;width:1px;background:var(--zero);opacity:.85}
+  .striprow .val{font-variant-numeric:tabular-nums;text-align:right}
+  .striprow .val .z{color:var(--faint);font-size:10px;margin-left:4px}
+  table.tbl td.pl{font-size:12.5px;font-weight:600}
+  table.tbl td.pl a{color:var(--accent)}
+  table.tbl td.pl a:hover{color:var(--text)}
+  table.tbl td.mpg,table.tbl td.gp{color:#aebccd}
+  :root[data-theme=light] table.tbl td.mpg,:root[data-theme=light] table.tbl td.gp{color:#33425a}
+  /* red->green net cell: high-contrast number (var(--text)) + a colored swatch carrying the cue */
+  table.tbl td.rg{white-space:nowrap}
+  table.tbl td.rg .sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:baseline;border:1px solid rgba(0,0,0,.18)}
+  :root[data-theme=light] table.tbl td.rg .sw{border-color:rgba(0,0,0,.22)}
+  table.tbl td.rg .nv{font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+  /* depth chart: 5 position columns, players bucketed + ordered by contribution */
+  .depth{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:2px}
+  @media(max-width:680px){.depth{grid-template-columns:repeat(2,1fr)}}
+  .depthcol{border:1px solid var(--line);background:var(--panel);border-radius:var(--r-1);
+    padding:5px 6px 7px;min-width:0}
+  .depthcol h4{margin:0 0 6px;font-size:11px;font-weight:700;color:#aebccd;letter-spacing:.4px;
+    text-align:center;border-bottom:1px solid var(--line-2);padding-bottom:5px}
+  :root[data-theme=light] .depthcol h4{color:#33425a}
+  .dpl{display:flex;align-items:center;gap:6px;padding:4px 2px;border-bottom:1px solid var(--line-2)}
+  .dpl:last-child{border-bottom:none}
+  .dpl .nm{flex:1 1 auto;min-width:0;font-size:12px;font-weight:600;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap}
+  .dpl .nm a{color:var(--accent)}.dpl .nm a:hover{color:var(--text)}
+  .dpl .mp{flex:0 0 auto;font-size:10.5px;color:var(--faint);font-variant-numeric:tabular-nums}
+  .dpl .nchip{flex:0 0 auto;font-size:10.5px;font-weight:700;font-variant-numeric:tabular-nums;
+    padding:1px 5px;border-radius:3px;color:#0a0e16;min-width:30px;text-align:center}
+  .depthcol .none{font-size:11px;color:var(--faint);text-align:center;padding:6px 0}
+  .unlisted{margin-top:8px}
+</style></head>
+<body>
+<nav id="topnav" data-active="teams"></nav>
+<script src="charts.js"></script>
+<script src="nav.js"></script>
+<div class="wrap" id="wrap">
+  <div class="msg" id="msg">Loading team…</div>
+</div>
+
+<script>
+"use strict";
+const FACS = ["oTS","oTOV","oSC","dTS","dTOV","dSC"];
+const OFF = ["oTS","oTOV","oSC"], DEF = ["dTS","dTOV","dSC"];
+const FAC_TIP = {
+  oTS:"Offensive true-shooting RAPM — points/100 from shot-making efficiency (NBA scale).",
+  oTOV:"Offensive turnover RAPM — ball-security value (fewer turnovers = positive).",
+  oSC:"Offensive second-chance RAPM — value from offensive rebounding / extra possessions.",
+  dTS:"Defensive true-shooting RAPM — suppressing opponent shot efficiency.",
+  dTOV:"Defensive turnover RAPM — forcing turnovers / ball pressure.",
+  dSC:"Defensive second-chance RAPM — limiting opponent offensive rebounds."
+};
+const OWN_TIP = "This player's own RAPM net while on court (pts/100).";
+const CONTRIB_TIP = "Minute-weighted contribution to team net = own net x minute share.";
+const WAR_TIP = "Wins above replacement this season.";
+
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function num(v,dec){ return (v==null||isNaN(v))?"–":Number(v).toFixed(dec==null?1:dec); }
+function fmt(v,dec){
+  dec = (dec==null)?1:dec;
+  if(v==null || isNaN(v)) return {txt:"–",cls:"zero"};
+  const n = Number(v);
+  const txt = (n>=0?"+":"−") + Math.abs(n).toFixed(dec);
+  let cls = "zero";
+  if(n >= 0.05) cls = "pos"; else if(n <= -0.05) cls = "neg";
+  return {txt,cls};
+}
+// red->green NBA-net ramp cell: t = (net+5)/10 clipped to [0,1]. The cue lives in a
+// colored swatch; the NUMBER is always high-contrast (var(--text)) in both themes.
+function rgCell(v,extraCls){
+  const f = fmt(v,1);
+  if(v==null||isNaN(v)) return '<td class="f rg '+(extraCls||"")+' zero">'+f.txt+'</td>';
+  const t = Math.max(0, Math.min(1, (Number(v)+5)/10));
+  return '<td class="f rg '+(extraCls||"")+'"><span class="sw" style="background:'+RC.redGreen(t)
+    + '"></span><span class="nv">'+f.txt+'</span></td>';
+}
+function qparam(k){ return new URLSearchParams(location.search).get(k); }
+
+let DATA = null;
+
+fetch('teams.json')
+  .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+  .then(d=>{ DATA=d; render(d); })
+  .catch(err=>{
+    document.getElementById('msg').innerHTML =
+      "Couldn't load team data (teams.json). "+esc(err.message)+
+      '<br><a href="teams.html">← back to standings</a>';
+  });
+
+function friendly(htmlMsg){
+  document.getElementById('wrap').innerHTML =
+    '<div class="empty">'+htmlMsg+'<br><a href="teams.html" style="font-size:13px">← back to projected standings</a></div>';
+}
+
+function render(d){
+  const abbrRaw = qparam('abbr');
+  if(!abbrRaw){ friendly("No team selected."); return; }
+  const abbr = String(abbrRaw).toUpperCase();
+  const team = (d && d.teams && d.teams[abbr]) ? d.teams[abbr] : null;
+  if(!team){ friendly("No team found for <b>"+esc(abbrRaw)+"</b>."); return; }
+
+  // matching standings row (carries proj_wins / p10 / p90 / actual / playoff_prob)
+  let srow = null;
+  const confs = (d && d.conferences) || {};
+  ["West","East"].forEach(name=>{
+    (Array.isArray(confs[name])?confs[name]:[]).forEach(r=>{ if(r.abbr===abbr) srow=r; });
+  });
+  srow = srow || {};
+
+  const totals = team.totals || {};
+  // league averages per factor (across all teams)
+  const all = Object.values(d.teams||{});
+  const leagueAvg = {};
+  FACS.forEach(f=>{
+    const v = all.map(t=>(t.totals||{})[f]).filter(x=>x!=null&&!isNaN(x));
+    leagueAvg[f] = v.length ? v.reduce((a,b)=>a+b,0)/v.length : 0;
+    leagueAvg["sd_"+f] = (function(){
+      if(!v.length) return 1e-9;
+      const mu=leagueAvg[f]; return Math.sqrt(v.reduce((a,b)=>a+(b-mu)*(b-mu),0)/v.length)||1e-9;
+    })();
+  });
+
+  const oRapm = OFF.reduce((a,f)=>a+(totals[f]||0),0);
+  const dRapm = DEF.reduce((a,f)=>a+(totals[f]||0),0);
+  document.title = (team.name||abbr) + " · Daily RAPM";
+
+  // ---- header ----
+  const logo = team.logo
+    ? '<img src="'+esc(team.logo)+'" alt="" onerror="this.style.visibility=\'hidden\'">' : '';
+  const confTxt = srow.conf
+    ? srow.conf + ' conference' : (team.conf || '');
+  let html = '<div class="thead">'+logo
+    + '<div class="tn"><h1>'+esc(team.name||abbr)+'</h1>'
+    + '<div class="conf"><b>'+esc(abbr)+'</b>'+(confTxt?' · '+esc(confTxt):'')+'</div></div></div>';
+  html += '<p class="sub">Season-to-date six-factor team RAPM (pts/100), minute-weighted. '
+    + 'Projected wins from the same Monte-Carlo as the <a href="teams.html">standings</a>.</p>';
+
+  // ---- KPI block ----
+  const projCI = (srow.p10!=null&&srow.p90!=null) ? num(srow.p10,0)+'–'+num(srow.p90,0)+' (p10–p90)' : '';
+  const po = (srow.playoff_prob!=null) ? Math.round(srow.playoff_prob*100)+'%' : '–';
+  const netF = fmt(totals.net,1), oF = fmt(oRapm,1), dF = fmt(dRapm,1);
+  html += '<div class="kpis">';
+  html += kpi('Projected wins', num(srow.proj_wins,1), projCI);
+  html += kpi('Actual wins', srow.actual_wins==null?'–':num(srow.actual_wins,0), 'so far this season');
+  html += kpi('Playoff prob', po, 'from the Monte-Carlo');
+  html += '<div class="kpi"><div class="k">Team net</div><div class="v '+netF.cls+'">'+netF.txt+'</div><div class="x">pts/100, six factors + resid</div></div>';
+  html += '<div class="kpi"><div class="k">ORAPM</div><div class="v '+oF.cls+'">'+oF.txt+'</div><div class="x">oTS + oTOV + oSC</div></div>';
+  html += '<div class="kpi"><div class="k">DRAPM</div><div class="v '+dF.cls+'">'+dF.txt+'</div><div class="x">dTS + dTOV + dSC (sign-flipped)</div></div>';
+  html += '</div>';
+
+  // ---- factor profile: radar (vs league as the 100% ring is bespoke; here pct = relative-to-max-abs) + RdBu strip ----
+  html += '<div class="sectitle">Factor profile <span style="font-weight:400;color:var(--faint)">· vs league average</span></div>';
+  html += '<div class="profile">';
+  html += '<div class="card" style="padding:10px"><div id="radar"></div>'
+    + '<div class="cap" style="margin:6px 4px 2px">Radar shape: each spoke is the team\'s factor as a share of the league\'s largest absolute factor value, so the polygon shows where this team is strong relative to the league.</div></div>';
+  html += '<div><div class="strip" id="strip"></div>'
+    + '<div class="cap">Each bar diverges from the grey league-average line: it grows right (blue) when the team is above the league on that factor, left (red) when below, with length proportional to the within-league z (RdBu, CVD-safe). Number is the raw factor total (pts/100); z in grey.</div></div>';
+  html += '</div>';
+
+  // ---- roster table ----
+  const roster = Array.isArray(team.roster) ? team.roster.slice() : [];
+  roster.sort((a,b)=>((b.c&&b.c.net)||0)-((a.c&&a.c.net)||0));
+  html += '<div class="sectitle">Roster <span style="font-weight:400;color:var(--faint)">· '+roster.length+' players · sorted by net contribution</span></div>';
+  html += '<div class="scroll"><table class="tbl" style="min-width:820px"><thead><tr>'
+    + '<th class="l">Player</th>'
+    + '<th title="Minutes per game">MPG</th>'
+    + '<th>GP</th>'
+    + '<th class="grp">Own net <span class="help" data-tip="'+esc(OWN_TIP)+'">?</span></th>'
+    + '<th>Contrib <span class="help" data-tip="'+esc(CONTRIB_TIP)+'">?</span></th>'
+    + '<th class="grp">WAR <span class="help" data-tip="'+esc(WAR_TIP)+'">?</span></th>'
+    + '</tr></thead><tbody>';
+  roster.forEach(p=>{
+    const c = p.c||{}, own = p.p||{};
+    const tip = 'Own per-100 rating · net '+num(own.net,1)+(FACS.map(f=>' · '+f+' '+num(own[f],1)).join(''));
+    const link = p.pid!=null ? 'index.html?p='+encodeURIComponent(p.pid) : null;
+    const nm = link
+      ? '<a href="'+esc(link)+'" title="'+esc(tip)+'">'+esc(p.name||'')+'</a>'
+      : '<span title="'+esc(tip)+'">'+esc(p.name||'')+'</span>';
+    html += '<tr>'
+      + '<td class="l pl">'+nm+'</td>'
+      + '<td class="mpg" title="'+(p.min_total==null?'':esc(num(p.min_total,1)+' total min'))+'">'+num(p.mpg,1)+'</td>'
+      + '<td class="gp">'+(p.gp==null?'–':num(p.gp,0))+'</td>'
+      + rgCell(own.net,'grp')
+      + rgCell(c.net,'net')
+      + '<td class="grp">'+num(p.war,1)+'</td>'
+      + '</tr>';
+  });
+  // TOTAL row: contribution column sums to team net
+  const cSum = roster.reduce((a,p)=>a+(((p.c&&p.c.net)!=null)?p.c.net:0),0);
+  const warSum = roster.reduce((a,p)=>a+((p.war!=null&&!isNaN(p.war))?p.war:0),0);
+  html += '<tr class="total"><td class="l pl">TOTAL</td>'
+    + '<td class="mpg">–</td>'
+    + '<td class="gp">'+(totals.gp==null?'–':num(totals.gp,0))+'</td>'
+    + '<td class="grp zero">–</td>'
+    + rgCell(totals.net!=null?totals.net:cSum,'net')
+    + '<td class="grp">'+num(warSum,1)+'</td>'
+    + '</tr>';
+  html += '</tbody></table></div>';
+  html += '<div class="cap">Contrib = 5·(min·net)/total min; the column sums to team net'
+    + (totals.resid!=null ? ' (residual: '+fmt(totals.resid,1).txt+')' : '') + '. '
+    + 'Ratings colored red→green on a fixed NBA-net scale (−5 to +5); number is always shown. '
+    + 'Names link to the <a href="index.html">Explorer</a>.</div>';
+
+  // ---- depth chart (roster shape by listed position) ----
+  html += '<div class="sectitle">Depth chart <span style="font-weight:400;color:var(--faint)">· by listed position</span></div>';
+  html += '<div class="depth" id="depth"></div>';
+  html += '<div class="cap">Positions are <b>listed / primary</b>, not a lineup optimization — this is a '
+    + 'roster-shape view, not a starting five. Players slot under their primary position; broad listings '
+    + '(G / F) fall under PG / SF and anything unlabeled drops to <b>Unlisted</b> below. Within each column '
+    + 'players are ordered by minute-weighted net contribution; the chip is the player\'s own net (pts/100), '
+    + 'colored red→green on the same −5…+5 scale.</div>';
+
+  // ---- best / worst pairs (filled async from lineup_pairs.json) ----
+  html += '<div class="sectitle">Best &amp; worst two-man combos '
+    + '<span style="font-weight:400;color:var(--faint)">· co-occurrence, not synergy</span></div>';
+  html += '<div id="pairs"><div class="msg" style="padding:28px 0">Loading pairs…</div></div>';
+
+  document.getElementById('wrap').innerHTML = html;
+
+  // draw radar (share of league max-abs factor) + RdBu strip
+  drawRadar(totals, all);
+  drawStrip(totals, leagueAvg);
+  // depth chart from the same roster
+  drawDepth(roster);
+  // pairs come from a second file; render into #pairs when it resolves
+  loadPairs(abbr);
+}
+
+// ---- DEPTH CHART -----------------------------------------------------------
+// Bucket roster players by listed position into the 5 columns; broad listings
+// (G->PG, F->SF) fold in; UNK + anything unmapped goes to an "Unlisted" row.
+const POS_COLS = ["PG","SG","SF","PF","C"];
+const POS_LABEL = {PG:"PG",SG:"SG",SF:"SF",PF:"PF",C:"C"};
+function posBucket(pos){
+  const p = String(pos||"").toUpperCase();
+  if(POS_COLS.indexOf(p) >= 0) return p;   // exact PG/SG/SF/PF/C
+  if(p === "G") return "PG";               // broad guard -> PG column
+  if(p === "F") return "SF";               // broad forward -> SF column
+  return null;                              // UNK / blank -> Unlisted
+}
+function netChip(net){
+  if(net==null||isNaN(net))
+    return '<span class="nchip" style="background:var(--grid);color:var(--muted)">–</span>';
+  const t = Math.max(0, Math.min(1, (Number(net)+5)/10));
+  const bg = RC.redGreen(t);
+  const f = fmt(net,1);
+  return '<span class="nchip" style="background:'+bg+';color:'+RC.inkOn(bg)+'" title="own net '
+    + esc(num(net,1))+' pts/100">'+f.txt+'</span>';
+}
+function depthPlayerRow(p){
+  const own = p.p||{};
+  const link = p.pid!=null ? 'index.html?p='+encodeURIComponent(p.pid) : null;
+  const nm = link
+    ? '<a href="'+esc(link)+'">'+esc(p.name||'')+'</a>'
+    : '<span>'+esc(p.name||'')+'</span>';
+  return '<div class="dpl">'
+    + '<span class="nm" title="'+esc(p.name||'')+'">'+nm+'</span>'
+    + '<span class="mp" title="minutes per game">'+num(p.mpg,1)+'</span>'
+    + netChip(own.net)
+    + '</div>';
+}
+function drawDepth(roster){
+  const host = document.getElementById('depth');
+  if(!host) return;
+  const cols = {PG:[],SG:[],SF:[],PF:[],C:[]}, unlisted = [];
+  (roster||[]).forEach(p=>{
+    const b = posBucket(p.pos);
+    if(b) cols[b].push(p); else unlisted.push(p);
+  });
+  const byContrib = (a,b)=>(((b.c&&b.c.net)||0)-((a.c&&a.c.net)||0));
+  let h = '';
+  POS_COLS.forEach(c=>{
+    const list = cols[c].sort(byContrib);
+    h += '<div class="depthcol"><h4>'+POS_LABEL[c]+'</h4>';
+    h += list.length ? list.map(depthPlayerRow).join('') : '<div class="none">—</div>';
+    h += '</div>';
+  });
+  host.innerHTML = h;
+  if(unlisted.length){
+    unlisted.sort(byContrib);
+    let u = '<div class="depthcol unlisted" style="grid-column:1/-1"><h4>UNLISTED</h4>'
+      + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:0 12px">'
+      + unlisted.map(depthPlayerRow).join('') + '</div></div>';
+    host.insertAdjacentHTML('beforeend', u);
+  }
+}
+
+// ---- BEST / WORST PAIRS ----------------------------------------------------
+function pairRow(pr){
+  const a = pr.a_pid!=null ? '<a href="index.html?p='+encodeURIComponent(pr.a_pid)+'">'+esc(pr.a_name||'')+'</a>' : esc(pr.a_name||'');
+  const b = pr.b_pid!=null ? '<a href="index.html?p='+encodeURIComponent(pr.b_pid)+'">'+esc(pr.b_name||'')+'</a>' : esc(pr.b_name||'');
+  return '<tr><td class="l pl">'+a+' <span style="color:var(--faint)">+</span> '+b+'</td>'
+    + rgCell(pr.score,'grp')
+    + '<td class="gp">'+(pr.shared_games==null?'–':num(pr.shared_games,0))+'</td>'
+    + '</tr>';
+}
+function pairsTable(title, rows){
+  let h = '<table class="tbl" style="min-width:340px"><thead><tr>'
+    + '<th class="l">'+esc(title)+'</th>'
+    + '<th class="grp">Pair score</th>'
+    + '<th title="Games the two were rostered together">Shared GP</th>'
+    + '</tr></thead><tbody>';
+  h += (rows&&rows.length) ? rows.map(pairRow).join('')
+    : '<tr><td class="l" colspan="3" style="color:var(--faint)">No qualifying pairs.</td></tr>';
+  h += '</tbody></table>';
+  return h;
+}
+function loadPairs(abbr){
+  const host = document.getElementById('pairs');
+  if(!host) return;
+  fetch('lineup_pairs.json')
+    .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(d=>{
+      const note = (d && d.meta && d.meta.note) ? d.meta.note : '';
+      const t = (d && d.teams && d.teams[abbr]) ? d.teams[abbr] : null;
+      if(!t){
+        host.innerHTML = '<div class="cap">No pair data for this team.</div>';
+        return;
+      }
+      const best = (Array.isArray(t.best)?t.best:[]).slice(0,5);
+      const worst = (Array.isArray(t.worst)?t.worst:[]).slice(0,5);
+      let h = '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">';
+      h += '<div class="scroll">'+pairsTable('Best combos', best)+'</div>';
+      h += '<div class="scroll">'+pairsTable('Weakest combos', worst.slice().reverse())+'</div>';
+      h += '</div>';
+      h += '<div class="legend">Pair score <span class="help" data-tip="'+esc(note)
+        + '">?</span> is <b>descriptive co-occurrence, not causal synergy</b>: the shared-minutes-weighted '
+        + 'sum of each player\'s own net over the games they shared a roster. It does not isolate how they '
+        + 'interact (no on/off or fit term). Score colored on the same −5…+5 scale; names link to the Explorer.</div>';
+      host.innerHTML = h;
+    })
+    .catch(err=>{
+      host.innerHTML = '<div class="cap">Couldn\'t load two-man combos (lineup_pairs.json). '+esc(err.message)+'</div>';
+    });
+}
+
+function kpi(k,v,x){
+  return '<div class="kpi"><div class="k">'+esc(k)+'</div><div class="v">'+esc(v)+'</div><div class="x">'+esc(x||'')+'</div></div>';
+}
+
+function drawRadar(totals, all){
+  const mount = document.getElementById('radar');
+  if(!mount || !window.RC) return;
+  // scale each spoke to [0,1] by league max-abs factor value so shape is comparable league-wide
+  const maxAbs = {};
+  FACS.forEach(f=>{
+    let m = 1e-9;
+    all.forEach(t=>{ const v=(t.totals||{})[f]; if(v!=null&&!isNaN(v)) m=Math.max(m,Math.abs(v)); });
+    maxAbs[f] = m;
+  });
+  const pcts = {};
+  FACS.forEach(f=>{
+    const v = totals[f]||0;
+    // map [-max,+max] -> [0,1]; league-avg shape sits near the middle ring
+    pcts[f] = Math.max(0, Math.min(1, 0.5 + 0.5*(v/maxAbs[f])));
+  });
+  RC.radar(mount, FACS, pcts, "var(--accent)");
+}
+
+function drawStrip(totals, leagueAvg){
+  const host = document.getElementById('strip');
+  if(!host) return;
+  let h = '';
+  FACS.forEach(f=>{
+    const val = totals[f];
+    const mu = leagueAvg[f], sd = leagueAvg["sd_"+f]||1e-9;
+    const z = (val==null||isNaN(val)) ? 0 : (val-mu)/sd;
+    // diverging bar from the 50% center; half-width proportional to |z| clipped at 2.2
+    const zc = Math.max(-2.2, Math.min(2.2, z));
+    const half = Math.abs(zc)/2.2*50; // % of full track on one side of center
+    // color from RdBu: 0=red (below), 1=blue (above)
+    const tt = Math.max(0, Math.min(1, 0.5 + z/4.4));
+    const col = window.RC ? RC.rdbu(tt) : 'var(--grid)';
+    const fillStyle = zc>=0
+      ? 'left:50%;width:'+half.toFixed(1)+'%;background:'+col
+      : 'right:50%;width:'+half.toFixed(1)+'%;background:'+col;
+    const f0 = fmt(val,2);
+    h += '<div class="striprow">'
+      + '<div class="lab">'+f+' <span class="help" data-tip="'+esc(FAC_TIP[f])+'">?</span></div>'
+      + '<div class="cellbar" title="'+esc(FAC_TIP[f])+': '+num(val,2)+' (z '+(z>=0?'+':'')+z.toFixed(1)+' vs league)">'
+        + '<div class="fill" style="'+fillStyle+'"></div><div class="axis"></div></div>'
+      + '<div class="val '+f0.cls+'">'+f0.txt+'<span class="z">z '+(z>=0?'+':'')+z.toFixed(1)+'</span></div>'
+      + '</div>';
+  });
+  host.innerHTML = h;
+}
+</script>
+</body></html>

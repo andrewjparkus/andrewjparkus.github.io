@@ -1,0 +1,94 @@
+{
+  "meta": {
+    "generated": null,
+    "note": "Descriptive model. These are the out-of-sample scorecards produced by daily_v5/oos_harness.py: game-margin (walk-forward and frozen-coefficient), calibration coverage of the prediction intervals, and next-season predictiveness of the net rating and the six oTS/oTOV/oSC/dTS/dTOV/dSC factors. Not a forecast \u2014 a measure of how well today's ratings travel."
+  },
+  "game_margin": {
+    "walkforward": {
+      "margin_rmse": 14.3195,
+      "margin_mae": 11.2216,
+      "brier": 0.2007,
+      "logloss": 0.5873,
+      "accuracy": 0.6905
+    },
+    "frozen": {
+      "margin_rmse": 14.2988,
+      "margin_mae": 11.2019,
+      "brier": 0.2003,
+      "logloss": 0.5861,
+      "accuracy": 0.696
+    },
+    "ci_coverage": {
+      "50": 0.5209,
+      "80": 0.8072,
+      "90": 0.8971
+    }
+  },
+  "next_season": {
+    "net": {
+      "rmse": 0.6205,
+      "corr": 0.9046
+    },
+    "oTS": {
+      "rmse": 0.4426,
+      "corr": 0.8939
+    },
+    "oTOV": {
+      "rmse": 0.162,
+      "corr": 0.8918
+    },
+    "oSC": {
+      "rmse": 0.1961,
+      "corr": 0.8699
+    },
+    "dTS": {
+      "rmse": 0.3499,
+      "corr": 0.8738
+    },
+    "dTOV": {
+      "rmse": 0.1371,
+      "corr": 0.8938
+    },
+    "dSC": {
+      "rmse": 0.2133,
+      "corr": 0.8341
+    }
+  },
+  "next_season_ci": {
+    "net": {
+      "50": 0.9596,
+      "80": 0.9973,
+      "90": 0.9995
+    },
+    "oTS": {
+      "50": 0.9363,
+      "80": 0.9932,
+      "90": 0.9985
+    },
+    "oTOV": {
+      "50": 0.9387,
+      "80": 0.994,
+      "90": 0.9987
+    },
+    "oSC": {
+      "50": 0.955,
+      "80": 0.9975,
+      "90": 0.9994
+    },
+    "dTS": {
+      "50": 0.9595,
+      "80": 0.9977,
+      "90": 0.9995
+    },
+    "dTOV": {
+      "50": 0.9524,
+      "80": 0.996,
+      "90": 0.9995
+    },
+    "dSC": {
+      "50": 0.9562,
+      "80": 0.9972,
+      "90": 0.9996
+    }
+  }
+}

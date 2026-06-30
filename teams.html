@@ -2,111 +2,59 @@
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Projected Standings · Daily RAPM</title>
+<link rel="stylesheet" href="site.css">
+<link rel="icon" href="favicon.svg"><link rel="manifest" href="manifest.webmanifest">
 <style>
-  :root{
-    --bg:#080b11; --panel:#0e141d; --line:#1b2532; --text:#e7eef7; --muted:#7c8ca2;
-    --accent:#56b6ff; --grid:#161f2c;
-    --nba:#4aa8ff; --gleague:#2dd4bf; --college:#b27bff;
-    --pos:#3ddc97; --neg:#ff6b6b; --zero:#5d6b7e;
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0}
-  body{background:var(--bg);color:var(--text);
-    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
-    -webkit-font-smoothing:antialiased}
-  .wrap{max-width:1040px;margin:0 auto;padding:24px 22px 70px}
-  h1{font-size:20px;margin:0;font-weight:650;letter-spacing:-.2px}
-  h1 b{color:var(--accent);font-weight:750}
-  .sub{color:var(--muted);font-size:12.5px;margin:6px 0 0;line-height:1.5;max-width:820px}
-  .note{color:#566377;font-size:11.5px;margin:8px 0 0;line-height:1.6;max-width:820px}
-  /* nav (verbatim from index.html) */
-  .topnav{border-bottom:1px solid var(--line);background:#0a0e16;position:sticky;top:0;z-index:50}
-  .navinner{max-width:1040px;margin:0 auto;padding:0 22px;display:flex;align-items:center;gap:8px;height:52px}
-  .brand{font-size:16px;font-weight:700;letter-spacing:-.2px;margin-right:18px}
-  .brand b{color:var(--accent)}
-  .tab{font-size:13.5px;color:var(--muted);text-decoration:none;padding:16px 12px;border-bottom:2px solid transparent}
-  .tab:hover{color:var(--text)}
-  .tab.active{color:var(--text);border-bottom-color:var(--accent)}
-  /* conference sections */
-  .conf{margin-top:26px}
-  .conf h2{font-size:15px;font-weight:700;letter-spacing:-.1px;margin:0 0 9px;color:var(--text)}
+  /* page-unique: standings team cell */
+  .conf{margin-top:24px}
+  .conf h2{font-size:var(--fs-4);font-weight:700;letter-spacing:-.1px;margin:0 0 9px;color:var(--text)}
   .conf h2 span{color:var(--muted);font-weight:500;font-size:12px;margin-left:8px}
-  .scroll{overflow-x:auto;border:1px solid var(--line);background:var(--panel)}
-  table.stand{border-collapse:collapse;width:100%;min-width:760px;
-    font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
-  table.stand th,table.stand td{padding:7px 8px;text-align:right;white-space:nowrap;
-    border-bottom:1px solid #121a25}
-  table.stand thead th{font-size:11px;color:var(--muted);font-weight:600;
-    border-bottom:1px solid var(--line);background:#0c121b;cursor:default}
-  table.stand th.l,table.stand td.l{text-align:left}
-  table.stand td.rank{color:var(--muted);font-size:12px;width:26px}
   .teamcell{display:flex;align-items:center;gap:9px}
   .teamcell img{width:22px;height:22px;flex:0 0 auto;object-fit:contain}
   .teamcell .ab{font-weight:700;font-size:13px;letter-spacing:.2px}
   .teamcell .nm{color:var(--muted);font-size:11.5px}
-  td.f,td.net{font-size:12px}
-  td.net{font-weight:700}
-  th.f{font-size:11px}
+  table.tbl td.f,table.tbl td.net{font-size:12px}
+  table.tbl th.f{font-size:11px}
   td.projw{font-weight:600;font-size:13px}
-  td.projw .ci{color:#566377;font-size:10.5px;font-weight:400;margin-left:3px}
+  td.projw .ci{color:var(--faint);font-size:10.5px;font-weight:400;margin-left:3px}
   td.actw{font-size:12.5px;color:#aebccd}
+  :root[data-theme=light] td.actw{color:#33425a}
   td.po{font-size:11px;color:var(--muted)}
   tr.teamrow{cursor:pointer}
-  tr.teamrow:hover>td{background:#121b27}
-  tr.teamrow.open>td{background:#15202e}
-  tr.cut>td{border-bottom:2px solid #3a4862}
-  .pos{color:var(--pos)} .neg{color:var(--neg)} .zero{color:var(--zero)}
-  /* detail row */
-  tr.detailrow>td{padding:0;background:#0a0f17;border-bottom:1px solid var(--line)}
-  .detail{padding:13px 14px 16px}
-  .dhead{display:flex;align-items:center;gap:10px;margin-bottom:9px;flex-wrap:wrap}
-  .dhead img{width:26px;height:26px;object-fit:contain}
-  .dhead .dn{font-size:15px;font-weight:700}
-  .dhead .dnet{color:var(--muted);font-size:12px}
-  .dhead .dnet b{color:var(--text)}
-  table.roster{border-collapse:collapse;width:100%;min-width:680px;
-    font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
-  table.roster th,table.roster td{padding:5px 8px;text-align:right;white-space:nowrap;
-    border-bottom:1px solid #121a25}
-  table.roster thead th{font-size:10.5px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line)}
-  table.roster th.l,table.roster td.l{text-align:left}
-  table.roster td.pl{font-size:12.5px;font-weight:600}
-  table.roster td.f,table.roster td.net{font-size:12px}
-  table.roster td.net{font-weight:700}
-  table.roster td.mpg,table.roster td.gp{font-size:11.5px;color:#aebccd}
-  table.roster tr.total td{border-top:1px solid var(--line);border-bottom:none;
-    font-weight:700;background:#0e151f;padding-top:7px}
-  table.roster tr.total td.pl{color:var(--text)}
-  table.roster tr.prow:hover td{background:#121b27}
-  .cap{color:#566377;font-size:10.5px;margin-top:8px;line-height:1.55;max-width:760px}
-  .msg{color:var(--muted);text-align:center;padding:70px 0;font-size:14px}
-  .foot{color:#566377;font-size:11px;margin-top:30px;line-height:1.7}
+  tr.teamrow.cut>td{border-bottom:2px solid var(--faint)}    /* playoff cutoff (after 6) — stronger */
+  tr.teamrow.cut2>td{border-bottom:1px dashed var(--muted)} /* play-in cutoff (after 10) — lighter */
+  /* header ? tooltips live in a sticky thead inside the .scroll box; the shared
+     tooltip renders upward and gets clipped — flip header tips DOWN */
+  .scroll thead th .help[data-tip]:hover::after{bottom:auto;top:calc(100% + 6px)}
+  .scroll thead th .help[data-tip]:hover::before{bottom:auto;top:calc(100% + 1px);
+    border-top-color:transparent;border-bottom-color:var(--line)}
 </style></head>
 <body>
 <nav id="topnav" data-active="teams"></nav>
+<script src="charts.js"></script>
 <script src="nav.js"></script>
 <div class="wrap">
   <h1 style="margin-top:6px">Projected standings, <b id="season">2025-26</b></h1>
-  <p class="sub">Minute-weighted six-factor team RAPM (pts/100), leakage-safe. Projected wins = mean of a 10,000-season Monte-Carlo (HCA 1.56, sigma 14.3). Click a team for its roster decomposition.</p>
-  <p class="note" id="note"></p>
+  <p class="sub">Projected 2025-26 standings from minute-weighted team RAPM (pts/100). Click a team for its roster.</p>
 
   <div id="standings"></div>
   <div class="msg" id="msg">Loading standings…</div>
 
-  <p class="foot">Decomp factors are pts/100 team RAPM; positive is good (defense sign-flipped). Top-8 in each conference make the playoffs.</p>
+  <p class="foot">Factors are pts/100 team RAPM; positive is good (defense sign-flipped). Top 6 make the playoffs; 7–10 play in; 11–15 are eliminated. Descriptive of play already on the books, not a roster-move projection.</p>
 </div>
 
 <script>
 "use strict";
 const FACS = ["oTS","oTOV","oSC","dTS","dTOV","dSC"];
 const FAC_TIP = {
-  oTS:"offense: true-shooting value",
-  oTOV:"offense: turnover value",
-  oSC:"offense: second-chance value",
-  dTS:"defense: true-shooting value (positive = good, sign-flipped)",
-  dTOV:"defense: turnover value (positive = good, sign-flipped)",
-  dSC:"defense: second-chance value (positive = good, sign-flipped)"
+  oTS:"Offensive true-shooting RAPM — points/100 from shot-making efficiency (NBA scale).",
+  oTOV:"Offensive turnover RAPM — ball-security value (fewer turnovers = positive).",
+  oSC:"Offensive second-chance RAPM — value from offensive rebounding / extra possessions.",
+  dTS:"Defensive true-shooting RAPM — suppressing opponent shot efficiency.",
+  dTOV:"Defensive turnover RAPM — forcing turnovers / ball pressure.",
+  dSC:"Defensive second-chance RAPM — limiting opponent offensive rebounds."
 };
+const NET_TIP = "Net RAPM = ORAPM (oTS+oTOV+oSC) + DRAPM (dTS+dTOV+dSC), points/100 on the NBA-equivalent scale.";
 
 // number formatter: signed, fixed decimals, with sign-based color class
 function fmt(v,dec){
@@ -137,14 +85,13 @@ fetch('teams.json')
     const m = document.getElementById('msg');
     m.style.display='block';
     m.innerHTML = "Couldn't load the standings (teams.json). "+esc(err.message)+
-      "<br><span style=\"font-size:12px;color:#566377\">If you opened this file directly, serve the folder over http (e.g. <code>python3 -m http.server</code>).</span>";
+      "<br><span style=\"font-size:12px;color:var(--faint)\">If you opened this file directly, serve the folder over http (e.g. <code>python3 -m http.server</code>).</span>";
   });
 
 function render(d){
   document.getElementById('msg').style.display='none';
   const meta = (d && d.meta) || {};
   if(meta.season) document.getElementById('season').textContent = meta.season;
-  if(meta.note) document.getElementById('note').textContent = meta.note;
 
   const host = document.getElementById('standings');
   host.innerHTML = '';
@@ -168,7 +115,8 @@ function buildConf(name, rows, d){
   scroll.className = 'scroll';
 
   const table = document.createElement('table');
-  table.className = 'stand';
+  table.className = 'tbl';
+  table.style.minWidth = '780px';
   table.id = 'table-' + name.toLowerCase();
 
   // header
@@ -177,15 +125,15 @@ function buildConf(name, rows, d){
     + '<th class="l">Team</th>'
     + '<th title="Projected wins — mean of 10,000-season Monte-Carlo (p10–p90 in parens)">Proj W</th>'
     + '<th title="Actual wins so far">Act W</th>';
-  FACS.forEach(f=>{ thead += '<th class="f" title="'+esc(FAC_TIP[f])+'">'+f+'</th>'; });
-  thead += '<th class="net" title="Team net rating (pts/100) — the six factors plus residual">Net</th>'
+  FACS.forEach(f=>{ thead += '<th class="f">'+f+' <span class="help" data-tip="'+esc(FAC_TIP[f])+'">?</span></th>'; });
+  thead += '<th class="net">Net <span class="help" data-tip="'+esc(NET_TIP)+'">?</span></th>'
     + '</tr></thead>';
   table.innerHTML = thead;
 
   const tbody = document.createElement('tbody');
   rows.forEach((row,i)=>{
     const tr = document.createElement('tr');
-    tr.className = 'teamrow' + ((i===7) ? ' cut' : '');
+    tr.className = 'teamrow' + (i===5 ? ' cut' : '') + (i===9 ? ' cut2' : '');
     tr.dataset.abbr = row.abbr || '';
     tr.dataset.conf = name;
 
@@ -204,7 +152,10 @@ function buildConf(name, rows, d){
     html += cell(row.net,'net');
     tr.innerHTML = html;
 
-    tr.addEventListener('click', ()=>toggleDetail(tr, row, d));
+    // whole row -> team subpage
+    tr.addEventListener('click', ()=>{
+      if(row.abbr) location.href = 'team.html?abbr=' + encodeURIComponent(row.abbr);
+    });
     tbody.appendChild(tr);
   });
   table.appendChild(tbody);
@@ -212,85 +163,5 @@ function buildConf(name, rows, d){
   sec.appendChild(scroll);
   return sec;
 }
-
-function toggleDetail(tr, row, d){
-  const isOpen = tr.classList.contains('open');
-  // collapse every open detail across both tables
-  document.querySelectorAll('tr.detailrow').forEach(r=>r.remove());
-  document.querySelectorAll('tr.teamrow.open').forEach(r=>r.classList.remove('open'));
-  if(isOpen) return;
-
-  const abbr = row.abbr;
-  const detail = (d && d.teams && d.teams[abbr]) ? d.teams[abbr] : null;
-  const colspan = 2 + 2 + FACS.length + 1; // rank+team + projw+actw + 6 + net
-
-  const dr = document.createElement('tr');
-  dr.className = 'detailrow';
-  dr.dataset.abbr = abbr || '';
-  const td = document.createElement('td');
-  td.colSpan = colspan;
-  td.innerHTML = buildDetail(detail, row);
-  dr.appendChild(td);
-
-  tr.classList.add('open');
-  tr.parentNode.insertBefore(dr, tr.nextSibling);
-}
-
-function buildDetail(detail, row){
-  if(!detail){
-    return '<div class="detail"><div class="dhead"><span class="dn">'
-      + esc(row.name||row.abbr||'Team')+'</span></div>'
-      + '<div class="cap">No roster decomposition available for this team.</div></div>';
-  }
-  const totals = detail.totals || {};
-  const roster = Array.isArray(detail.roster) ? detail.roster : [];
-  const logo = detail.logo
-    ? '<img src="'+esc(detail.logo)+'" alt="" onerror="this.style.visibility=\'hidden\'">' : '';
-  const netF = fmt(totals.net,1);
-
-  let html = '<div class="detail">';
-  html += '<div class="dhead">'+logo
-    + '<span class="dn">'+esc(detail.name||row.name||abbrSafe(detail))+'</span>'
-    + '<span class="dnet">Net <b class="'+netF.cls+'">'+netF.txt+'</b> = how each player contributes</span>'
-    + '</div>';
-
-  html += '<div class="scroll"><table class="roster"><thead><tr>'
-    + '<th class="l">Player</th><th title="Minutes per game — hover a cell for total season minutes">MPG</th><th>GP</th>';
-  FACS.forEach(f=>{ html += '<th class="f" title="'+esc(FAC_TIP[f])+' — contribution">'+f+'</th>'; });
-  html += '<th class="net">Net</th></tr></thead><tbody>';
-
-  roster.forEach(p=>{
-    const c = p.c || {};
-    const own = p.p || {};
-    // own per-100 rating tooltip on the player name
-    const tip = 'Own per-100 rating · net '+num(own.net,1)
-      + (FACS.map(f=>' · '+f+' '+num(own[f],1)).join(''));
-    html += '<tr class="prow">'
-      + '<td class="l pl" title="'+esc(tip)+'">'+esc(p.name||'')+'</td>'
-      + '<td class="mpg" title="'+(p.min_total==null?'':esc(num(p.min_total,1)+' total min')) +'">'+num(p.mpg,1)+'</td>'
-      + '<td class="gp">'+(p.gp==null?'–':num(p.gp,0))+'</td>';
-    FACS.forEach(f=>{ html += cell(c[f]); });
-    html += cell(c.net,'net');
-    html += '</tr>';
-  });
-
-  // TOTAL row = team totals (must equal the standings row decomp)
-  html += '<tr class="total"><td class="l pl">TOTAL</td>'
-    + '<td class="mpg">–</td>'
-    + '<td class="gp">'+ (totals.gp==null?'–':num(totals.gp,0)) +'</td>';
-  FACS.forEach(f=>{ html += cell(totals[f]); });
-  html += cell(totals.net,'net');
-  html += '</tr></tbody></table></div>';
-
-  html += '<div class="cap">Cell = player\'s contribution to the team factor = 5·(min·factor)/total min; '
-    + 'column sums to the team total. Hover a player row to see their own per-100 rating.';
-  if(totals.resid!=null){
-    const rf = fmt(totals.resid,1);
-    html += ' Residual (unallocated): <span class="'+rf.cls+'">'+rf.txt+'</span>.';
-  }
-  html += '</div></div>';
-  return html;
-}
-function abbrSafe(detail){ return (detail && detail.abbr) ? detail.abbr : 'Team'; }
 </script>
 </body></html>

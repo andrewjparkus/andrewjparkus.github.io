@@ -1,351 +1,683 @@
 <!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Model — Daily RAPM</title>
+<link rel="stylesheet" href="site.css">
+<link rel="icon" href="favicon.svg"><link rel="manifest" href="manifest.webmanifest">
 <style>
-  :root{--bg:#080b11;--panel:#0e141d;--line:#1b2532;--text:#e7eef7;--muted:#8497ad;--accent:#56b6ff;--grid:#161f2c}
-  *{box-sizing:border-box} html,body{margin:0}
-  body{background:var(--bg);color:var(--text);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.65}
-  .topnav{border-bottom:1px solid var(--line);background:#0a0e16;position:sticky;top:0;z-index:50}
-  .navinner{max-width:1000px;margin:0 auto;padding:0 22px;display:flex;align-items:center;gap:8px;height:52px}
-  .brand{font-size:16px;font-weight:700;letter-spacing:-.2px;margin-right:18px}.brand b{color:var(--accent)}
-  .tab{font-size:13.5px;color:var(--muted);text-decoration:none;padding:16px 12px;border-bottom:2px solid transparent}
-  .tab:hover{color:var(--text)} .tab.active{color:var(--text);border-bottom-color:var(--accent)}
-  .doc{max-width:820px;margin:0 auto;padding:14px 24px 80px}
-  .doc h1{font-size:30px;font-weight:800;letter-spacing:-.6px;margin:26px 0 6px}
-  .doc h2{font-size:21px;font-weight:700;margin:38px 0 8px;padding-top:14px;border-top:1px solid var(--line);letter-spacing:-.3px}
-  .doc h3{font-size:16px;font-weight:700;margin:24px 0 6px;color:#cdd9e6}
-  .doc p,.doc li{color:#cfdae7;font-size:15px}
-  .doc strong{color:#fff} .doc em{color:var(--muted)}
-  .doc a{color:var(--accent);text-decoration:none}
-  .doc code{background:#121a26;border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:13px;color:#9fd0ff}
-  .doc hr{border:0;border-top:1px solid var(--line);margin:30px 0}
-  .doc blockquote{margin:14px 0;padding:2px 16px;border-left:3px solid var(--accent);color:var(--muted)}
-  .doc table{border-collapse:collapse;width:100%;margin:16px 0;font-size:13.5px;font-variant-numeric:tabular-nums}
-  .doc th,.doc td{border-bottom:1px solid var(--line);padding:7px 10px;text-align:left}
-  .doc thead th{border-bottom:2px solid #2c3a52;color:#aebccd;font-weight:700}
-  .doc tbody tr:hover{background:#0d1420}
-  .doc td:not(:first-child){text-align:right}
-  .doc ul,.doc ol{padding-left:22px}
+  /* ---- page-unique: doc layout w/ sticky left-rail TOC (all tokens, themes for free) ---- */
+  .doc{max-width:var(--maxw);margin:0 auto;padding:var(--sp-5) 22px 80px}
+  /* two columns on desktop: sticky TOC rail + prose. Single column on mobile. */
+  .doclayout{display:grid;grid-template-columns:212px minmax(0,1fr);gap:34px;align-items:start}
+  .prose{min-width:0;line-height:1.65;max-width:760px}
+  /* ---- vertical TOC ---- */
+  .toc{position:sticky;top:64px;align-self:start;font-size:var(--fs-2)}
+  .toc .toclab{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--faint);margin:0 0 8px 11px}
+  .toc nav{display:flex;flex-direction:column;border-left:1px solid var(--line)}
+  .toc a{color:var(--muted);text-decoration:none;padding:6px 11px;margin-left:-1px;
+    border-left:2px solid transparent;line-height:1.35;transition:color .12s,border-color .12s}
+  .toc a:hover{color:var(--text);border-left-color:var(--line-2)}
+  .toc a.on{color:var(--text);font-weight:600;border-left-color:var(--accent)}
+  /* anchored sections must clear the sticky topnav when jumped to */
+  .prose h2,.prose h3{scroll-margin-top:62px}
+  /* ---- prose typography (tokens) ---- */
+  .prose .lede{color:var(--muted);font-size:var(--fs-4);font-style:italic;margin:6px 0 0;line-height:1.6}
+  .prose h2{font-size:var(--fs-5);font-weight:700;margin:34px 0 8px;padding-top:16px;
+    border-top:1px solid var(--line);letter-spacing:-.2px;color:var(--text)}
+  .prose h2:first-of-type{border-top:0;padding-top:6px;margin-top:14px}
+  .prose h3{font-size:var(--fs-4);font-weight:700;margin:22px 0 6px;color:var(--text)}
+  .prose p,.prose li{color:var(--text);font-size:var(--fs-4);line-height:1.65}
+  .prose p,.prose ul,.prose ol{margin:11px 0}
+  .prose strong{color:var(--text);font-weight:700}
+  .prose em{color:var(--muted)}
+  .prose a{color:var(--accent);text-decoration:none}
+  .prose a:hover{color:var(--text);text-decoration:underline}
+  .prose code{background:var(--panel-3);border:1px solid var(--line);border-radius:var(--r-1);
+    padding:1px 5px;font-size:12.5px;color:var(--accent);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .prose ul,.prose ol{padding-left:22px}
+  .prose li{margin:5px 0}
+  .prose li::marker{color:var(--faint)}
+  .prose .scroll{margin:14px 0}
+  .prose table.tbl td.l,.prose table.tbl th.l{text-align:left}
+  .prose table.tbl td.lead{font-weight:600}
+  /* prose tables wrap (override site.css .tbl nowrap); numerics keep tabular-nums from site.css */
+  .prose table.tbl td,.prose table.tbl th{white-space:normal}
+  /* site guide cards */
+  .guidegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:14px 0}
+  .guide{border:1px solid var(--line);background:var(--panel);border-radius:var(--r-1);padding:11px 13px}
+  .guide h3{margin:0 0 4px;font-size:var(--fs-3)}
+  .guide h3 a{color:var(--text)}
+  .guide h3 a:hover{color:var(--accent);text-decoration:none}
+  .guide p{margin:0;font-size:var(--fs-2);color:var(--muted);line-height:1.55}
+  .guide p strong{color:var(--text)}
+  /* worked-example 6-factor chart grid (mirrors Explorer small-multiples) */
+  .exhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin:4px 0 2px}
+  .exhead .exname{font-weight:700;font-size:var(--fs-4)}
+  .exhead .exmeta{color:var(--faint);font-size:var(--fs-2)}
+  .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+  .fcell{border:1px solid var(--line);background:var(--panel);border-radius:var(--r-1);padding:8px 9px 4px}
+  .fcell.net{grid-column:1 / -1}
+  .fcell .ftitle{display:flex;justify-content:space-between;align-items:baseline;
+    font-size:var(--fs-2);font-weight:600;color:var(--muted);margin-bottom:2px}
+  .fcell .fval{font-variant-numeric:tabular-nums;font-weight:700;font-size:var(--fs-3);color:var(--text)}
+  .fcell .fval .pm{color:var(--faint);font-weight:400;font-size:11px}
+  .fcell svg{display:block;width:100%}
+  @media(max-width:860px){
+    .doclayout{grid-template-columns:1fr;gap:6px}
+    /* on mobile the TOC becomes a plain vertical list above the prose */
+    .toc{position:static;top:auto;margin-bottom:8px}
+    .toc nav{max-height:none}
+  }
+  @media(max-width:560px){
+    .doc{padding:18px 14px 60px}
+    .prose h2{font-size:18px}
+    .fgrid{grid-template-columns:1fr 1fr}
+    /* DataBallR ref table is a dense 6-col two-up; stack the right half below the
+       left so each sub-table is 3 cols and nothing scrolls sideways on mobile */
+    #reftbl thead th:nth-child(n+4){display:none}
+    #reftbl,#reftbl tbody,#reftbl tr{display:block;width:100%}
+    #reftbl thead{display:block}
+    #reftbl thead tr{display:grid;grid-template-columns:1fr auto auto}
+    #reftbl tbody tr{display:grid;grid-template-columns:1fr auto auto;
+      grid-template-areas:"a b c" "d e f";column-gap:8px}
+    #reftbl tbody td{border-bottom:none;padding:4px 0}
+    #reftbl tbody td:nth-child(1){grid-area:a}
+    #reftbl tbody td:nth-child(2){grid-area:b}
+    #reftbl tbody td:nth-child(3){grid-area:c}
+    #reftbl tbody td:nth-child(4){grid-area:d;border-left:none}
+    #reftbl tbody td:nth-child(5){grid-area:e}
+    #reftbl tbody td:nth-child(6){grid-area:f}
+    #reftbl tbody tr{border-bottom:1px solid var(--line-2);padding:6px 0}
+  }
 </style></head>
 <body>
-<nav class="topnav"><div class="navinner">
-  <span class="brand">Daily <b>RAPM</b></span>
-  <a href="index.html" class="tab">Explorer</a>
-  <a href="model.html" class="tab active">Model</a>
-  <a href="teams.html" class="tab">Teams</a>
-  <a href="table.html" class="tab">Tables</a>
-</div></nav>
-<div class="doc"><h1>A daily, multi-league six-factor RAPM — a reader's guide</h1>
-<p><em>For readers who know the traditional six-factor RAPM decomposition: what's new here, how it
-works, and what it says — with numbers.</em></p>
-<hr />
-<h2>The one-liner</h2>
-<p>Traditional six-factor RAPM gives <strong>one number per player per season</strong>: the six factors —
-<strong>oTS, oTOV, oSC</strong> on offense, <strong>dTS, dTOV, dSC</strong> on defense (points per 100, summing to net).
-This model re-computes that decomposition <strong>as of every game-day</strong>, for <strong>three leagues at once</strong>
-(NBA, G-League, NCAA) on <strong>one NBA-equivalent scale</strong>, each value with a <strong>confidence interval</strong>.</p>
-<p>So instead of "Jokić was +8 in 2025-26," you get his rating as a <strong>daily curve</strong> across his
-career and <em>through the playoffs</em>, beside a college freshman's curve on the <em>same axis</em> — each
-with error bars.</p>
-<blockquote>
-<p><strong>The sixth factor.</strong> What older boards called "oREB/dREB" is here <strong>second-chance value</strong>
-(<code>oSC</code>/<code>dSC</code>): points added <em>after the offense's own miss</em> — putbacks, kickouts off the
-offensive glass, and on defense the prevention of those second chances. It is <em>not</em> a rebound
-rate (Jokić grades <strong>dSC ≈ +2.0</strong>, Wembanyama ≈ +0.9).</p>
-</blockquote>
-<hr />
-<h2>Four things that are different</h2>
-<p><strong>Daily, not seasonal.</strong> Every game-day, the model re-solves the full ridge regression as of that
-day — a smooth curve, not a step function. The NBA series spans regular season <em>and</em> playoffs with
-no break: each day sees only games dated ≤ itself, so a star's net flows continuously from April
-into June.</p>
-<p><strong>Multi-league and self-consistent.</strong> College and G-League players are translated onto the NBA
-scale, so a Duke sophomore and an All-NBA center are directly comparable (more below — it's the
-most interesting part).</p>
-<p><strong>Error bars on everything.</strong> Each factor, each day, carries a confidence interval that widens
-with few possessions (early career, a cup of coffee, a recent call-up) and narrows as the sample
-grows. Cross-league numbers carry an extra, <em>non-shrinkable</em> uncertainty for the leap between
-leagues.</p>
-<p><strong>Smooth, no between-season jumps.</strong> Day-to-day the median change in net is about <strong>0.02 points</strong>;
-across a full offseason, under <strong>0.8</strong> — by construction, not smoothing.</p>
-<hr />
-<h2>How a "daily re-solve" works</h2>
-<p>Each day's value is a full RAPM: a <strong>time-decayed ridge</strong> over <strong>every possession in the trailing
-~6 years</strong> (a 2,190-day window for the NBA), recent games weighted more — a <strong>700-day half-life</strong>,
-so a game's weight is <code>2^(−age/700)</code>. "As of day D" just means feeding it games dated ≤ D — there
-is <strong>no carried-over state</strong>, so every day stands alone. (Planting a future game moves the as-of
-estimate by exactly 0.0; the build is causally clean by construction.)</p>
-<p>The ridge is solved in three column groups with separate penalties — offense and defense at
-<code>α = 3000</code>, plus a small <code>α = 10</code> group of garbage-time "rubber-band" nuisance columns — over a
-decay-weighted, whitened design. It is a <strong>maximum-a-posteriori</strong> estimate under a Gaussian prior
-on each player's coefficient: the <em>pure</em> series shrinks toward zero; the <em>prior-informed</em> series
-shrinks three factors toward a box-score prior instead (next section).</p>
-<p>That as-of-day independence is a gift: the whole thing is <strong>embarrassingly parallel</strong>, and each
-league's giant possession matrix is built once and re-sliced per day. The NBA design alone is
-~7.1 million possession-rows × ~5,800 player-columns. The NBA has ~6,080 game-days; with the other
-leagues it's ~10,200 league-days × five ridge solves each — on the order of <strong>~51,000 solves</strong>,
-each over a million-plus possessions.</p>
-<blockquote>
-<p><strong>Net is its own solve.</strong> The six factors are assembled from four ridge "leaf" metrics
-(<code>oTS = ALT_EFG_VALUE + ALT_FT</code>, <code>oTOV</code>/<code>dTOV</code> from turnover value, <code>oSC</code>/<code>dSC</code> from clean
-second chances). Their sum, <code>sum6 = ORAPM + DRAPM</code>, is shown as the player's offense/defense
-split, while the headline <strong>net is a separate net-RAPM solve</strong> of the same possessions; the two
-agree to within a few hundredths (<code>|net − sum6|</code> peaks at ~0.5).</p>
-</blockquote>
-<hr />
-<h2>Three views of the same day: pure, prior-informed, box prior</h2>
-<p>The explorer toggles each chart between <strong>three daily series</strong>. They share dates, leagues, and
-error bars; they differ only in what the three "shrink-toward" targets are.</p>
-<p><strong>Pure RAPM</strong> — the canonical, prior-free solve. Every factor shrinks toward zero, exactly as a
-textbook regularized RAPM does. This is the series tuned to reproduce the public DataBallR ridge
-(below), and it is the reference the other two are measured against.</p>
-<p><strong>Prior-informed</strong> <em>(the default)</em> — the same solve, but three of the six factors shrink toward an
-<strong>informative, daily, multi-league box-score prior</strong> instead of toward zero. The box prior is a
-per-player skill estimate built by regressing predictive box rates onto the engine's own RAPM,
-<strong>re-computed as of every game-day</strong> from all of a player's games across NCAA, G-League, and the NBA
-up to that day. The blend is exposure-weighted, <code>(1−M)·lineup + M·box</code> with <code>M = α/(weff+α)</code>: with
-little on-court data a rating leans on the box estimate; as possessions pile up the lineup data
-takes over — so a rookie, a fresh call-up, or a player early in a season starts from a sensible
-place rather than from replacement level, and a cross-league prospect's NBA prior is informed by
-what he did in college or the G-League.</p>
-<p>The prior is applied only to the three factors where the daily box carries the most signal, chosen
-by out-of-sample testing (does an as-of-day rating predict <em>next</em> season better?): <strong>second-chance
-offense (oSC), shot defense (dTS), and forcing turnovers (dTOV)</strong>. The other three — shooting (oTS),
-ball-security (oTOV), and defensive rebounding (dSC) — are left at the pure solve; a daily box built
-from traditional box stats (no shot-tracking) simply doesn't predict those three well enough to
-help thin-data players. (This is the <em>opposite</em> split from the old constant prior, which leaned on
-shooting.) It is a <strong>deliberately modest adjustment</strong>: for established players it barely moves the
-rating, and even for thin-data players the out-of-sample edge over the pure solve is small —
-the prior's clearer value is being <em>time-varying, causal, and multi-league</em> (so a rookie's NBA
-prior reflects his actual college / G-League box, on every day, instead of a single career number).
-Prior-informed and pure are <strong>identical on oTS, oTOV, dSC and on the headline net</strong>; the toggle lets
-you compare the pure solve against the box-nudged one for the three factors it touches.</p>
-<p><strong>Box prior</strong> — the prior itself, on its own: a <strong>daily, multi-league curve with a confidence band</strong>,
-showing the box-score skill the model expected of a player <em>before</em> any lineup data, re-estimated
-every game-day from his box profile across all three leagues. It is no longer a flat reference — it
-rises and falls as a player's box game develops, runs continuously across a college→G-League→NBA
-career (each league translated onto the NBA-equivalent scale), and widens its band where the
-estimate is thin. Compared against Pure and Prior-informed it shows <em>where a player started</em> and how
-far the on-court data has moved him: for a developed star the box prior sits well below his measured
-lineup RAPM (a conservative anchor the on-court data amplifies); for a rookie the two start close
-and diverge as the lineup signal accrues.</p>
-<hr />
-<h2>Does it match a known reference?</h2>
-<p>The pure NBA scale is tuned to reproduce <strong>DataBallR's six-factor RAPM</strong> (the public 6-year,
-time-decay, pure-lineup ridge), anchored at the regular-season end (DataBallR is regular-season
-only; by causality that solve is playoff-free). As of the 2025-26 regular-season end, the
-prior-informed series — what the explorer shows by default — lines up like this:</p>
-<table>
-<thead>
-<tr>
-<th>Player</th>
-<th style="text-align: right;">This model</th>
-<th style="text-align: right;">DataBallR</th>
-<th></th>
-<th>Player</th>
-<th style="text-align: right;">This model</th>
-<th style="text-align: right;">DataBallR</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Jokić</td>
-<td style="text-align: right;">+7.7</td>
-<td style="text-align: right;">+8.1</td>
-<td></td>
-<td>Gobert</td>
-<td style="text-align: right;">+4.5</td>
-<td style="text-align: right;">+4.9</td>
-</tr>
-<tr>
-<td>Gilgeous-Alexander</td>
-<td style="text-align: right;">+7.2</td>
-<td style="text-align: right;">+7.5</td>
-<td></td>
-<td>Mitchell</td>
-<td style="text-align: right;">+4.5</td>
-<td style="text-align: right;">+4.5</td>
-</tr>
-<tr>
-<td>Wembanyama</td>
-<td style="text-align: right;">+6.6</td>
-<td style="text-align: right;">+6.8</td>
-<td></td>
-<td>Caruso</td>
-<td style="text-align: right;">+4.3</td>
-<td style="text-align: right;">+4.5</td>
-</tr>
-<tr>
-<td>Leonard</td>
-<td style="text-align: right;">+6.4</td>
-<td style="text-align: right;">+6.7</td>
-<td></td>
-<td>Curry</td>
-<td style="text-align: right;">+4.2</td>
-<td style="text-align: right;">+4.5</td>
-</tr>
-<tr>
-<td>Antetokounmpo</td>
-<td style="text-align: right;">+6.1</td>
-<td style="text-align: right;">+6.3</td>
-<td></td>
-<td><em>(tail)</em> Rupert</td>
-<td style="text-align: right;">−7.0</td>
-<td style="text-align: right;">−6.9</td>
-</tr>
-</tbody>
-</table>
-<p>Across these targets the correlation is <strong>0.99</strong> and the slope <strong>0.98</strong>, with the negative tail
-reaching <strong>−7.0</strong> (vs −6.9) — the full range and ordering, not just the leaders. (The prior-free
-series sits a touch higher — Jokić +8.0, SGA +7.4 — and is the one literally calibrated to the
-public board.)</p>
-<hr />
-<h2>The interesting part: what transfers between leagues?</h2>
-<p>Here the multi-league model earns its keep. We don't assume college production means the same
-thing as NBA production — we <strong>measure it</strong>, using two-league players (786 who played both G-League
-and NBA, 1,276 who went college → NBA). For each factor we fit how lower-league value predicts NBA
-value: the slope is <em>how much</em> transfers, the correlation R <em>how reliably</em>.</p>
-<table>
-<thead>
-<tr>
-<th>Factor</th>
-<th style="text-align: right;">NCAA→NBA slope</th>
-<th style="text-align: right;">R</th>
-<th></th>
-<th style="text-align: right;">G-League→NBA slope</th>
-<th style="text-align: right;">R</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>oTS (shooting)</td>
-<td style="text-align: right;">0.24</td>
-<td style="text-align: right;">0.22</td>
-<td></td>
-<td style="text-align: right;">0.10</td>
-<td style="text-align: right;">0.11</td>
-</tr>
-<tr>
-<td>oTOV (ball security)</td>
-<td style="text-align: right;">0.08</td>
-<td style="text-align: right;">0.12</td>
-<td></td>
-<td style="text-align: right;">0.38</td>
-<td style="text-align: right;">0.38</td>
-</tr>
-<tr>
-<td>oSC (offensive 2nd-chance)</td>
-<td style="text-align: right;">0.15</td>
-<td style="text-align: right;">0.15</td>
-<td></td>
-<td style="text-align: right;">0.41</td>
-<td style="text-align: right;">0.34</td>
-</tr>
-<tr>
-<td>dTS (shot defense)</td>
-<td style="text-align: right;">0.26</td>
-<td style="text-align: right;">0.22</td>
-<td></td>
-<td style="text-align: right;">0.31</td>
-<td style="text-align: right;">0.21</td>
-</tr>
-<tr>
-<td>dTOV (forcing turnovers)</td>
-<td style="text-align: right;">0.13</td>
-<td style="text-align: right;">0.14</td>
-<td></td>
-<td style="text-align: right;">0.77</td>
-<td style="text-align: right;">0.47</td>
-</tr>
-<tr>
-<td><strong>dSC (defensive 2nd-chance)</strong></td>
-<td style="text-align: right;"><strong>0.17</strong></td>
-<td style="text-align: right;"><strong>0.12</strong></td>
-<td></td>
-<td style="text-align: right;"><strong>0.30</strong></td>
-<td style="text-align: right;"><strong>0.22</strong></td>
-</tr>
-</tbody>
-</table>
-<p>The model's whole personality is in this table:</p>
-<ul>
-<li><strong>Every slope is well below 1.</strong> Dominating a lower league barely moves your NBA number — the
-  competition gap is enormous. A college player who is +5 in true shooting projects to roughly
-  <em>average</em> NBA shooting.</li>
-<li><strong>Shooting transfers weakly</strong> (G-League R ≈ 0.1, college only modestly): efficiency against
-  lower-league defenses says little about scoring on NBA ones.</li>
-<li><strong>Hustle/instinct carries over best</strong> — forcing turnovers (G-League R 0.47) and generating
-  offensive second chances (G-League R 0.34) reflect motor more than skill-against-weaker-competition.</li>
-<li><strong>Defensive second-chance barely transfers from college</strong> (dSC R = 0.12): out-working weaker
-  college bigs on the glass tells you little about the NBA. We let the data decide this.</li>
-</ul>
-<p>The translation also carries an <strong>irreducible uncertainty floor</strong> (<code>Var_translate</code>) per factor —
-the league jump is genuinely uncertain, so cross-league error bars are <em>wide and never shrink to
-zero</em>, however many college games a player has. That honesty is the point: it's why a future MVP's
-lone college season can sit near replacement level on the NBA axis and still be "consistent" with
-stardom — the band is that wide.</p>
-<hr />
-<h2>Confidence intervals</h2>
-<p>Every factor on every day carries a standard error, <code>se = 100·√σ̂² / √Weff</code>, where <code>Weff</code> is the
-decay-weighted possession exposure that day. So the band <strong>widens with few effective possessions</strong>
-— a rookie's first weeks, a cup of coffee, a recent call-up — and <strong>narrows as minutes accumulate</strong>.
-At high exposure the net band runs ±1.5 or so; on a thin sample it balloons past ±5. Translated
-(college/G-League) factors add the non-shrinkable <code>Var_translate</code> floor in quadrature, so their
-bands stay permanently wide — the league jump is uncertain in a way more games can't fix.</p>
-<hr />
-<h2>What it looks like for real players</h2>
-<p><strong>A full career as a smooth curve.</strong> LeBron James across 23 seasons rises from a replacement-level
-rookie (wide CI) through a Miami-era peak, then a gentle age-41 decline — no season boundaries, no
-jumps, the error band tightening as his minutes pile up and widening as his role shrinks.</p>
-<p><strong>The cross-league reality check.</strong> Cooper Flagg, the 2025 No. 1 pick, was elite in college — yet
-his Duke season translates to roughly <strong>replacement level</strong> (about 0.0 NBA-equivalent, heavily
-discounted), and his actual NBA rookie year has hovered near <strong>−1.3</strong>. The picture tells the story a
-single number hides: dominant college production maps to "promising prospect," and the real NBA
-learning curve is steep — all on one axis, NCAA handing off to NBA. Because college now reaches
-back to <strong>2005-06</strong>, pre-2021 college→NBA careers (an SGA-at-Kentucky type) appear in full.</p>
-<p><strong>A three-league journey.</strong> A two-way player like Jake LaRavia shows all three colors on one chart
-— NCAA → NBA with G-League stints interleaved — every leg on the same scale, hovering near
-replacement level, exactly where a fringe rotation player belongs. Flip him to <em>Box prior</em> and you
-see the same three-league curve from the box-score side: what his box stats projected him to be at
-each step, his college and G-League box feeding the early-NBA prior before the lineup data took
-over — a fitted curve with its own confidence band, not a flat line.</p>
-<hr />
-<h2>The system at a glance</h2>
-<table>
-<thead>
-<tr>
-<th></th>
-<th>Coverage</th>
-<th style="text-align: right;">Players</th>
-<th style="text-align: right;">Game-days</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>NBA</strong> (incl. playoffs)</td>
-<td>1996-97 → 2025-26</td>
-<td style="text-align: right;">2,620</td>
-<td style="text-align: right;">6,078</td>
-</tr>
-<tr>
-<td><strong>G-League</strong></td>
-<td>2016-17 → 2025-26</td>
-<td style="text-align: right;">2,377</td>
-<td style="text-align: right;">1,161</td>
-</tr>
-<tr>
-<td><strong>College</strong></td>
-<td>2005-06 → 2025-26</td>
-<td style="text-align: right;">42,378</td>
-<td style="text-align: right;">2,953</td>
-</tr>
-</tbody>
-</table>
-<p>That's roughly <strong>42 million player-day rows</strong>, each with six factors, a net, and confidence
-intervals. College seasons 2005-06 through 2012-13 have thinner play-by-play coverage (21–67% of
-scheduled games) and are flagged <code>reduced_sample</code> to be down-weighted, not trusted blindly;
-coverage is full (≥85%) from 2013-14 on.</p>
-<p><strong>What's next</strong> (lower-value): NBA pre-1996 and pre-2005 college have no public play-by-play, so
-the possession-level RAPM can't extend there — those eras would need box-only strength priors
-rather than the daily series.</p></div>
+<nav id="topnav" data-active="model"></nav>
+<script src="charts.js"></script>
+<script src="nav.js"></script>
+
+<div class="doc">
+  <h1>A daily, multi-league six-factor RAPM <small>a reader's guide</small></h1>
+  <p class="lede">If you know the classic six-factor RAPM decomposition, this is what's new here, how
+  it works, and what it says — with numbers, tables, and one worked example. Everything below is
+  <strong>descriptive</strong> (a rating measured as of a game-day), never a forward projection.</p>
+
+  <div class="doclayout">
+    <aside class="toc">
+      <p class="toclab">On this page</p>
+      <nav id="toc">
+        <a href="#oneliner">The one-liner</a>
+        <a href="#diff">What's different</a>
+        <a href="#factors">The six factors</a>
+        <a href="#example">Worked example</a>
+        <a href="#resolve">Daily re-solve</a>
+        <a href="#modes">Three modes</a>
+        <a href="#ref">DataBallR match</a>
+        <a href="#transfer">Cross-league transfer</a>
+        <a href="#ci">Confidence intervals</a>
+        <a href="#accuracy">Model accuracy</a>
+        <a href="#guide">Using the site</a>
+      </nav>
+    </aside>
+
+    <div class="prose">
+
+  <h2 id="oneliner">The one-liner</h2>
+  <p>Classic six-factor RAPM gives <strong>one number per player per season</strong> — six
+  components (points per 100 possessions, summing to net) split across offense and defense. This
+  model re-computes that decomposition <strong>as of every game-day</strong>, for
+  <strong>three leagues at once</strong> (<span class="nb">NBA</span>, <span class="gl">G-League</span>,
+  <span class="co">NCAA</span>) on <strong>one NBA-equivalent scale</strong>, each value with a
+  <strong>confidence interval</strong>.</p>
+  <p>So instead of "Jokic was +8 in 2025-26," you get his rating as a <strong>daily curve</strong>
+  across his career and <em>through the playoffs</em>, beside a college freshman's curve on the
+  <em>same axis</em> — each with error bars. On the <a href="table.html">DataBallR scale</a>,
+  <strong>net +5</strong> is clear All-Star level; the league centers near 0, the very best sit
+  around +7 to +8, and the negative tail near −7.</p>
+  <div class="callout">
+    <strong>The sixth factor, renamed.</strong> What older boards called "oREB/dREB" is here
+    <strong>second-chance value</strong> (<code>oSC</code>/<code>dSC</code>): points added
+    <em>after the offense's own miss</em> — putbacks and kickouts off the offensive glass, and on
+    defense the prevention of those second chances. It is <em>not</em> a rebound rate (Jokic grades
+    <code>dSC ≈ +2.0</code>, Wembanyama ≈ +0.9).
+  </div>
+
+  <h2 id="diff">Four things that are different</h2>
+  <div class="scroll">
+    <table class="tbl">
+      <thead><tr><th class="l">What's new</th><th class="l">In one line</th></tr></thead>
+      <tbody>
+        <tr><td class="l lead">Daily, not seasonal</td>
+            <td class="l">Re-solves the full ridge as of every game-day — a smooth curve, regular
+            season into playoffs with no break.</td></tr>
+        <tr><td class="l lead">Multi-league, one scale</td>
+            <td class="l">College &amp; G-League players are translated onto the NBA scale, so a Duke
+            sophomore and an All-NBA center are directly comparable.</td></tr>
+        <tr><td class="l lead">Error bars on everything</td>
+            <td class="l">Each factor, each day, carries a CI that widens with few possessions and
+            narrows as the sample grows.</td></tr>
+        <tr><td class="l lead">Smooth, no season jumps</td>
+            <td class="l">Median day-to-day change in net ≈ <strong>0.02</strong>; across a full
+            offseason under <strong>0.8</strong> — by construction, not smoothing.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="factors">The six factors</h2>
+  <p>Three offensive, three defensive, each in points per 100 possessions on the NBA-equivalent
+  scale. Offense and defense are sign-aligned so that <strong>positive is always good</strong>.</p>
+  <div class="scroll">
+    <table class="tbl">
+      <thead><tr>
+        <th class="l">Factor</th><th class="l">What it measures</th><th class="l">Positive means</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="l lead"><span class="pos">oTS</span></td>
+            <td class="l">Offensive true-shooting value (EFG + FT value)</td>
+            <td class="l">scores efficiently</td></tr>
+        <tr><td class="l lead"><span class="pos">oTOV</span></td>
+            <td class="l">Offensive turnover value — ball security</td>
+            <td class="l">protects the ball</td></tr>
+        <tr><td class="l lead"><span class="pos">oSC</span></td>
+            <td class="l">Offensive second-chance value (putbacks/kickouts off the o-glass)</td>
+            <td class="l">creates extra possessions</td></tr>
+        <tr><td class="l lead grp"><span class="pos">dTS</span></td>
+            <td class="l grp">Defensive true-shooting — making opponents shoot worse</td>
+            <td class="l">suppresses opponent efficiency</td></tr>
+        <tr><td class="l lead"><span class="pos">dTOV</span></td>
+            <td class="l">Defensive turnover value — forcing turnovers</td>
+            <td class="l">forces turnovers</td></tr>
+        <tr><td class="l lead"><span class="pos">dSC</span></td>
+            <td class="l">Defensive second-chance — preventing opponent second chances</td>
+            <td class="l">denies opponent extra shots</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><code>net = oTS + oTOV + oSC + dTS + dTOV + dSC</code>. Offense is the first three, defense the
+  last three.</p>
+
+  <h2 id="example">What one player's decomposition looks like</h2>
+  <p>A worked example: the prior-informed daily series for one player, drawn the way the
+  <a href="index.html">Explorer</a> draws it — net on top, then the six factors as small multiples.
+  The faint band is the 95% CI; it is wide early (thin sample) and tightens as minutes accumulate.
+  The number on each panel is the <strong>latest</strong> game-day value.</p>
+  <div class="exhead">
+    <span class="exname" id="ex_name">Loading example…</span>
+    <span class="exmeta" id="ex_meta"></span>
+  </div>
+  <div class="fgrid" id="ex_grid"></div>
+  <p class="cap" id="ex_caption" style="color:var(--faint);font-size:var(--fs-2)"></p>
+  <p>Read across: nearly all of Jokic's value is <strong>scoring efficiency</strong> (oTS) plus a
+  large <strong>defensive second-chance</strong> contribution (dSC) — the six panels add to the net
+  on top. That additivity is exact:</p>
+  <div class="scroll" style="max-width:420px">
+    <table class="tbl">
+      <thead><tr><th class="l">Component</th><th>Latest</th></tr></thead>
+      <tbody id="ex_tbl"><tr><td class="l">…</td><td>…</td></tr></tbody>
+    </table>
+  </div>
+
+  <h2 id="resolve">How a "daily re-solve" works</h2>
+  <p>Each day's value is a full RAPM under an <strong>open-ended, all-history time-decay</strong>
+  regime: a time-decayed ridge over <em>every possession on or before that day</em>, recent games
+  weighted far more via a <strong>700-day half-life</strong> (a game's weight is
+  <code>2^(−age/700)</code>). "As of day D" just means feeding it games dated ≤ D — there is
+  <strong>no carried-over state</strong>, so every day stands alone and the build is causally clean
+  (planting a future game moves the as-of estimate by exactly 0.0).</p>
+  <p>The ridge solves three column groups with separate penalties — offense and defense at
+  <code>α = 3000</code>, plus a small <code>α = 10</code> group of garbage-time nuisance columns —
+  over a decay-weighted, whitened design. It is a <strong>maximum-a-posteriori</strong> estimate
+  under a Gaussian prior: the <em>pure</em> series shrinks toward zero; the <em>prior-informed</em>
+  series shrinks three factors toward a box-score prior instead (next section).</p>
+  <div class="callout">
+    <strong>Scale, by the numbers.</strong> The NBA design alone is ~7.1M possession-rows × ~5,800
+    player-columns. With ~10,200 league-days × five ridge solves each, that's on the order of
+    <strong>~51,000 solves</strong>, each over a million-plus possessions — embarrassingly parallel,
+    since every day stands alone.
+  </div>
+  <div class="callout">
+    <strong>Net is its own solve.</strong> The headline <strong>net</strong> is a separate net-RAPM
+    fit, while the six factors come from four ridge leaf-metrics whose sum is
+    <code>sum6 = ORAPM + DRAPM</code>. The two agree to within a few hundredths
+    (<code>|net − sum6|</code> peaks at ~0.5).
+  </div>
+
+  <h2 id="modes">Three views of the same day</h2>
+  <p>The <a href="index.html">Explorer's</a> <strong>Box-prior toggle</strong> switches every chart
+  between three daily series. They share dates, leagues, and error bars; they differ only in what
+  each factor shrinks <em>toward</em>.</p>
+  <div class="scroll">
+    <table class="tbl">
+      <thead><tr>
+        <th class="l">Mode</th><th class="l">What it is</th><th class="l">Shrinks toward</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="l lead">Pure</td>
+            <td class="l">The canonical, prior-free solve — textbook regularized RAPM. The reference
+            calibrated to the public DataBallR ridge.</td>
+            <td class="l"><strong>zero</strong>, all six factors</td></tr>
+        <tr><td class="l lead">Prior-informed <em>(default)</em></td>
+            <td class="l">Same solve, but three factors lean on a daily, multi-league box-score prior
+            when lineup data is thin — so a rookie or fresh call-up starts somewhere sensible.</td>
+            <td class="l"><strong>box prior</strong> for oSC, dTS, dTOV; zero for the rest</td></tr>
+        <tr><td class="l lead">Box prior</td>
+            <td class="l">The prior itself, on its own: a daily curve with a band, showing the
+            box-score skill expected <em>before</em> any lineup data.</td>
+            <td class="l">— (it <em>is</em> the target)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>The blend is exposure-weighted, <code>(1−M)·lineup + M·box</code> with
+  <code>M = α/(weff+α)</code>: with little on-court data a rating leans on the box estimate; as
+  possessions pile up the lineup data takes over. The prior touches only the three factors a daily
+  box predicts well out-of-sample — <strong>oSC, dTS, dTOV</strong> — leaving shooting (oTS),
+  ball-security (oTOV) and defensive second-chance (dSC) at the pure solve. It is a deliberately
+  modest adjustment: for established players it barely moves the rating. <strong>Prior-informed and
+  pure are identical on oTS, oTOV, dSC, and on the headline net.</strong></p>
+
+  <h2 id="ref">Does it match a known reference?</h2>
+  <p>The pure NBA scale is tuned to reproduce <strong>DataBallR's six-factor RAPM</strong> (the
+  public time-decay, pure-lineup ridge), anchored at the regular-season end. As of the 2025-26
+  regular-season end, the prior-informed series — the Explorer default — lines up like this:</p>
+  <div class="scroll">
+    <table class="tbl" id="reftbl">
+      <thead><tr>
+        <th class="l">Player</th><th>This model</th><th>DataBallR</th>
+        <th class="grp l">Player</th><th>This model</th><th>DataBallR</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="l">Jokic</td><td class="pos">+7.7</td><td class="pos">+8.1</td>
+            <td class="grp l">Gobert</td><td class="pos">+4.5</td><td class="pos">+4.9</td></tr>
+        <tr><td class="l">Gilgeous-Alexander</td><td class="pos">+7.2</td><td class="pos">+7.5</td>
+            <td class="grp l">Mitchell</td><td class="pos">+4.5</td><td class="pos">+4.5</td></tr>
+        <tr><td class="l">Wembanyama</td><td class="pos">+6.6</td><td class="pos">+6.8</td>
+            <td class="grp l">Caruso</td><td class="pos">+4.3</td><td class="pos">+4.5</td></tr>
+        <tr><td class="l">Leonard</td><td class="pos">+6.4</td><td class="pos">+6.7</td>
+            <td class="grp l">Curry</td><td class="pos">+4.2</td><td class="pos">+4.5</td></tr>
+        <tr><td class="l">Antetokounmpo</td><td class="pos">+6.1</td><td class="pos">+6.3</td>
+            <td class="grp l"><em>(tail)</em> Rupert</td><td class="neg">−7.0</td><td class="neg">−6.9</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Across these targets the correlation is <strong>0.99</strong> and the slope <strong>0.98</strong>,
+  the negative tail reaching <strong>−7.0</strong> (vs −6.9) — the full range and ordering, not just
+  the leaders. The prior-free series sits a touch higher (Jokic +8.0, SGA +7.4) and is the one
+  literally calibrated to the public board. DataBallR uses a fixed ~6-year window; this model uses an
+  open-ended all-history decay, yet the two still agree at <strong>correlation ≈ 0.99</strong> — the
+  half-life discounts old games so steeply that "6 years" versus "all history" barely changes a
+  current rating, while letting one curve run cleanly across a 20-season career.</p>
+
+  <h2 id="transfer">The interesting part: what transfers between leagues?</h2>
+  <p>We don't assume college production means the same thing as NBA production — we
+  <strong>measure it</strong>, from two-league players (786 G-League → NBA, 1,276 college → NBA). For
+  each factor we fit an <strong>affine translation</strong>: the slope is <em>how much</em>
+  transfers, the correlation R <em>how reliably</em>.</p>
+  <div class="scroll">
+    <table class="tbl">
+      <thead><tr>
+        <th class="l">Factor</th>
+        <th>NCAA→NBA slope</th><th>R</th>
+        <th class="grp">G-League→NBA slope</th><th>R</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="l">oTS <span class="help" data-tip="True-shooting / scoring efficiency value.">?</span> (shooting)</td>
+            <td>0.24</td><td>0.22</td><td class="grp">0.10</td><td>0.11</td></tr>
+        <tr><td class="l">oTOV (ball security)</td>
+            <td>0.08</td><td>0.12</td><td class="grp">0.38</td><td>0.38</td></tr>
+        <tr><td class="l">oSC <span class="help" data-tip="Offensive second-chance value — putbacks &amp; kickouts off the offensive glass.">?</span> (off. 2nd-chance)</td>
+            <td>0.15</td><td>0.15</td><td class="grp">0.41</td><td>0.34</td></tr>
+        <tr><td class="l">dTS (shot defense)</td>
+            <td>0.26</td><td>0.22</td><td class="grp">0.31</td><td>0.21</td></tr>
+        <tr><td class="l">dTOV (forcing turnovers)</td>
+            <td>0.13</td><td>0.14</td><td class="grp">0.77</td><td>0.47</td></tr>
+        <tr><td class="l"><strong>dSC (def. 2nd-chance)</strong></td>
+            <td><strong>0.17</strong></td><td><strong>0.12</strong></td>
+            <td class="grp"><strong>0.30</strong></td><td><strong>0.22</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>The model's whole personality is in this table:</p>
+  <ul>
+    <li><strong>Every slope is well below 1.</strong> Dominating a lower league barely moves your NBA
+    number — a college player who is +5 in true shooting projects to roughly <em>average</em> NBA
+    shooting.</li>
+    <li><strong>Shooting transfers weakly</strong> (G-League R ≈ 0.1): efficiency against lower-league
+    defenses says little about scoring on NBA ones.</li>
+    <li><strong>Hustle / instinct carries over best</strong> — forcing turnovers (G-League R 0.47) and
+    offensive second chances (R 0.34) reflect motor more than skill-against-weaker-competition.</li>
+  </ul>
+  <div class="callout">
+    <strong>Worked translation.</strong> A G-League player grading <code>+1.5</code> on forcing
+    turnovers (dTOV, the most-transferable factor, slope 0.77) projects to ≈ <code>+1.2</code> on the
+    NBA scale — but with a wide, <em>non-shrinkable</em> band. The same player at <code>+1.5</code> in
+    shooting (oTS, slope 0.10) projects to only ≈ <code>+0.15</code>: lower-league scoring almost
+    doesn't carry.
+  </div>
+  <p>Each translation also carries an <strong>irreducible uncertainty floor</strong>
+  (<code>Var_translate</code>): the league jump is genuinely uncertain, so cross-league error bars are
+  <em>wide and never shrink to zero</em>, however many college games a player has. That honesty is the
+  point — it's why a future MVP's lone college season can sit near replacement level on the NBA axis
+  and still be "consistent" with stardom. You can see it on the <a href="draft.html">Draft board</a>,
+  where every prospect's at-draft translation carries that wide band by construction.</p>
+
+  <h2 id="ci">Confidence intervals</h2>
+  <p>Every factor on every day carries a standard error, <code>se = 100·√σ̂² / √Weff</code>, where
+  <code>Weff</code> is the decay-weighted possession exposure that day. The band <strong>widens with
+  few effective possessions</strong> (a rookie's first weeks, a cup of coffee, a recent call-up) and
+  <strong>narrows as minutes accumulate</strong>: at high exposure the net band runs ±1.5 or so; on a
+  thin sample it balloons past ±5. Translated (college / G-League) factors add the non-shrinkable
+  <code>Var_translate</code> floor in quadrature, so their bands stay permanently wide — the league
+  jump is uncertain in a way more games can't fix.</p>
+
+  <h3>The system at a glance</h3>
+  <div class="scroll">
+    <table class="tbl">
+      <thead><tr>
+        <th class="l">League</th><th class="l">Coverage</th><th>Players</th><th>Game-days</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="l"><span class="nb">NBA</span> (incl. playoffs)</td>
+            <td class="l">1996-97 → 2025-26</td><td>2,620</td><td>6,078</td></tr>
+        <tr><td class="l"><span class="gl">G-League</span></td>
+            <td class="l">2016-17 → 2025-26</td><td>2,377</td><td>1,161</td></tr>
+        <tr><td class="l"><span class="co">College</span></td>
+            <td class="l">2005-06 → 2025-26</td><td>42,378</td><td>2,953</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Roughly <strong>42 million player-day rows</strong>, each with six factors, a net, and CIs.
+  College seasons 2005-06 → 2012-13 have thinner play-by-play (21–67% of scheduled games) and are
+  flagged <code>reduced_sample</code> to be down-weighted; coverage is full (≥85%) from 2013-14 on.
+  NBA pre-1996 and pre-2005 college have no public play-by-play, so the possession-level RAPM can't
+  extend there.</p>
+
+  <h2 id="accuracy">Model accuracy — the out-of-sample scorecard</h2>
+  <p>Everything above is <strong>descriptive</strong> by design, but two fair questions follow: how
+  well do the day-of-game ratings predict <em>games</em>, and how well does a rating travel to
+  <em>next season</em>? Both are answered by <code>daily_v5/oos_harness.py</code>, a
+  <strong>walk-forward, leakage-free</strong> evaluation: every prediction is made using only data
+  available <em>before</em> the event it scores, so nothing below has seen its own answer.</p>
+
+  <div id="acc_msg" class="callout" style="display:none">Loading the accuracy scorecard…</div>
+
+  <h3>Predicting game margins</h3>
+  <p>Feeding the team RAPM into the game model and scoring every game out-of-sample. The
+  <strong>walk-forward</strong> column re-fits coefficients as of each game-day; the
+  <strong>frozen</strong> column holds the published coefficients fixed — they agree closely, so the
+  fit isn't overtuned. Margin error is in points; accuracy is straight-up win/loss.</p>
+  <div class="scroll" style="max-width:560px">
+    <table class="tbl" id="acc_game">
+      <thead><tr>
+        <th class="l">Metric</th><th>Walk-forward</th><th>Frozen</th>
+      </tr></thead>
+      <tbody><tr><td class="l">…</td><td>…</td><td>…</td></tr></tbody>
+    </table>
+  </div>
+  <p class="cap" id="acc_game_cap" style="color:var(--faint);font-size:var(--fs-2)"></p>
+
+  <h3>Are the game-prediction intervals honest?</h3>
+  <p>Each margin prediction carries an interval. If those intervals are calibrated, a nominal 50%
+  band should contain the actual result about 50% of the time, an 80% band about 80%, and so on.
+  Realized coverage tracks nominal almost exactly — the bands are <strong>honest</strong>, neither
+  over- nor under-confident.</p>
+  <div class="scroll" style="max-width:520px">
+    <table class="tbl" id="acc_cov">
+      <thead><tr>
+        <th class="l">Nominal band</th><th>Should contain</th><th>Actually contains</th>
+      </tr></thead>
+      <tbody><tr><td class="l">…</td><td>…</td><td>…</td></tr></tbody>
+    </table>
+  </div>
+
+  <h3>How far does today's rating travel to next season?</h3>
+  <p>The other test of a descriptive rating: take a player's rating as of a given day and ask how well
+  it predicts that player's RAPM <em>next season</em>. This is pure carry-forward — no aging, no
+  minutes model, no projection — so it is the <strong>baseline a real forward model must beat</strong>.
+  Per factor: the carry-forward RMSE (pts/100 on the NBA scale) and the correlation with next year's
+  measured value.</p>
+  <div class="scroll" style="max-width:520px">
+    <table class="tbl" id="acc_next">
+      <thead><tr>
+        <th class="l">Factor</th><th>Carry-forward RMSE</th><th>Correlation</th>
+      </tr></thead>
+      <tbody><tr><td class="l">…</td><td>…</td><td>…</td></tr></tbody>
+    </table>
+  </div>
+  <p>Net carries forward at <strong>r ≈ 0.90</strong>: where a player ranks today is most of where
+  they rank a year out. The factors most tied to motor and role — turnovers and offensive
+  second-chance — are the stickiest; defensive second-chance (dSC) is the noisiest to carry.</p>
+  <div class="callout">
+    <strong>One honest caveat.</strong> The confidence intervals here are <em>within-season</em>
+    standard errors — calibrated for "what is this rating today," which the game-margin table confirms.
+    Pressed into service as a <em>next-season</em> forecast band they <strong>over-cover</strong>: a
+    nominal 50% band catches the next-season value about <strong>96%</strong> of the time, because a
+    full year of aging, role change and roster churn adds variance the within-season SE never tried to
+    model. A genuine forward model would shrink those bands; that's plan 17's job, and this is the
+    bar it has to clear.</p>
+  </div>
+
+  <h2 id="guide">Using the site</h2>
+  <p>Five pages, one scale. Each is descriptive — it reports what was measured as of a game-day,
+  never a forecast. Player names everywhere link into the Explorer.</p>
+  <div class="guidegrid">
+    <div class="guide">
+      <h3><a href="index.html">Explorer →</a></h3>
+      <p>Any player's <strong>daily six-factor curve</strong> with error bands across NCAA, G-League
+      &amp; NBA. The <strong>Box-prior toggle</strong> switches Pure / Prior-informed / Box prior. A
+      college→NBA career reads as one continuous, color-coded line.</p>
+    </div>
+    <div class="guide">
+      <h3><a href="teams.html">Teams →</a></h3>
+      <p>Minute-weighted <strong>team RAPM</strong> turned into <strong>projected standings</strong>
+      via a 10,000-season Monte-Carlo (HCA 1.56, σ 14.3). Win totals are the simulator's mean with
+      spread, not a prediction. Click a team for its roster decomposition.</p>
+    </div>
+    <div class="guide">
+      <h3><a href="table.html">Tables →</a></h3>
+      <p>Ranked <strong>RAPM leaderboards</strong> — the full six-factor decomposition in
+      NBA-equivalent pts/100, offense and defense sign-aligned so positive is always good. Click a
+      column to sort by any single factor, not just net.</p>
+    </div>
+    <div class="guide">
+      <h3><a href="trade.html">Trade →</a></h3>
+      <p>Move players between two franchises; each team's <strong>expected win change (Δwins ± 80%
+      band)</strong> updates live, with a six-factor attribution. A what-if on <em>current</em>
+      ratings — not a contract or fit model.</p>
+    </div>
+    <div class="guide">
+      <h3><a href="draft.html">Draft →</a></h3>
+      <p>The <strong>at-draft translation</strong> of each prospect's college / G-League production
+      onto the NBA scale, with 95% CIs. Bands are wide by construction, so most prospects cluster near
+      replacement level — that wide band <em>is</em> the honest signal.</p>
+    </div>
+  </div>
+
+  <p class="foot">All values are on the DataBallR NBA-equivalent scale (pts/100). Everything shown is
+  a descriptive, as-of-game-day measurement with a confidence interval — never a forward projection.
+  Cross-league (college / G-League) factors carry an extra, non-shrinkable translation uncertainty.</p>
+
+    </div><!-- /.prose -->
+  </div><!-- /.doclayout -->
+</div>
+
+<script>
+"use strict";
+/* ---- scroll-spy: highlight the TOC entry for the section in view ---- */
+(function(){
+  var links=[].slice.call(document.querySelectorAll('#toc a'));
+  var ids=links.map(function(a){return a.getAttribute('href').slice(1);});
+  var secs=ids.map(function(id){return document.getElementById(id);});
+  function spy(){
+    var y=window.scrollY+90, cur=0;
+    for(var i=0;i<secs.length;i++){ if(secs[i] && secs[i].offsetTop<=y) cur=i; }
+    links.forEach(function(a,i){ a.classList.toggle('on', i===cur); });
+  }
+  window.addEventListener('scroll',spy,{passive:true});
+  window.addEventListener('resize',spy); spy();
+})();
+
+/* ---- worked example: fetch one player's prior-informed series, draw net + 6 factors ---- */
+(function(){
+  var EX_ID='203999', EX_FALLBACK='Nikola Jokic';
+  var FAC=[['oTS','oTS'],['oTOV','oTOV'],['oSC','oSC'],['dTS','dTS'],['dTOV','dTOV'],['dSC','dSC']];
+  var el=(window.RC&&RC.el)?RC.el:null;
+  var grid=document.getElementById('ex_grid');
+  function lgColor(lg){ return (window.RC&&RC.leagueColor)?RC.leagueColor(lg):'#4aa8ff'; }
+  function fail(msg){
+    document.getElementById('ex_name').textContent=EX_FALLBACK;
+    grid.innerHTML='<p style="grid-column:1/-1;color:var(--faint);font-size:var(--fs-2);margin:4px 0">'
+      +(msg||'The illustrative chart could not load; the factor table below still describes how a decomposition adds up.')+'</p>';
+  }
+  if(!el){ fail(); return; }
+
+  // small-multiple chart: mirrors the Explorer's Chart() idiom (band + per-league polyline), static.
+  function draw(mount,d,key,big){
+    var W=mount.clientWidth||240, H=big?120:84;
+    var padL=26,padR=5,padT=6,padB=12, pw=W-padL-padR, ph=H-padT-padB;
+    var n=d.d.length, v=d[key], se=d[key+'_se'];
+    var pool=v.filter(function(x){return x!=null;});
+    var lo=Math.min.apply(null,pool), hi=Math.max.apply(null,pool);
+    var c=(lo+hi)/2, half=Math.max((hi-lo)/2*1.06,0.15);
+    var ymin=c-half, ymax=c+half;
+    var X=function(i){return padL+(n>1?i/(n-1):.5)*pw;};
+    var Y=function(val){return padT+ph-(Math.max(ymin,Math.min(ymax,val))-ymin)/(ymax-ymin)*ph;};
+    var svg=el('svg',{viewBox:'0 0 '+W+' '+H,preserveAspectRatio:'none',role:'img',
+      'aria-label':key+' daily series for '+d.name});
+    [0,.5,1].forEach(function(f){var yv=ymin+(ymax-ymin)*f, y=Y(yv);
+      svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'var(--grid)','stroke-width':1}));
+      var t=el('text',{x:padL-4,y:y+3,'font-size':8,fill:'var(--faint)','text-anchor':'end'});
+      t.textContent=(yv>=0?'+':'')+yv.toFixed(1); svg.appendChild(t);});
+    if(ymin<0&&ymax>0){var yz=Y(0);svg.appendChild(el('line',{x1:padL,y1:yz,x2:W-padR,y2:yz,stroke:'var(--zero)','stroke-width':1}));}
+    // season gridlines (light)
+    var py=d.d[0].slice(0,4);
+    for(var i=1;i<n;i++){var yr=d.d[i].slice(0,4); if(yr!==py){
+      svg.appendChild(el('line',{x1:X(i),y1:padT,x2:X(i),y2:padT+ph,stroke:'var(--line-2)','stroke-width':1}));
+      if(big){var tt=el('text',{x:X(i),y:H-3,'font-size':8,fill:'var(--faint)','text-anchor':'middle'});
+        tt.textContent="’"+yr.slice(2); svg.appendChild(tt);} py=yr;}}
+    // CI band
+    var up='',dn='';
+    for(var a=0;a<n;a++) up+=X(a).toFixed(1)+','+Y(v[a]+1.96*se[a]).toFixed(1)+' ';
+    for(var b=n-1;b>=0;b--) dn+=X(b).toFixed(1)+','+Y(v[b]-1.96*se[b]).toFixed(1)+' ';
+    svg.appendChild(el('polygon',{points:up+dn,fill:'#8aa0bb','fill-opacity':.08,stroke:'none'}));
+    // one polyline per league
+    var lgs={}; d.lg.forEach(function(l,i){(lgs[l]=lgs[l]||[]).push(i);});
+    Object.keys(lgs).forEach(function(lg){var idx=lgs[lg]; if(idx.length<2)return;
+      svg.appendChild(el('polyline',{points:idx.map(function(i){return X(i).toFixed(1)+','+Y(v[i]).toFixed(1);}).join(' '),
+        fill:'none',stroke:lgColor(lg),'stroke-width':1.5,'stroke-linejoin':'round','stroke-linecap':'round'}));});
+    mount.innerHTML=''; mount.appendChild(svg);
+  }
+
+  function cell(key,label,big){
+    var c=document.createElement('div'); c.className='fcell'+(big?' net':'');
+    var last=DATA[key][DATA[key].length-1], se=DATA[key+'_se'][DATA[key+'_se'].length-1];
+    var val=(last>=0?'+':'')+last.toFixed(2);
+    c.innerHTML='<div class="ftitle"><span>'+label+'</span>'
+      +'<span class="fval">'+val+' <span class="pm">±'+(1.96*se).toFixed(2)+'</span></span></div>'
+      +'<div class="fchart"></div>';
+    grid.appendChild(c);
+    draw(c.querySelector('.fchart'),DATA,key,big);
+    return c;
+  }
+
+  var DATA=null;
+  function render(){
+    grid.innerHTML='';
+    document.getElementById('ex_name').textContent=DATA.name;
+    var lg0=DATA.lg[0], lg1=DATA.lg[DATA.lg.length-1];
+    document.getElementById('ex_meta').textContent=DATA.d[0]+' – '+DATA.d[DATA.d.length-1]
+      +' · '+DATA.d.length+' game-days · prior-informed';
+    document.getElementById('ex_caption').textContent=
+      'Latest values shown on each panel; the faint band is the 95% CI. Drawn like the Explorer (static).';
+    cell('net','Net RAPM · ORAPM + DRAPM',true);
+    FAC.forEach(function(p){ cell(p[0],p[1],false); });
+    // additivity table
+    var rows='', sum=0;
+    FAC.forEach(function(p){var k=p[0], val=DATA[k][DATA[k].length-1]; sum+=val;
+      rows+='<tr><td class="l">'+p[1]+'</td><td class="'+(val>=0?'pos':'neg')+'">'+(val>=0?'+':'')+val.toFixed(2)+'</td></tr>';});
+    rows+='<tr class="total"><td class="l"><strong>sum of six (sum6)</strong></td>'
+      +'<td class="'+(sum>=0?'pos':'neg')+'"><strong>'+(sum>=0?'+':'')+sum.toFixed(2)+'</strong></td></tr>';
+    var netv=DATA.net[DATA.net.length-1];
+    rows+='<tr><td class="l">net RAPM <em>(separate solve)</em></td><td class="'+(netv>=0?'pos':'neg')+'">'+(netv>=0?'+':'')+netv.toFixed(2)+'</td></tr>';
+    document.getElementById('ex_tbl').innerHTML=rows;
+  }
+  function rerender(){ if(DATA) render(); }
+  var rt; window.addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(rerender,150);});
+
+  fetch('data/'+EX_ID+'.json').then(function(r){if(!r.ok)throw 0;return r.json();})
+    .then(function(j){ DATA=j; render(); })
+    .catch(function(){ fail(); });
+})();
+
+/* ---- model accuracy: fetch the OOS scorecard, fill the three tables ---- */
+(function(){
+  var msg=document.getElementById('acc_msg');
+  function show(t){ if(msg){ msg.style.display='block'; msg.textContent=t; } }
+  function pct(x){ return (x*100).toFixed(1)+'%'; }
+
+  function fillGame(g){
+    var wf=g.walkforward||{}, fr=g.frozen||{};
+    var rows=[
+      ['Margin RMSE (pts)', wf.margin_rmse, fr.margin_rmse, 4],
+      ['Margin MAE (pts)',  wf.margin_mae,  fr.margin_mae,  4],
+      ['Win/loss accuracy', wf.accuracy,    fr.accuracy,    'pct'],
+      ['Brier score',       wf.brier,       fr.brier,       3],
+      ['Log loss',          wf.logloss,     fr.logloss,     3]
+    ];
+    var h='';
+    rows.forEach(function(r){
+      var fmt=function(v){ if(v==null)return '—'; return r[3]==='pct'?pct(v):(+v).toFixed(r[3]); };
+      h+='<tr><td class="l lead">'+r[0]+'</td><td>'+fmt(r[1])+'</td><td>'+fmt(r[2])+'</td></tr>';
+    });
+    document.querySelector('#acc_game tbody').innerHTML=h;
+    var cap=document.getElementById('acc_game_cap');
+    if(cap) cap.textContent='Lower is better for RMSE / MAE / Brier / log loss; higher for accuracy. '
+      +'Margin RMSE ≈ '+(wf.margin_rmse!=null?(+wf.margin_rmse).toFixed(1):'—')
+      +' pts sits near the irreducible floor for NBA game margins.';
+  }
+
+  function fillCov(c){
+    var bands=['50','80','90'], h='';
+    bands.forEach(function(b){
+      var realized=c[b];
+      h+='<tr><td class="l lead">'+b+'%</td><td>'+b+'%</td><td>'
+        +(realized==null?'—':pct(realized))+'</td></tr>';
+    });
+    document.querySelector('#acc_cov tbody').innerHTML=h;
+  }
+
+  function fillNext(ns){
+    var FAC=['net','oTS','oTOV','oSC','dTS','dTOV','dSC'], h='';
+    // correlation range for a per-column green ramp
+    var cs=FAC.map(function(k){return (ns[k]||{}).corr;}).filter(function(x){return x!=null;});
+    var clo=Math.min.apply(null,cs), chi=Math.max.apply(null,cs), span=(chi-clo)||1;
+    FAC.forEach(function(k){
+      var o=ns[k]||{}, rmse=o.rmse, corr=o.corr;
+      var lead=k==='net'?'<strong>net</strong>':k;
+      var ccell='—';
+      if(corr!=null){
+        var bg=(window.RC&&RC.redGreen)?RC.redGreen((corr-clo)/span):'transparent';
+        var ink=(window.RC&&RC.inkOn)?RC.inkOn(bg):'var(--text)';
+        ccell='<span style="background:'+bg+';color:'+ink
+          +';padding:1px 7px;border-radius:3px;font-variant-numeric:tabular-nums">'+corr.toFixed(3)+'</span>';
+      }
+      // group-border the first defensive row (dTS) so offense/defense split visually
+      var tdCls=k==='dTS'?'l lead grp':'l lead';
+      h+='<tr><td class="'+tdCls+'">'+lead+'</td>'
+        +'<td'+(k==='dTS'?' class="grp"':'')+'>'+(rmse==null?'—':rmse.toFixed(3))+'</td>'
+        +'<td>'+ccell+'</td></tr>';
+    });
+    document.querySelector('#acc_next tbody').innerHTML=h;
+  }
+
+  fetch('accuracy.json').then(function(r){ if(!r.ok) throw 0; return r.json(); })
+    .then(function(j){
+      if(msg) msg.style.display='none';
+      if(j.game_margin){ fillGame(j.game_margin); if(j.game_margin.ci_coverage) fillCov(j.game_margin.ci_coverage); }
+      if(j.next_season) fillNext(j.next_season);
+    })
+    .catch(function(){
+      show('The accuracy scorecard (accuracy.json) could not be loaded. The methodology above still '
+        +'describes the out-of-sample tests; rerun daily_v5/oos_harness.py to regenerate the numbers.');
+    });
+})();
+</script>
 </body></html>

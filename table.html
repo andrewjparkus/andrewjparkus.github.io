@@ -1,111 +1,255 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>RAPM Leaderboards · Daily RAPM</title>
+<title>Tables · Daily RAPM</title>
+<link rel="stylesheet" href="site.css">
+<link rel="icon" href="favicon.svg"><link rel="manifest" href="manifest.webmanifest">
 <style>
-  :root{
-    --bg:#080b11; --panel:#0e141d; --line:#1b2532; --text:#e7eef7; --muted:#7c8ca2;
-    --accent:#56b6ff; --grid:#161f2c;
-    --nba:#4aa8ff; --gleague:#2dd4bf; --college:#b27bff;
-    --pos:#3ddc97; --neg:#ff6b6b; --zero:#5d6b7e;
-  }
-  *{box-sizing:border-box} html,body{margin:0}
-  body{background:var(--bg);color:var(--text);
-    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:1040px;margin:0 auto;padding:24px 22px 70px}
-  h1{font-size:20px;margin:0;font-weight:650;letter-spacing:-.2px}
-  h1 b{color:var(--accent);font-weight:750}
-  .sub{color:var(--muted);font-size:12.5px;margin:6px 0 0;line-height:1.5;max-width:820px}
-  /* nav (verbatim from index.html) */
-  .topnav{border-bottom:1px solid var(--line);background:#0a0e16;position:sticky;top:0;z-index:50}
-  .navinner{max-width:1040px;margin:0 auto;padding:0 22px;display:flex;align-items:center;gap:8px;height:52px}
-  .brand{font-size:16px;font-weight:700;letter-spacing:-.2px;margin-right:18px}
-  .brand b{color:var(--accent)}
-  .tab{font-size:13.5px;color:var(--muted);text-decoration:none;padding:16px 12px;border-bottom:2px solid transparent}
-  .tab:hover{color:var(--text)}
-  .tab.active{color:var(--text);border-bottom-color:var(--accent)}
-  /* table sections */
-  .sec{margin-top:26px}
-  .sec h2{font-size:15px;font-weight:700;letter-spacing:-.1px;margin:0 0 3px;color:var(--text);
-    border-left:3px solid var(--accent);padding-left:9px}
-  .sec p.cap{color:var(--muted);font-size:11.5px;margin:0 0 9px 12px;line-height:1.5;max-width:780px}
-  .scroll{overflow-x:auto;border:1px solid var(--line);background:var(--panel)}
-  table.stand{border-collapse:collapse;width:100%;min-width:720px;
-    font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
-  table.stand th,table.stand td{padding:7px 8px;text-align:right;white-space:nowrap;
-    border-bottom:1px solid #121a25}
-  table.stand thead th{font-size:11px;color:var(--muted);font-weight:600;
-    border-bottom:1px solid var(--line);background:#0c121b}
-  table.stand th.l,table.stand td.l{text-align:left}
-  table.stand td.rank{color:var(--muted);font-size:12px;width:26px}
-  table.stand tr.prow:hover>td{background:#121b27}
-  td.pcell .pn{font-size:13px;font-weight:600}
-  td.pcell .sub2{color:var(--muted);font-size:11px;margin-left:7px}
-  td.f,td.net,td.sub-o,td.sub-d{font-size:12px}
-  td.net{font-weight:700}
-  td.sub-o,td.sub-d{font-weight:600}
-  th.grp{color:#9fb0c4;border-left:1px solid var(--line)}
-  td.grp{border-left:1px solid #131c28}
-  .pos{color:var(--pos)} .neg{color:var(--neg)} .zero{color:var(--zero)}
-  .msg{color:var(--muted);text-align:center;padding:70px 0;font-size:14px}
-  .foot{color:#566377;font-size:11px;margin-top:34px;line-height:1.7;max-width:820px}
+  /* page-unique: overall-table scroll body */
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:18px 0 4px}
+  .toolbar .asof{font-size:11.5px;color:var(--faint);margin-left:auto}
+  .selrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:14px 0 6px}
+  .findbox{flex:0 0 auto;margin-left:auto;position:relative}
+  .findbox input{font:inherit;font-size:12.5px;background:var(--panel);border:1px solid var(--line);
+    color:var(--text);outline:none;padding:6px 10px;border-radius:var(--r-1);width:180px}
+  .findbox input:focus{border-color:var(--accent)}
+  .tcap{color:var(--faint);font-size:11px;margin:4px 2px 8px;line-height:1.5;max-width:840px}
+  /* capped-height scroll so the sticky header has something to stick to */
+  .tablebox{max-height:560px;overflow:auto}
+  /* header ? tooltips live in the sticky thead at the top of this scroll box;
+     the shared tooltip renders upward and gets clipped — flip header tips DOWN */
+  .tablebox th .help[data-tip]:hover::after{bottom:auto;top:calc(100% + 6px)}
+  .tablebox th .help[data-tip]:hover::before{bottom:auto;top:calc(100% + 1px);
+    border-top-color:transparent;border-bottom-color:var(--line)}
+  table.tbl thead th .arr{font-size:9px;color:var(--accent);margin-left:3px}
+  td.pn{font-weight:600}
+  td.pn .sub2{color:var(--muted);font-size:11px;font-weight:400;margin-left:7px}
+  td.trend{text-align:center;padding-top:3px;padding-bottom:3px}
+  .showall{margin:10px 0 2px}
+  .nohit{color:var(--muted);font-size:12.5px;padding:18px 10px;text-align:center}
 </style></head>
 <body>
 <nav id="topnav" data-active="tables"></nav>
+<script src="charts.js"></script>
 <script src="nav.js"></script>
 <div class="wrap">
-  <h1 style="margin-top:6px">RAPM <b>leaderboards</b></h1>
-  <p class="sub" id="sub">Six-factor RAPM decomposition, NBA-equivalent pts/100. Offense (oTS+oTOV+oSC) and defense (dTS+dTOV+dSC) are sign-aligned so positive is always good. College &amp; G-League are translated onto the NBA scale.</p>
-  <div id="tables"></div>
-  <div class="msg" id="msg">Loading leaderboards…</div>
-  <p class="foot">Net = ORAPM + DRAPM. oTS true-shooting · oTOV turnover · oSC second-chance value (offense, and defensive mirror). Draft picks are ranked by our model's rating of their 2025-26 college/G-League season, not by draft slot — the pick number is shown for contrast.</p>
+  <h1>RAPM <b>tables</b></h1>
+  <p class="sub" id="sub">Six-factor RAPM leaderboards on the NBA-equivalent scale — sortable; college &amp; G-League translated.</p>
+
+  <div class="toolbar">
+    <span class="asof" id="asof"></span>
+  </div>
+
+  <!-- ===================== OVERALL ===================== -->
+  <section id="view-overall">
+    <div class="selrow">
+      <span class="seglab">Table</span>
+      <div class="seg" id="tableseg"></div>
+      <div class="findbox"><input id="find" type="text" placeholder="Search this table…" autocomplete="off"></div>
+    </div>
+    <p class="tcap" id="tcap"></p>
+    <div class="scroll"><div class="tablebox"><table class="tbl" id="otable"></table></div></div>
+    <div class="showall"><button class="btn" id="showall" type="button" style="display:none"></button></div>
+  </section>
+
+  <div class="empty" id="empty">Loading tables…</div>
+
+  <p class="foot">Net = ORAPM + DRAPM. 2026-draft picks are ranked by our model's rating of their 2025-26 college / G-League season, not by draft slot. Everything is descriptive — already-measured, never projected.</p>
 </div>
+
 <script>
 "use strict";
-const FACS=["oTS","oTOV","oSC","dTS","dTOV","dSC"];
+const TOP_N=10;            // overall: rows shown before "Show all"
+const TIP={
+  net:"Net RAPM = ORAPM (oTS+oTOV+oSC) + DRAPM (dTS+dTOV+dSC), points/100 on the NBA-equivalent scale.",
+  ORAPM:"Offensive RAPM = oTS + oTOV + oSC, points/100 on the NBA-equivalent scale.",
+  DRAPM:"Defensive RAPM = dTS + dTOV + dSC, points/100 on the NBA-equivalent scale.",
+  oTS:"Offensive true-shooting RAPM — points/100 from shot-making efficiency (NBA scale).",
+  oTOV:"Offensive turnover RAPM — ball-security value (fewer turnovers = positive).",
+  oSC:"Offensive second-chance RAPM — value from offensive rebounding / extra possessions.",
+  dTS:"Defensive true-shooting RAPM — suppressing opponent shot efficiency.",
+  dTOV:"Defensive turnover RAPM — forcing turnovers / ball pressure.",
+  dSC:"Defensive second-chance RAPM — limiting opponent offensive rebounds."
+};
+
+/* ---- formatting ---------------------------------------------------------- */
+function signCls(n){ if(n==null||isNaN(n)) return "zero"; if(n>=0.05) return "pos"; if(n<=-0.05) return "neg"; return "zero"; }
 function fmt(v,dec){ dec=(dec==null)?2:dec;
-  if(v==null||isNaN(v)) return {txt:"–",cls:"zero"};
-  const n=Number(v); const txt=(n>=0?"+":"−")+Math.abs(n).toFixed(dec);
-  let cls="zero"; if(n>=0.05)cls="pos"; else if(n<=-0.05)cls="neg";
-  return {txt,cls}; }
-function cell(v,extra){ const f=fmt(v,2); return '<td class="f '+(extra||"")+' '+f.cls+'">'+f.txt+'</td>'; }
+  if(v==null||isNaN(v)) return "–";
+  const n=Number(v); return (n>=0?"+":"−")+Math.abs(n).toFixed(dec); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 
-fetch('table.json')
-  .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
-  .then(render)
-  .catch(err=>{ document.getElementById('msg').textContent="Couldn't load leaderboards (table.json). "+err.message; });
+/* =========================================================================
+   STATE
+   ========================================================================= */
+let TBL=null;             // table.json
+let tableKey=null;        // current overall table key
+let showAll=false;        // overall: reveal full list
+let query='';             // overall search
+let sortKey=null;         // overall sort column (null = file order by rank)
+let sortDir=-1;           // -1 desc, +1 asc
 
-function render(d){
-  document.getElementById('msg').style.display='none';
-  document.getElementById('sub').insertAdjacentHTML('beforeend',
-    ' <span style="color:#566377">· NBA as of '+esc(d.meta.as_of_nba)+'</span>');
-  const head =
-    '<thead><tr>'+
-    '<th class="l">#</th><th class="l">Player</th>'+
-    '<th>Net</th>'+
-    '<th class="grp">ORAPM</th><th>oTS</th><th>oTOV</th><th>oSC</th>'+
-    '<th class="grp">DRAPM</th><th>dTS</th><th>dTOV</th><th>dSC</th>'+
-    '</tr></thead>';
-  let html="";
-  for(const tb of d.tables){
-    let body="";
-    for(const r of tb.rows){
-      const net=fmt(r.net,2);
-      body += '<tr class="prow">'+
-        '<td class="rank">'+r.rank+'</td>'+
-        '<td class="l pcell"><span class="pn">'+esc(r.name)+'</span>'+
-          (r.sub?'<span class="sub2">'+esc(r.sub)+'</span>':'')+'</td>'+
-        '<td class="net '+net.cls+'">'+net.txt+'</td>'+
-        cell(r.ORAPM,'sub-o grp')+cell(r.oTS)+cell(r.oTOV)+cell(r.oSC)+
-        cell(r.DRAPM,'sub-d grp')+cell(r.dTS)+cell(r.dTOV)+cell(r.dSC)+
-        '</tr>';
-    }
-    html += '<div class="sec"><h2>'+esc(tb.title)+'</h2>'+
-            '<p class="cap">'+esc(tb.sub)+'</p>'+
-            '<div class="scroll"><table class="stand">'+head+'<tbody>'+body+'</tbody></table></div></div>';
-  }
-  document.getElementById('tables').innerHTML=html;
+/* =========================================================================
+   SHARED: segmented control builder
+   ========================================================================= */
+function buildSeg(id, items, getLabel, cur, onpick){
+  const seg=document.getElementById(id); seg.innerHTML='';
+  items.forEach(it=>{
+    const btn=document.createElement('button'); btn.type='button';
+    btn.textContent=getLabel(it);
+    btn.classList.toggle('on', it===cur);
+    btn.onclick=()=>onpick(it);
+    seg.appendChild(btn);
+  });
 }
+
+/* =========================================================================
+   OVERALL view
+   ========================================================================= */
+const OCOLS=[
+  {key:'net',   label:'Net',   grp:false, net:true},
+  {key:'ORAPM', label:'ORAPM', grp:true},
+  {key:'oTS',   label:'oTS',   grp:false},
+  {key:'oTOV',  label:'oTOV',  grp:false},
+  {key:'oSC',   label:'oSC',   grp:false},
+  {key:'DRAPM', label:'DRAPM', grp:true},
+  {key:'dTS',   label:'dTS',   grp:false},
+  {key:'dTOV',  label:'dTOV',  grp:false},
+  {key:'dSC',   label:'dSC',   grp:false}
+];
+
+function curTable(){ return TBL.tables.find(t=>t.key===tableKey); }
+
+function sortedRows(){
+  const tb=curTable(); if(!tb) return [];
+  let rows=tb.rows.slice();
+  if(query){
+    const q=query.toLowerCase();
+    rows=rows.filter(r=>String(r.name||'').toLowerCase().includes(q)
+                     || String(r.sub||'').toLowerCase().includes(q));
+  }
+  if(sortKey){
+    rows.sort((a,b)=>{
+      const av=a[sortKey], bv=b[sortKey];
+      const an=(av==null||isNaN(av)), bn=(bv==null||isNaN(bv));
+      if(an&&bn) return 0; if(an) return 1; if(bn) return -1;   // nulls last
+      return (av-bv)*sortDir;
+    });
+  }else{
+    rows.sort((a,b)=>a.rank-b.rank);    // file order (already net-ranked)
+  }
+  return rows;
+}
+
+function renderOverall(){
+  const tb=curTable();
+  const cap=document.getElementById('tcap');
+  if(!tb){ cap.textContent=''; document.getElementById('otable').innerHTML=''; return; }
+  cap.textContent=tb.sub||'';
+
+  const rows=sortedRows();
+  const total=rows.length;
+  const shown=showAll?rows:rows.slice(0,TOP_N);
+
+  // header
+  let head='<thead><tr>'+
+    '<th class="l">#</th>'+
+    '<th class="l">Player</th>';
+  OCOLS.forEach(c=>{
+    const active=(sortKey===c.key);
+    const arr=active?'<span class="arr">'+(sortDir<0?'▼':'▲')+'</span>':'';
+    const tip=TIP[c.key]?' <span class="help" data-tip="'+esc(TIP[c.key])+'">?</span>':'';
+    head+='<th class="sortable'+(c.grp?' grp':'')+'" data-k="'+c.key+'">'+c.label+tip+arr+'</th>';
+  });
+  head+='<th class="l">Trend</th>';
+  head+='</tr></thead>';
+
+  // body
+  let body='';
+  if(!shown.length){
+    body='<tr><td colspan="12"><div class="nohit">No players match “'+esc(query)+'”.</div></td></tr>';
+  }else{
+    for(const r of shown){
+      body+='<tr>'+
+        '<td class="rank">'+(r.rank!=null?r.rank:'')+'</td>'+
+        '<td class="l pn">'+esc(r.name)+
+          (r.sub?'<span class="sub2">'+esc(r.sub)+'</span>':'')+'</td>';
+      OCOLS.forEach(c=>{
+        const v=r[c.key];
+        body+='<td class="'+(c.net?'net ':'')+(c.grp?'grp ':'')+signCls(v)+'">'+fmt(v)+'</td>';
+      });
+      body+='<td class="trend"></td>';
+      body+='</tr>';
+    }
+  }
+  document.getElementById('otable').innerHTML=head+'<tbody>'+body+'</tbody>';
+
+  // render sparklines into the Trend cells
+  if(shown.length){
+    const cells=document.querySelectorAll('#otable tbody td.trend');
+    shown.forEach((r,i)=>{
+      const cell=cells[i]; if(!cell) return;
+      if(r.spark && r.spark.length){
+        const color=(r.net>=0?'var(--pos)':'var(--neg)');
+        cell.appendChild(RC.spark(r.spark, color));
+      }
+    });
+  }
+
+  // wire sortable headers
+  document.querySelectorAll('#otable th.sortable').forEach(th=>{
+    th.onclick=()=>{
+      const k=th.getAttribute('data-k');
+      if(sortKey===k){ sortDir=-sortDir; }
+      else { sortKey=k; sortDir=-1; }      // new column -> desc first
+      renderOverall();
+    };
+  });
+
+  // show-all toggle
+  const sa=document.getElementById('showall');
+  if(total>TOP_N){
+    sa.style.display='';
+    sa.textContent=showAll?('Show top '+TOP_N):('Show all ('+total+')');
+    sa.classList.toggle('active',showAll);
+    sa.onclick=()=>{ showAll=!showAll; renderOverall(); };
+  }else{
+    sa.style.display='none';
+  }
+}
+
+/* =========================================================================
+   refresh
+   ========================================================================= */
+function refresh(){
+  const asof=document.getElementById('asof');
+  asof.textContent = TBL?('NBA as of '+TBL.meta.as_of_nba):'';
+  if(!TBL) return;
+  buildSeg('tableseg', TBL.tables.map(t=>t.key),
+    k=>(TBL.tables.find(t=>t.key===k)||{}).title||k, tableKey,
+    k=>{ tableKey=k; showAll=false; sortKey=null; sortDir=-1; query=''; document.getElementById('find').value=''; renderOverall(); refresh(); });
+  renderOverall();
+}
+
+/* live search-within (overall) */
+document.getElementById('find').addEventListener('input',e=>{
+  query=e.target.value.trim();
+  // searching reveals the full filtered list
+  showAll = query ? true : showAll;
+  renderOverall();
+});
+
+/* =========================================================================
+   LOAD
+   ========================================================================= */
+fetch('table.json').then(r=>{ if(!r.ok) throw new Error('table.json '+r.status); return r.json(); })
+  .then(t=>{
+    TBL=t; tableKey=TBL.tables[0]&&TBL.tables[0].key;
+    document.getElementById('empty').style.display='none';
+    refresh();
+  })
+  .catch(()=>{
+    document.getElementById('empty').textContent="Couldn't load tables (table.json).";
+  });
 </script>
 </body></html>

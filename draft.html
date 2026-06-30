@@ -2,56 +2,26 @@
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Draft Board · Daily RAPM</title>
+<link rel="stylesheet" href="site.css">
+<link rel="icon" href="favicon.svg"><link rel="manifest" href="manifest.webmanifest">
 <style>
-  :root{
-    --bg:#080b11; --panel:#0e141d; --line:#1b2532; --text:#e7eef7; --muted:#7c8ca2;
-    --accent:#56b6ff; --grid:#161f2c;
-    --nba:#4aa8ff; --gleague:#2dd4bf; --college:#b27bff;
-    --pos:#3ddc97; --neg:#ff6b6b; --zero:#5d6b7e; --whisk:#56b6ff;
-  }
-  *{box-sizing:border-box} html,body{margin:0}
-  body{background:var(--bg);color:var(--text);
-    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:1100px;margin:0 auto;padding:24px 22px 70px}
-  h1{font-size:20px;margin:0;font-weight:650;letter-spacing:-.2px}
-  h1 b{color:var(--accent);font-weight:750}
-  .sub{color:var(--muted);font-size:12.5px;margin:6px 0 0;line-height:1.5;max-width:860px}
-  .topnav{border-bottom:1px solid var(--line);background:#0a0e16;position:sticky;top:0;z-index:50}
-  .navinner{max-width:1100px;margin:0 auto;padding:0 22px;display:flex;align-items:center;gap:8px;height:52px}
-  .brand{font-size:16px;font-weight:700;letter-spacing:-.2px;margin-right:18px}
-  .brand b{color:var(--accent)}
-  .tab{font-size:13.5px;color:var(--muted);text-decoration:none;padding:16px 12px;border-bottom:2px solid transparent}
-  .tab:hover{color:var(--text)}
-  .tab.active{color:var(--text);border-bottom-color:var(--accent)}
+  /* page-unique: draft board */
+  .wrap{max-width:1100px}
+  #tbl{min-width:880px}
   .caveat{margin-top:18px;border:1px solid #3a2a16;background:#15110a;border-left:3px solid #d99a3a;
-    padding:11px 13px;border-radius:4px;color:#e8d6b6;font-size:12px;line-height:1.55;max-width:880px}
-  .scroll{overflow-x:auto;border:1px solid var(--line);background:var(--panel);margin-top:18px}
-  table.stand{border-collapse:collapse;width:100%;min-width:880px;
-    font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
-  table.stand th,table.stand td{padding:7px 8px;text-align:right;white-space:nowrap;
-    border-bottom:1px solid #121a25}
-  table.stand thead th{font-size:11px;color:var(--muted);font-weight:600;
-    border-bottom:1px solid var(--line);background:#0c121b;cursor:pointer;user-select:none}
-  table.stand thead th:hover{color:var(--text)}
-  table.stand th.l,table.stand td.l{text-align:left}
-  table.stand td.rank{color:var(--muted);font-size:12px;width:30px}
-  table.stand tr.prow:hover>td{background:#121b27}
-  table.stand tr.prow.sel>td{background:#142233}
+    padding:11px 13px;border-radius:var(--r-1);color:#e8d6b6;font-size:12px;line-height:1.55;max-width:880px}
+  table.tbl tr.prow.sel>td{background:#142233}
   td.pcell .pn{font-size:13px;font-weight:600;color:var(--accent);cursor:pointer}
   td.pcell .pn.nolink{color:var(--muted);cursor:default}
   td.pcell .sub2{color:var(--muted);font-size:11px;margin-left:7px}
-  td.f{font-size:12px} td.net{font-weight:700}
-  th.grp{color:#9fb0c4;border-left:1px solid var(--line)} td.grp{border-left:1px solid #131c28}
-  .pos{color:var(--pos)} .neg{color:var(--neg)} .zero{color:var(--zero)}
+  td.f{font-size:12px}
   .badge{display:inline-block;font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:6px;
     vertical-align:middle}
-  .badge.thin{background:#3a2a16;color:#e8b86b} .badge.name{background:#172a3a;color:#7cc0ff}
+  .badge.thin{background:#3a2a16;color:#e8b86b}
   .badge.nodata{background:#2a1620;color:#e88}
   .whisk{display:inline-block;width:150px;height:12px;vertical-align:middle;margin-left:6px}
-  .msg{color:var(--muted);text-align:center;padding:70px 0;font-size:14px}
-  .foot{color:#566377;font-size:11px;margin-top:30px;line-height:1.7;max-width:880px}
   /* curve panel */
-  #panel{display:none;margin-top:22px;border:1px solid var(--line);background:var(--panel);padding:16px 18px}
+  #panel{display:none;margin-top:22px;border:1px solid var(--line);background:var(--panel);padding:16px 18px;border-radius:var(--r-1)}
   #panel h3{margin:0 0 2px;font-size:15px} #panel .pmeta{color:var(--muted);font-size:11.5px;margin:0 0 10px}
   #chart{width:100%;height:240px} #panel .close{float:right;color:var(--muted);cursor:pointer;font-size:13px}
   .meth{margin-top:24px;font-size:11.5px;color:var(--muted);line-height:1.6;max-width:880px}
@@ -62,14 +32,14 @@
 </style></head>
 <body>
 <nav id="topnav" data-active="draft"></nav>
+<script src="charts.js"></script>
 <script src="nav.js"></script>
 <div class="wrap">
   <h1 style="margin-top:6px">Draft <b>board</b> <span id="yr" style="color:var(--muted);font-weight:400"></span></h1>
-  <p class="sub" id="sub">At-draft translation of each prospect's college / G-League production onto the
-    NBA-equivalent scale, with 95% confidence intervals. Click a column header to sort; click a prospect to see their daily curve.
-    See also the <a href="draft_tracker.html" style="color:var(--accent);text-decoration:none">live draft tracker →</a>.</p>
+  <p class="sub" id="sub">2026 prospects' college / G-League production translated to the NBA scale, with
+    95% CIs. Sort any column; click a prospect for their curve.</p>
   <div class="caveat" id="caveat">Loading…</div>
-  <div class="scroll"><table class="stand" id="tbl"></table></div>
+  <div class="scroll"><table class="tbl" id="tbl"></table></div>
   <div id="panel"><span class="close" onclick="closePanel()">close ✕</span>
     <h3 id="pname"></h3><p class="pmeta" id="pmeta"></p><svg id="chart"></svg></div>
   <div class="msg" id="msg">Loading draft board…</div>
@@ -79,14 +49,13 @@
     nearly all prospects — they reflect the genuine, irreducible uncertainty of projecting one league
     onto another (slopes &lt; 0.27), and are <b>NOT</b> a forecast of NBA careers. This board surfaces
     calibrated uncertainty, not a confident ranking. The age-driven CI widening is <b>not</b> a shipped
-    feature of this version (Var_age = 0); only an age column is shown where available.</p>
+    feature of this version (Var_age = 0).</p>
     <div id="transtbl"></div>
   </details>
-  <p class="foot">Net = oTS+oTOV+oSC+dTS+dTOV+dSC on the NBA-equivalent scale. Pick # is the consensus
-    draft slot, shown for contrast — our rank is by translated net, which carries no claim of predictive
-    superiority. Badges: <span class="badge thin">thin</span> weff&lt;400 (below translation-fit support);
-    <span class="badge name">name</span> joined by name match (audited); <span class="badge nodata">no data</span>
-    no NCAA/G-League possessions (e.g. internationals).</p>
+  <p class="foot">Net = oTS+oTOV+oSC+dTS+dTOV+dSC (NBA-eq). Pick # is the consensus slot; our rank is by
+    translated net (no claim of predictive superiority). Badges:
+    <span class="badge thin">thin</span> weff&lt;400 (thin fit support);
+    <span class="badge nodata">no data</span> no NCAA/G-League possessions.</p>
 </div>
 <script>
 "use strict";
@@ -143,24 +112,28 @@ function facCell(p,f){
 
 const COLDEF=[
   {key:"pick",label:"Pick",l:true},{key:"name",label:"Prospect",l:true},
-  {key:"our_rank",label:"Our#"},{key:"net",label:"Net ±95% (NBA-eq)"},
-  {key:"oTS",label:"oTS",grp:true},{key:"oTOV",label:"oTOV"},{key:"oSC",label:"oSC"},
-  {key:"dTS",label:"dTS",grp:true},{key:"dTOV",label:"dTOV"},{key:"dSC",label:"dSC"},
-  {key:"age_at_draft",label:"Age"},{key:"weff",label:"weff"}];
+  {key:"our_rank",label:"Our#"},
+  {key:"net",label:"Net ±95% (NBA-eq)",tip:"Net RAPM = ORAPM (oTS+oTOV+oSC) + DRAPM (dTS+dTOV+dSC), points/100 on the NBA-equivalent scale."},
+  {key:"oTS",label:"oTS",grp:true,tip:"Offensive true-shooting RAPM — points/100 from shot-making efficiency (NBA scale)."},
+  {key:"oTOV",label:"oTOV",tip:"Offensive turnover RAPM — ball-security value (fewer turnovers = positive)."},
+  {key:"oSC",label:"oSC",tip:"Offensive second-chance RAPM — value from offensive rebounding / extra possessions."},
+  {key:"dTS",label:"dTS",grp:true,tip:"Defensive true-shooting RAPM — suppressing opponent shot efficiency."},
+  {key:"dTOV",label:"dTOV",tip:"Defensive turnover RAPM — forcing turnovers / ball pressure."},
+  {key:"dSC",label:"dSC",tip:"Defensive second-chance RAPM — limiting opponent offensive rebounds."}];
 
 function render(){
   const dom=netDomain();
   let head='<thead><tr>';
   for(const c of COLDEF){
     const arrow=SORT.key===c.key?(SORT.asc?' ▲':' ▼'):'';
-    head+='<th class="'+(c.l?'l ':'')+(c.grp?'grp':'')+'" onclick="setSort(\''+c.key+'\')">'+esc(c.label)+arrow+'</th>'; }
+    const help=c.tip?' <span class="help" data-tip="'+esc(c.tip)+'">?</span>':'';
+    head+='<th class="sortable '+(c.l?'l ':'')+(c.grp?'grp':'')+'" onclick="setSort(\''+c.key+'\')">'+esc(c.label)+arrow+help+'</th>'; }
   head+='</tr></thead>';
   const rows=DATA.prospects.slice().sort(cmp);
   let body='<tbody>';
   for(const p of rows){
     const net=fmt(p.net,2);
     const badges=(p.thin_sample?'<span class="badge thin">thin</span>':'')+
-                 (p.id_join==="name"?'<span class="badge name">name</span>':'')+
                  (p.status!=="ok"?'<span class="badge nodata">no data</span>':'');
     const linkable=p.status==="ok"&&p.gid;
     const pn='<span class="pn'+(linkable?'':' nolink')+'"'+(linkable?' onclick="openPanel(\''+esc(p.gid)+'\',\''+esc(p.name)+'\')"':'')+'>'+esc(p.name)+'</span>';
@@ -174,8 +147,6 @@ function render(){
       netcell+
       facCell(p,"oTS").replace('class="f','class="f grp')+facCell(p,"oTOV")+facCell(p,"oSC")+
       facCell(p,"dTS").replace('class="f','class="f grp')+facCell(p,"dTOV")+facCell(p,"dSC")+
-      '<td class="f">'+(p.age_at_draft!=null&&!isNaN(p.age_at_draft)?Number(p.age_at_draft).toFixed(1):'–')+'</td>'+
-      '<td class="f zero">'+(p.weff!=null&&!isNaN(p.weff)?Math.round(p.weff):'–')+'</td>'+
       '</tr>';
   }
   body+='</tbody>';

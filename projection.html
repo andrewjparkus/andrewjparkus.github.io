@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2026-27 Projection · Daily RAPM</title>
+<link rel="stylesheet" href="site.css">
+<link rel="icon" href="favicon.svg"><link rel="manifest" href="manifest.webmanifest">
+<style>
+  /* page-unique: the only forward-looking page */
+  .forwardtag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.5px;
+    color:var(--accent-ink);background:var(--accent);padding:2px 8px;border-radius:999px;
+    vertical-align:middle;margin-left:8px;text-transform:uppercase}
+  .confs{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
+  .conf h2{font-size:var(--fs-4);font-weight:700;letter-spacing:-.1px;margin:0 0 9px;color:var(--text)}
+  .conf h2 span{color:var(--muted);font-weight:500;font-size:12px;margin-left:8px}
+  td.team{font-weight:700;font-size:13px;letter-spacing:.2px}
+  td.team .cs{color:var(--amber);font-weight:800;margin-left:4px;cursor:help}
+  td.projw{font-weight:700;font-size:13px;color:var(--accent-ink)}
+  td.range{padding:5px 8px}
+  td.range svg{display:block}
+  td.range .rl{color:var(--faint);font-size:10.5px;font-weight:400;margin-top:2px;
+    display:flex;justify-content:space-between;font-variant-numeric:tabular-nums}
+  td.po{font-weight:700;font-size:12.5px;color:var(--accent-ink)}
+  table.tbl td.cb{color:var(--accent-ink)}    /* color-block cells: readable ink set inline */
+  /* header ? tooltips live in a sticky thead inside the .scroll box — flip tips DOWN */
+  .scroll thead th .help[data-tip]:hover::after{bottom:auto;top:calc(100% + 6px)}
+  .scroll thead th .help[data-tip]:hover::before{bottom:auto;top:calc(100% + 1px);
+    border-top-color:transparent;border-bottom-color:var(--line)}
+  @media(max-width:760px){ .confs{grid-template-columns:1fr} }
+</style></head>
+<body>
+<nav id="topnav" data-active="proj"></nav>
+<script src="charts.js"></script>
+<script src="nav.js"></script>
+<div class="wrap">
+  <h1 style="margin-top:6px">2026-27 <b>projection</b><span class="forwardtag">forward</span></h1>
+  <p class="sub" id="sub">The only forward-looking page on the site — every other page is descriptive of play already on the books. This one projects next season.</p>
+  <p class="legend" id="legend"></p>
+
+  <div class="confs" id="confs"></div>
+  <div class="msg" id="msg">Loading projection…</div>
+
+  <p class="foot" id="foot"></p>
+</div>
+
+<script>
+"use strict";
+
+/* win-domain for the inline range bar (covers tank..contender) */
+const W_LO = 20, W_HI = 62;
+function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
+
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,
+  c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+/* color a number cell via the red->green ramp, with readable ink on top */
+function colorCell(td, t){
+  const bg = RC.redGreen(clamp(t,0,1));
+  td.style.background = bg;
+  td.style.color = RC.inkOn(bg);
+}
+
+/* inline horizontal range bar: track over [W_LO,W_HI], a band from p10..p90, dot at mean */
+function rangeBar(p10, p90, mean){
+  const W = 132, H = 16, pad = 1;
+  const x = v => pad + clamp((v - W_LO) / (W_HI - W_LO), 0, 1) * (W - 2 * pad);
+  const xl = x(p10), xh = x(p90), xm = x(mean);
+  const svg = RC.el("svg", { viewBox: "0 0 " + W + " " + H, width: W, height: H, class: "rangebar",
+    role: "img", "aria-label": "win range " + p10 + " to " + p90 + ", projected " + mean });
+  // track
+  svg.appendChild(RC.el("rect", { x: 0, y: H/2 - 2, width: W, height: 4, rx: 2, fill: "var(--grid)" }));
+  // 41-win (.500) reference tick
+  const x50 = x(41);
+  svg.appendChild(RC.el("line", { x1: x50, y1: 2, x2: x50, y2: H - 2, stroke: "var(--line)", "stroke-width": 1 }));
+  // p10..p90 band
+  svg.appendChild(RC.el("rect", { x: xl, y: H/2 - 3, width: Math.max(2, xh - xl), height: 6, rx: 3,
+    fill: "var(--accent)", "fill-opacity": 0.32 }));
+  svg.appendChild(RC.el("line", { x1: xl, y1: 3, x2: xl, y2: H - 3, stroke: "var(--accent)", "stroke-width": 1.4 }));
+  svg.appendChild(RC.el("line", { x1: xh, y1: 3, x2: xh, y2: H - 3, stroke: "var(--accent)", "stroke-width": 1.4 }));
+  // mean dot
+  svg.appendChild(RC.el("circle", { cx: xm, cy: H/2, r: 3, fill: "var(--accent)", stroke: "var(--bg)", "stroke-width": 1 }));
+  return svg;
+}
+
+function buildConf(name, teams){
+  const sec = document.createElement("section");
+  sec.className = "conf";
+  const sorted = teams.slice().sort((a,b)=> b.mc_mean_wins - a.mc_mean_wins);
+
+  let head = '<thead><tr>'+
+    '<th class="l">#</th>'+
+    '<th class="l">Team</th>'+
+    '<th>Proj W <span class="help" data-tip="Monte-Carlo mean wins over the 10k simulated seasons.">?</span></th>'+
+    '<th class="l">Range <span class="help" data-tip="10th–90th percentile win band (bar) with the projected mean (dot), over a 20–62 win scale; tick = .500 (41).">?</span></th>'+
+    '<th>Playoffs % <span class="help" data-tip="Share of the 10k simulations in which the team finishes in a playoff/play-in slot.">?</span></th>'+
+    '</tr></thead>';
+
+  let body = "";
+  sorted.forEach((t, i)=>{
+    const cs = t.n_cold_start > 0;
+    const csMark = cs ? ('<span class="cs" data-tip="'+t.n_cold_start+
+      ' cold-started player(s) — thin or unrated, so this team\'s band is wider.">*</span>') : '';
+    body += '<tr>'+
+      '<td class="rank">'+(i+1)+'</td>'+
+      '<td class="l team">'+esc(t.franchise)+csMark+'</td>'+
+      '<td class="projw cb" data-w="'+t.mc_mean_wins+'">'+t.mc_mean_wins.toFixed(1)+'</td>'+
+      '<td class="l range" data-p10="'+t.p10_wins+'" data-p90="'+t.p90_wins+'" data-mean="'+t.mc_mean_wins+'">'+
+        '<div class="rl"><span>'+Math.round(t.p10_wins)+'</span><span>'+Math.round(t.p90_wins)+'</span></div></td>'+
+      '<td class="po cb" data-p="'+t.make_playoffs_prob+'">'+Math.round(t.make_playoffs_prob*100)+'%</td>'+
+      '</tr>';
+  });
+
+  sec.innerHTML =
+    '<h2>'+esc(name)+'<span>'+sorted.length+' teams</span></h2>'+
+    '<div class="scroll"><table class="tbl">'+head+'<tbody>'+body+'</tbody></table></div>';
+
+  // fix .cs tooltip class (it uses .help styling indirectly — make it hoverable)
+  sec.querySelectorAll('td.team .cs').forEach(el=>{ el.classList.add('help'); el.style.border='none'; });
+
+  // color the Proj W and Playoffs cells; draw the range bars
+  sec.querySelectorAll('td.projw').forEach(td=>{
+    const w = +td.getAttribute('data-w');
+    colorCell(td, (w - W_LO) / (W_HI - W_LO));
+  });
+  sec.querySelectorAll('td.po').forEach(td=>{
+    colorCell(td, +td.getAttribute('data-p'));
+  });
+  sec.querySelectorAll('td.range').forEach(td=>{
+    const bar = rangeBar(+td.getAttribute('data-p10'), +td.getAttribute('data-p90'), +td.getAttribute('data-mean'));
+    td.insertBefore(bar, td.firstChild);
+  });
+  return sec;
+}
+
+function provNote(meta){
+  const p = meta.provenance;
+  if (p && typeof p === "object") return p.note || "";
+  return (typeof p === "string") ? p : "";
+}
+
+function render(data){
+  const meta = data.meta || {};
+  const teams = data.teams || [];
+
+  // legend: quote the model note + a plain-English roster-proxy caveat
+  const prov = provNote(meta);
+  let legend = esc(meta.note || "");
+  if (/carry-forward proxy/i.test(prov) || /carry-forward proxy/i.test(meta.note||"")){
+    legend += ' <b>Rosters are a proxy</b> — carried forward from 2025-26 with no curated 2026-27 depth chart loaded yet, '+
+      'so trades, signings, and draft picks are NOT reflected. Treat these standings as "if the league stood pat, aged a year."';
+  }
+  document.getElementById("legend").innerHTML = legend;
+
+  // split by conference, build two tables
+  const east = teams.filter(t=> (t.conf||"")==="East");
+  const west = teams.filter(t=> (t.conf||"")==="West");
+  const confs = document.getElementById("confs");
+  confs.innerHTML = "";
+  confs.appendChild(buildConf("Eastern Conference", east));
+  confs.appendChild(buildConf("Western Conference", west));
+
+  // foot: synthetic schedule + MC + band composition
+  const ng = meta.n_games != null ? meta.n_games : 1230;
+  document.getElementById("foot").textContent =
+    "Bands come from a 10,000-run Monte-Carlo over a synthetic "+ng+"-game schedule "+
+    "(HCA "+(meta.hca!=null?(+meta.hca).toFixed(2):"–")+" pts, σ "+(meta.sigma!=null?(+meta.sigma).toFixed(1):"–")+" pts/game). "+
+    "Each simulation re-draws every team's rating from its own uncertainty, so the p10–p90 bands include rating "+
+    "uncertainty as well as game-to-game variance — thin or cold-started teams (*) get the widest bands. "+
+    "Model: "+esc(meta.projection_model||"carry-forward + aging")+".";
+
+  document.getElementById("msg").style.display = "none";
+}
+
+fetch("projection_2026_27.json")
+  .then(r=>{ if(!r.ok) throw new Error("projection_2026_27.json "+r.status); return r.json(); })
+  .then(render)
+  .catch(()=>{
+    const m = document.getElementById("msg");
+    m.textContent = "Couldn't load the 2026-27 projection (projection_2026_27.json).";
+  });
+</script>
+</body></html>
