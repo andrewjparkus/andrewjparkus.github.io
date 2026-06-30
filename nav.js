@@ -8,20 +8,21 @@
  * never per-page, so the bar can never drift again. Styling lives in site.css
  * (.topnav/.tab/...), which every page links — nav.js no longer injects CSS.
  *
- * Six pages, one bar: Explorer · Teams · Tables · Trade · Draft · Model. The old
- * Viz dropdown + profile/pvb/leaders pages were folded into these (Plan 15).
+ * Top bar (Plan 21): Explorer · 2026-27 · Other ▾ · Model. The "Other" dropdown holds
+ * Tables / Trade / Draft; Teams (2025-26) is reached from the 2026-27 page and Grades
+ * from the Trade page (so they set data-active="proj" / "trade" to light the right top item).
  */
 (function () {
   "use strict";
 
   var TABS = [
     { key: "explorer", href: "index.html", label: "Explorer" },
-    { key: "teams",    href: "teams.html", label: "Teams" },
-    { key: "tables",   href: "table.html", label: "Tables" },
-    { key: "trade",    href: "trade.html", label: "Trade" },
-    { key: "grades",   href: "grades.html", label: "Grades" },
-    { key: "draft",    href: "draft.html", label: "Draft" },
     { key: "proj",     href: "projection.html", label: "2026-27" },
+    { label: "Other", menu: [
+      { key: "tables", href: "table.html", label: "Tables" },
+      { key: "trade",  href: "trade.html", label: "Trade" },
+      { key: "draft",  href: "draft.html", label: "Draft" }
+    ] },
     { key: "model",    href: "model.html", label: "Model" }
   ];
 
@@ -40,14 +41,51 @@
     var html = '<div class="navinner">';
     html += '<a class="brand" href="index.html">Daily <b>RAPM</b></a>';
     TABS.forEach(function (t) {
-      var cls = "tab" + (t.key === active ? " active" : "");
-      html += '<a class="' + cls + '" href="' + esc(t.href) + '">' + esc(t.label) + "</a>";
+      if (t.menu) {
+        var inMenu = t.menu.some(function (m) { return m.key === active; });
+        html += '<div class="navdrop' + (inMenu ? " active" : "") + '">';
+        html += '<button class="tab navdrop-btn" type="button" aria-haspopup="true" aria-expanded="false">'
+              + esc(t.label) + ' <span class="caret">▾</span></button>';
+        html += '<div class="navmenu">';
+        t.menu.forEach(function (m) {
+          html += '<a class="navmenu-item' + (m.key === active ? " active" : "") + '" href="'
+                + esc(m.href) + '">' + esc(m.label) + '</a>';
+        });
+        html += '</div></div>';
+      } else {
+        var cls = "tab" + (t.key === active ? " active" : "");
+        html += '<a class="' + cls + '" href="' + esc(t.href) + '">' + esc(t.label) + "</a>";
+      }
     });
     html += '<span class="navspace"></span>';
     html += '<button class="navsearch" id="nav-search" type="button" title="Search players & teams (⌘K)" aria-label="Search">Search<b>⌘K</b></button>';
     html += '<button class="themebtn" id="nav-theme" type="button" title="Toggle light / dark" aria-label="Toggle theme"></button>';
     html += "</div>";
     nav.innerHTML = html;
+
+    // "Other" dropdown: the menu is position:fixed (so the nav's overflow-x:auto can't clip it),
+    // positioned under its button on open. Click toggles; any outside click / Escape closes.
+    function closeDrops() {
+      nav.querySelectorAll(".navdrop.open").forEach(function (dd) {
+        dd.classList.remove("open");
+        var b = dd.querySelector(".navdrop-btn"); if (b) b.setAttribute("aria-expanded", "false");
+      });
+    }
+    nav.querySelectorAll(".navdrop-btn").forEach(function (btn) {
+      btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var dd = btn.parentNode, menu = dd.querySelector(".navmenu"), willOpen = !dd.classList.contains("open");
+        closeDrops();
+        if (willOpen) {
+          var r = btn.getBoundingClientRect();
+          menu.style.left = Math.round(r.left) + "px";
+          menu.style.top = Math.round(r.bottom) + "px";
+          dd.classList.add("open"); btn.setAttribute("aria-expanded", "true");
+        }
+      });
+    });
+    document.addEventListener("click", closeDrops);
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrops(); });
 
     var sb = document.getElementById("nav-search");
     if (sb) sb.addEventListener("click", openPalette);

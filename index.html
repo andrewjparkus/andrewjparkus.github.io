@@ -201,8 +201,8 @@ fetch('players.json').then(r=>r.json()).then(d=>{
   if(ids.length>1){loadMulti(ids.slice(0,4));return;}
   let hit=pid?INDEX.find(x=>x.id===pid):(nq?INDEX.find(x=>x.n.toLowerCase()===nq.toLowerCase())||INDEX.find(x=>x.n.toLowerCase().includes(nq.toLowerCase())):null);
   if(hit){load(hit.id,hit.n);return;}
-  // DEFAULT: open populated on Jayson Tatum so the home page is never empty.
-  load('1628369','Jayson Tatum');
+  // DEFAULT: open populated on Nikola Jokić so the home page is never empty.
+  load('203999','Nikola Jokić');
 });
 
 q.addEventListener('input',()=>filt(q.value.trim()));
