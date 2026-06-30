@@ -149,7 +149,7 @@ function render(d){
   // ---- KPI strip ----
   const projW = num(team.proj_wins,1);
   const band = (team.p10!=null && team.p90!=null) ? num(team.p10,0)+'–'+num(team.p90,0) : '–';
-  const po = (team.playoff_prob!=null) ? Math.round(team.playoff_prob*100)+'%' : '–';
+  const po = (team.playoff_prob!=null) ? (team.playoff_prob*100).toFixed(1)+'%' : '–';
   const strF = fmt(team.strength,1);
   html += '<div class="kpis">';
   html += kpi('Projected wins', projW, '82-game season');
@@ -157,7 +157,6 @@ function render(d){
   html += kpi('Playoff odds', po, 'from the projection');
   html += '<div class="kpi"><div class="k">Projected net</div><div class="v '+strF.cls+'">'+strF.txt
     + '</div><div class="x">pts/100, six factors</div></div>';
-  html += kpi('Rookies', (team.n_rookies==null?'–':String(team.n_rookies)), 'cold-start (R)');
   html += '</div>';
   html += '<div class="cap">A <b>forward projection</b>, not a measured result. '
     + 'Player ratings are carried forward and aged to 2026-27 (per-factor aging). '
@@ -189,10 +188,14 @@ function render(d){
       + (p.age!=null ? ' · age '+num(p.age,0) : '')
       + (p.n_seasons ? ' · '+p.n_seasons+' prior season'+(p.n_seasons===1?'':'s') : '')
       + ftip;
-    // cold-start rookies have no pid -> plain text + an "R" badge; everyone else links to the Explorer
+    // rated players link by pid; cold-start rookies link by gid (college page) when one exists,
+    // else plain text — all rookies keep the "R" badge.
     let nm;
     if(!p.cold && p.pid!=null){
       nm = '<a href="index.html?p='+encodeURIComponent(p.pid)+'" title="'+esc(ntip)+'">'+esc(p.name||'')+'</a>';
+    } else if(p.gid!=null){
+      nm = '<a href="index.html?p='+encodeURIComponent(p.gid)+'" title="'+esc(ntip)+'">'+esc(p.name||'')+'</a>'
+        + '<span class="rk" title="Cold-start rookie — net is a replacement-level prior, no rated history yet.">R</span>';
     } else {
       nm = '<span title="'+esc(ntip)+'">'+esc(p.name||'')+'</span>'
         + '<span class="rk" title="Cold-start rookie — net is a replacement-level prior, no rated history yet.">R</span>';

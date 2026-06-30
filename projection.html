@@ -19,7 +19,6 @@
   .teamcell{display:flex;align-items:center;gap:9px;min-width:0}
   .teamcell img{width:22px;height:22px;flex:0 0 auto;object-fit:contain}
   .teamcell .ab{font-weight:700;font-size:13px;letter-spacing:.2px}
-  .teamcell .cs{color:var(--amber);font-weight:800;cursor:help;margin-left:1px}
   td.projw{font-weight:700;font-size:13px}
   td.range{padding:5px 8px}
   td.range svg{display:block}
@@ -107,19 +106,16 @@ function buildConf(name, teams){
 
   let body = "";
   sorted.forEach((t, i)=>{
-    const cs = t.n_cold_start > 0;
-    const csMark = cs ? ('<span class="cs help" data-tip="'+t.n_cold_start+
-      ' cold-started player(s) — thin or unrated, so this team\'s band is wider.">*</span>') : '';
     const logo = '<img src="'+logoURL(t.franchise)+'" width="22" height="22" loading="lazy" alt="" '+
       'onerror="this.style.visibility=\'hidden\'">';
     body += '<tr>'+
       '<td class="l rank">'+(i+1)+'</td>'+
       '<td class="l"><a href="team2027.html?abbr='+encodeURIComponent(t.franchise)+'" '+
         'class="teamcell" title="2026-27 team detail">'+logo+
-        '<span class="ab">'+esc(t.franchise)+'</span>'+csMark+'</a></td>'+
+        '<span class="ab">'+esc(t.franchise)+'</span></a></td>'+
       '<td class="projw cb" data-w="'+t.mc_mean_wins+'">'+t.mc_mean_wins.toFixed(1)+'</td>'+
       '<td class="l range" data-p10="'+t.p10_wins+'" data-p90="'+t.p90_wins+'" data-mean="'+t.mc_mean_wins+'"></td>'+
-      '<td class="po cb" data-p="'+t.make_playoffs_prob+'">'+Math.round(t.make_playoffs_prob*100)+'%</td>'+
+      '<td class="po cb" data-p="'+t.make_playoffs_prob+'">'+(t.make_playoffs_prob*100).toFixed(1)+'%</td>'+
       '</tr>';
   });
 
@@ -173,8 +169,7 @@ function render(data){
   document.getElementById("foot").textContent =
     "Bands: 10k Monte-Carlo over a synthetic "+ng+"-game schedule "+
     "(HCA "+(meta.hca!=null?(+meta.hca).toFixed(2):"–")+" pts, σ "+(meta.sigma!=null?(+meta.sigma).toFixed(1):"–")+" pts/game). "+
-    "Each sim re-draws every rating from its own uncertainty, so p10–p90 captures rating + game-to-game variance; "+
-    "thin / cold-started teams (*) get the widest bands. "+
+    "Each sim re-draws every rating from its own uncertainty, so p10–p90 captures rating + game-to-game variance. "+
     "Model: "+(meta.projection_model||"carry-forward + aging")+".";
 
   document.getElementById("msg").style.display = "none";
