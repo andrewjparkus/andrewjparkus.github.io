@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "license": "CC-BY-4.0",
-  "generated": "20260629",
+  "generated": "20260630",
   "factors": {
     "oTS": "offensive true-shooting value (ALT_EFG_VALUE + ALT_FT), pts/100",
     "oTOV": "offensive ball security / turnover avoidance, pts/100",
@@ -18,9 +18,9 @@
     "gleague"
   ],
   "data_freshness": {
-    "nba": "20260629",
-    "college": "20260629",
-    "gleague": "20260629"
+    "nba": "20260630",
+    "college": "20260630",
+    "gleague": "20260630"
   },
   "war_note": "descriptive accrual; win-slope = phi(HCA/sigma)/sigma ~ 2.27 wins/pt over 82 games; $/win is a market convention, not a model output; ~17% of board names are id-ambiguous and get no WAR",
   "ci_note": "CIs are de-shrunk ridge SEs (nominal); system nominal-90% covers ~88%",
@@ -32,7 +32,7 @@
   "changelog": [
     {
       "v": "1.0.0",
-      "date": "20260629",
+      "date": "20260630",
       "note": "initial public export"
     }
   ]
