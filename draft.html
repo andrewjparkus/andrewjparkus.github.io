@@ -44,15 +44,14 @@
     <h3 id="pname"></h3><p class="pmeta" id="pmeta"></p><svg id="chart"></svg></div>
   <div class="msg" id="msg">Loading draft board…</div>
   <details class="meth" id="meth"><summary>Methodology &amp; frozen NCAA→NBA translation</summary>
-    <p>Estimates are the translation of college production to the NBA scale, as of the end of each
-    prospect's final pre-draft season. The intervals are wide (net 95% CI ≈ ±4.7) and overlap across
-    nearly all prospects — they reflect the genuine, irreducible uncertainty of projecting one league
-    onto another (slopes &lt; 0.27), and are <b>NOT</b> a forecast of NBA careers. This board surfaces
-    calibrated uncertainty, not a confident ranking. The age-driven CI widening is <b>not</b> a shipped
-    feature of this version (Var_age = 0).</p>
+    <p>Each estimate translates college / G-League production onto the NBA scale, as of the end of the
+    prospect's final pre-draft season. Intervals are wide and overlap across nearly all prospects:
+    irreducible cross-league uncertainty (slopes &lt; 0.27), <b>not</b> a forecast of NBA careers. This
+    board surfaces calibrated uncertainty, not a confident ranking. Age-driven CI widening is not shipped
+    here (Var_age = 0).</p>
     <div id="transtbl"></div>
   </details>
-  <p class="foot">Net = oTS+oTOV+oSC+dTS+dTOV+dSC (NBA-eq). Pick # is the consensus slot; our rank is by
+  <p class="foot">Net = oTS+oTOV+oSC+dTS+dTOV+dSC (NBA-eq). Pick # is the consensus slot; our rank sorts by
     translated net (no claim of predictive superiority). Badges:
     <span class="badge thin">thin</span> weff&lt;400 (thin fit support);
     <span class="badge nodata">no data</span> no NCAA/G-League possessions.</p>

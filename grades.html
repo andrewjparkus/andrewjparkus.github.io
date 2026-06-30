@@ -10,6 +10,13 @@
   table.tbl thead th .arr{font-size:9px;color:var(--accent);margin-left:3px}
   .band{color:var(--faint);font-variant-numeric:tabular-nums}
 
+  /* two conference ledgers side-by-side on desktop, stacked on mobile (mirrors the projection page) */
+  .confs{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+  @media(max-width:820px){ .confs{grid-template-columns:1fr} }
+  .conf{min-width:0}
+  .conf h2{font-size:var(--fs-4);font-weight:700;letter-spacing:-.1px;margin:0 0 9px;color:var(--text)}
+  .conf h2 span{color:var(--muted);font-weight:500;font-size:12px;margin-left:8px}
+
   /* the trades table — each summary row is a button-row, with a caret */
   #trades tbody tr.trow{cursor:pointer}
   #trades tbody tr.trow:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
@@ -29,8 +36,8 @@
   .teamcell .ab{font-weight:700;font-size:13px;letter-spacing:.2px}
   .teamcell .nm{color:var(--muted);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   @media(max-width:680px){.teamcell .nm{display:none}}
-  /* net-impact chip in the standings ledger */
-  .netchip{font-weight:700;padding:1px 7px;border-radius:3px;font-variant-numeric:tabular-nums;display:inline-block}
+  /* net-impact in the standings ledger — plain colored number, no chip */
+  td.net{font-weight:700;font-variant-numeric:tabular-nums}
   /* small inline logos in the Every-trade Teams column */
   .tteams .tlogo{width:16px;height:16px;object-fit:contain;vertical-align:-3px;margin-right:3px}
 
@@ -62,12 +69,12 @@
 <script src="nav.js"></script>
 <div class="wrap">
   <h1>Trade <b>grades</b> <small id="seasonlbl"></small></h1>
-  <p class="sub" id="sub">Every in-season trade graded by the Expected Wins Added (EWA) the moved players actually delivered for their new team.</p>
-  <p class="legend" id="legend">Retrospective Expected Wins Added — what each moved player added for his new team vs a replacement fill, over games actually played. Descriptive, not a verdict. <a href="model.html#ewa">Full method on the Model page.</a></p>
+  <p class="sub" id="sub">Every in-season trade graded by the Expected Wins Added (EWA) moved players delivered for their new team.</p>
+  <p class="legend" id="legend">Retrospective EWA: wins a moved player added for his new team vs a replacement fill, over games played. Descriptive, not a verdict. <a href="model.html#ewa">Method on the Model page.</a></p>
 
   <h2 class="sectitle">Net trade impact by team</h2>
-  <p class="sub">Every franchise's net changed-EWA this season — wins acquired minus wins sent. Sortable; default by net.</p>
-  <div class="scroll"><table class="tbl" id="ledger"></table></div>
+  <p class="sub">Each franchise's net changed-EWA this season — wins acquired minus wins sent. By conference; sorted by net.</p>
+  <div class="confs" id="ledgerconfs"></div>
 
   <h2 class="sectitle">Every trade</h2>
   <p class="cap">One row per trade — click a row (or press Enter) to expand the per-player detail. Sortable; default sort by date.</p>
@@ -90,7 +97,9 @@ const TIP={
 
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 // franchise logo URL from the abbr (lowercase) — onerror-hidden where used.
-function logoURL(abbr){ return 'https://a.espncdn.com/i/teamlogos/nba/500/'+esc(String(abbr||'').toLowerCase())+'.png'; }
+// ESPN filename exceptions: UTA→utah, NOP→no, GSW→gs (everyone else = lowercased abbr).
+function logoURL(abbr){ const M={UTA:'utah',NOP:'no',GSW:'gs',SAS:'sa',NYK:'ny',WAS:'wsh'}; const k=String(abbr||'').toUpperCase();
+  return 'https://a.espncdn.com/i/teamlogos/nba/500/'+esc(M[k]||k.toLowerCase())+'.png'; }
 function signCls(n){ if(n==null||isNaN(n)) return "zero"; if(n>=0.005) return "pos"; if(n<=-0.005) return "neg"; return "zero"; }
 function fmt(v,dec){ dec=(dec==null)?2:dec;
   if(v==null||isNaN(v)) return "–";
@@ -104,15 +113,15 @@ let tSortKey='date', tSortDir=-1;       // trades sort (default date desc → mo
 /* ---- season ledger (sortable .tbl) -------------------------------------- */
 const LCOLS=[
   {key:'franchise', label:'Team',     txt:true, left:true},
-  {key:'conf',      label:'Conf',     txt:true, left:true},
   {key:'acquired',  label:'Acquired'},
   {key:'sent',      label:'Sent'},
   {key:'net',       label:'Net', tip:'net', netcol:true},
   {key:'band80',    label:'80% band', band:true, tip:'band'}
 ];
 
-function ledgerRows(){
-  const rows=DATA.season_ledger.slice();
+// sort a given subset of ledger rows by the active sortKey/sortDir
+function ledgerRows(rows){
+  rows=rows.slice();
   rows.sort((a,b)=>{
     if(sortKey==='band80'){
       const aw=(a.band80[1]-a.band80[0]), bw=(b.band80[1]-b.band80[0]);
@@ -129,8 +138,8 @@ function ledgerRows(){
   return rows;
 }
 
-function renderLedger(){
-  const rows=ledgerRows();
+// build one conference table (title + .scroll>table.tbl) from its rows
+function buildLedgerConf(title, rows){
   let head='<thead><tr>';
   LCOLS.forEach(c=>{
     const active=(sortKey===c.key);
@@ -141,31 +150,40 @@ function renderLedger(){
   head+='</tr></thead>';
 
   let body='';
-  for(const r of rows){
+  for(const r of ledgerRows(rows)){
     body+='<tr>';
     // team logo + abbr cell (.teamcell), like the trade-sim standings
     body+='<td class="l"><div class="teamcell">'+
       '<img src="'+logoURL(r.franchise)+'" width="22" height="22" loading="lazy" alt="" '+
       'onerror="this.style.visibility=\'hidden\'">'+
       '<span class="ab">'+esc(r.franchise)+'</span></div></td>';
-    body+='<td class="l" style="color:var(--muted)">'+esc(r.conf)+'</td>';
     body+='<td class="'+signCls(r.acquired)+'">'+fmt(r.acquired)+'</td>';
     body+='<td class="'+signCls(r.sent)+'">'+fmt(r.sent)+'</td>';
-    // net on an RC.redGreen-colored chip with RC.inkOn ink (ramp clamp((net+2)/4,0,1))
-    const t=Math.max(0,Math.min(1,(r.net+2)/4));
-    const bg=RC.redGreen(t), ink=RC.inkOn(bg);
-    body+='<td class="net"><span class="netchip" style="background:'+bg+';color:'+ink+'">'+fmt(r.net)+'</span></td>';
+    // net as a plain colored number (red/green via the sign class; no chip)
+    body+='<td class="net '+signCls(r.net)+'">'+fmt(r.net)+'</td>';
     const lo=r.band80[0], hi=r.band80[1];
-    body+='<td class="band">'+fmt(lo,2)+' ‥ '+fmt(hi,2)+'</td>';
+    // 80% band: ascii hyphen-minus + " - " separator, e.g. "-4.41 - +0.24"
+    const bandStr=(fmt(lo,2)+' - '+fmt(hi,2)).replace(/−/g,'-');
+    body+='<td class="band">'+bandStr+'</td>';
     body+='</tr>';
   }
-  document.getElementById('ledger').innerHTML=head+'<tbody>'+body+'</tbody>';
 
-  document.querySelectorAll('#ledger th.sortable').forEach(th=>{
+  return '<section class="conf"><h2>'+esc(title)+'<span>'+rows.length+' teams</span></h2>'+
+         '<div class="scroll"><table class="tbl">'+head+'<tbody>'+body+'</tbody></table></div></section>';
+}
+
+function renderLedger(){
+  const all=DATA.season_ledger||[];
+  const east=all.filter(r=>r.conf==='East'), west=all.filter(r=>r.conf==='West');
+  document.getElementById('ledgerconfs').innerHTML=
+    buildLedgerConf('Eastern Conference', east)+buildLedgerConf('Western Conference', west);
+
+  // header sorting — re-sorts both conference tables in lockstep
+  document.querySelectorAll('#ledgerconfs th.sortable').forEach(th=>{
     th.onclick=()=>{
       const k=th.getAttribute('data-k');
       if(sortKey===k){ sortDir=-sortDir; }
-      else { sortKey=k; sortDir=(k==='franchise'||k==='conf')?1:-1; }
+      else { sortKey=k; sortDir=(k==='franchise')?1:-1; }
       renderLedger();
     };
   });

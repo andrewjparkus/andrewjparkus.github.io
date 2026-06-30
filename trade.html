@@ -250,7 +250,7 @@ function renderCol(side, fr, listId, selId, strgId){
     const net = cold ? R.meta.repl_net : p.net;
     // DISPLAY = minutes per game (p.min is TOTAL season minutes, kept for weighting + tooltip).
     const mpg = (p.gp && p.gp > 0) ? (p.min / p.gp) : null;
-    const mpgTxt = (mpg == null) ? '–' : mpg.toFixed(1) + 'm';
+    const mpgTxt = (mpg == null) ? '–' : mpg.toFixed(1) + 'm · ' + p.gp + ' GP';
     const mTip = `${Math.round(p.min)} total min` + (p.gp != null ? ` · ${p.gp} GP` : '');
     row.innerHTML =
       `<span class="pn">${escapeHtml(p.name)}${cold?' <span class="cold">CS</span>':''}</span>`+

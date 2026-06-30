@@ -151,9 +151,8 @@
       <div class="sectitle">True-talent densities
         <span style="font-weight:400;color:var(--faint)">· N(net, se²) at each player's latest game-day</span></div>
       <div id="densplot"></div>
-      <div class="legend">Each curve is the published <b>se_net</b> as a Gaussian: a thin-sample rookie is visibly <b>wide</b>,
-        an established star is <b>tight</b>. Overlapping curves make "we don't actually know who's better yet" obvious.
-        The 0-line marks league-average impact. Descriptive — no projection.</div>
+      <div class="legend">Each curve is N(net, se²): thin-sample rookies read <b>wide</b>, established stars <b>tight</b>.
+        Overlap means the gap isn't settled yet. 0 = league average. Descriptive — no projection.</div>
     </div>
   </div>
 
@@ -427,13 +426,12 @@ function renderProjCallout(){
   const y3=p.yr3[1], y3s=p.yr3[2], y3lo=y3-Z80*y3s, y3hi=y3+Z80*y3s;
   box.style.display='block';
   box.innerHTML=
-    `<b>FORWARD · projected</b> (not measured) — `+
+    `<b>FORWARD · projected</b> — `+
     `<b>${p.next[0]-1}-${String(p.next[0]).slice(2)}</b> net <b>${f(nn)}</b> `+
-    `<span style="color:var(--muted)">(80% ${f(lo)}…${f(hi)})</span>; `+
+    `<span style="color:var(--muted)">(80% ${f(lo)}…${f(hi)})</span> · `+
     `<b>${p.yr3[0]-1}-${String(p.yr3[0]).slice(2)}</b> net <b>${f(y3)}</b> `+
     `<span style="color:var(--muted)">(80% ${f(y3lo)}…${f(y3hi)})</span>. `+
-    `<span style="color:var(--faint)">Carry-forward + aging; bands widen with the horizon. `+
-    `The rest of this page is descriptive (already-measured).</span>`;
+    `<span style="color:var(--faint)">Carry-forward + aging; bands widen with horizon.</span>`;
 }
 function renderActive(){
   SER=SERIES[activeMode()]; const last=SER[SER.length-1];

@@ -55,8 +55,13 @@ function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,
   c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 
-/* ESPN team logo from the franchise abbr (no extra fetch) */
-function logoURL(abbr){ return "https://a.espncdn.com/i/teamlogos/nba/500/"+String(abbr||"").toLowerCase()+".png"; }
+/* ESPN team logo from the franchise abbr (no extra fetch).
+   ESPN slug exceptions (confirmed against teams.json); all others = lowercase abbr. */
+function logoURL(abbr){
+  const M={UTA:'utah',NOP:'no',GSW:'gs',SAS:'sa',NYK:'ny',WAS:'wsh'};
+  const k=String(abbr||'').toUpperCase();
+  return "https://a.espncdn.com/i/teamlogos/nba/500/"+(M[k]||k.toLowerCase())+".png";
+}
 
 /* color a number cell via the red->green ramp, with readable ink on top */
 function colorCell(td, t){
@@ -146,12 +151,11 @@ function render(data){
   const meta = data.meta || {};
   const teams = data.teams || [];
 
-  // legend: quote the model note + a plain-English roster-proxy caveat
+  // legend: model note + roster-proxy caveat (terse)
   const prov = provNote(meta);
   let legend = esc(meta.note || "");
   if (/carry-forward proxy/i.test(prov) || /carry-forward proxy/i.test(meta.note||"")){
-    legend += ' <b>Rosters are a proxy</b> — carried forward from 2025-26 with no curated 2026-27 depth chart loaded yet, '+
-      'so trades, signings, and draft picks are NOT reflected. Treat these standings as "if the league stood pat, aged a year."';
+    legend += ' <b>Rosters are a proxy</b> — 2025-26 carried forward and aged a year; no trades, signings, or draft picks reflected.';
   }
   document.getElementById("legend").innerHTML = legend;
 
@@ -163,13 +167,13 @@ function render(data){
   confs.appendChild(buildConf("Eastern Conference", east));
   confs.appendChild(buildConf("Western Conference", west));
 
-  // foot: synthetic schedule + MC + band composition
+  // foot: synthetic schedule + MC + band composition (terse)
   const ng = meta.n_games != null ? meta.n_games : 1230;
   document.getElementById("foot").textContent =
-    "Bands come from a 10,000-run Monte-Carlo over a synthetic "+ng+"-game schedule "+
+    "Bands: 10k Monte-Carlo over a synthetic "+ng+"-game schedule "+
     "(HCA "+(meta.hca!=null?(+meta.hca).toFixed(2):"–")+" pts, σ "+(meta.sigma!=null?(+meta.sigma).toFixed(1):"–")+" pts/game). "+
-    "Each simulation re-draws every team's rating from its own uncertainty, so the p10–p90 bands include rating "+
-    "uncertainty as well as game-to-game variance — thin or cold-started teams (*) get the widest bands. "+
+    "Each sim re-draws every rating from its own uncertainty, so p10–p90 captures rating + game-to-game variance; "+
+    "thin / cold-started teams (*) get the widest bands. "+
     "Model: "+(meta.projection_model||"carry-forward + aging")+".";
 
   document.getElementById("msg").style.display = "none";

@@ -34,8 +34,8 @@
   table.tbl td.rg .sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:baseline;border:1px solid rgba(0,0,0,.18)}
   :root[data-theme=light] table.tbl td.rg .sw{border-color:rgba(0,0,0,.22)}
   table.tbl td.rg .nv{font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
-  /* depth chart: 5 position columns, players bucketed + ordered by contribution */
-  .depth{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:2px}
+  /* depth chart: 3 position columns (G/F/C), players bucketed + ordered by contribution */
+  .depth{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:2px}
   @media(max-width:680px){.depth{grid-template-columns:repeat(2,1fr)}}
   .depthcol{border:1px solid var(--line);background:var(--panel);border-radius:var(--r-1);
     padding:5px 6px 7px;min-width:0}
@@ -175,9 +175,9 @@ function render(d){
   html += '<div class="sectitle">Factor profile <span style="font-weight:400;color:var(--faint)">· vs league average</span></div>';
   html += '<div class="profile">';
   html += '<div class="card" style="padding:10px"><div id="radar"></div>'
-    + '<div class="cap" style="margin:6px 4px 2px">Radar shape: each spoke is the team\'s factor as a share of the league\'s largest absolute factor value, so the polygon shows where this team is strong relative to the league.</div></div>';
+    + '<div class="cap" style="margin:6px 4px 2px">Each spoke is the team\'s factor as a share of the league\'s largest absolute value — the polygon shows relative strengths.</div></div>';
   html += '<div><div class="strip" id="strip"></div>'
-    + '<div class="cap">Each bar diverges from the grey league-average line: it grows right (blue) when the team is above the league on that factor, left (red) when below, with length proportional to the within-league z (RdBu, CVD-safe). Number is the raw factor total (pts/100); z in grey.</div></div>';
+    + '<div class="cap">Bars diverge from the grey league-average line: right/blue above league, left/red below, length ∝ within-league z (RdBu, CVD-safe). Number is the raw factor total (pts/100); z in grey.</div></div>';
   html += '</div>';
 
   // ---- roster table ----
@@ -220,23 +220,16 @@ function render(d){
     + '</tr>';
   html += '</tbody></table></div>';
   html += '<div class="cap">Contrib = 5·(min·net)/total min; the column sums to team net'
-    + (totals.resid!=null ? ' (residual: '+fmt(totals.resid,1).txt+')' : '') + '. '
-    + 'Ratings colored red→green on a fixed NBA-net scale (−5 to +5); number is always shown. '
+    + (totals.resid!=null ? ' (residual '+fmt(totals.resid,1).txt+')' : '') + '. '
+    + 'Ratings colored red→green on a fixed −5…+5 NBA-net scale. '
     + 'Names link to the <a href="index.html">Explorer</a>.</div>';
 
   // ---- depth chart (roster shape by listed position) ----
   html += '<div class="sectitle">Depth chart <span style="font-weight:400;color:var(--faint)">· by listed position</span></div>';
   html += '<div class="depth" id="depth"></div>';
-  html += '<div class="cap">Positions are <b>listed / primary</b>, not a lineup optimization — this is a '
-    + 'roster-shape view, not a starting five. Players slot under their primary position; broad listings '
-    + '(G / F) fall under PG / SF and anything unlabeled drops to <b>Unlisted</b> below. Within each column '
-    + 'players are ordered by minute-weighted net contribution; the chip is the player\'s own net (pts/100), '
-    + 'colored red→green on the same −5…+5 scale.</div>';
-
-  // ---- best / worst pairs (filled async from lineup_pairs.json) ----
-  html += '<div class="sectitle">Best &amp; worst two-man combos '
-    + '<span style="font-weight:400;color:var(--faint)">· co-occurrence, not synergy</span></div>';
-  html += '<div id="pairs"><div class="msg" style="padding:28px 0">Loading pairs…</div></div>';
+  html += '<div class="cap">Roster shape by <b>listed / primary</b> position collapsed to Guard / Forward / '
+    + 'Center, not a lineup. Unlabeled players drop to <b>Unlisted</b>. Within a column, ordered by '
+    + 'minute-weighted net contribution; the chip is own net (pts/100), red→green on the −5…+5 scale.</div>';
 
   document.getElementById('wrap').innerHTML = html;
 
@@ -245,21 +238,19 @@ function render(d){
   drawStrip(totals, leagueAvg);
   // depth chart from the same roster
   drawDepth(roster);
-  // pairs come from a second file; render into #pairs when it resolves
-  loadPairs(abbr);
 }
 
 // ---- DEPTH CHART -----------------------------------------------------------
-// Bucket roster players by listed position into the 5 columns; broad listings
-// (G->PG, F->SF) fold in; UNK + anything unmapped goes to an "Unlisted" row.
-const POS_COLS = ["PG","SG","SF","PF","C"];
-const POS_LABEL = {PG:"PG",SG:"SG",SF:"SF",PF:"PF",C:"C"};
+// Bucket roster players by primary position into 3 columns (G/F/C); guards
+// (PG/SG/G) -> G, forwards (SF/PF/F) -> F; UNK + anything unmapped -> "Unlisted".
+const POS_COLS = ["G","F","C"];
+const POS_LABEL = {G:"G",F:"F",C:"C"};
 function posBucket(pos){
   const p = String(pos||"").toUpperCase();
-  if(POS_COLS.indexOf(p) >= 0) return p;   // exact PG/SG/SF/PF/C
-  if(p === "G") return "PG";               // broad guard -> PG column
-  if(p === "F") return "SF";               // broad forward -> SF column
-  return null;                              // UNK / blank -> Unlisted
+  if(p==="PG"||p==="SG"||p==="G") return "G";   // guards
+  if(p==="SF"||p==="PF"||p==="F") return "F";   // forwards
+  if(p==="C") return "C";                        // centers
+  return null;                                   // UNK / blank -> Unlisted
 }
 function netChip(net){
   if(net==null||isNaN(net))
@@ -285,7 +276,7 @@ function depthPlayerRow(p){
 function drawDepth(roster){
   const host = document.getElementById('depth');
   if(!host) return;
-  const cols = {PG:[],SG:[],SF:[],PF:[],C:[]}, unlisted = [];
+  const cols = {G:[],F:[],C:[]}, unlisted = [];
   (roster||[]).forEach(p=>{
     const b = posBucket(p.pos);
     if(b) cols[b].push(p); else unlisted.push(p);
@@ -306,55 +297,6 @@ function drawDepth(roster){
       + unlisted.map(depthPlayerRow).join('') + '</div></div>';
     host.insertAdjacentHTML('beforeend', u);
   }
-}
-
-// ---- BEST / WORST PAIRS ----------------------------------------------------
-function pairRow(pr){
-  const a = pr.a_pid!=null ? '<a href="index.html?p='+encodeURIComponent(pr.a_pid)+'">'+esc(pr.a_name||'')+'</a>' : esc(pr.a_name||'');
-  const b = pr.b_pid!=null ? '<a href="index.html?p='+encodeURIComponent(pr.b_pid)+'">'+esc(pr.b_name||'')+'</a>' : esc(pr.b_name||'');
-  return '<tr><td class="l pl">'+a+' <span style="color:var(--faint)">+</span> '+b+'</td>'
-    + rgCell(pr.score,'grp')
-    + '<td class="gp">'+(pr.shared_games==null?'–':num(pr.shared_games,0))+'</td>'
-    + '</tr>';
-}
-function pairsTable(title, rows){
-  let h = '<table class="tbl" style="min-width:340px"><thead><tr>'
-    + '<th class="l">'+esc(title)+'</th>'
-    + '<th class="grp">Pair score</th>'
-    + '<th title="Games the two were rostered together">Shared GP</th>'
-    + '</tr></thead><tbody>';
-  h += (rows&&rows.length) ? rows.map(pairRow).join('')
-    : '<tr><td class="l" colspan="3" style="color:var(--faint)">No qualifying pairs.</td></tr>';
-  h += '</tbody></table>';
-  return h;
-}
-function loadPairs(abbr){
-  const host = document.getElementById('pairs');
-  if(!host) return;
-  fetch('lineup_pairs.json')
-    .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
-    .then(d=>{
-      const note = (d && d.meta && d.meta.note) ? d.meta.note : '';
-      const t = (d && d.teams && d.teams[abbr]) ? d.teams[abbr] : null;
-      if(!t){
-        host.innerHTML = '<div class="cap">No pair data for this team.</div>';
-        return;
-      }
-      const best = (Array.isArray(t.best)?t.best:[]).slice(0,5);
-      const worst = (Array.isArray(t.worst)?t.worst:[]).slice(0,5);
-      let h = '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">';
-      h += '<div class="scroll">'+pairsTable('Best combos', best)+'</div>';
-      h += '<div class="scroll">'+pairsTable('Weakest combos', worst.slice().reverse())+'</div>';
-      h += '</div>';
-      h += '<div class="legend">Pair score <span class="help" data-tip="'+esc(note)
-        + '">?</span> is <b>descriptive co-occurrence, not causal synergy</b>: the shared-minutes-weighted '
-        + 'sum of each player\'s own net over the games they shared a roster. It does not isolate how they '
-        + 'interact (no on/off or fit term). Score colored on the same −5…+5 scale; names link to the Explorer.</div>';
-      host.innerHTML = h;
-    })
-    .catch(err=>{
-      host.innerHTML = '<div class="cap">Couldn\'t load two-man combos (lineup_pairs.json). '+esc(err.message)+'</div>';
-    });
 }
 
 function kpi(k,v,x){
