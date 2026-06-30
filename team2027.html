@@ -21,6 +21,7 @@
   table.tbl td.pl a:hover{color:var(--text)}
   table.tbl td.mpg,table.tbl td.gp{color:#aebccd}
   :root[data-theme=light] table.tbl td.mpg,:root[data-theme=light] table.tbl td.gp{color:#33425a}
+  table.tbl td.gp .rng{display:block;font-size:10px;line-height:1.1;color:var(--faint);font-variant-numeric:tabular-nums}
   /* cold-start rookie badge: small "R" pill next to a name with no Explorer link */
   .rk{display:inline-block;margin-left:6px;font-size:9.5px;font-weight:800;letter-spacing:.3px;
     color:var(--amber);border:1px solid var(--amber);border-radius:3px;padding:0 4px;vertical-align:middle;
@@ -175,7 +176,7 @@ function render(d){
     + '<th class="l">Player</th>'
     + '<th class="l">Role</th>'
     + '<th title="Projected minutes per game when active">MPG</th>'
-    + '<th title="Expected games played (availability model)">Exp GP</th>'
+    + '<th title="Expected games played, role-conditioned by projected minutes; small numbers are the 80% range (low–high)">Exp GP</th>'
     + '<th class="grp">Proj net <span class="help" title="Player\'s projected on-court net rating (pts/100), aged to 2026-27. Cold-start rookies use a replacement-level prior.">?</span></th>'
     + '<th class="grp">Wins contributed <span class="help" title="Each player\'s exact-additive share of the team\'s projected wins; the column sums to the team total.">?</span></th>'
     + '</tr></thead><tbody>';
@@ -210,7 +211,8 @@ function render(d){
       + '<td class="l pl">'+nm+'</td>'
       + '<td class="l">'+esc((p.role||'').replace(/^\w/,c=>c.toUpperCase()))+'</td>'
       + '<td class="mpg">'+num(p.mpg,1)+'</td>'
-      + '<td class="gp">'+(p.exp_gp==null?'–':num(p.exp_gp,0))+'</td>'
+      + '<td class="gp">'+(p.exp_gp==null?'–':num(p.exp_gp,0)
+          +(p.gp_lo!=null&&p.gp_hi!=null?'<span class="rng">'+num(p.gp_lo,0)+'–'+num(p.gp_hi,0)+'</span>':''))+'</td>'
       + rgCell(p.net,'grp')
       + winCell
       + '</tr>';
@@ -233,7 +235,7 @@ function render(d){
   // ---- captions (terse, honest) ----
   html += '<div class="cap">'
     + '<b>MPG</b> = curated depth-chart minutes (projected per game when active). '
-    + '<b>Exp GP</b> = expected games-played model (availability), 0–82. '
+    + '<b>Exp GP</b> = expected games-played, role-conditioned by projected minutes (a deep-bench role projects far fewer games than a starter); the small low–high under each is the 80% range. '
     + '<b>Wins contributed</b> = each player\'s exact-additive share of the team\'s projected wins — '
     + 'the column sums to ' + num(totalWins,1) + ' (the projected total). '
     + 'Net colored red→green on a fixed −5…+5 NBA-net scale. '
