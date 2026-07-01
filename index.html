@@ -340,31 +340,48 @@ function Chart(mount,ser,key,proj){
     if(idx.length>1)svg.appendChild(el('polyline',{points:idx.map(i=>`${X(i).toFixed(1)},${Y(v[i]).toFixed(1)}`).join(' '),
       fill:'none',stroke:lgColor(lg),'stroke-width':1.6,'stroke-linejoin':'round','stroke-linecap':'round'}));});
   // ── FORWARD projection overlay (1-5yr trajectory, opt-in, ORANGE = projected, NOT measured) ──────
+  // Drawn as a CONNECTED widening cone: a filled 80% band + one continuous dashed centre line + a dot
+  // per horizon. PTg holds each point's geometry so the crosshair/readout can hover the future too.
+  let PTg=null;
   if(PT){
-    let px=X(n-1), py=Y(v[n-1]); const cap=3;          // grow out of the live curve's last measured point
-    PT.forEach((t,h)=>{
-      const xp=XP(h), yc=Y(t.val), ylo=Y(t.val-Z80*t.se), yhi=Y(t.val+Z80*t.se);
-      svg.appendChild(el('line',{class:'projconn',x1:px,y1:py,x2:xp,y2:yc}));        // dashed segment
-      svg.appendChild(el('line',{class:'projci',x1:xp,y1:yhi,x2:xp,y2:ylo}));         // widening 80% CI bar
-      svg.appendChild(el('line',{class:'projcap',x1:xp-cap,y1:yhi,x2:xp+cap,y2:yhi}));
-      svg.appendChild(el('line',{class:'projcap',x1:xp-cap,y1:ylo,x2:xp+cap,y2:ylo}));
+    const lx=X(n-1), ly=Y(v[n-1]);                       // anchor at the live curve's last measured point
+    // widening 80% CI band (a filled cone) from the anchor out through every horizon
+    let up=`${lx.toFixed(1)},${ly.toFixed(1)} `, dn=`${lx.toFixed(1)},${ly.toFixed(1)}`;
+    PT.forEach((t,h)=>{const xp=XP(h);up+=`${xp.toFixed(1)},${Y(t.val+Z80*t.se).toFixed(1)} `;});
+    for(let h=PT.length-1;h>=0;h--){const xp=XP(h);dn=`${xp.toFixed(1)},${Y(PT[h].val-Z80*PT[h].se).toFixed(1)} `+dn;}
+    svg.appendChild(el('polygon',{points:up+dn,fill:'var(--amber)','fill-opacity':.10,stroke:'none'}));
+    // one continuous dashed centre line through the anchor and every projected point
+    const mid=[`${lx.toFixed(1)},${ly.toFixed(1)}`].concat(PT.map((t,h)=>`${XP(h).toFixed(1)},${Y(t.val).toFixed(1)}`)).join(' ');
+    svg.appendChild(el('polyline',{class:'projconn',points:mid}));
+    // a dot + year tick at each horizon; keep the geometry for hover
+    PTg=PT.map((t,h)=>{const xp=XP(h), yc=Y(t.val);
       svg.appendChild(el('circle',{class:'projdot',cx:xp,cy:yc,r:2.6}));
       if(t.season){const tk=el('text',{x:xp,y:H-4,'font-size':8,fill:'var(--amber)','text-anchor':'middle'});tk.textContent="’"+String(t.season).slice(2);svg.appendChild(tk);}
-      px=xp; py=yc;                                     // chain the next segment from this point
-    });
+      return {x:xp, y:yc, val:t.val, se:t.se, season:t.season};});
   }
   const cross=el('line',{class:'crosshair',x1:0,y1:padT,x2:0,y2:padT+ph,visibility:'hidden'});svg.appendChild(cross);
   const dot=el('circle',{class:'hdot',r:3.2,visibility:'hidden'});svg.appendChild(dot);
   const ov=el('rect',{x:0,y:0,width:W,height:H,fill:'transparent'});svg.appendChild(ov);
   mount.innerHTML='';mount.appendChild(svg);
-  const obj={key,n,W,padL,pw,
-    setHover(i,line){if(i<0||i>=n){cross.setAttribute('visibility','hidden');dot.setAttribute('visibility','hidden');return;}
+  const obj={key,n,W,padL,pw,histW,futW,PTg,
+    setHover(i,line){
+      if(i>=n && PTg){                                   // projection-point hover (i-n = horizon 0..P-1)
+        const g=PTg[i-n];
+        if(!g){cross.setAttribute('visibility','hidden');dot.setAttribute('visibility','hidden');return;}
+        cross.setAttribute('x1',g.x);cross.setAttribute('x2',g.x);cross.setAttribute('visibility',line?'visible':'hidden');
+        dot.setAttribute('cx',g.x);dot.setAttribute('cy',g.y);dot.setAttribute('fill','var(--amber)');dot.setAttribute('visibility','visible');return;}
+      if(i<0||i>=n){cross.setAttribute('visibility','hidden');dot.setAttribute('visibility','hidden');return;}
       cross.setAttribute('x1',X(i));cross.setAttribute('x2',X(i));cross.setAttribute('visibility',line?'visible':'hidden');
       dot.setAttribute('cx',X(i));dot.setAttribute('cy',Y(v[i]));dot.setAttribute('fill',lgColor(ser[i].lg));dot.setAttribute('visibility','visible');},
-    valAt(i){return{v:v[i],se:se[i]};}};
+    valAt(i){return (i>=n&&PTg)?{v:PTg[i-n].val,se:PTg[i-n].se}:{v:v[i],se:se[i]};}};
   ov.addEventListener('pointermove',e=>{const r=svg.getBoundingClientRect();
-    const sx=(e.clientX-r.left)/r.width*W; let i=Math.round((sx-padL)/pw*(n-1));
-    i=Math.max(0,Math.min(n-1,i)); setHoverAll(i,true);});
+    const sx=(e.clientX-r.left)/r.width*W;
+    if(PTg && sx>padL+histW+2){                          // future slice -> nearest projected horizon
+      let h=Math.round((sx-(padL+histW))/futW*PTg.length-0.5);
+      h=Math.max(0,Math.min(PTg.length-1,h)); setHoverAll(n+h,true);
+    } else {                                             // history -> nearest measured game-day
+      let i=Math.round((sx-padL)/histW*(n-1)); i=Math.max(0,Math.min(n-1,i)); setHoverAll(i,true);
+    }});
   ov.addEventListener('pointerleave',()=>setHoverAll(n-1,false));  // default: last actual game
   return obj;
 }
@@ -372,6 +389,16 @@ function Chart(mount,ser,key,proj){
 function setHoverAll(i,line){
   CHARTS.forEach(c=>c.setHover(i,line));
   const ro=document.getElementById('readout');
+  const p=projFor();
+  if(p&&Array.isArray(p.traj)&&i>=SER.length){          // projection-point readout (ORANGE = projected)
+    const h=i-SER.length, t=p.traj[h];
+    const fp=(val,sd)=>val==null?'—':`<b style="color:var(--amber)">${val>=0?'+':''}${val.toFixed(2)}</b> <span style="color:var(--faint)">±${(Z80*sd).toFixed(2)}</span>`;
+    ro.innerHTML=`<span style="color:var(--amber)">projected&nbsp;</span><b style="color:var(--amber)">${t[0]}</b>`;
+    document.getElementById('v_net').innerHTML=fp(t[1],t[2]);
+    const fok=Array.isArray(p.traj_f)&&Array.isArray(p.traj_f_se);
+    FAC.forEach(([f],k)=>{const e=document.getElementById('v_'+f);if(e)e.innerHTML=fok?fp(p.traj_f[h][k],p.traj_f_se[h][k]):'—';});
+    return;
+  }
   if(i<0||!SER||!SER[i]){ro.innerHTML='';document.getElementById('v_net').innerHTML='';
     FAC.forEach(([f])=>{const e=document.getElementById('v_'+f);if(e)e.innerHTML='';});return;}
   const s=SER[i];

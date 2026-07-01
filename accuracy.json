@@ -5,23 +5,23 @@
   },
   "game_margin": {
     "walkforward": {
-      "margin_rmse": 14.3791,
-      "margin_mae": 11.2587,
-      "brier": 0.202,
-      "logloss": 0.5907,
-      "accuracy": 0.6905
+      "margin_rmse": 14.3957,
+      "margin_mae": 11.2756,
+      "brier": 0.2025,
+      "logloss": 0.5919,
+      "accuracy": 0.6942
     },
     "frozen": {
-      "margin_rmse": 14.3583,
-      "margin_mae": 11.2373,
-      "brier": 0.2017,
-      "logloss": 0.5898,
-      "accuracy": 0.6923
+      "margin_rmse": 14.3744,
+      "margin_mae": 11.2556,
+      "brier": 0.2022,
+      "logloss": 0.5913,
+      "accuracy": 0.696
     },
     "ci_coverage": {
-      "50": 0.5116,
-      "80": 0.8035,
-      "90": 0.899
+      "50": 0.5088,
+      "80": 0.8054,
+      "90": 0.9027
     }
   },
   "next_season": {
