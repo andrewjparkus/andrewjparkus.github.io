@@ -231,7 +231,7 @@ function paint(){if(!curOpts.length){drop.style.display='none';return}
 // charts on toggle: 'pure' (prior-free), 'prior' (box-prior-informed, default), 'box' (the prior).
 const MODEHINT={
   pure:'Pure RAPM — the prior-free six-factor decomp, calibrated to the public DataBallR ridge. One line per league.',
-  prior:'Prior-informed RAPM — the same daily solve, with three factors (oSC, dTS, dTOV) shrunk toward a daily box-score prior. Shrinkage is strongest where lineup data is thin (rookies, early season) and fades as exposure grows. The default.',
+  prior:'Prior-informed RAPM — the same daily solve, with all six factors shrunk toward a daily box-score prior. Shrinkage is strongest where lineup data is thin (rookies, early season) and fades as exposure grows. The default.',
   box:'Box prior — the daily, multi-league box-score skill estimate that informs the prior-informed solve. A real fitted curve (not a flat reference) with a confidence band, built from box stats across NCAA, G-League & NBA up to each day. All six factors are shown.'};
 let SERIES={}, MODE=(localStorage.getItem('rapm_mode')||'prior'), PNAME='', CURID=null;
 function load(id,name){drop.style.display='none';q.value=name;history.replaceState(null,'','?p='+id);

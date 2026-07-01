@@ -231,7 +231,7 @@
   <code>α = 3000</code>, plus a small <code>α = 10</code> group of garbage-time nuisance columns —
   over a decay-weighted, whitened design. It is a <strong>maximum-a-posteriori</strong> estimate
   under a Gaussian prior: the <em>pure</em> series shrinks toward zero; the <em>prior-informed</em>
-  series shrinks three factors toward a box-score prior instead (next section).</p>
+  series shrinks all six factors toward a box-score prior instead (next section).</p>
   <div class="callout">
     <strong>Scale, by the numbers.</strong> The NBA design alone is ~7.1M possession-rows × ~5,800
     player-columns. With ~10,200 league-days × five ridge solves each, that's on the order of
@@ -260,9 +260,9 @@
             calibrated to the public DataBallR ridge.</td>
             <td class="l"><strong>zero</strong>, all six factors</td></tr>
         <tr><td class="l lead">Prior-informed <em>(default)</em></td>
-            <td class="l">Same solve, but three factors lean on a daily, multi-league box-score prior
+            <td class="l">Same solve, but every factor leans on a daily, multi-league box-score prior
             when lineup data is thin — so a rookie or fresh call-up starts somewhere sensible.</td>
-            <td class="l"><strong>box prior</strong> for oSC, dTS, dTOV; zero for the rest</td></tr>
+            <td class="l"><strong>box prior</strong>, all six factors</td></tr>
         <tr><td class="l lead">Box prior</td>
             <td class="l">The prior itself, on its own: a daily curve with a band, showing the
             box-score skill expected <em>before</em> any lineup data.</td>
@@ -272,33 +272,34 @@
   </div>
   <p>The blend is exposure-weighted, <code>(1−M)·lineup + M·box</code> with
   <code>M = α/(weff+α)</code>: with little on-court data a rating leans on the box estimate; as
-  possessions pile up the lineup data takes over. It touches only the three factors a daily box predicts
-  well out-of-sample — <strong>oSC, dTS, dTOV</strong> — leaving shooting (oTS), ball-security (oTOV)
-  and defensive second-chance (dSC) at the pure solve. A deliberately modest adjustment: for established
-  players it barely moves the rating, and <strong>prior-informed and pure are identical on oTS, oTOV,
-  dSC, and on the headline net.</strong></p>
+  possessions pile up the lineup data takes over. It touches <strong>all six factors</strong>, and the
+  reliability-fade keeps it deliberately modest — for established players it barely moves the rating, so
+  prior-informed and pure stay close for stars and on the headline net. The box's out-of-sample
+  <em>value</em> is uneven across the six, though (next) — worth knowing when you read a thin-data player.</p>
   <div class="callout">
-    <strong>Why those three factors?</strong> The blend only leans on the box where the box
-    <em>demonstrably</em> beats the pure solve out-of-sample — and because the reliability-fade
-    <code>M</code> puts almost all of its weight on <strong>thin-data players</strong> (rookies,
-    call-ups, early season), the deciding test is how much the box improves prediction <em>there</em>.
-    It helps exactly three factors:
-    <div class="scroll" style="max-width:540px;margin-top:9px">
+    <strong>Which factors does the box actually help?</strong> All six are blended toward the box (a
+    complete, consistent prior) — but the box's out-of-sample value is uneven, and because the
+    reliability-fade <code>M</code> puts almost all its weight on <strong>thin-data players</strong>
+    (rookies, call-ups, early season), the deciding test is how much the box improves prediction
+    <em>there</em>. It clearly helps three; on the other three the gain is negligible-to-slightly-negative,
+    so their blend is deliberately gentle:
+    <div class="scroll" style="max-width:560px;margin-top:9px">
       <table class="tbl">
-        <thead><tr><th class="l">Factor</th><th>Box lift for thin-data players (Δr²)</th><th>Blended?</th></tr></thead>
+        <thead><tr><th class="l">Factor</th><th>Box lift for thin-data players (Δr²)</th><th>Verdict</th></tr></thead>
         <tbody>
-          <tr><td class="l lead">oSC</td><td class="pos">+0.029</td><td><strong>yes</strong></td></tr>
-          <tr><td class="l lead">dTOV</td><td class="pos">+0.024</td><td><strong>yes</strong></td></tr>
-          <tr><td class="l lead">dTS</td><td class="pos">+0.015</td><td><strong>yes</strong></td></tr>
-          <tr><td class="l lead">oTOV</td><td>+0.003</td><td>no</td></tr>
-          <tr><td class="l lead">oTS</td><td class="neg">−0.001</td><td>no</td></tr>
-          <tr><td class="l lead">dSC</td><td class="neg">−0.006</td><td>no</td></tr>
+          <tr><td class="l lead">oSC</td><td class="pos">+0.029</td><td><strong>clear help</strong></td></tr>
+          <tr><td class="l lead">dTOV</td><td class="pos">+0.024</td><td><strong>clear help</strong></td></tr>
+          <tr><td class="l lead">dTS</td><td class="pos">+0.015</td><td><strong>clear help</strong></td></tr>
+          <tr><td class="l lead">oTOV</td><td>+0.003</td><td>marginal</td></tr>
+          <tr><td class="l lead">oTS</td><td class="neg">−0.001</td><td>marginal</td></tr>
+          <tr><td class="l lead">dSC</td><td class="neg">−0.006</td><td>marginal</td></tr>
         </tbody>
       </table>
     </div>
-    For the other three the box adds nothing (or hurts) for thin players, so they stay at the pure
-    solve. On high-exposure veterans the blend is near-zero for <em>every</em> factor — their lineup
-    rating is already reliable — which is why prior-informed and pure look identical for stars.
+    We blend all six for a complete prior even where the accuracy case is thin — the reliability-fade
+    ensures the marginal three barely move a real rating. On high-exposure veterans the blend is near-zero
+    for <em>every</em> factor anyway — their lineup rating is already reliable — which is why prior-informed
+    and pure look nearly identical for stars.
   </div>
   <div class="callout">
     <strong>Sharper defense, from tracking-flavored stats.</strong> The box prior now folds in a
