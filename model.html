@@ -115,6 +115,7 @@
         <a href="#transfer">Cross-league transfer</a>
         <a href="#ci">Confidence intervals</a>
         <a href="#accuracy">Model accuracy</a>
+        <a href="#forward">Forward projection</a>
         <a href="#ewa">Trade grades (EWA)</a>
         <a href="#guide">Using the site</a>
       </nav>
@@ -218,12 +219,14 @@
   </div>
 
   <h2 id="resolve">How a "daily re-solve" works</h2>
-  <p>Each day's value is a full RAPM under an <strong>open-ended, all-history time-decay</strong>
-  regime: a time-decayed ridge over <em>every possession on or before that day</em>, recent games
+  <p>Each day's value is a full RAPM under a <strong>5-year rolling-window time-decay</strong>
+  regime: a time-decayed ridge over <em>every possession in the trailing five years</em>, recent games
   weighted far more via a <strong>700-day half-life</strong> (a game's weight is
-  <code>2^(−age/700)</code>). "As of day D" just means feeding it games dated ≤ D — there is
+  <code>2^(−age/700)</code>). "As of day D" just means feeding it games dated in (D−5yr, D] — there is
   <strong>no carried-over state</strong>, so every day stands alone and the build is causally clean
-  (planting a future game moves the as-of estimate by exactly 0.0).</p>
+  (planting a future game moves the as-of estimate by exactly 0.0). The window is chiefly for
+  <strong>speed and cross-league consistency</strong>; because the half-life already discounts old
+  games so steeply (a 5-year-old game weighs ~16%), it barely changes a current rating.</p>
   <p>The ridge solves three column groups with separate penalties — offense and defense at
   <code>α = 3000</code>, plus a small <code>α = 10</code> group of garbage-time nuisance columns —
   over a decay-weighted, whitened design. It is a <strong>maximum-a-posteriori</strong> estimate
@@ -236,10 +239,10 @@
     since every day stands alone.
   </div>
   <div class="callout">
-    <strong>Net is its own solve.</strong> The headline <strong>net</strong> is a separate net-RAPM
-    fit, while the six factors come from four ridge leaf-metrics whose sum is
-    <code>sum6 = ORAPM + DRAPM</code>. The two agree to within a few hundredths
-    (<code>|net − sum6|</code> peaks at ~0.5).
+    <strong>Net is the sum of the six.</strong> The headline <strong>net</strong> is <em>exactly</em>
+    <code>oTS + oTOV + oSC + dTS + dTOV + dSC</code> (<code>net := sum6</code>) — there is no separate
+    net solve to reconcile. The six factors come from four ridge leaf-metrics; offense is the first
+    three, defense the last three.
   </div>
 
   <h2 id="modes">Three views of the same day</h2>
@@ -274,6 +277,38 @@
   and defensive second-chance (dSC) at the pure solve. A deliberately modest adjustment: for established
   players it barely moves the rating, and <strong>prior-informed and pure are identical on oTS, oTOV,
   dSC, and on the headline net.</strong></p>
+  <div class="callout">
+    <strong>Why those three factors?</strong> The blend only leans on the box where the box
+    <em>demonstrably</em> beats the pure solve out-of-sample — and because the reliability-fade
+    <code>M</code> puts almost all of its weight on <strong>thin-data players</strong> (rookies,
+    call-ups, early season), the deciding test is how much the box improves prediction <em>there</em>.
+    It helps exactly three factors:
+    <div class="scroll" style="max-width:540px;margin-top:9px">
+      <table class="tbl">
+        <thead><tr><th class="l">Factor</th><th>Box lift for thin-data players (Δr²)</th><th>Blended?</th></tr></thead>
+        <tbody>
+          <tr><td class="l lead">oSC</td><td class="pos">+0.029</td><td><strong>yes</strong></td></tr>
+          <tr><td class="l lead">dTOV</td><td class="pos">+0.024</td><td><strong>yes</strong></td></tr>
+          <tr><td class="l lead">dTS</td><td class="pos">+0.015</td><td><strong>yes</strong></td></tr>
+          <tr><td class="l lead">oTOV</td><td>+0.003</td><td>no</td></tr>
+          <tr><td class="l lead">oTS</td><td class="neg">−0.001</td><td>no</td></tr>
+          <tr><td class="l lead">dSC</td><td class="neg">−0.006</td><td>no</td></tr>
+        </tbody>
+      </table>
+    </div>
+    For the other three the box adds nothing (or hurts) for thin players, so they stay at the pure
+    solve. On high-exposure veterans the blend is near-zero for <em>every</em> factor — their lineup
+    rating is already reliable — which is why prior-informed and pure look identical for stars.
+  </div>
+  <div class="callout">
+    <strong>Sharper defense, from tracking-flavored stats.</strong> The box prior now folds in a
+    handful of <strong>predictive box stats</strong> — steal rate, block rate, shot-location frequency —
+    from an external forward-looking box model (Dunks &amp; Threes' EPM). Predictive steal rate is the
+    single strongest new signal for <code>dTOV</code>: a high-steal defender now carries a bigger
+    turnover-forcing prior (the box's out-of-sample edge on <code>dTOV</code> rose by ~0.08 r², and a
+    defender's projected dTOV now tracks their steal rate at <code>r ≈ 0.88</code>). It's the one place
+    a little tracking-flavored data measurably sharpens the defensive priors.
+  </div>
 
   <h2 id="ref">Does it match a known reference?</h2>
   <p>The pure NBA scale is tuned to reproduce <strong>DataBallR's six-factor RAPM</strong> (the
@@ -286,30 +321,30 @@
         <th class="grp l">Player</th><th>This model</th><th>DataBallR</th>
       </tr></thead>
       <tbody>
-        <tr><td class="l">Jokic</td><td class="pos">+7.7</td><td class="pos">+8.1</td>
-            <td class="grp l">Gobert</td><td class="pos">+4.5</td><td class="pos">+4.9</td></tr>
-        <tr><td class="l">Gilgeous-Alexander</td><td class="pos">+7.2</td><td class="pos">+7.5</td>
-            <td class="grp l">Mitchell</td><td class="pos">+4.5</td><td class="pos">+4.5</td></tr>
-        <tr><td class="l">Wembanyama</td><td class="pos">+6.6</td><td class="pos">+6.8</td>
+        <tr><td class="l">Jokic</td><td class="pos">+8.1</td><td class="pos">+8.1</td>
+            <td class="grp l">Gobert</td><td class="pos">+4.2</td><td class="pos">+4.9</td></tr>
+        <tr><td class="l">Gilgeous-Alexander</td><td class="pos">+7.8</td><td class="pos">+7.5</td>
+            <td class="grp l">Mitchell</td><td class="pos">+4.6</td><td class="pos">+4.5</td></tr>
+        <tr><td class="l">Wembanyama</td><td class="pos">+6.9</td><td class="pos">+6.8</td>
             <td class="grp l">Caruso</td><td class="pos">+4.3</td><td class="pos">+4.5</td></tr>
-        <tr><td class="l">Leonard</td><td class="pos">+6.4</td><td class="pos">+6.7</td>
-            <td class="grp l">Curry</td><td class="pos">+4.2</td><td class="pos">+4.5</td></tr>
-        <tr><td class="l">Antetokounmpo</td><td class="pos">+6.1</td><td class="pos">+6.3</td>
-            <td class="grp l"><em>(tail)</em> Rupert</td><td class="neg">−7.0</td><td class="neg">−6.9</td></tr>
+        <tr><td class="l">Leonard</td><td class="pos">+6.6</td><td class="pos">+6.7</td>
+            <td class="grp l">Curry</td><td class="pos">+4.5</td><td class="pos">+4.5</td></tr>
+        <tr><td class="l">Antetokounmpo</td><td class="pos">+6.2</td><td class="pos">+6.3</td>
+            <td class="grp l"><em>(tail)</em> Rupert</td><td class="neg">−6.7</td><td class="neg">−6.9</td></tr>
       </tbody>
     </table>
   </div>
   <p>Across these targets the correlation is <strong>0.99</strong>, the slope <strong>0.98</strong>,
-  and the negative tail reaches <strong>−7.0</strong> (vs −6.9) — the full range and ordering, not just
-  the leaders. The prior-free series sits a touch higher (Jokic +8.0, SGA +7.4) and is the one literally
-  calibrated to the public board. DataBallR uses a fixed ~6-year window and this model an open-ended
-  all-history decay, yet they still agree at <strong>r ≈ 0.99</strong>: the half-life discounts old
-  games so steeply that "6 years" vs "all history" barely changes a current rating — while letting one
-  curve run cleanly across a 20-season career.</p>
+  and the negative tail reaches <strong>−6.7</strong> (vs −6.9) — the full range and ordering, not just
+  the leaders. The prior-free series is the one literally calibrated to the public board. DataBallR uses
+  a fixed ~6-year window and this model a <strong>5-year rolling window</strong> — nearly the same span —
+  so they agree at <strong>r ≈ 0.99</strong> (0.985 on the calibration anchors): the 700-day half-life
+  discounts old games so steeply that the exact window length barely changes a current rating, while the
+  daily solve still runs one clean curve across a 20-season career.</p>
 
   <h2 id="transfer">The interesting part: what transfers between leagues?</h2>
   <p>We don't assume college production means the same thing as NBA production — we
-  <strong>measure it</strong>, from two-league players (786 G-League → NBA, 1,276 college → NBA). For
+  <strong>measure it</strong>, from two-league players (786 G-League → NBA, 1,252 college → NBA). For
   each factor we fit an <strong>affine translation</strong>: the slope is <em>how much</em>
   transfers, the correlation R <em>how reliably</em>.</p>
   <div class="scroll">
@@ -358,6 +393,14 @@
   <em>wide and never shrink to zero</em>, however many college games a player has. That honesty is the
   point — it's why a future MVP's lone college season can sit near replacement level on the NBA axis and
   still be "consistent" with stardom, as you can see on the <a href="draft.html">Draft board</a>.</p>
+  <div class="callout">
+    <strong>Did the 5-year window change these?</strong> Almost not at all. Re-fitting every translation
+    under the new rolling window moved each slope by <strong>≤ 0.003</strong> (NCAA→NBA oTS 0.241→0.242,
+    dTS 0.263→0.260, dTOV 0.126→0.126). The window evicts a couple dozen long-retired two-league players
+    from the fit (1,276→1,252 NCAA movers), but the transfer relationships are robust — the set of
+    players who actually crossed leagues is unchanged, so the affine barely shifts. The cross-league
+    translation is essentially identical before and after the regime change.
+  </div>
 
   <h2 id="ci">Confidence intervals</h2>
   <p>Every factor on every day carries a standard error, <code>se = 100·√σ̂² / √Weff</code>, where
@@ -450,8 +493,46 @@
     Pressed into service as a <em>next-season</em> forecast band they <strong>over-cover</strong>: a
     nominal 50% band catches the next-season value about <strong>96%</strong> of the time, because a
     full year of aging, role change and roster churn adds variance the within-season SE never tried to
-    model. A genuine forward model would shrink those bands; that's plan 17's job, and this is the
-    bar it has to clear.</p>
+    model. A genuine forward model shrinks those bands and clears this bar — that's the projection
+    described next.</p>
+  </div>
+
+  <h2 id="forward">The forward projection — 1 to 5 years out</h2>
+  <p>Everything above is <strong>descriptive</strong> — already-measured RAPM. The
+  <a href="projection.html">2026-27 page</a> and the Explorer's <strong>+ Projection</strong> toggle add
+  the other half: a genuine <strong>forward model</strong> for "where is this player <em>headed</em>?" It
+  clears the carry-forward bar above, and now runs <strong>one to five seasons ahead</strong>.</p>
+  <p>For each of the six factors × each horizon (1yr … 5yr) a separate <strong>gradient-boosted model</strong>
+  (XGBoost) is trained on 30 seasons of history — from a player's recent trajectory (current value, lags,
+  three-year slope), the box-prior's second opinion, the predictive box stats, age, and role/minutes. Three
+  choices keep it honest:</p>
+  <ul>
+    <li><strong>Time-ordered validation</strong> — each model trains on the past and is scored strictly on
+    the future, never on data it has seen.</li>
+    <li><strong>A monotonic constraint</strong> — a higher current value can never <em>lower</em> the
+    projection, ruling out perverse "great now, so worse later" swings.</li>
+    <li><strong>Survivorship-honest decline</strong> — players who leave the league aren't dropped from the
+    target; their factor fades toward replacement level, so the model learns realistic decline and exit
+    instead of assuming everyone ages like the veterans who happened to stick around.</li>
+  </ul>
+  <p>It beats plain carry-forward on <strong>every factor at every horizon</strong>, and the age-curve
+  baseline on all six factors one year out (dTOV, for instance, at CV-MAE <strong>0.096 vs 0.107</strong>).
+  The one-year gain is real if modest; the 2-to-5-year horizons are net-new — the old model could only step
+  a single season forward. <strong>net</strong> is the sum of the six projected factors (never modeled
+  directly), and every projected point carries a band that <strong>widens with the horizon</strong>: five
+  years out is genuinely more uncertain than one.</p>
+  <div class="callout">
+    <strong>See it on the Explorer.</strong> Open any current player, flip <strong>+ Projection</strong> on
+    the Net chart, and the blue measured curve grows an <span style="color:var(--amber);font-weight:700">orange
+    dashed trajectory</span> out five seasons, a confidence bar at each year. Jokic, for one, is projected to
+    drift from +8 today toward the mid-5s by 2031 as the age curve bites — the honest arc of a great player
+    past his peak.
+  </div>
+  <div class="callout">
+    <strong>Minutes feed it, but don't inflate it.</strong> A companion model projects each player's
+    <strong>minutes per game</strong> (carry-forward + mean-reversion + an age curve) and allocates each
+    team's 240 minutes across its roster. Those minutes drive <em>availability and team win totals</em> on
+    the 2026-27 page — not the per-100 rating itself, so no one is rewarded twice for simply playing more.
   </div>
 
   <h2 id="ewa">Trade grades — Expected Wins Added (EWA)</h2>

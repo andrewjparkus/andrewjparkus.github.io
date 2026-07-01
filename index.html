@@ -58,7 +58,7 @@
   /* offense row 1, defense row 2 (FAC order is fixed) */
   #grid{grid-template-columns:repeat(3,1fr)}
   @media(max-width:640px){#grid{grid-template-columns:repeat(2,1fr)}}
-  /* forward projection overlay (opt-in, ORANGE = projected, NOT measured) — one year ahead, drawn on each chart */
+  /* forward projection overlay (opt-in, ORANGE = projected, NOT measured) — 1-5yr trajectory, drawn on each chart */
   .projconn{stroke:var(--amber);stroke-width:1.4;fill:none;stroke-dasharray:4 2;stroke-linejoin:round;stroke-linecap:round;opacity:.65}
   .projci{stroke:var(--amber);stroke-width:1.6;stroke-linecap:butt}
   .projcap{stroke:var(--amber);stroke-width:1.6;stroke-linecap:round}
@@ -101,7 +101,7 @@
     <div class="netcard">
       <div class="ctitle"><span>Net RAPM <span style="color:var(--faint);font-weight:400">· ORAPM + DRAPM</span> <span class="help" data-tip="Net RAPM = ORAPM (oTS+oTOV+oSC) + DRAPM (dTS+dTOV+dSC), points/100 on the NBA-equivalent scale.">?</span></span>
         <span style="display:inline-flex;align-items:center;gap:8px;margin-left:auto">
-          <span id="projseg" class="seg" style="display:none" title="Overlay a forward, age-adjusted projection (off by default)">
+          <span id="projseg" class="seg" style="display:none" title="Overlay the 1–5 year forward projection (per-factor XGBoost; off by default)">
             <button data-proj="off" type="button" class="on">Descriptive</button>
             <button data-proj="on"  type="button">+ Projection</button>
           </span>
@@ -186,7 +186,7 @@ const getContr = ()=>lazy('box_contraction.json',_c).then(d=>CONTR=d);
 // ── forward-projection overlay (opt-in; fetched ONCE, cached) ─────────────────
 // projection_series.json: { meta:{factors,...}, players:{ "<pid>":{ last_season,
 //   anchor:[net,se], next:[season,net,se], anchor_f:[6], next_f:[6], next_f_se:[6] } } }.
-// ONE year ahead only. Rendered as an ORANGE projected point + 80% CI on each chart. OFF by default.
+// 1-5yr trajectory. Rendered as ORANGE projected points + 80% CI on each chart. OFF by default.
 let PROJ=null; const _p={};
 const Z80=1.2816;                                  // 80% two-sided band half-width
 let PROJON=(localStorage.getItem('rapm_proj')==='on');
@@ -305,20 +305,21 @@ function Chart(mount,ser,key,proj){
   const v   = ser.map(s=>s[key]);
   const se  = ser.map(s=>s[key+'_se']);
   let pool=v.filter(x=>x!=null);
-  // forward projection (net + each factor): ONE point next year, {val,se,season}; widen the y-domain so
-  // the orange point + 80% CI fit, and reserve a right-hand slice (~28%) of the plot for the future.
-  let PP=null;
-  if(proj && proj.val!=null && proj.se!=null){
-    PP={val:proj.val, se:proj.se, season:proj.season};
-    pool.push(PP.val+Z80*PP.se); pool.push(PP.val-Z80*PP.se);   // fold ±80% CI into the y-domain
+  // forward projection: a 1-5yr TRAJECTORY {traj:[{val,se,season}...]}; widen the y-domain so every
+  // orange point + its 80% CI fits, and reserve a right-hand slice of the plot for the future path.
+  let PT=null;
+  if(proj && Array.isArray(proj.traj) && proj.traj.length){
+    PT=proj.traj.filter(t=>t&&t.val!=null&&t.se!=null);
+    if(!PT.length) PT=null;
+    else PT.forEach(t=>{pool.push(t.val+Z80*t.se); pool.push(t.val-Z80*t.se);});   // fold every ±80% CI in
   }
   let lo=Math.min(...pool), hi=Math.max(...pool), c=(lo+hi)/2, half=Math.max((hi-lo)/2*1.06,0.15);
   const ymin=c-half, ymax=c+half;
-  const histW=PP?pw*0.72:pw;                          // history occupies the left; future the right
+  const histW=PT?pw*0.60:pw;                           // history occupies the left; the future the right
   const X=i=>padL+(n>1?i/(n-1):.5)*histW;
   const Y=val=>padT+ph-(Math.max(ymin,Math.min(ymax,val))-ymin)/(ymax-ymin)*ph;
-  const projGap=PP?(W-padR-(padL+histW)):0;           // px available to the right of history
-  const XP=padL+histW+projGap;                        // the projected point sits at the right edge
+  const futW=PT?(W-padR-(padL+histW)):0;               // px available to the right of history
+  const XP=h=>padL+histW+futW*(h+1)/PT.length;         // horizon h (0-based) placed across the future slice
   const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,preserveAspectRatio:'none'});
   [0,.5,1].forEach(f=>{const yv=ymin+(ymax-ymin)*f, y=Y(yv);
     svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'var(--grid)','stroke-width':1}));
@@ -338,20 +339,19 @@ function Chart(mount,ser,key,proj){
     const idx=[];for(let i=0;i<n;i++)if(ser[i].lg===lg)idx.push(i);
     if(idx.length>1)svg.appendChild(el('polyline',{points:idx.map(i=>`${X(i).toFixed(1)},${Y(v[i]).toFixed(1)}`).join(' '),
       fill:'none',stroke:lgColor(lg),'stroke-width':1.6,'stroke-linejoin':'round','stroke-linecap':'round'}));});
-  // ── FORWARD projection overlay (one year ahead, opt-in, ORANGE = projected, NOT measured) ──────
-  if(PP){
-    const lastX=X(n-1), lastY=Y(v[n-1]);               // grow out of the live curve's last point
-    const yc=Y(PP.val), ylo=Y(PP.val-Z80*PP.se), yhi=Y(PP.val+Z80*PP.se), cap=3;
-    // faint dashed connector from the last measured point to the projected point
-    svg.appendChild(el('line',{class:'projconn',x1:lastX,y1:lastY,x2:XP,y2:yc}));
-    // vertical 80% CI bar with small caps
-    svg.appendChild(el('line',{class:'projci',x1:XP,y1:yhi,x2:XP,y2:ylo}));
-    svg.appendChild(el('line',{class:'projcap',x1:XP-cap,y1:yhi,x2:XP+cap,y2:yhi}));
-    svg.appendChild(el('line',{class:'projcap',x1:XP-cap,y1:ylo,x2:XP+cap,y2:ylo}));
-    // the projected point itself
-    svg.appendChild(el('circle',{class:'projdot',cx:XP,cy:yc,r:3}));
-    // forward-year tick
-    if(PP.season){const t=el('text',{x:XP,y:H-4,'font-size':8.5,fill:'var(--amber)','text-anchor':'middle'});t.textContent="’"+String(PP.season).slice(2);svg.appendChild(t);}
+  // ── FORWARD projection overlay (1-5yr trajectory, opt-in, ORANGE = projected, NOT measured) ──────
+  if(PT){
+    let px=X(n-1), py=Y(v[n-1]); const cap=3;          // grow out of the live curve's last measured point
+    PT.forEach((t,h)=>{
+      const xp=XP(h), yc=Y(t.val), ylo=Y(t.val-Z80*t.se), yhi=Y(t.val+Z80*t.se);
+      svg.appendChild(el('line',{class:'projconn',x1:px,y1:py,x2:xp,y2:yc}));        // dashed segment
+      svg.appendChild(el('line',{class:'projci',x1:xp,y1:yhi,x2:xp,y2:ylo}));         // widening 80% CI bar
+      svg.appendChild(el('line',{class:'projcap',x1:xp-cap,y1:yhi,x2:xp+cap,y2:yhi}));
+      svg.appendChild(el('line',{class:'projcap',x1:xp-cap,y1:ylo,x2:xp+cap,y2:ylo}));
+      svg.appendChild(el('circle',{class:'projdot',cx:xp,cy:yc,r:2.6}));
+      if(t.season){const tk=el('text',{x:xp,y:H-4,'font-size':8,fill:'var(--amber)','text-anchor':'middle'});tk.textContent="’"+String(t.season).slice(2);svg.appendChild(tk);}
+      px=xp; py=yc;                                     // chain the next segment from this point
+    });
   }
   const cross=el('line',{class:'crosshair',x1:0,y1:padT,x2:0,y2:padT+ph,visibility:'hidden'});svg.appendChild(cross);
   const dot=el('circle',{class:'hdot',r:3.2,visibility:'hidden'});svg.appendChild(dot);
@@ -410,11 +410,14 @@ function renderActive(){
   const badges=['nba','gleague','college'].filter(l=>lgset.includes(l)).map(l=>`<span style="color:${LC[l]};font-weight:700">${LNAME[l]}</span>`).join(' · ');
   document.getElementById('pmeta').innerHTML=`${SER[0].date} – ${last.date} · ${badges}`;
   const p=projFor();                                 // null unless toggle ON + pid has a projection
-  // ONE point next year. NET chart -> {val,se,season}; factor i -> {val:next_f[i],se:next_f_se[i],season}.
-  // Guard: only build the per-factor projections when the per-factor arrays are present and length-6.
-  const facOK=p&&Array.isArray(p.next_f)&&p.next_f.length===FAC.length&&Array.isArray(p.next_f_se)&&p.next_f_se.length===FAC.length;
-  const netProj=p?{val:p.next[1],se:p.next[2],season:p.next[0]}:null;
-  const facProj=i=>facOK?{val:p.next_f[i],se:p.next_f_se[i],season:p.next[0]}:null;
+  // Forward TRAJECTORY 1-5yr ahead (plan 25). NET chart -> {traj:[{val,se,season}...]}; factor i is the
+  // same shape sliced from traj_f/traj_f_se. Falls back to the single `next` point if traj is absent.
+  const trajOK=p&&Array.isArray(p.traj)&&p.traj.length>0;
+  const facTrajOK=trajOK&&Array.isArray(p.traj_f)&&Array.isArray(p.traj_f_se)&&p.traj_f.length===p.traj.length&&p.traj_f[0].length===FAC.length;
+  const netProj=trajOK?{traj:p.traj.map(t=>({season:t[0],val:t[1],se:t[2]}))}
+               :(p?{traj:[{val:p.next[1],se:p.next[2],season:p.next[0]}]}:null);
+  const facProj=i=>facTrajOK?{traj:p.traj.map((t,h)=>({season:t[0],val:p.traj_f[h][i],se:p.traj_f_se[h][i]}))}
+               :(p&&Array.isArray(p.next_f)&&p.next_f.length===FAC.length?{traj:[{val:p.next_f[i],se:p.next_f_se[i],season:p.next[0]}]}:null);
   requestAnimationFrame(()=>{
     CHARTS=[Chart(document.getElementById('c_net'),SER,'net',netProj)];
     FAC.forEach(([f],i)=>CHARTS.push(Chart(document.getElementById('c_'+f),SER,f,facProj(i))));
