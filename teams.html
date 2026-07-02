@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Projected Standings · Daily RAPM</title>
+<title>Team Ratings · Daily RAPM</title>
 <link rel="stylesheet" href="site.css">
 <link rel="icon" href="favicon.svg"><link rel="manifest" href="manifest.webmanifest">
 <style>
@@ -30,18 +30,18 @@
     border-top-color:transparent;border-bottom-color:var(--line)}
 </style></head>
 <body>
-<nav id="topnav" data-active="proj"></nav>
+<nav id="topnav" data-active="teams"></nav>
 <script src="charts.js"></script>
 <script src="nav.js"></script>
 <div class="wrap">
-  <h1 style="margin-top:6px">Projected standings, <b id="season">2025-26</b></h1>
-  <p class="sub">Projected 2025-26 standings from minute-weighted team RAPM (pts/100). Click a team for its roster.
+  <h1 style="margin-top:6px">Measured team ratings, <b id="season">2025-26</b></h1>
+  <p class="sub">Season-to-date team RAPM (pts/100) with model-win context. Click a team for its roster.
     <a href="projection.html" style="color:var(--accent)">See the forward 2026-27 projection →</a></p>
 
   <div id="standings"></div>
   <div class="msg" id="msg">Loading standings…</div>
 
-  <p class="foot">Factors are pts/100 team RAPM; positive is good (defense sign-flipped). Top 6 make playoffs; 7–10 play in; 11–15 eliminated. Descriptive of play on the books, not a roster-move projection.</p>
+  <p class="foot">Factors are measured 2025-26 team RAPM; positive is good (defense sign-flipped). Model wins are historical season context from the game model, not a 2026-27 forecast.</p>
 </div>
 
 <script>
@@ -109,7 +109,7 @@ function buildConf(name, rows, d){
   sec.id = 'conf-' + name.toLowerCase();
 
   const h = document.createElement('h2');
-  h.innerHTML = esc(name) + ' <span>'+rows.length+' teams · sorted by projected wins</span>';
+  h.innerHTML = esc(name) + ' <span>'+rows.length+' teams · sorted by model wins</span>';
   sec.appendChild(h);
 
   const scroll = document.createElement('div');
@@ -124,7 +124,7 @@ function buildConf(name, rows, d){
   let thead = '<thead><tr>'
     + '<th class="l rank">#</th>'
     + '<th class="l">Team</th>'
-    + '<th title="Projected wins — mean of 10,000-season Monte-Carlo (p10–p90 in parens)">Proj W</th>'
+    + '<th title="Model wins — mean of 10,000-season Monte-Carlo from measured 2025-26 team strength (p10–p90 in parens)">Model W</th>'
     + '<th title="Actual wins so far">Act W</th>';
   FACS.forEach(f=>{ thead += '<th class="f">'+f+' <span class="help" data-tip="'+esc(FAC_TIP[f])+'">?</span></th>'; });
   thead += '<th class="net">Net <span class="help" data-tip="'+esc(NET_TIP)+'">?</span></th>'

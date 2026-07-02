@@ -1,9 +1,26 @@
 {
+  "schema": "accuracy.v2",
   "meta": {
     "generated": null,
-    "note": "Descriptive model. These are the out-of-sample scorecards produced by daily_v5/oos_harness.py: game-margin (walk-forward and frozen-coefficient), calibration coverage of the prediction intervals, and next-season predictiveness of the net rating and the six oTS/oTOV/oSC/dTS/dTOV/dSC factors. Not a forecast \u2014 a measure of how well today's ratings travel."
+    "label": "baseline",
+    "note": "Descriptive model. These are the out-of-sample scorecards produced by daily_v5/oos_harness.py: game-margin walkforward/frozen scoring, interval coverage, and next-season predictiveness of net plus the six factors.",
+    "source_scorecard": "daily_v5/out/oos/scorecard_baseline.parquet",
+    "source_manifest": "daily_v5/out/oos/manifest_baseline.json",
+    "caveats": [
+      "game_margin uses walkforward and frozen views; strict_pregame is not_available until roster/minute inputs exclude realized_minutes.",
+      "game accuracy currently uses realized_minutes for team aggregation, so it is rating quality given realized usage rather than strict_pregame forecasting.",
+      "today-estimate SE is not the same as next-season forecast interval; ci_next_season is diagnostic and intentionally over-covers.",
+      "candidate comparisons require block-aware CIs from paired residual/detail artifacts."
+    ]
   },
   "game_margin": {
+    "units": {
+      "margin_rmse": "points",
+      "margin_mae": "points",
+      "brier": "dimensionless",
+      "logloss": "dimensionless",
+      "accuracy": "fraction"
+    },
     "walkforward": {
       "margin_rmse": 14.3957,
       "margin_mae": 11.2756,
@@ -18,13 +35,124 @@
       "logloss": 0.5913,
       "accuracy": 0.696
     },
+    "strict_pregame": {
+      "status": "not_available",
+      "reason": "requires pregame-known rosters and minutes; current game score uses realized_minutes"
+    },
     "ci_coverage": {
       "50": 0.5088,
       "80": 0.8054,
       "90": 0.9027
     }
   },
+  "game_calibration": {
+    "win_probability": {
+      "walkforward": {
+        "brier": 0.2025,
+        "logloss": 0.5919,
+        "accuracy": 0.6942
+      },
+      "frozen": {
+        "brier": 0.2022,
+        "logloss": 0.5913,
+        "accuracy": 0.696
+      }
+    },
+    "interval_coverage": {
+      "50": {
+        "nominal": 0.5,
+        "realized": 0.5088,
+        "n": 1079,
+        "units": "fraction"
+      },
+      "80": {
+        "nominal": 0.8,
+        "realized": 0.8054,
+        "n": 1079,
+        "units": "fraction"
+      },
+      "90": {
+        "nominal": 0.9,
+        "realized": 0.9027,
+        "n": 1079,
+        "units": "fraction"
+      }
+    },
+    "minute_mode": "realized_minutes",
+    "strict_pregame": {
+      "status": "not_available"
+    }
+  },
   "next_season": {
+    "units": {
+      "rmse": "points per 100 possessions",
+      "corr": "Pearson r"
+    },
+    "factors": {
+      "net": {
+        "rmse": 0.7647,
+        "corr": 0.8853,
+        "n": 17752,
+        "units": {
+          "rmse": "points per 100 possessions",
+          "corr": "Pearson r"
+        }
+      },
+      "oTS": {
+        "rmse": 0.5476,
+        "corr": 0.8724,
+        "n": 17752,
+        "units": {
+          "rmse": "points per 100 possessions",
+          "corr": "Pearson r"
+        }
+      },
+      "oTOV": {
+        "rmse": 0.2004,
+        "corr": 0.8677,
+        "n": 17752,
+        "units": {
+          "rmse": "points per 100 possessions",
+          "corr": "Pearson r"
+        }
+      },
+      "oSC": {
+        "rmse": 0.2383,
+        "corr": 0.8485,
+        "n": 17752,
+        "units": {
+          "rmse": "points per 100 possessions",
+          "corr": "Pearson r"
+        }
+      },
+      "dTS": {
+        "rmse": 0.4289,
+        "corr": 0.848,
+        "n": 17752,
+        "units": {
+          "rmse": "points per 100 possessions",
+          "corr": "Pearson r"
+        }
+      },
+      "dTOV": {
+        "rmse": 0.1689,
+        "corr": 0.8724,
+        "n": 17752,
+        "units": {
+          "rmse": "points per 100 possessions",
+          "corr": "Pearson r"
+        }
+      },
+      "dSC": {
+        "rmse": 0.262,
+        "corr": 0.806,
+        "n": 17752,
+        "units": {
+          "rmse": "points per 100 possessions",
+          "corr": "Pearson r"
+        }
+      }
+    },
     "net": {
       "rmse": 0.7647,
       "corr": 0.8853
@@ -55,6 +183,149 @@
     }
   },
   "next_season_ci": {
+    "units": "fraction",
+    "factors": {
+      "net": {
+        "50": {
+          "nominal": 0.5,
+          "realized": 0.9388,
+          "n": 17752,
+          "units": "fraction"
+        },
+        "80": {
+          "nominal": 0.8,
+          "realized": 0.9952,
+          "n": 17752,
+          "units": "fraction"
+        },
+        "90": {
+          "nominal": 0.9,
+          "realized": 0.9991,
+          "n": 17752,
+          "units": "fraction"
+        }
+      },
+      "oTS": {
+        "50": {
+          "nominal": 0.5,
+          "realized": 0.9057,
+          "n": 17752,
+          "units": "fraction"
+        },
+        "80": {
+          "nominal": 0.8,
+          "realized": 0.9886,
+          "n": 17752,
+          "units": "fraction"
+        },
+        "90": {
+          "nominal": 0.9,
+          "realized": 0.9969,
+          "n": 17752,
+          "units": "fraction"
+        }
+      },
+      "oTOV": {
+        "50": {
+          "nominal": 0.5,
+          "realized": 0.9084,
+          "n": 17752,
+          "units": "fraction"
+        },
+        "80": {
+          "nominal": 0.8,
+          "realized": 0.9892,
+          "n": 17752,
+          "units": "fraction"
+        },
+        "90": {
+          "nominal": 0.9,
+          "realized": 0.9979,
+          "n": 17752,
+          "units": "fraction"
+        }
+      },
+      "oSC": {
+        "50": {
+          "nominal": 0.5,
+          "realized": 0.9329,
+          "n": 17752,
+          "units": "fraction"
+        },
+        "80": {
+          "nominal": 0.8,
+          "realized": 0.9946,
+          "n": 17752,
+          "units": "fraction"
+        },
+        "90": {
+          "nominal": 0.9,
+          "realized": 0.9991,
+          "n": 17752,
+          "units": "fraction"
+        }
+      },
+      "dTS": {
+        "50": {
+          "nominal": 0.5,
+          "realized": 0.9402,
+          "n": 17752,
+          "units": "fraction"
+        },
+        "80": {
+          "nominal": 0.8,
+          "realized": 0.995,
+          "n": 17752,
+          "units": "fraction"
+        },
+        "90": {
+          "nominal": 0.9,
+          "realized": 0.9989,
+          "n": 17752,
+          "units": "fraction"
+        }
+      },
+      "dTOV": {
+        "50": {
+          "nominal": 0.5,
+          "realized": 0.9269,
+          "n": 17752,
+          "units": "fraction"
+        },
+        "80": {
+          "nominal": 0.8,
+          "realized": 0.9935,
+          "n": 17752,
+          "units": "fraction"
+        },
+        "90": {
+          "nominal": 0.9,
+          "realized": 0.9989,
+          "n": 17752,
+          "units": "fraction"
+        }
+      },
+      "dSC": {
+        "50": {
+          "nominal": 0.5,
+          "realized": 0.9329,
+          "n": 17752,
+          "units": "fraction"
+        },
+        "80": {
+          "nominal": 0.8,
+          "realized": 0.9948,
+          "n": 17752,
+          "units": "fraction"
+        },
+        "90": {
+          "nominal": 0.9,
+          "realized": 0.9992,
+          "n": 17752,
+          "units": "fraction"
+        }
+      }
+    },
     "net": {
       "50": 0.9388,
       "80": 0.9952,
@@ -89,6 +360,52 @@
       "50": 0.9329,
       "80": 0.9948,
       "90": 0.9992
+    }
+  },
+  "projection": {
+    "status": "not_available",
+    "reason": "projection committees have not emitted canonical scoreboard metrics"
+  },
+  "minutes_gp": {
+    "status": "not_available",
+    "reason": "minutes/GP committees have not emitted canonical scoreboard metrics"
+  },
+  "translation": {
+    "status": "not_available",
+    "reason": "translation committees have not emitted canonical scoreboard metrics"
+  },
+  "artifact_versions": {
+    "scorecard": {
+      "path": "daily_v5/out/oos/scorecard_baseline.parquet",
+      "exists": true,
+      "size": 3811,
+      "mtime": 1783018478.4731033
+    },
+    "manifest": {
+      "path": "daily_v5/out/oos/manifest_baseline.json",
+      "exists": true,
+      "size": 6998,
+      "mtime": 1783018479.224823
+    },
+    "git": {
+      "sha": "4e58283023b62d495f2d55591daa5b708718387a",
+      "dirty": true,
+      "dirty_entries": 124
+    },
+    "game_model_params": {
+      "hca": 1.5370466094308175,
+      "sigma": 14.374403787753343,
+      "burn_in_date": "2025-11-10",
+      "fit_window": "expanding-walk-forward-2wk",
+      "oos": {
+        "margin_rmse": 14.395672971994209,
+        "margin_rmse_se": 0.3098890652628952,
+        "margin_mae": 11.275577440422758,
+        "brier": 0.2024693256488907,
+        "brier_se": 0.00473472384497239,
+        "logloss": 0.591940984270203,
+        "accuracy": 0.6941612604263206
+      }
     }
   }
 }

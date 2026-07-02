@@ -98,8 +98,8 @@
 <div class="doc">
   <h1>A daily, multi-league six-factor RAPM <small>a reader's guide</small></h1>
   <p class="lede">If you know the classic six-factor RAPM decomposition, this is what's new here, how
-  it works, and what it says — with numbers, tables, and one worked example. Everything below is
-  <strong>descriptive</strong> (a rating measured as of a game-day), never a forward projection.</p>
+  it works, and what it says — with numbers, tables, and one worked example. Ratings are
+  <strong>descriptive</strong> unless a page is explicitly tagged as a forward projection.</p>
 
   <div class="doclayout">
     <aside class="toc">
@@ -438,8 +438,9 @@
   <p>Everything above is <strong>descriptive</strong> by design, but two fair questions follow: how well
   do the day-of-game ratings predict <em>games</em>, and how well does a rating travel to <em>next
   season</em>? Both come from <code>daily_v5/oos_harness.py</code>, a <strong>walk-forward,
-  leakage-free</strong> evaluation — every prediction uses only data available <em>before</em> the event
-  it scores, so nothing below has seen its own answer.</p>
+  leakage-aware</strong> evaluation. Player ratings are causal snapshots; the current game table still
+  uses <code>realized_minutes</code> when aggregating players into team ratings, so it is not yet a
+  <code>strict_pregame</code> forecast.</p>
 
   <div id="acc_msg" class="callout" style="display:none">Loading the accuracy scorecard…</div>
 
@@ -488,6 +489,17 @@
   <p>Net carries forward at <strong>r ≈ 0.90</strong>: where a player ranks today is most of where
   they rank a year out. The factors most tied to motor and role — turnovers and offensive
   second-chance — are the stickiest; defensive second-chance (dSC) is the noisiest to carry.</p>
+  <h3>Are today's player CIs a next-season forecast band?</h3>
+  <p>No. This diagnostic presses today's estimate SE into service against next-season RAPM. The
+  table shows why that is a different product from a true forecast interval.</p>
+  <div class="scroll" style="max-width:520px">
+    <table class="tbl" id="acc_next_cov">
+      <thead><tr>
+        <th class="l">Nominal band</th><th>Should contain</th><th>Actually contains net</th>
+      </tr></thead>
+      <tbody><tr><td class="l">…</td><td>…</td><td>…</td></tr></tbody>
+    </table>
+  </div>
   <div class="callout">
     <strong>One honest caveat.</strong> The confidence intervals here are <em>within-season</em>
     standard errors — calibrated for "what is this rating today," which the game-margin table confirms.
@@ -580,8 +592,9 @@
   </div>
 
   <h2 id="guide">Using the site</h2>
-  <p>Five pages, one scale. Each is descriptive — it reports what was measured as of a game-day,
-  never a forecast. Player names everywhere link into the Explorer.</p>
+  <p>One scale across measured and forward views. Measured pages report what was known as of a
+  game-day; the 2026-27 pages are explicitly tagged as forward projections. Player names everywhere
+  link into the Explorer.</p>
   <div class="guidegrid">
     <div class="guide">
       <h3><a href="index.html">Explorer →</a></h3>
@@ -591,9 +604,14 @@
     </div>
     <div class="guide">
       <h3><a href="teams.html">Teams →</a></h3>
-      <p>Minute-weighted <strong>team RAPM</strong> turned into <strong>projected standings</strong>
-      via a 10,000-season Monte-Carlo (HCA 1.56, σ 14.3). Win totals are the simulator's mean with
-      spread, not a prediction. Click a team for its roster decomposition.</p>
+      <p>Measured 2025-26 <strong>team RAPM</strong>, factor heat strips, roster contribution, WAR,
+      and model-win context from the game model. This is historical team strength, separate from the
+      forward 2026-27 projection.</p>
+    </div>
+    <div class="guide">
+      <h3><a href="projection.html">2026-27 →</a></h3>
+      <p>The explicitly <strong>forward-looking</strong> standings page: p10/p50/p90 wins, playoff
+      odds, and team drilldowns with rating, GP, minutes, rookie, and fallback uncertainty flags.</p>
     </div>
     <div class="guide">
       <h3><a href="table.html">Tables →</a></h3>
@@ -613,10 +631,15 @@
       onto the NBA scale, with 95% CIs. Bands are wide by construction, so most prospects cluster near
       replacement level — that wide band <em>is</em> the honest signal.</p>
     </div>
+    <div class="guide">
+      <h3><a href="https://andrewjparkus.github.io/api/manifest.json">API export →</a></h3>
+      <p>Versioned static exports for leaderboards, snapshots, and the public schema. Use the manifest
+      for freshness, factor definitions, and file locations.</p>
+    </div>
   </div>
 
-  <p class="foot">All values are on the DataBallR NBA-equivalent scale (pts/100). Everything shown is
-  a descriptive, as-of-game-day measurement with a confidence interval — never a forward projection.
+  <p class="foot">All values are on the DataBallR NBA-equivalent scale (pts/100). Descriptive ratings
+  are as-of-game-day measurements with confidence intervals; forward views are labeled separately.
   Cross-league (college / G-League) factors carry an extra, non-shrinkable translation uncertainty.</p>
 
     </div><!-- /.prose -->
@@ -720,7 +743,7 @@
     rows+='<tr class="total"><td class="l"><strong>sum of six (sum6)</strong></td>'
       +'<td class="'+(sum>=0?'pos':'neg')+'"><strong>'+(sum>=0?'+':'')+sum.toFixed(2)+'</strong></td></tr>';
     var netv=DATA.net[DATA.net.length-1];
-    rows+='<tr><td class="l">net RAPM <em>(separate solve)</em></td><td class="'+(netv>=0?'pos':'neg')+'">'+(netv>=0?'+':'')+netv.toFixed(2)+'</td></tr>';
+    rows+='<tr><td class="l">net RAPM</td><td class="'+(netv>=0?'pos':'neg')+'">'+(netv>=0?'+':'')+netv.toFixed(2)+'</td></tr>';
     document.getElementById('ex_tbl').innerHTML=rows;
   }
   function rerender(){ if(DATA) render(); }
@@ -736,6 +759,7 @@
   var msg=document.getElementById('acc_msg');
   function show(t){ if(msg){ msg.style.display='block'; msg.textContent=t; } }
   function pct(x){ return (x*100).toFixed(1)+'%'; }
+  function realized(x){ return x&&typeof x==='object'&&'realized' in x ? x.realized : x; }
 
   function fillGame(g){
     var wf=g.walkforward||{}, fr=g.frozen||{};
@@ -755,20 +779,21 @@
     var cap=document.getElementById('acc_game_cap');
     if(cap) cap.textContent='Lower is better for RMSE / MAE / Brier / log loss; higher for accuracy. '
       +'Margin RMSE ≈ '+(wf.margin_rmse!=null?(+wf.margin_rmse).toFixed(1):'—')
-      +' pts sits near the irreducible floor for NBA game margins.';
+      +' pts sits near the irreducible floor for NBA game margins. Current mode: realized_minutes, not strict_pregame.';
   }
 
   function fillCov(c){
     var bands=['50','80','90'], h='';
     bands.forEach(function(b){
-      var realized=c[b];
+      var val=realized(c[b]);
       h+='<tr><td class="l lead">'+b+'%</td><td>'+b+'%</td><td>'
-        +(realized==null?'—':pct(realized))+'</td></tr>';
+        +(val==null?'—':pct(val))+'</td></tr>';
     });
     document.querySelector('#acc_cov tbody').innerHTML=h;
   }
 
   function fillNext(ns){
+    if(ns&&ns.factors) ns=ns.factors;
     var FAC=['net','oTS','oTOV','oSC','dTS','dTOV','dSC'], h='';
     // correlation range for a per-column green ramp
     var cs=FAC.map(function(k){return (ns[k]||{}).corr;}).filter(function(x){return x!=null;});
@@ -792,11 +817,28 @@
     document.querySelector('#acc_next tbody').innerHTML=h;
   }
 
+  function fillNextCov(ci){
+    if(ci&&ci.factors) ci=ci.factors;
+    var net=(ci&&ci.net)||{}, bands=['50','80','90'], h='';
+    bands.forEach(function(b){
+      var val=realized(net[b]);
+      h+='<tr><td class="l lead">'+b+'%</td><td>'+b+'%</td><td>'
+        +(val==null?'—':pct(val))+'</td></tr>';
+    });
+    var el=document.querySelector('#acc_next_cov tbody');
+    if(el) el.innerHTML=h;
+  }
+
   fetch('accuracy.json').then(function(r){ if(!r.ok) throw 0; return r.json(); })
     .then(function(j){
       if(msg) msg.style.display='none';
-      if(j.game_margin){ fillGame(j.game_margin); if(j.game_margin.ci_coverage) fillCov(j.game_margin.ci_coverage); }
+      if(j.game_margin){
+        fillGame(j.game_margin);
+        if(j.game_calibration&&j.game_calibration.interval_coverage) fillCov(j.game_calibration.interval_coverage);
+        else if(j.game_margin.ci_coverage) fillCov(j.game_margin.ci_coverage);
+      }
       if(j.next_season) fillNext(j.next_season);
+      if(j.next_season_ci) fillNextCov(j.next_season_ci);
     })
     .catch(function(){
       show('The accuracy scorecard (accuracy.json) could not be loaded. The methodology above still '

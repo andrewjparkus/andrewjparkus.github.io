@@ -118,6 +118,15 @@ function ord(n){
   const s=["th","st","nd","rd"], v=n%100;
   return n + (s[(v-20)%10] || s[v] || s[0]);
 }
+function flagLabel(s){
+  const M={
+    many_rookies:"many rookies",
+    many_replacement_rows:"replacement rows",
+    high_gp_uncertainty:"high GP uncertainty",
+    high_rating_uncertainty:"high rating uncertainty"
+  };
+  return M[s] || String(s||"").replace(/_/g," ");
+}
 
 function render(d){
   const abbrRaw = qparam('abbr');
@@ -162,6 +171,16 @@ function render(d){
   html += '<div class="cap">A <b>forward projection</b>, not a measured result. '
     + 'Player ratings are carried forward and aged to 2026-27 (per-factor aging). '
     + 'Wins, band, and playoff odds come from the same model as the standings.</div>';
+  const flags = Array.isArray(team.fallback_flags) ? team.fallback_flags : [];
+  if(flags.length || team.uncertainty){
+    const u = team.uncertainty || {};
+    html += '<div class="cap">Uncertainty: '
+      + (u.win_band_width!=null ? 'win band '+num(u.win_band_width,1) : 'win band –')
+      + (u.gp_uncertainty_games_weighted!=null ? ' · GP '+num(u.gp_uncertainty_games_weighted,1) : '')
+      + (u.minutes_uncertainty_mpg_weighted!=null ? ' · minutes '+num(u.minutes_uncertainty_mpg_weighted,1) : '')
+      + (flags.length ? ' · flags: '+flags.map(flagLabel).map(esc).join(', ') : '')
+      + '</div>';
+  }
 
   // ---- ROSTER table (the centerpiece) — already sorted by wins contributed desc ----
   const roster = Array.isArray(team.roster) ? team.roster : [];
@@ -177,8 +196,8 @@ function render(d){
     + '<th class="l">Role</th>'
     + '<th title="Projected minutes per game when active">MPG</th>'
     + '<th title="Expected games played, role-conditioned by projected minutes; small numbers are the 80% range (low–high)">Exp GP</th>'
-    + '<th class="grp">Proj net <span class="help" title="Player\'s projected on-court net rating (pts/100), aged to 2026-27. Cold-start rookies use a replacement-level prior.">?</span></th>'
-    + '<th class="grp">Wins contributed <span class="help" title="Each player\'s exact-additive share of the team\'s projected wins; the column sums to the team total.">?</span></th>'
+    + '<th class="grp">Proj net <span class="help" data-tip="Player\'s projected on-court net rating (pts/100), aged to 2026-27. Cold-start rookies use a replacement-level prior.">?</span></th>'
+    + '<th class="grp">Wins contributed <span class="help" data-tip="Each player\'s exact-additive share of the team\'s projected wins; the column sums to the team total.">?</span></th>'
     + '</tr></thead><tbody>';
 
   roster.forEach(p=>{
@@ -188,6 +207,8 @@ function render(d){
     const ntip = 'Projected net '+num(p.net,1)+' pts/100'
       + (p.age!=null ? ' · age '+num(p.age,0) : '')
       + (p.n_seasons ? ' · '+p.n_seasons+' prior season'+(p.n_seasons===1?'':'s') : '')
+      + (p.model_source ? ' · source '+p.model_source : '')
+      + (p.rating_p10!=null&&p.rating_p90!=null ? ' · p10–p90 '+num(p.rating_p10,1)+'–'+num(p.rating_p90,1) : '')
       + ftip;
     // rated players link by pid; cold-start rookies link by gid (college page) when one exists,
     // else plain text — all rookies keep the "R" badge.

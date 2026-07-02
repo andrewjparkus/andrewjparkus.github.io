@@ -188,13 +188,20 @@ function drawNet(j){
   // j.series[*] is a per-league polyline; each point has a date + net. Be tolerant of shape.
   const series=(j.series||j.leagues||[]).filter(s=>s&&(s.net||s.points));
   let pts=[];
+  const asX = raw => /^\d{4}-\d{2}-\d{2}$/.test(String(raw)) ? Date.parse(raw) : +raw;
   function pull(s){
     const xs=s.date||s.dates||(s.points?s.points.map(p=>p.date||p.x):null);
     const ys=s.net||(s.points?s.points.map(p=>p.net!=null?p.net:p.y):null);
-    if(!xs||!ys) return; for(let i=0;i<xs.length;i++) pts.push({d:+xs[i],v:+ys[i],lg:s.league||s.name});
+    if(!xs||!ys) return; for(let i=0;i<xs.length;i++) pts.push({d:asX(xs[i]),v:+ys[i],lg:s.league||s.name});
   }
   if(series.length) series.forEach(pull);
-  else if(j.date&&j.net){ for(let i=0;i<j.date.length;i++) pts.push({d:+j.date[i],v:+j.net[i],lg:j.league}); }
+  else if((j.date||j.d)&&j.net){
+    const xs = j.date || j.d;
+    const lgs = j.league || j.lg || [];
+    for(let i=0;i<xs.length;i++){
+      pts.push({d:asX(xs[i]), v:+j.net[i], lg:lgs[i]||j.league||j.lg});
+    }
+  }
   pts=pts.filter(p=>isFinite(p.d)&&isFinite(p.v));
   if(!pts.length){ document.getElementById('pmeta').textContent='Daily curve file has an unexpected shape; open in Explorer.'; return; }
   const d0=Math.min(...pts.map(p=>p.d)), d1=Math.max(...pts.map(p=>p.d));

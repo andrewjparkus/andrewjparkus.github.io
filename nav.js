@@ -9,8 +9,8 @@
  * (.topnav/.tab/...), which every page links — nav.js no longer injects CSS.
  *
  * Top bar (Plan 21): Explorer · 2026-27 · Other ▾ · Model. The "Other" dropdown holds
- * Tables / Trade / Draft; Teams (2025-26) is reached from the 2026-27 page and Grades
- * from the Trade page (so they set data-active="proj" / "trade" to light the right top item).
+ * measured 2025-26 Teams plus Tables / Trade / Draft; Grades is reached from the Trade
+ * page (so it sets data-active="trade" to light the right top item).
  */
 (function () {
   "use strict";
@@ -19,6 +19,7 @@
     { key: "explorer", href: "index.html", label: "Explorer" },
     { key: "proj",     href: "projection.html", label: "2026-27" },
     { label: "Other", menu: [
+      { key: "teams",  href: "teams.html", label: "Teams" },
       { key: "tables", href: "table.html", label: "Tables" },
       { key: "trade",  href: "trade.html", label: "Trade" },
       { key: "draft",  href: "draft.html", label: "Draft" }

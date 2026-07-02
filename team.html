@@ -54,7 +54,7 @@
   .unlisted{margin-top:8px}
 </style></head>
 <body>
-<nav id="topnav" data-active="proj"></nav>
+<nav id="topnav" data-active="teams"></nav>
 <script src="charts.js"></script>
 <script src="nav.js"></script>
 <div class="wrap" id="wrap">
@@ -112,7 +112,7 @@ fetch('teams.json')
 
 function friendly(htmlMsg){
   document.getElementById('wrap').innerHTML =
-    '<div class="empty">'+htmlMsg+'<br><a href="teams.html" style="font-size:13px">← back to projected standings</a></div>';
+    '<div class="empty">'+htmlMsg+'<br><a href="teams.html" style="font-size:13px">← back to team ratings</a></div>';
 }
 
 function render(d){
@@ -155,17 +155,17 @@ function render(d){
   let html = '<div class="thead">'+logo
     + '<div class="tn"><h1>'+esc(team.name||abbr)+'</h1>'
     + '<div class="conf"><b>'+esc(abbr)+'</b>'+(confTxt?' · '+esc(confTxt):'')+'</div></div></div>';
-  html += '<p class="sub">Season-to-date six-factor team RAPM (pts/100), minute-weighted. '
-    + 'Projected wins from the same Monte-Carlo as the <a href="teams.html">standings</a>.</p>';
+  html += '<p class="sub">Measured 2025-26 six-factor team RAPM (pts/100), minute-weighted. '
+    + 'Model wins come from the same Monte-Carlo context as the <a href="teams.html">team ratings</a>; the 2026-27 forecast lives separately.</p>';
 
   // ---- KPI block ----
   const projCI = (srow.p10!=null&&srow.p90!=null) ? num(srow.p10,0)+'–'+num(srow.p90,0)+' (p10–p90)' : '';
   const po = (srow.playoff_prob!=null) ? Math.round(srow.playoff_prob*100)+'%' : '–';
   const netF = fmt(totals.net,1), oF = fmt(oRapm,1), dF = fmt(dRapm,1);
   html += '<div class="kpis">';
-  html += kpi('Projected wins', num(srow.proj_wins,1), projCI);
+  html += kpi('Model wins', num(srow.proj_wins,1), projCI);
   html += kpi('Actual wins', srow.actual_wins==null?'–':num(srow.actual_wins,0), 'so far this season');
-  html += kpi('Playoff prob', po, 'from the Monte-Carlo');
+  html += kpi('Playoff odds', po, 'from measured-strength Monte-Carlo');
   html += '<div class="kpi"><div class="k">Team net</div><div class="v '+netF.cls+'">'+netF.txt+'</div><div class="x">pts/100, six factors + resid</div></div>';
   html += '<div class="kpi"><div class="k">ORAPM</div><div class="v '+oF.cls+'">'+oF.txt+'</div><div class="x">oTS + oTOV + oSC</div></div>';
   html += '<div class="kpi"><div class="k">DRAPM</div><div class="v '+dF.cls+'">'+dF.txt+'</div><div class="x">dTS + dTOV + dSC (sign-flipped)</div></div>';

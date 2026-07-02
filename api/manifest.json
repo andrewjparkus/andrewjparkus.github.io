@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "license": "CC-BY-4.0",
-  "generated": "20260701",
+  "generated": "20260702",
   "factors": {
     "oTS": "offensive true-shooting value (ALT_EFG_VALUE + ALT_FT), pts/100",
     "oTOV": "offensive ball security / turnover avoidance, pts/100",
@@ -9,7 +9,7 @@
     "dTS": "defensive true-shooting conceded, pts/100 (WEAK: no tracking data, OOF R2~0.18)",
     "dTOV": "defensive turnovers forced, pts/100",
     "dSC": "defensive second-chance conceded, pts/100 (WEAK: no tracking data, OOF R2~0.15)",
-    "net": "net rating (currently a separate solve; net:=sum6 pending; RESID peaks ~0.5)"
+    "net": "net rating, reconciled as the sum of the six factor estimates, pts/100"
   },
   "scale": "pts/100 possessions",
   "leagues": [
@@ -18,21 +18,20 @@
     "gleague"
   ],
   "data_freshness": {
-    "nba": "20260701",
-    "college": "20260701",
-    "gleague": "20260701"
+    "nba": "20260702",
+    "college": "20260702",
+    "gleague": "20260702"
   },
   "war_note": "descriptive accrual; win-slope = phi(HCA/sigma)/sigma ~ 2.27 wins/pt over 82 games; $/win is a market convention, not a model output; ~17% of board names are id-ambiguous and get no WAR",
   "ci_note": "CIs are de-shrunk ridge SEs (nominal); system nominal-90% covers ~88%",
   "caveats": [
-    "net is a separate solve; RESID small (peaks ~0.5)",
     "breakout alerts lag real change ~weeks (700-day half-life)",
     "dTS/dSC are weak (no tracking data)"
   ],
   "changelog": [
     {
       "v": "1.0.0",
-      "date": "20260701",
+      "date": "20260702",
       "note": "initial public export"
     }
   ]
