@@ -371,7 +371,7 @@
     "source_scorecard": "daily_v5/out/depth_model/minutes_gp_scorecard.parquet",
     "source_manifest": "daily_v5/out/depth_model/minutes_gp_manifest.json",
     "decision": "candidate_only",
-    "promotion": "not_promoted_owner_review_required",
+    "promotion": "promotion_allowed",
     "metrics": {
       "teams": {
         "block": "source_identity",
@@ -419,13 +419,13 @@
       "path": "daily_v5/out/oos/scorecard_baseline.parquet",
       "exists": true,
       "size": 3811,
-      "mtime": 1783095146.498707
+      "mtime": 1783098384.455033
     },
     "manifest": {
       "path": "daily_v5/out/oos/manifest_baseline.json",
       "exists": true,
       "size": 6998,
-      "mtime": 1783095147.1840851
+      "mtime": 1783098385.17529
     },
     "git": {
       "sha": "4e58283023b62d495f2d55591daa5b708718387a",
