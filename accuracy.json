@@ -367,8 +367,48 @@
     "reason": "projection committees have not emitted canonical scoreboard metrics"
   },
   "minutes_gp": {
-    "status": "not_available",
-    "reason": "minutes/GP committees have not emitted canonical scoreboard metrics"
+    "status": "candidate_only_no_historical_promotion",
+    "source_scorecard": "daily_v5/out/depth_model/minutes_gp_scorecard.parquet",
+    "source_manifest": "daily_v5/out/depth_model/minutes_gp_manifest.json",
+    "decision": "candidate_only",
+    "promotion": "not_promoted_owner_review_required",
+    "metrics": {
+      "teams": {
+        "block": "source_identity",
+        "value": 30.0,
+        "status": "pass"
+      },
+      "roster_rows": {
+        "block": "source_identity",
+        "value": 596.0,
+        "status": "info"
+      },
+      "duplicate_franchise_key_rows": {
+        "block": "source_identity",
+        "value": 0.0,
+        "status": "pass"
+      },
+      "max_team_mpg_error": {
+        "block": "allocation",
+        "value": 0.0,
+        "status": "pass"
+      },
+      "negative_mpg_rows": {
+        "block": "allocation",
+        "value": 0.0,
+        "status": "pass"
+      },
+      "low_confidence_rows": {
+        "block": "confidence",
+        "value": 23.0,
+        "status": "info"
+      },
+      "learned_model_gate": {
+        "block": "historical_validation",
+        "value": null,
+        "status": "dormant_baseline_only"
+      }
+    }
   },
   "translation": {
     "status": "not_available",
@@ -379,18 +419,18 @@
       "path": "daily_v5/out/oos/scorecard_baseline.parquet",
       "exists": true,
       "size": 3811,
-      "mtime": 1783018478.4731033
+      "mtime": 1783095146.498707
     },
     "manifest": {
       "path": "daily_v5/out/oos/manifest_baseline.json",
       "exists": true,
       "size": 6998,
-      "mtime": 1783018479.224823
+      "mtime": 1783095147.1840851
     },
     "git": {
       "sha": "4e58283023b62d495f2d55591daa5b708718387a",
       "dirty": true,
-      "dirty_entries": 124
+      "dirty_entries": 135
     },
     "game_model_params": {
       "hca": 1.5370466094308175,
