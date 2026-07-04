@@ -11,7 +11,22 @@
       "game accuracy currently uses realized_minutes for team aggregation, so it is rating quality given realized usage rather than strict_pregame forecasting.",
       "today-estimate SE is not the same as next-season forecast interval; ci_next_season is diagnostic and intentionally over-covers.",
       "candidate comparisons require block-aware CIs from paired residual/detail artifacts."
-    ]
+    ],
+    "minutes_source": "v2_production",
+    "minutes_provenance": {
+      "minutes_source": "v2_production",
+      "minutes_model_version": "depth_model.v2",
+      "minutes_artifact": "daily_v5/out/depth_model/v2/minutes_allocation_v2.parquet",
+      "minutes_artifact_sha256": "bb8b3498c646aad637ab77721e497aa73d747661144d711d9b864dfa88ea4909",
+      "gp_artifact": "daily_v5/out/depth_model/v2/gp_projection_v2.parquet",
+      "gp_artifact_sha256": "83a1c629f10323d94c1494a43ede7e365e87faa1b3ca0a284693ddbcac11c613",
+      "minutes_distribution_artifact": "daily_v5/out/depth_model/v2/minutes_distribution_v2.parquet",
+      "minutes_distribution_artifact_sha256": "63aac9aa09f32b49a7cc3f5673c49429422ef280ca32c14a4471bbc8f5a7245b",
+      "depth_csv_artifact": "daily_v5/out/depth_model/v2/depthcharts_2026_27_v2.csv",
+      "depth_source": "owner",
+      "v2_promotion_manifest": "daily_v5/out/depth_model/v2/v2_promotion_manifest.json",
+      "v2_promotion_manifest_sha256": "0cce6db697e977db14c8c41c007eae318d94d9d79cca0e86b2684e9a07a77a14"
+    }
   },
   "game_margin": {
     "units": {
@@ -419,18 +434,18 @@
       "path": "daily_v5/out/oos/scorecard_baseline.parquet",
       "exists": true,
       "size": 3811,
-      "mtime": 1783120789.5795639
+      "mtime": 1783130132.8026366
     },
     "manifest": {
       "path": "daily_v5/out/oos/manifest_baseline.json",
       "exists": true,
       "size": 6998,
-      "mtime": 1783120790.468399
+      "mtime": 1783130133.5692134
     },
     "git": {
       "sha": "4e58283023b62d495f2d55591daa5b708718387a",
       "dirty": true,
-      "dirty_entries": 144
+      "dirty_entries": 146
     },
     "game_model_params": {
       "hca": 1.5370466094308175,

@@ -22,6 +22,21 @@
     "college": "20260703",
     "gleague": "20260703"
   },
+  "minutes_source": "v2_production",
+  "minutes_provenance": {
+    "minutes_source": "v2_production",
+    "minutes_model_version": "depth_model.v2",
+    "minutes_artifact": "daily_v5/out/depth_model/v2/minutes_allocation_v2.parquet",
+    "minutes_artifact_sha256": "bb8b3498c646aad637ab77721e497aa73d747661144d711d9b864dfa88ea4909",
+    "gp_artifact": "daily_v5/out/depth_model/v2/gp_projection_v2.parquet",
+    "gp_artifact_sha256": "83a1c629f10323d94c1494a43ede7e365e87faa1b3ca0a284693ddbcac11c613",
+    "minutes_distribution_artifact": "daily_v5/out/depth_model/v2/minutes_distribution_v2.parquet",
+    "minutes_distribution_artifact_sha256": "63aac9aa09f32b49a7cc3f5673c49429422ef280ca32c14a4471bbc8f5a7245b",
+    "depth_csv_artifact": "daily_v5/out/depth_model/v2/depthcharts_2026_27_v2.csv",
+    "depth_source": "owner",
+    "v2_promotion_manifest": "daily_v5/out/depth_model/v2/v2_promotion_manifest.json",
+    "v2_promotion_manifest_sha256": "0cce6db697e977db14c8c41c007eae318d94d9d79cca0e86b2684e9a07a77a14"
+  },
   "war_note": "descriptive accrual; win-slope = phi(HCA/sigma)/sigma ~ 2.27 wins/pt over 82 games; $/win is a market convention, not a model output; ~17% of board names are id-ambiguous and get no WAR",
   "ci_note": "CIs are de-shrunk ridge SEs (nominal); system nominal-90% covers ~88%",
   "caveats": [
