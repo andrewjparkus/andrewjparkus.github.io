@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "license": "CC-BY-4.0",
-  "generated": "20260703",
+  "generated": "20260704",
   "factors": {
     "oTS": "offensive true-shooting value (ALT_EFG_VALUE + ALT_FT), pts/100",
     "oTOV": "offensive ball security / turnover avoidance, pts/100",
@@ -18,34 +18,40 @@
     "gleague"
   ],
   "data_freshness": {
-    "nba": "20260703",
-    "college": "20260703",
-    "gleague": "20260703"
+    "nba": "20260704",
+    "college": "20260704",
+    "gleague": "20260704"
   },
-  "minutes_source": "v3_production",
+  "minutes_source": "current",
   "minutes_provenance": {
-    "minutes_source": "v3_production",
-    "minutes_model_version": "depth_model.v3",
-    "minutes_contract": "active_plus_availability_plus_replacement",
-    "availability_application": "exactly_once",
-    "minutes_artifact": "daily_v5/out/depth_model/v3/minutes_allocation_v3.parquet",
-    "minutes_artifact_sha256": "eaa5c5fc8c3768ec0dff3631066bb3cd3918dff4a1b15b65ed981e7d03018536",
-    "active_minutes_artifact": "daily_v5/out/depth_model/v3/minutes_active_v3.parquet",
-    "active_minutes_artifact_sha256": "90030a73a79884e634776fae90d4257f1292942789b2f5750dc53f6f226ae953",
-    "season_minutes_artifact": "daily_v5/out/depth_model/v3/minutes_season_v3.parquet",
-    "season_minutes_artifact_sha256": "543f1975a2b115c3220030874fb308c8c40862938a96f98d411fff4fbdc2fcf7",
-    "replacement_minutes_artifact": "daily_v5/out/depth_model/v3/replacement_minutes_v3.parquet",
-    "replacement_minutes_artifact_sha256": "fb9638a2dcb1a0214aeb9a12a17ed5bd8ccdeb5ab3951a64a830c500ea83f4b4",
-    "gp_artifact": "daily_v5/out/depth_model/v3/gp_projection_v3.parquet",
-    "gp_artifact_sha256": "20d720f9898d8901ad03301506a7e80b36f7627966759d5d878b4afacfa40272",
-    "minutes_distribution_artifact": "daily_v5/out/depth_model/v3/minutes_distribution_v3.parquet",
-    "minutes_distribution_artifact_sha256": "d86d3d1778bb93e93c188c469b477318e3f8a5fa5fa7cca9b3b956ee9549b00b",
-    "depth_csv_artifact": "daily_v5/out/depth_model/v3/depthcharts_2026_27_v3.csv",
+    "minutes_source": "current",
+    "minutes_model_version": "current",
+    "minutes_contract": "legacy_alloc_mpg",
+    "availability_application": "legacy_consumer_dependent",
+    "minutes_artifact": "daily_v5/out/minutes_allocation.parquet",
+    "minutes_artifact_sha256": "f1db17790fa3287322dcfc096651109ebe7608b19eb00051e09b6d93d7170707",
+    "active_minutes_artifact": null,
+    "active_minutes_artifact_sha256": null,
+    "season_minutes_artifact": null,
+    "season_minutes_artifact_sha256": null,
+    "replacement_minutes_artifact": null,
+    "replacement_minutes_artifact_sha256": null,
+    "replacement_tree_artifact": null,
+    "replacement_tree_artifact_sha256": null,
+    "gp_artifact": "daily_v5/out/gp_projection.parquet",
+    "gp_artifact_sha256": "4512ef86062976cb1e14620849875ea91919b0d24e1647680b55546e0b1fe29d",
+    "minutes_distribution_artifact": "daily_v5/out/minutes_distribution.parquet",
+    "minutes_distribution_artifact_sha256": "218ae080314e89824873b6eb43cf915264b98d4ca3cbd956001299fe6d44b4a0",
+    "depth_csv_artifact": "daily_v5/out/depthcharts_2026_27.csv",
     "depth_source": "owner",
     "v2_promotion_manifest": null,
     "v2_promotion_manifest_sha256": null,
-    "v3_promotion_manifest": "daily_v5/out/depth_model/v3/v3_promotion_manifest.json",
-    "v3_promotion_manifest_sha256": "e9d4e3b1a8bec420c8a65c2c6d638d2f992b2a8e5da93c31ba1732d1c6699257"
+    "v3_promotion_manifest": null,
+    "v3_promotion_manifest_sha256": null,
+    "v4_promotion_manifest": null,
+    "v4_promotion_manifest_sha256": null,
+    "v5_promotion_manifest": null,
+    "v5_promotion_manifest_sha256": null
   },
   "war_note": "descriptive accrual; win-slope = phi(HCA/sigma)/sigma ~ 2.27 wins/pt over 82 games; $/win is a market convention, not a model output; ~17% of board names are id-ambiguous and get no WAR",
   "ci_note": "CIs are de-shrunk ridge SEs (nominal); system nominal-90% covers ~88%",
@@ -56,7 +62,7 @@
   "changelog": [
     {
       "v": "1.0.0",
-      "date": "20260703",
+      "date": "20260704",
       "note": "initial public export"
     }
   ]
