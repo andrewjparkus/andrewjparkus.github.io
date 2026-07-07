@@ -189,7 +189,7 @@ const getContr = ()=>lazy('box_contraction.json',_c).then(d=>CONTR=d);
 // 1-5yr trajectory. Rendered as ORANGE projected points + 80% CI on each chart. OFF by default.
 let PROJ=null; const _p={};
 const Z80=1.2816;                                  // 80% two-sided band half-width
-let PROJON=(localStorage.getItem('rapm_proj')==='on');
+let PROJON=false;                                  // always land on Descriptive; projection is opt-in, session-only
 const getProj = ()=>lazy('projection_series.json',_p).then(d=>PROJ=d);
 function projFor(){ return (PROJON && PROJ && PROJ.players && CURID && PROJ.players[CURID]) || null; }
 
@@ -272,7 +272,7 @@ function syncProjSeg(){
 }
 function setProj(on){
   if(PROJON===on)return;
-  PROJON=on; localStorage.setItem('rapm_proj',on?'on':'off');
+  PROJON=on;                                       // session-only; not persisted (Descriptive is the default landing)
   syncProjSeg();
   if(MULTI)return;                                 // projection overlay is single-player only
   if(on) getProj().then(renderActive);             // lazy-load then re-draw charts with orange overlay
@@ -329,11 +329,20 @@ function Chart(mount,ser,key,proj){
   for(let i=1;i<n;i++){const yr=ser[i].date.slice(0,4);if(yr!==py){
     svg.appendChild(el('line',{x1:X(i),y1:padT,x2:X(i),y2:padT+ph,stroke:'var(--line-2)','stroke-width':1}));
     const t=el('text',{x:X(i),y:H-4,'font-size':8.5,fill:'var(--faint)','text-anchor':'middle'});t.textContent="’"+yr.slice(2);svg.appendChild(t);py=yr;}}
-  // CI band (clamped, faint): the de-shrunk daily SE; the box prior now carries a real band too
-  {let up='',dn='';
-    for(let i=0;i<n;i++)up+=`${X(i).toFixed(1)},${Y(v[i]+1.96*se[i]).toFixed(1)} `;
-    for(let i=n-1;i>=0;i--)dn+=`${X(i).toFixed(1)},${Y(v[i]-1.96*se[i]).toFixed(1)} `;
-    svg.appendChild(el('polygon',{points:up+dn,fill:'#8aa0bb','fill-opacity':.07,stroke:'none'}));}
+  // CI band (95%, faint): the de-shrunk daily SE. Drawn UNCLAMPED and clipped to the plot rect.
+  // Early-career SE is huge (±1.96·17 ≈ ±34); the old value-clamped envelope folded flat against
+  // the axis edge and, as SE wobbled day-to-day, tore into jagged dark blocks. Clipping lets the
+  // envelope run off-plot cleanly, so the band hugs the line and washes where uncertain.
+  {const Yb=val=>padT+ph-(val-ymin)/(ymax-ymin)*ph;          // unclamped Y for the band envelope
+    const idx=[];for(let i=0;i<n;i++)if(v[i]!=null&&se[i]!=null)idx.push(i);
+    if(idx.length>1){
+      const cid='ciclip_'+key, clip=el('clipPath',{id:cid}), defs=el('defs');
+      clip.appendChild(el('rect',{x:padL,y:padT,width:W-padR-padL,height:ph}));
+      defs.appendChild(clip);svg.appendChild(defs);
+      let up='',dn='';
+      idx.forEach(i=>{up+=`${X(i).toFixed(1)},${Yb(v[i]+1.96*se[i]).toFixed(1)} `;});
+      for(let k=idx.length-1;k>=0;k--){const i=idx[k];dn+=`${X(i).toFixed(1)},${Yb(v[i]-1.96*se[i]).toFixed(1)} `;}
+      svg.appendChild(el('polygon',{points:up+dn,fill:'#8aa0bb','fill-opacity':.07,stroke:'none','clip-path':`url(#${cid})`}));}}
   // one line PER league (no cross-league bridge)
   [...new Set(ser.map(s=>s.lg))].forEach(lg=>{
     const idx=[];for(let i=0;i<n;i++)if(ser[i].lg===lg)idx.push(i);

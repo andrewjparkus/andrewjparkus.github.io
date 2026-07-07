@@ -92,12 +92,14 @@ function kpi(k,v,x,vcls){
 
 let DATA = null;
 
-/* ── model toggle: RAPM decomp (default) | EPM blend (opt-in alternative dataset) ─────
+/* ── model toggle: RAPM decomp (default) | EPM blend | RAPM-EPM hybrid (opt-in alternatives) ─────
    Same localStorage key as projection.html so the choice follows the reader between the
-   standings and the team pages. Swaps to the parallel _blend teams JSON. */
+   standings and the team pages. Swaps to the parallel _blend / _hybrid teams JSON. */
 const MODEL_KEY = 'proj27_model';
-const TEAMS_SRC = { rapm: 'projection_2026_27_teams.json', blend: 'projection_2026_27_teams_blend.json' };
-let PMODEL = (localStorage.getItem(MODEL_KEY) === 'blend') ? 'blend' : 'rapm';
+const TEAMS_SRC = { rapm: 'projection_2026_27_teams.json', blend: 'projection_2026_27_teams_blend.json',
+                    hybrid: 'projection_2026_27_teams_hybrid.json' };
+const MODEL_SET = { rapm: 1, blend: 1, hybrid: 1 };
+let PMODEL = MODEL_SET[localStorage.getItem(MODEL_KEY)] ? localStorage.getItem(MODEL_KEY) : 'rapm';
 const MCACHE = {};
 
 function loadModel(){
@@ -107,7 +109,7 @@ function loadModel(){
     .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
     .then(d=>{ MCACHE[PMODEL]=d; DATA=d; render(d); })
     .catch(err=>{
-      if (PMODEL === 'blend'){       // blend dataset unavailable -> fall back to the default
+      if (PMODEL !== 'rapm'){        // alternative dataset unavailable -> fall back to the default
         PMODEL = 'rapm'; localStorage.setItem(MODEL_KEY, 'rapm'); loadModel();
         return;
       }
@@ -179,13 +181,19 @@ function render(d){
     + 'See the full <a href="projection.html">2026-27 standings</a>.</p>';
 
   // model toggle (mirrors projection.html; same persisted choice)
+  const MODEL_CAP = {
+    rapm: '',
+    blend: 'blends external EPM player values, w=0.50 — opt-in alternative; RAPM decomp is the default',
+    hybrid: 'per-player selection: external EPM for veterans, internal RAPM for rookies (EPM has no rookie ratings) — opt-in alternative; RAPM decomp is the default'
+  };
   html += '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 10px">'
-    + '<span id="modelseg" class="seg" title="Projection model. RAPM decomp (default) is the internal six-factor model; EPM blend is an opt-in alternative that blends external EPM player values (w=0.50).">'
+    + '<span id="modelseg" class="seg" title="Projection model. RAPM decomp (default) is the internal six-factor model; EPM blend is an opt-in alternative that blends external EPM player values (w=0.50); RAPM-EPM hybrid selects per player — external EPM for veterans, internal RAPM for rookies (EPM has no rookie ratings).">'
     + '<button data-model="rapm" type="button"'+(PMODEL==='rapm'?' class="on"':'')+'>RAPM decomp</button>'
     + '<button data-model="blend" type="button"'+(PMODEL==='blend'?' class="on"':'')+'>EPM blend</button>'
+    + '<button data-model="hybrid" type="button"'+(PMODEL==='hybrid'?' class="on"':'')+'>RAPM-EPM hybrid</button>'
     + '</span>'
-    + (PMODEL==='blend'
-        ? '<span style="font-size:11.5px;color:var(--faint)">blends external EPM player values, w=0.50 — opt-in alternative; RAPM decomp is the default</span>'
+    + (MODEL_CAP[PMODEL]
+        ? '<span style="font-size:11.5px;color:var(--faint)">'+MODEL_CAP[PMODEL]+'</span>'
         : '')
     + '</div>';
 

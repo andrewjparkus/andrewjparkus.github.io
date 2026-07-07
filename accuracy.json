@@ -2,10 +2,10 @@
   "schema": "accuracy.v2",
   "meta": {
     "generated": null,
-    "label": "baseline",
+    "label": "current",
     "note": "Descriptive model. These are the out-of-sample scorecards produced by daily_v5/oos_harness.py: game-margin walkforward/frozen scoring, interval coverage, and next-season predictiveness of net plus the six factors.",
-    "source_scorecard": "daily_v5/out/oos/scorecard_baseline.parquet",
-    "source_manifest": "daily_v5/out/oos/manifest_baseline.json",
+    "source_scorecard": "daily_v5/out/oos/scorecard_current.parquet",
+    "source_manifest": "daily_v5/out/oos/manifest_current.json",
     "caveats": [
       "game_margin uses walkforward and frozen views; strict_pregame is not_available until roster/minute inputs exclude realized_minutes.",
       "game accuracy currently uses realized_minutes for team aggregation, so it is rating quality given realized usage rather than strict_pregame forecasting.",
@@ -416,48 +416,8 @@
     }
   },
   "minutes_gp": {
-    "status": "candidate_only_no_historical_promotion",
-    "source_scorecard": "daily_v5/out/depth_model/minutes_gp_scorecard.parquet",
-    "source_manifest": "daily_v5/out/depth_model/minutes_gp_manifest.json",
-    "decision": "candidate_only",
-    "promotion": "promotion_allowed",
-    "metrics": {
-      "teams": {
-        "block": "source_identity",
-        "value": 30.0,
-        "status": "pass"
-      },
-      "roster_rows": {
-        "block": "source_identity",
-        "value": 596.0,
-        "status": "info"
-      },
-      "duplicate_franchise_key_rows": {
-        "block": "source_identity",
-        "value": 0.0,
-        "status": "pass"
-      },
-      "max_team_mpg_error": {
-        "block": "allocation",
-        "value": 0.0,
-        "status": "pass"
-      },
-      "negative_mpg_rows": {
-        "block": "allocation",
-        "value": 0.0,
-        "status": "pass"
-      },
-      "low_confidence_rows": {
-        "block": "confidence",
-        "value": 23.0,
-        "status": "info"
-      },
-      "learned_model_gate": {
-        "block": "historical_validation",
-        "value": null,
-        "status": "dormant_baseline_only"
-      }
-    }
+    "status": "not_available",
+    "reason": "minutes/GP committee metrics are only attached for the canonical accuracy build"
   },
   "translation": {
     "status": "not_available",
@@ -465,21 +425,21 @@
   },
   "artifact_versions": {
     "scorecard": {
-      "path": "daily_v5/out/oos/scorecard_baseline.parquet",
+      "path": "daily_v5/out/oos/scorecard_current.parquet",
       "exists": true,
       "size": 3811,
-      "mtime": 1783404930.037494
+      "mtime": 1783455697.4842873
     },
     "manifest": {
-      "path": "daily_v5/out/oos/manifest_baseline.json",
+      "path": "daily_v5/out/oos/manifest_current.json",
       "exists": true,
-      "size": 6999,
-      "mtime": 1783404930.765994
+      "size": 6982,
+      "mtime": 1783455698.1878273
     },
     "git": {
       "sha": "4e58283023b62d495f2d55591daa5b708718387a",
       "dirty": true,
-      "dirty_entries": 206
+      "dirty_entries": 233
     },
     "game_model_params": {
       "hca": 1.5370466094308175,

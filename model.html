@@ -486,9 +486,13 @@
       <tbody><tr><td class="l">…</td><td>…</td><td>…</td></tr></tbody>
     </table>
   </div>
-  <p>Net carries forward at <strong>r ≈ 0.90</strong>: where a player ranks today is most of where
-  they rank a year out. The factors most tied to motor and role — turnovers and offensive
-  second-chance — are the stickiest; defensive second-chance (dSC) is the noisiest to carry.</p>
+  <p>Net carries forward at <strong>r ≈ 0.89</strong> against a five-year-trailing target: where a
+  player ranks today is most of where they rank a year out. But that number is inflated by <em>window
+  overlap</em> — the target board shares most of today's data. Scored against a genuinely
+  <strong>non-overlapping single-season</strong> target, the honest forward correlation is
+  <strong>≈ 0.48</strong> (both numbers are in the frozen scoreboard below). The factors most tied to
+  motor and role — turnovers and offensive second-chance — are the stickiest; defensive second-chance
+  (dSC) is the noisiest to carry.</p>
   <h3>Are today's player CIs a next-season forecast band?</h3>
   <p>No. This diagnostic presses today's estimate SE into service against next-season RAPM. The
   table shows why that is a different product from a true forecast interval.</p>
@@ -509,6 +513,47 @@
     model. A genuine forward model shrinks those bands and clears this bar — that's the projection
     described next.</p>
   </div>
+
+  <h3 id="scoreboard">Frozen forecast scoreboard — tamper-evident accuracy</h3>
+  <p>Every accuracy number on this page is re-derived from a frozen on-disk artifact and hash-chained
+  into an append-only ledger (<code>daily_v5/ledger.py</code> → <code>out/ledger.jsonl</code>). If any
+  figure no longer reproduces from its artifact within <strong>±0.01</strong>, this panel
+  <strong>refuses to render</strong> rather than show a stale number. Season-ahead forecasts (2026-27
+  team win totals + playoff odds) are hash-committed <em>before</em> the season tips — git commit
+  timestamps are the tamper-evidence authority, so no forecast can be quietly rewritten after the fact.</p>
+  <div id="sb_msg" class="callout" style="display:none"></div>
+  <div class="scroll" style="max-width:660px">
+    <table class="tbl" id="sb_backfill">
+      <thead><tr><th class="l">Frozen metric</th><th>Value</th><th>Unit</th><th>Reproduces</th></tr></thead>
+      <tbody><tr><td class="l">…</td><td>…</td><td>…</td><td>…</td></tr></tbody>
+    </table>
+  </div>
+  <p class="cap" id="sb_cap" style="color:var(--faint);font-size:var(--fs-2)"></p>
+  <h4>2026-27 committed forecasts (top 8 by projected wins)</h4>
+  <div class="scroll" style="max-width:560px">
+    <table class="tbl" id="sb_fc">
+      <thead><tr><th class="l">Team</th><th>Proj wins</th><th>80% band</th><th>Playoff %</th><th>Realized</th></tr></thead>
+      <tbody><tr><td class="l">…</td><td>…</td><td>…</td><td>…</td><td>…</td></tr></tbody>
+    </table>
+  </div>
+  <p class="cap" style="color:var(--faint);font-size:var(--fs-2)">Committed 2026-07-07, before the
+  2026-27 season. The "Realized" column fills as games are played and the forecast is scored against
+  actual wins — win or lose, the number was frozen in advance.</p>
+
+  <h3 id="clv">Closing-line value — do we beat the market?</h3>
+  <p><strong>No rating changes here.</strong> Feeding market lines back into the ratings is a
+  measured-dead lever (it makes win forecasts <em>worse</em>), so this is pure transparency: it lines
+  up our frozen pre-game margin against the sportsbook <em>closing</em> line (ESPN pickcenter) and asks
+  whether our number leads or lags the sharpest public estimate. An efficient close is very hard to
+  beat — showing that honestly is the point.</p>
+  <div id="clv_msg" class="callout" style="display:none"></div>
+  <div class="scroll" style="max-width:520px">
+    <table class="tbl" id="clv_tbl">
+      <thead><tr><th class="l">Measure</th><th>Value</th></tr></thead>
+      <tbody><tr><td class="l">…</td><td>…</td></tr></tbody>
+    </table>
+  </div>
+  <p class="cap" id="clv_cap" style="color:var(--faint);font-size:var(--fs-2)"></p>
 
   <h2 id="forward">The forward projection — 1 to 5 years out</h2>
   <p>Everything above is <strong>descriptive</strong> — already-measured RAPM. The
@@ -843,6 +888,79 @@
     .catch(function(){
       show('The accuracy scorecard (accuracy.json) could not be loaded. The methodology above still '
         +'describes the out-of-sample tests; rerun daily_v5/oos_harness.py to regenerate the numbers.');
+    });
+})();
+
+/* ---- P1.1 frozen forecast scoreboard: fetch the hash-chained ledger feed ---- */
+(function(){
+  var msg=document.getElementById('sb_msg');
+  function show(t){ if(msg){ msg.style.display='block'; msg.textContent=t; } }
+  fetch('scoreboard.json').then(function(r){ if(!r.ok) throw 0; return r.json(); })
+    .then(function(j){
+      if(j.status==='REFUSED'){
+        show('Scoreboard REFUSED to render: '+j.reason+'. A frozen number no longer reproduces from its '
+          +'artifact, so nothing is shown rather than a stale figure — which is the point.');
+        return;
+      }
+      var dec=function(u){ return u==='wins'?2:(u==='pts'?2:3); };
+      var h='';
+      (j.backfill||[]).forEach(function(b){
+        var ok=b.reproduces?'<span style="color:#2a8a4a">✓</span>':'<span style="color:#c0392b">✗</span>';
+        var v=(b.stored==null?'—':(+b.stored).toFixed(dec(b.unit)));
+        h+='<tr><td class="l lead" title="'+(b.note||'').replace(/"/g,'&quot;')+'">'
+          +b.name.replace(/_/g,' ')+'</td><td>'+v+'</td><td>'+b.unit+'</td><td>'+ok+'</td></tr>';
+      });
+      document.querySelector('#sb_backfill tbody').innerHTML=h;
+      var cap=document.getElementById('sb_cap');
+      if(cap){
+        var flags=(j.drift_flags||[]);
+        cap.textContent='Hash chain intact; all '+(j.backfill||[]).length+' metrics reproduce from their '
+          +'frozen artifacts within ±'+j.tol+'. '+(flags.length? flags.length+' figure(s) have since drifted '
+          +'from a previously published number (shown honestly): '+flags.join(', ').replace(/_/g,' ')+'.'
+          : 'None have drifted from previously published numbers.');
+      }
+      var fc=(j.forecasts||[]).slice().sort(function(a,b){
+        return b.forecast.mc_mean_wins-a.forecast.mc_mean_wins; }).slice(0,8);
+      var fh='';
+      fc.forEach(function(f){
+        var w=f.forecast;
+        fh+='<tr><td class="l lead">'+f.franchise+'</td><td>'+w.mc_mean_wins.toFixed(1)+'</td><td>'
+          +w.p10_wins.toFixed(0)+'–'+w.p90_wins.toFixed(0)+'</td><td>'
+          +(w.make_playoffs_prob*100).toFixed(0)+'%</td><td>'+(f.realized==null?'—':f.realized)+'</td></tr>';
+      });
+      document.querySelector('#sb_fc tbody').innerHTML=fh;
+    })
+    .catch(function(){
+      show('The frozen scoreboard (scoreboard.json) is not present yet. Build it with '
+        +'daily_v5/ledger.py build --freeze <date> then ledger.py render.');
+    });
+})();
+
+/* ---- P1.2 closing-line-value panel (transparency; ratings never change) ---- */
+(function(){
+  var msg=document.getElementById('clv_msg');
+  function show(t){ if(msg){ msg.style.display='block'; msg.textContent=t; } }
+  fetch('clv_panel.json').then(function(r){ if(!r.ok) throw 0; return r.json(); })
+    .then(function(j){
+      if(j.status!=='OK'){ show('CLV panel unavailable.'); return; }
+      var edge=j.model_ats_edge_when_disagree_ge_1p5;
+      var rows=[
+        ['Games matched to a close', j.n_matched+' / '+j.n_closing_lines+' ('+(j.match_rate*100).toFixed(0)+'%)'],
+        ['Join errors (final vs stored)', j.join_errors_final_vs_stored],
+        ['Our pre-game margin MAE', j.our_pregame_margin_mae+' pts'],
+        ['Market closing-line MAE', j.market_close_margin_mae+' pts'],
+        ['We beat the close by', j.we_beat_the_close_mae_by+' pts (negative = the close is sharper)'],
+        ['Same-side agreement', (j.side_agreement_rate*100).toFixed(0)+'%'],
+        ['Our edge when we disagree ≥1.5', edge==null?'—':(edge*100).toFixed(0)+'% (≈50% = no edge vs the close)']
+      ];
+      document.querySelector('#clv_tbl tbody').innerHTML=rows.map(function(r){
+        return '<tr><td class="l lead">'+r[0]+'</td><td>'+r[1]+'</td></tr>'; }).join('');
+      var cap=document.getElementById('clv_cap');
+      if(cap) cap.textContent=(j.date_range?('Window '+j.date_range[0]+' → '+j.date_range[1]+'. '):'')
+        +j.disclaimer;
+    })
+    .catch(function(){
+      show('The CLV panel (clv_panel.json) is not present yet — run daily_v5/build_clv.py pull then build.');
     });
 })();
 </script>
