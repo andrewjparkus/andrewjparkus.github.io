@@ -92,14 +92,36 @@ function kpi(k,v,x,vcls){
 
 let DATA = null;
 
-fetch('projection_2026_27_teams.json')
-  .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
-  .then(d=>{ DATA=d; render(d); })
-  .catch(err=>{
-    document.getElementById('msg').innerHTML =
-      "Couldn't load the 2026-27 team projection (projection_2026_27_teams.json). "+esc(err.message)+
-      '<br><a href="projection.html">← back to the 2026-27 standings</a>';
-  });
+/* ── model toggle: RAPM decomp (default) | EPM blend (opt-in alternative dataset) ─────
+   Same localStorage key as projection.html so the choice follows the reader between the
+   standings and the team pages. Swaps to the parallel _blend teams JSON. */
+const MODEL_KEY = 'proj27_model';
+const TEAMS_SRC = { rapm: 'projection_2026_27_teams.json', blend: 'projection_2026_27_teams_blend.json' };
+let PMODEL = (localStorage.getItem(MODEL_KEY) === 'blend') ? 'blend' : 'rapm';
+const MCACHE = {};
+
+function loadModel(){
+  if (MCACHE[PMODEL]){ DATA = MCACHE[PMODEL]; render(DATA); return; }
+  const src = TEAMS_SRC[PMODEL];
+  fetch(src)
+    .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(d=>{ MCACHE[PMODEL]=d; DATA=d; render(d); })
+    .catch(err=>{
+      if (PMODEL === 'blend'){       // blend dataset unavailable -> fall back to the default
+        PMODEL = 'rapm'; localStorage.setItem(MODEL_KEY, 'rapm'); loadModel();
+        return;
+      }
+      document.getElementById('msg').innerHTML =
+        "Couldn't load the 2026-27 team projection ("+esc(src)+"). "+esc(err.message)+
+        '<br><a href="projection.html">← back to the 2026-27 standings</a>';
+    });
+}
+function setModel(mo){
+  if (mo === PMODEL) return;
+  PMODEL = mo; localStorage.setItem(MODEL_KEY, mo);
+  loadModel();
+}
+loadModel();
 
 function friendly(htmlMsg){
   document.getElementById('wrap').innerHTML =
@@ -155,6 +177,17 @@ function render(d){
   html += '<p class="sub">Forward 2026-27 per-team projection — the only forward-looking view of this roster. '
     + 'Wins are split across the roster so each player\'s contribution sums to the team total. '
     + 'See the full <a href="projection.html">2026-27 standings</a>.</p>';
+
+  // model toggle (mirrors projection.html; same persisted choice)
+  html += '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 10px">'
+    + '<span id="modelseg" class="seg" title="Projection model. RAPM decomp (default) is the internal six-factor model; EPM blend is an opt-in alternative that blends external EPM player values (w=0.50).">'
+    + '<button data-model="rapm" type="button"'+(PMODEL==='rapm'?' class="on"':'')+'>RAPM decomp</button>'
+    + '<button data-model="blend" type="button"'+(PMODEL==='blend'?' class="on"':'')+'>EPM blend</button>'
+    + '</span>'
+    + (PMODEL==='blend'
+        ? '<span style="font-size:11.5px;color:var(--faint)">blends external EPM player values, w=0.50 — opt-in alternative; RAPM decomp is the default</span>'
+        : '')
+    + '</div>';
 
   // ---- KPI strip ----
   const projW = num(team.proj_wins,1);
@@ -270,6 +303,9 @@ function render(d){
   }
 
   document.getElementById('wrap').innerHTML = html;
+  // the toggle is re-created on every render — re-wire its clicks
+  document.querySelectorAll('#modelseg button').forEach(b=>
+    b.addEventListener('click', ()=>setModel(b.dataset.model)));
 }
 </script>
 </body></html>
