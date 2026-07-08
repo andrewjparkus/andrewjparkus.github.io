@@ -133,8 +133,8 @@
     },
     "factors": {
       "net": {
-        "rmse": 1.0061,
-        "corr": 0.8757,
+        "rmse": 1.0028,
+        "corr": 0.8875,
         "n": 17204,
         "units": {
           "rmse": "points per 100 possessions",
@@ -142,8 +142,8 @@
         }
       },
       "oTS": {
-        "rmse": 0.7111,
-        "corr": 0.8571,
+        "rmse": 0.7214,
+        "corr": 0.8746,
         "n": 17204,
         "units": {
           "rmse": "points per 100 possessions",
@@ -151,8 +151,8 @@
         }
       },
       "oTOV": {
-        "rmse": 0.292,
-        "corr": 0.8468,
+        "rmse": 0.2654,
+        "corr": 0.8838,
         "n": 17204,
         "units": {
           "rmse": "points per 100 possessions",
@@ -160,8 +160,8 @@
         }
       },
       "oSC": {
-        "rmse": 0.3953,
-        "corr": 0.835,
+        "rmse": 0.3759,
+        "corr": 0.8577,
         "n": 17204,
         "units": {
           "rmse": "points per 100 possessions",
@@ -169,8 +169,8 @@
         }
       },
       "dTS": {
-        "rmse": 0.5457,
-        "corr": 0.8801,
+        "rmse": 0.5371,
+        "corr": 0.8826,
         "n": 17204,
         "units": {
           "rmse": "points per 100 possessions",
@@ -178,8 +178,8 @@
         }
       },
       "dTOV": {
-        "rmse": 0.246,
-        "corr": 0.8568,
+        "rmse": 0.2283,
+        "corr": 0.8732,
         "n": 17204,
         "units": {
           "rmse": "points per 100 possessions",
@@ -187,8 +187,8 @@
         }
       },
       "dSC": {
-        "rmse": 0.2759,
-        "corr": 0.787,
+        "rmse": 0.2781,
+        "corr": 0.7984,
         "n": 17204,
         "units": {
           "rmse": "points per 100 possessions",
@@ -197,32 +197,32 @@
       }
     },
     "net": {
-      "rmse": 1.0061,
-      "corr": 0.8757
+      "rmse": 1.0028,
+      "corr": 0.8875
     },
     "oTS": {
-      "rmse": 0.7111,
-      "corr": 0.8571
+      "rmse": 0.7214,
+      "corr": 0.8746
     },
     "oTOV": {
-      "rmse": 0.292,
-      "corr": 0.8468
+      "rmse": 0.2654,
+      "corr": 0.8838
     },
     "oSC": {
-      "rmse": 0.3953,
-      "corr": 0.835
+      "rmse": 0.3759,
+      "corr": 0.8577
     },
     "dTS": {
-      "rmse": 0.5457,
-      "corr": 0.8801
+      "rmse": 0.5371,
+      "corr": 0.8826
     },
     "dTOV": {
-      "rmse": 0.246,
-      "corr": 0.8568
+      "rmse": 0.2283,
+      "corr": 0.8732
     },
     "dSC": {
-      "rmse": 0.2759,
-      "corr": 0.787
+      "rmse": 0.2781,
+      "corr": 0.7984
     }
   },
   "next_season_ci": {
@@ -231,19 +231,19 @@
       "net": {
         "50": {
           "nominal": 0.5,
-          "realized": 0.9157,
+          "realized": 0.9111,
           "n": 17204,
           "units": "fraction"
         },
         "80": {
           "nominal": 0.8,
-          "realized": 0.9915,
+          "realized": 0.991,
           "n": 17204,
           "units": "fraction"
         },
         "90": {
           "nominal": 0.9,
-          "realized": 0.9984,
+          "realized": 0.998,
           "n": 17204,
           "units": "fraction"
         }
@@ -251,7 +251,47 @@
       "oTS": {
         "50": {
           "nominal": 0.5,
-          "realized": 0.8697,
+          "realized": 0.8638,
+          "n": 17204,
+          "units": "fraction"
+        },
+        "80": {
+          "nominal": 0.8,
+          "realized": 0.9769,
+          "n": 17204,
+          "units": "fraction"
+        },
+        "90": {
+          "nominal": 0.9,
+          "realized": 0.9927,
+          "n": 17204,
+          "units": "fraction"
+        }
+      },
+      "oTOV": {
+        "50": {
+          "nominal": 0.5,
+          "realized": 0.8604,
+          "n": 17204,
+          "units": "fraction"
+        },
+        "80": {
+          "nominal": 0.8,
+          "realized": 0.9751,
+          "n": 17204,
+          "units": "fraction"
+        },
+        "90": {
+          "nominal": 0.9,
+          "realized": 0.9922,
+          "n": 17204,
+          "units": "fraction"
+        }
+      },
+      "oSC": {
+        "50": {
+          "nominal": 0.5,
+          "realized": 0.8722,
           "n": 17204,
           "units": "fraction"
         },
@@ -263,47 +303,7 @@
         },
         "90": {
           "nominal": 0.9,
-          "realized": 0.9938,
-          "n": 17204,
-          "units": "fraction"
-        }
-      },
-      "oTOV": {
-        "50": {
-          "nominal": 0.5,
-          "realized": 0.8496,
-          "n": 17204,
-          "units": "fraction"
-        },
-        "80": {
-          "nominal": 0.8,
-          "realized": 0.9748,
-          "n": 17204,
-          "units": "fraction"
-        },
-        "90": {
-          "nominal": 0.9,
-          "realized": 0.9924,
-          "n": 17204,
-          "units": "fraction"
-        }
-      },
-      "oSC": {
-        "50": {
-          "nominal": 0.5,
-          "realized": 0.8668,
-          "n": 17204,
-          "units": "fraction"
-        },
-        "80": {
-          "nominal": 0.8,
-          "realized": 0.9791,
-          "n": 17204,
-          "units": "fraction"
-        },
-        "90": {
-          "nominal": 0.9,
-          "realized": 0.9947,
+          "realized": 0.9949,
           "n": 17204,
           "units": "fraction"
         }
@@ -311,19 +311,19 @@
       "dTS": {
         "50": {
           "nominal": 0.5,
-          "realized": 0.935,
+          "realized": 0.9346,
           "n": 17204,
           "units": "fraction"
         },
         "80": {
           "nominal": 0.8,
-          "realized": 0.9959,
+          "realized": 0.9956,
           "n": 17204,
           "units": "fraction"
         },
         "90": {
           "nominal": 0.9,
-          "realized": 0.9995,
+          "realized": 0.9994,
           "n": 17204,
           "units": "fraction"
         }
@@ -331,19 +331,19 @@
       "dTOV": {
         "50": {
           "nominal": 0.5,
-          "realized": 0.8825,
+          "realized": 0.8905,
           "n": 17204,
           "units": "fraction"
         },
         "80": {
           "nominal": 0.8,
-          "realized": 0.9845,
+          "realized": 0.9874,
           "n": 17204,
           "units": "fraction"
         },
         "90": {
           "nominal": 0.9,
-          "realized": 0.996,
+          "realized": 0.9964,
           "n": 17204,
           "units": "fraction"
         }
@@ -351,58 +351,58 @@
       "dSC": {
         "50": {
           "nominal": 0.5,
-          "realized": 0.9327,
+          "realized": 0.9266,
           "n": 17204,
           "units": "fraction"
         },
         "80": {
           "nominal": 0.8,
-          "realized": 0.9948,
+          "realized": 0.9949,
           "n": 17204,
           "units": "fraction"
         },
         "90": {
           "nominal": 0.9,
-          "realized": 0.9993,
+          "realized": 0.9992,
           "n": 17204,
           "units": "fraction"
         }
       }
     },
     "net": {
-      "50": 0.9157,
-      "80": 0.9915,
-      "90": 0.9984
+      "50": 0.9111,
+      "80": 0.991,
+      "90": 0.998
     },
     "oTS": {
-      "50": 0.8697,
-      "80": 0.9797,
-      "90": 0.9938
+      "50": 0.8638,
+      "80": 0.9769,
+      "90": 0.9927
     },
     "oTOV": {
-      "50": 0.8496,
-      "80": 0.9748,
-      "90": 0.9924
+      "50": 0.8604,
+      "80": 0.9751,
+      "90": 0.9922
     },
     "oSC": {
-      "50": 0.8668,
-      "80": 0.9791,
-      "90": 0.9947
+      "50": 0.8722,
+      "80": 0.9797,
+      "90": 0.9949
     },
     "dTS": {
-      "50": 0.935,
-      "80": 0.9959,
-      "90": 0.9995
+      "50": 0.9346,
+      "80": 0.9956,
+      "90": 0.9994
     },
     "dTOV": {
-      "50": 0.8825,
-      "80": 0.9845,
-      "90": 0.996
+      "50": 0.8905,
+      "80": 0.9874,
+      "90": 0.9964
     },
     "dSC": {
-      "50": 0.9327,
-      "80": 0.9948,
-      "90": 0.9993
+      "50": 0.9266,
+      "80": 0.9949,
+      "90": 0.9992
     }
   },
   "projection": {
@@ -427,19 +427,19 @@
     "scorecard": {
       "path": "daily_v5/out/oos/scorecard_current.parquet",
       "exists": true,
-      "size": 3819,
-      "mtime": 1783539169.611792
+      "size": 3811,
+      "mtime": 1783553881.2508953
     },
     "manifest": {
       "path": "daily_v5/out/oos/manifest_current.json",
       "exists": true,
       "size": 6982,
-      "mtime": 1783539170.2895162
+      "mtime": 1783553881.955249
     },
     "git": {
       "sha": "4e58283023b62d495f2d55591daa5b708718387a",
       "dirty": true,
-      "dirty_entries": 237
+      "dirty_entries": 239
     },
     "game_model_params": {
       "hca": 1.5370466094308175,
@@ -463,8 +463,8 @@
     "source": "daily_v5/out/p2_0/verify_composite/frozen_preseason_all.json",
     "pooled": {
       "rapm_decomp": {
-        "win_mae": 6.939,
-        "brier": 0.18167
+        "win_mae": 6.8848,
+        "brier": 0.17895
       },
       "pure_epm": {
         "win_mae": 6.1834,
@@ -473,15 +473,15 @@
     },
     "per_season": {
       "2024": {
-        "rapm_decomp": 6.352773333333333,
+        "rapm_decomp": 6.374973333333334,
         "pure_epm": 5.989913333333334
       },
       "2025": {
-        "rapm_decomp": 6.77504,
+        "rapm_decomp": 6.717680000000001,
         "pure_epm": 5.9974066666666666
       },
       "2026": {
-        "rapm_decomp": 7.689073333333334,
+        "rapm_decomp": 7.561726666666668,
         "pure_epm": 6.56286
       }
     }
