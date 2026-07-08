@@ -221,17 +221,18 @@
   <h2 id="resolve">How a "daily re-solve" works</h2>
   <p>Each day's value is a full RAPM under a <strong>5-year rolling-window time-decay</strong>
   regime: a time-decayed ridge over <em>every possession in the trailing five years</em>, recent games
-  weighted far more via a <strong>700-day half-life</strong> (a game's weight is
-  <code>2^(−age/700)</code>). "As of day D" just means feeding it games dated in (D−5yr, D] — there is
+  weighted far more via a <strong>550-day half-life</strong> (a game's weight is
+  <code>2^(−age/550)</code>). "As of day D" just means feeding it games dated in (D−5yr, D] — there is
   <strong>no carried-over state</strong>, so every day stands alone and the build is causally clean
   (planting a future game moves the as-of estimate by exactly 0.0). The window is chiefly for
-  <strong>speed and cross-league consistency</strong>; because the half-life already discounts old
-  games so steeply (a 5-year-old game weighs ~16%), it barely changes a current rating.</p>
-  <p>The ridge solves three column groups with separate penalties — offense and defense at
-  <code>α = 3000</code>, plus a small <code>α = 10</code> group of garbage-time nuisance columns —
-  over a decay-weighted, whitened design. It is a <strong>maximum-a-posteriori</strong> estimate
-  under a Gaussian prior: the <em>pure</em> series shrinks toward zero; the <em>prior-informed</em>
-  series shrinks all six factors toward a box-score prior instead (next section).</p>
+  <strong>speed and cross-league consistency</strong>; the 550-day half-life keeps the snapshot fresh
+  (a game ~1.5 years old already weighs half; a 5-year-old game ~2%).</p>
+  <p>The ridge solves each of the eight shot/decomposition components with its <strong>own tuned
+  regularization penalty</strong> (a per-component α on offense and defense — the stabilized "LOCK"
+  configuration), plus a small <code>α = 10</code> group of garbage-time nuisance columns, over a
+  decay-weighted, whitened design. It is a <strong>maximum-a-posteriori</strong> estimate under a
+  Gaussian prior: the <em>pure</em> series shrinks toward zero; the <em>prior-informed</em> series
+  shrinks each factor toward an informative box+EPM prior <em>inside</em> the ridge (next section).</p>
   <div class="callout">
     <strong>Scale, by the numbers.</strong> The NBA design alone is ~7.1M possession-rows × ~5,800
     player-columns. With ~10,200 league-days × five ridge solves each, that's on the order of
@@ -260,9 +261,10 @@
             calibrated to the public DataBallR ridge.</td>
             <td class="l"><strong>zero</strong>, all six factors</td></tr>
         <tr><td class="l lead">Prior-informed <em>(default)</em></td>
-            <td class="l">Same solve, but every factor leans on a daily, multi-league box-score prior
-            when lineup data is thin — so a rookie or fresh call-up starts somewhere sensible.</td>
-            <td class="l"><strong>box prior</strong>, all six factors</td></tr>
+            <td class="l">Same solve, but every factor is shrunk toward an informative box+EPM prior
+            <em>inside</em> the ridge, strongest when lineup data is thin — so a rookie or fresh
+            call-up starts somewhere sensible.</td>
+            <td class="l"><strong>box+EPM prior</strong>, all six factors</td></tr>
         <tr><td class="l lead">Box prior</td>
             <td class="l">The prior itself, on its own: a daily curve with a band, showing the
             box-score skill expected <em>before</em> any lineup data.</td>
@@ -270,45 +272,23 @@
       </tbody>
     </table>
   </div>
-  <p>The blend is exposure-weighted, <code>(1−M)·lineup + M·box</code> with
-  <code>M = α/(weff+α)</code>: with little on-court data a rating leans on the box estimate; as
-  possessions pile up the lineup data takes over. It touches <strong>all six factors</strong>, and the
-  reliability-fade keeps it deliberately modest — for established players it barely moves the rating, so
-  prior-informed and pure stay close for stars and on the headline net. The box's out-of-sample
-  <em>value</em> is uneven across the six, though (next) — worth knowing when you read a thin-data player.</p>
+  <p>The shrinkage happens <strong>inside the ridge</strong> — a MAP estimate where each factor's
+  coefficient is pulled toward a prior mean <code>μ</code> rather than toward zero (<code>β ~ N(μ, ·)</code>).
+  Its strength is the ridge penalty itself: strong when a player's decay-weighted exposure is thin
+  (rookies, call-ups, early season) and fading to near-zero as possessions pile up. So prior-informed and
+  pure stay close for established players and on the headline net; the prior mainly rescues thin-data
+  players. This replaced an earlier post-hoc blend — moving the prior <em>into</em> the solve is the
+  single biggest accuracy gain in the current build (see <a href="#accuracy">accuracy</a>).</p>
   <div class="callout">
-    <strong>Which factors does the box actually help?</strong> All six are blended toward the box (a
-    complete, consistent prior) — but the box's out-of-sample value is uneven, and because the
-    reliability-fade <code>M</code> puts almost all its weight on <strong>thin-data players</strong>
-    (rookies, call-ups, early season), the deciding test is how much the box improves prediction
-    <em>there</em>. It clearly helps three; on the other three the gain is negligible-to-slightly-negative,
-    so their blend is deliberately gentle:
-    <div class="scroll" style="max-width:560px;margin-top:9px">
-      <table class="tbl">
-        <thead><tr><th class="l">Factor</th><th>Box lift for thin-data players (Δr²)</th><th>Verdict</th></tr></thead>
-        <tbody>
-          <tr><td class="l lead">oSC</td><td class="pos">+0.029</td><td><strong>clear help</strong></td></tr>
-          <tr><td class="l lead">dTOV</td><td class="pos">+0.024</td><td><strong>clear help</strong></td></tr>
-          <tr><td class="l lead">dTS</td><td class="pos">+0.015</td><td><strong>clear help</strong></td></tr>
-          <tr><td class="l lead">oTOV</td><td>+0.003</td><td>marginal</td></tr>
-          <tr><td class="l lead">oTS</td><td class="neg">−0.001</td><td>marginal</td></tr>
-          <tr><td class="l lead">dSC</td><td class="neg">−0.006</td><td>marginal</td></tr>
-        </tbody>
-      </table>
-    </div>
-    We blend all six for a complete prior even where the accuracy case is thin — the reliability-fade
-    ensures the marginal three barely move a real rating. On high-exposure veterans the blend is near-zero
-    for <em>every</em> factor anyway — their lineup rating is already reliable — which is why prior-informed
-    and pure look nearly identical for stars.
-  </div>
-  <div class="callout">
-    <strong>Sharper defense, from tracking-flavored stats.</strong> The box prior now folds in a
-    handful of <strong>predictive box stats</strong> — steal rate, block rate, shot-location frequency —
-    from an external forward-looking box model (Dunks &amp; Threes' EPM). Predictive steal rate is the
-    single strongest new signal for <code>dTOV</code>: a high-steal defender now carries a bigger
-    turnover-forcing prior (the box's out-of-sample edge on <code>dTOV</code> rose by ~0.08 r², and a
-    defender's projected dTOV now tracks their steal rate at <code>r ≈ 0.88</code>). It's the one place
-    a little tracking-flavored data measurably sharpens the defensive priors.
+    <strong>What the prior is made of.</strong> Each factor's prior mean comes from a hyper-sparse,
+    <strong>frozen linear map of predictive box + EPM rates</strong> (Dunks &amp; Threes' forward-looking
+    box model) onto that component — three-point value from 3P% and 3PA rate, turnover value from steal
+    rate, second-chance from offensive-rebound rate, and so on across the eight decomposition components.
+    A component earns a prior only if it improves the <strong>summed, out-of-time</strong> prediction on
+    held-out cut dates — a sum-level gate, not in-sample fit. That discipline is what keeps per-factor
+    gains from cancelling at the team level (a real trap: tuning each factor in isolation measurably
+    <em>hurt</em> the net). The shipped stack priors all eight components on the sides where the map clears
+    the gate.
   </div>
 
   <h2 id="ref">Does it match a known reference?</h2>
@@ -443,6 +423,22 @@
   <code>strict_pregame</code> forecast.</p>
 
   <div id="acc_msg" class="callout" style="display:none">Loading the accuracy scorecard…</div>
+
+  <h3>Projecting a season: RAPM decomp vs external EPM</h3>
+  <p>The sharpest test of the ratings as a <em>projection</em>: freeze each source at a single preseason
+  snapshot, simulate the season, and score the projected win totals against what actually happened. This
+  is the internal <strong>RAPM decomposition</strong> (the model on this site) against
+  <strong>Dunks &amp; Threes' EPM</strong>, pooled over 2024–26 (lower win MAE is better).</p>
+  <div class="scroll" style="max-width:560px">
+    <table class="tbl" id="acc_proj">
+      <thead><tr>
+        <th class="l">Source</th><th>Win MAE</th><th>Brier</th>
+        <th class="grp">2024</th><th>2025</th><th>2026</th>
+      </tr></thead>
+      <tbody><tr><td class="l">…</td><td>…</td><td>…</td><td class="grp">…</td><td>…</td><td>…</td></tr></tbody>
+    </table>
+  </div>
+  <p class="cap" id="acc_proj_cap" style="color:var(--faint);font-size:var(--fs-2)"></p>
 
   <h3>Predicting game margins</h3>
   <p>Feeding the team RAPM into the game model and scoring every game out-of-sample. The
@@ -874,9 +870,28 @@
     if(el) el.innerHTML=h;
   }
 
+  function fillProj(pa){
+    var el=document.querySelector('#acc_proj tbody'); if(!el) return;
+    var po=pa.pooled||{}, per=pa.per_season||{}, yrs=['2024','2025','2026'];
+    var rows=[['RAPM decomp','rapm_decomp'],['Pure EPM (D&amp;T)','pure_epm']];
+    var f1=function(v){return v==null?'—':(+v).toFixed(2);}, f3=function(v){return v==null?'—':(+v).toFixed(3);};
+    var h='';
+    rows.forEach(function(r){
+      var k=r[1], pooled=po[k]||{};
+      h+='<tr><td class="l lead">'+r[0]+'</td><td>'+f1(pooled.win_mae)+'</td><td>'+f3(pooled.brier)+'</td>';
+      yrs.forEach(function(y,i){ var v=(per[y]||{})[k]; h+='<td'+(i===0?' class="grp"':'')+'>'+f1(v)+'</td>'; });
+      h+='</tr>';
+    });
+    el.innerHTML=h;
+    var cap=document.getElementById('acc_proj_cap');
+    if(cap) cap.innerHTML='Frozen-preseason as-of-snapshot evaluation (10k Monte-Carlo per season, '
+      +'pooled 2024–26). EPM is a strong external forward model; the internal RAPM decomp is the shipped '
+      +'default. Blend/hybrid combinations were tested and retired — RAPM decomp is the product.';
+  }
   fetch('accuracy.json').then(function(r){ if(!r.ok) throw 0; return r.json(); })
     .then(function(j){
       if(msg) msg.style.display='none';
+      if(j.projection_accuracy_frozen_preseason) fillProj(j.projection_accuracy_frozen_preseason);
       if(j.game_margin){
         fillGame(j.game_margin);
         if(j.game_calibration&&j.game_calibration.interval_coverage) fillCov(j.game_calibration.interval_coverage);

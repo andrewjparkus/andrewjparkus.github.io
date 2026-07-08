@@ -37,15 +37,6 @@
   <h1 style="margin-top:6px">2026-27 <b>projection</b><span class="forwardtag">forward</span></h1>
   <p class="sub" id="sub">The only forward-looking page on the site — every other page is descriptive of play already on the books. This one projects next season.
     <a href="teams.html" style="color:var(--accent)">See 2025-26 team ratings →</a></p>
-  <!-- model toggle (mirrors the Explorer mode seg): RAPM decomp = default; EPM blend + RAPM-EPM hybrid = opt-in alternatives -->
-  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 4px">
-    <span id="modelseg" class="seg" title="Projection model. RAPM decomp (default) is the internal six-factor model; EPM blend is an opt-in alternative that blends external EPM player values (w=0.50); RAPM-EPM hybrid selects per player — external EPM for veterans, internal RAPM for rookies (EPM has no rookie ratings).">
-      <button data-model="rapm" type="button">RAPM decomp</button>
-      <button data-model="blend" type="button">EPM blend</button>
-      <button data-model="hybrid" type="button">RAPM-EPM hybrid</button>
-    </span>
-    <span id="modelcap" style="font-size:11.5px;color:var(--faint)"></span>
-  </div>
   <p class="legend" id="legend"></p>
 
   <div class="confs" id="confs"></div>
@@ -109,9 +100,9 @@ function buildConf(name, teams){
   let head = '<thead><tr>'+
     '<th class="l rank">#</th>'+
     '<th class="l">Team</th>'+
-    '<th>Proj W <span class="help" data-tip="Monte-Carlo mean wins over the 100k simulated seasons.">?</span></th>'+
+    '<th>Proj W <span class="help" data-tip="Monte-Carlo mean wins over 10k simulated seasons, each on its own re-drawn synthetic schedule.">?</span></th>'+
     '<th class="l">p10–p90 <span class="help" data-tip="10th–90th percentile win band (bar) with the projected mean (dot), over a win scale auto-fit to the league (lowest p10 to highest p90); tick = .500 (41).">?</span></th>'+
-    '<th>Playoffs % <span class="help" data-tip="Share of the 100k simulations in which the team reaches the 16-team playoff field, AFTER simulating each conference\'s 7–10 play-in tournament (so finishing 7–10 no longer guarantees a seed). Hover a row for its play-in odds (top-10).">?</span></th>'+
+    '<th>Playoffs % <span class="help" data-tip="Share of the 10k simulations in which the team reaches the 16-team playoff field, AFTER simulating each conference\'s 7–10 play-in tournament (so finishing 7–10 no longer guarantees a seed). Hover a row for its play-in odds (top-10).">?</span></th>'+
     '</tr></thead>';
 
   let body = "";
@@ -186,59 +177,22 @@ function render(data){
   // foot: synthetic schedule + MC + band composition (terse)
   const ng = meta.n_games != null ? meta.n_games : 1230;
   document.getElementById("foot").textContent =
-    "Bands: 100k Monte-Carlo over a synthetic "+ng+"-game schedule "+
+    "Bands: 10k Monte-Carlo, each sim on its OWN re-drawn synthetic "+ng+"-game schedule "+
     "(HCA "+(meta.hca!=null?(+meta.hca).toFixed(2):"–")+" pts, σ "+(meta.sigma!=null?(+meta.sigma).toFixed(1):"–")+" pts/game). "+
-    "Each sim re-draws every rating from its own uncertainty, so p10–p90 captures rating + game-to-game variance. "+
+    "Each sim re-draws its schedule AND every rating from its own uncertainty, so p10–p90 captures schedule + rating + game-to-game variance. "+
     "Model: "+(meta.projection_model||"carry-forward + aging")+".";
 
   document.getElementById("msg").style.display = "none";
 }
 
-/* ── model toggle: RAPM decomp (default) | EPM blend | RAPM-EPM hybrid (opt-in alternatives) ─────
-   Swaps the data source to the parallel _blend / _hybrid JSON; persisted in localStorage and shared
-   with team2027.html. Both alternatives are clearly captioned as external-data opt-in. */
-const MODEL_KEY = "proj27_model";
-const MODEL_SRC = { rapm: "projection_2026_27.json", blend: "projection_2026_27_blend.json",
-                    hybrid: "projection_2026_27_hybrid.json" };
-const MODEL_CAP = {
-  rapm: "",
-  blend: "blends external EPM player values, w=0.50 — opt-in alternative; RAPM decomp is the default",
-  hybrid: "per-player selection: external EPM for veterans, internal RAPM for rookies (EPM has no rookie ratings) — opt-in alternative; RAPM decomp is the default"
-};
-const MODEL_SET = { rapm: 1, blend: 1, hybrid: 1 };
-let PMODEL = MODEL_SET[localStorage.getItem(MODEL_KEY)] ? localStorage.getItem(MODEL_KEY) : "rapm";
-const CACHE = {};
-
-function paintModelSeg(){
-  document.querySelectorAll("#modelseg button").forEach(b=>
-    b.classList.toggle("on", b.dataset.model === PMODEL));
-  document.getElementById("modelcap").textContent = MODEL_CAP[PMODEL];
-}
-function loadModel(){
-  paintModelSeg();
-  if (CACHE[PMODEL]){ render(CACHE[PMODEL]); return; }
-  const src = MODEL_SRC[PMODEL];
-  const m = document.getElementById("msg");
-  m.style.display = ""; m.textContent = "Loading projection…";
-  fetch(src)
-    .then(r=>{ if(!r.ok) throw new Error(src+" "+r.status); return r.json(); })
-    .then(d=>{ CACHE[PMODEL]=d; render(d); })
-    .catch(()=>{
-      if (PMODEL !== "rapm"){        // alternative dataset unavailable -> fall back to the default
-        PMODEL = "rapm"; localStorage.setItem(MODEL_KEY, "rapm"); loadModel();
-        return;
-      }
-      m.style.display = "";
-      m.textContent = "Couldn't load the 2026-27 projection ("+src+").";
-    });
-}
-function setModel(mo){
-  if (mo === PMODEL) return;
-  PMODEL = mo; localStorage.setItem(MODEL_KEY, mo);
-  loadModel();
-}
-document.querySelectorAll("#modelseg button").forEach(b=>
-  b.addEventListener("click", ()=>setModel(b.dataset.model)));
-loadModel();
+/* RAPM-decomp is the only projection product now (EPM-blend / RAPM-EPM-hybrid toggles removed
+   2026-07-08 per owner). Single fetch of the default projection JSON. */
+fetch("projection_2026_27.json")
+  .then(r=>{ if(!r.ok) throw new Error("projection_2026_27.json "+r.status); return r.json(); })
+  .then(d=>{ render(d); })
+  .catch(()=>{
+    const m = document.getElementById("msg");
+    m.style.display = ""; m.textContent = "Couldn't load the 2026-27 projection (projection_2026_27.json).";
+  });
 </script>
 </body></html>
