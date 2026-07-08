@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "license": "CC-BY-4.0",
-  "generated": "20260707",
+  "generated": "20260708",
   "factors": {
     "oTS": "offensive true-shooting value (ALT_EFG_VALUE + ALT_FT), pts/100",
     "oTOV": "offensive ball security / turnover avoidance, pts/100",
@@ -18,9 +18,9 @@
     "gleague"
   ],
   "data_freshness": {
-    "nba": "20260707",
-    "college": "20260707",
-    "gleague": "20260707"
+    "nba": "20260708",
+    "college": "20260708",
+    "gleague": "20260708"
   },
   "minutes_source": "current",
   "minutes_provenance": {
@@ -74,7 +74,7 @@
   "changelog": [
     {
       "v": "1.0.0",
-      "date": "20260707",
+      "date": "20260708",
       "note": "initial public export"
     }
   ]
