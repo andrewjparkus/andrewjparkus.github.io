@@ -42,16 +42,6 @@
   /* two balanced columns: percentile bars (left) + radar (right), vertically centered to each other */
   .profcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px 30px;align-items:center}
   .radarwrap{max-width:330px;margin:0 auto;width:100%}
-  /* ── pure-vs-box explainer ── */
-  #pvb{display:none;margin-top:28px;border-top:1px solid var(--line);padding-top:6px}
-  .netrow{display:flex;gap:24px;flex-wrap:wrap;margin:12px 0 4px;font-variant-numeric:tabular-nums}
-  .swatch{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:middle}
-  .frow{display:flex;align-items:center;gap:10px;margin:9px 0}
-  .frow .flab{width:46px;font-size:12.5px;font-weight:700;color:#cdd9e6}
-  :root[data-theme=light] .frow .flab{color:#33425a}
-  .pair{flex:1;min-width:160px}
-  .deco{flex:1.2;min-width:200px}
-  .frow .delta{width:64px;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}
   /* ── density compare sub-view ── */
   #density{display:none;margin-top:24px}
   #densplot{margin-top:4px}
@@ -129,21 +119,6 @@
       </div>
     </div>
 
-    <!-- ── PURE-vs-BOX EXPLAINER (box mode only) ── -->
-    <div id="pvb">
-      <div class="sectitle">Pure vs box — why the box prior reads lower
-        <span style="font-weight:400;color:var(--faint)">· per-factor retention</span></div>
-      <div class="netrow" id="netrow"></div>
-      <div style="display:flex;gap:14px;font-size:11px;color:var(--muted);margin-bottom:6px;flex-wrap:wrap">
-        <span><span class="swatch" style="background:var(--pure)"></span>pure RAPM</span>
-        <span><span class="swatch" style="background:var(--box)"></span>box prior</span>
-        <span><span class="swatch" style="background:var(--amp)"></span>translate amplifies (slope&gt;1)</span>
-      </div>
-      <div id="factors"></div>
-      <div class="callout" id="pvbcap"></div>
-      <div class="legend" id="pvblegend"></div>
-    </div>
-
     <!-- ── DENSITY COMPARE sub-view (compare mode only) ── -->
     <div id="density">
       <div class="sectitle">True-talent densities
@@ -177,11 +152,10 @@ const q=document.getElementById('q'), drop=document.getElementById('drop');
 let INDEX=[], curOpts=[], active=-1, CHARTS=[], SER=null;
 
 // ── lazy-loaded, cached secondary data files ────────────────────────────────
-let QUANT=null, CONTR=null;
+let QUANT=null;
 function lazy(file, cache){ return cache.p || (cache.p = fetch(file).then(r=>r.ok?r.json():null).catch(()=>null)); }
-const _q={}, _c={};
+const _q={};
 const getQuant = ()=>lazy('quantiles.json',_q).then(d=>QUANT=d);
-const getContr = ()=>lazy('box_contraction.json',_c).then(d=>CONTR=d);
 
 // ── forward-projection overlay (opt-in; fetched ONCE, cached) ─────────────────
 // projection_series.json: { meta:{factors,...}, players:{ "<pid>":{ last_season,
@@ -254,7 +228,6 @@ function activeMode(){return SERIES[MODE]?MODE:'prior';}  // honor preference; f
 function setMode(m){
   if(!SERIES[m])return;                              // ignore unavailable mode (button disabled anyway)
   MODE=m; localStorage.setItem('rapm_mode',m);
-  syncSeg(); renderActive(); renderPVB();
 }
 function syncSeg(){
   const am=activeMode();
@@ -355,9 +328,10 @@ function Chart(mount,ser,key,proj){
   if(PT){
     const lx=X(n-1), ly=Y(v[n-1]);                       // anchor at the live curve's last measured point
     // widening 80% CI band (a filled cone) from the anchor out through every horizon
-    let up=`${lx.toFixed(1)},${ly.toFixed(1)} `, dn=`${lx.toFixed(1)},${ly.toFixed(1)}`;
+    let up=`${lx.toFixed(1)},${ly.toFixed(1)} `, dn='';
     PT.forEach((t,h)=>{const xp=XP(h);up+=`${xp.toFixed(1)},${Y(t.val+Z80*t.se).toFixed(1)} `;});
-    for(let h=PT.length-1;h>=0;h--){const xp=XP(h);dn=`${xp.toFixed(1)},${Y(PT[h].val-Z80*PT[h].se).toFixed(1)} `+dn;}
+    // lower edge back RIGHT->LEFT so the ring is anchor->top(L-R)->bottom(R-L); L->R here drew a bow-tie
+    for(let h=PT.length-1;h>=0;h--){const xp=XP(h);dn+=`${xp.toFixed(1)},${Y(PT[h].val-Z80*PT[h].se).toFixed(1)} `;}
     svg.appendChild(el('polygon',{points:up+dn,fill:'var(--amber)','fill-opacity':.10,stroke:'none'}));
     // one continuous dashed centre line through the anchor and every projected point
     const mid=[`${lx.toFixed(1)},${ly.toFixed(1)}`].concat(PT.map((t,h)=>`${XP(h).toFixed(1)},${Y(t.val).toFixed(1)}`)).join(' ');
@@ -436,7 +410,6 @@ function show(){
   if(PROJON){ getProj().then(renderActive); }
   else { renderActive(); }
   renderProfile();   // production profile (single-player, latest day)
-  renderPVB();       // pure-vs-box explainer (shown only in box mode)
   syncCmpList();
   window.scrollTo({top:90,behavior:'smooth'});
 }
@@ -500,97 +473,6 @@ function renderBars(mount,factors,row,q,lg){
     mount.appendChild(r);
   });
 }
-// ===== Pure-vs-box explainer (ported from pvb.html, box mode only) ==================
-// horizontal pure/box paired bars centered at 0, shared symmetric scale
-function pairBar(pure,box){
-  const W=170,H=34,mid=W/2;
-  const mag=Math.max(0.55,Math.abs(pure),Math.abs(box))*1.15;
-  const x=v=>mid+(v/mag)*(W/2-2);
-  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,width:'100%',height:H,role:'img',
-    'aria-label':`pure ${pure.toFixed(2)}, box ${box.toFixed(2)}`});
-  svg.appendChild(el('line',{x1:mid,y1:0,x2:mid,y2:H,stroke:'var(--zero)','stroke-width':1}));
-  [[pure,'var(--pure)',6],[box,'var(--box)',19]].forEach(([v,c,y])=>{
-    const xv=x(v),x0=Math.min(mid,xv),w=Math.abs(xv-mid);
-    svg.appendChild(el('rect',{x:x0,y:y,width:Math.max(w,1.5),height:9,fill:c,rx:2}));
-  });
-  return svg;
-}
-// decomposition bar: ridge_R (0..1 shrink) then translate_slope (may exceed 1 = amplify)
-function decoBar(c){
-  const W=210,H=34,unit=W*0.46;
-  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,width:'100%',height:H,role:'img',
-    'aria-label':`box-mapping skill ridge_R ${c.ridge_R}; translate slope ${c.translate_slope}`});
-  const one=unit; svg.appendChild(el('line',{x1:one,y1:0,x2:one,y2:H,stroke:'var(--zero)','stroke-width':1,'stroke-dasharray':'2 2'}));
-  svg.appendChild(el('rect',{x:0,y:5,width:Math.max(c.ridge_R*unit,2),height:9,fill:'var(--muted)',rx:2}));
-  const t1=el('text',{x:2,y:3,'font-size':9,fill:'#aebccd'}); t1.textContent='R='+c.ridge_R; svg.appendChild(t1);
-  const amp=c.translate_slope>1.0001;
-  svg.appendChild(el('rect',{x:0,y:19,width:Math.max(c.translate_slope*unit,2),height:9,fill:amp?'var(--amp)':'var(--muted)',rx:2}));
-  const t2=el('text',{x:2,y:33,'font-size':9,fill:amp?'#7fe9d8':'#aebccd'});
-  t2.textContent=(amp?'↑ ':'')+'tr='+c.translate_slope; svg.appendChild(t2);
-  return svg;
-}
-function renderPVB(){
-  const box=document.getElementById('pvb');
-  if(MULTI||activeMode()!=='box'){box.style.display='none';return;}
-  const pure=RAW.pure, bx=RAW.box;
-  if(!pure||!bx){
-    box.style.display='block';
-    document.getElementById('netrow').innerHTML=
-      '<span class="legend" style="color:var(--box)">Pure-vs-box unavailable — '+
-      (!pure?'no pure series':'')+(!pure&&!bx?'; ':'')+(!bx?'no box series (box prior is NBA-only / missing on the 6 corrupt NBA seasons)':'')+'.</span>';
-    document.getElementById('factors').innerHTML='';
-    document.getElementById('pvbcap').innerHTML=''; document.getElementById('pvblegend').innerHTML='';
-    return;
-  }
-  box.style.display='block';
-  getContr().then(()=>{
-    const ip=pure.d.length-1, ib=bx.d.length-1, lg=pure.lg[ip];
-    const pnet=FACK.reduce((s,f)=>s+pure[f][ip],0), bnet=FACK.reduce((s,f)=>s+bx[f][ib],0);
-    document.getElementById('netrow').innerHTML=
-      `<div class="kpi"><div class="k">pure net</div><div class="v" style="color:var(--pure)">${pnet>=0?'+':''}${pnet.toFixed(2)}</div></div>`+
-      `<div class="kpi"><div class="k">box net</div><div class="v" style="color:var(--box)">${bnet>=0?'+':''}${bnet.toFixed(2)}</div></div>`+
-      `<div class="kpi"><div class="k">compression Δ</div><div class="v">${(pnet-bnet>=0?'−':'+')}${Math.abs(pnet-bnet).toFixed(2)}</div></div>`;
-    const C=(CONTR&&(CONTR[lg]||CONTR.nba));
-    const mount=document.getElementById('factors'); mount.innerHTML='';
-    if(!C){document.getElementById('factors').innerHTML='<span class="legend">No retention decomposition for this league.</span>';
-      document.getElementById('pvbcap').innerHTML='';document.getElementById('pvblegend').innerHTML='';return;}
-    const head=document.createElement('div'); head.className='frow';
-    head.innerHTML='<span class="flab" style="color:var(--muted);font-weight:600">factor</span>'+
-      '<span class="pair" style="font-size:10.5px;color:var(--muted)">pure vs box</span>'+
-      '<span class="deco" style="font-size:10.5px;color:var(--muted)">retention: ridge_R · translate</span>'+
-      '<span class="delta" style="color:var(--muted)">Δ</span>';
-    mount.appendChild(head);
-    FACK.forEach(f=>{
-      const dp=pure[f][ip], db=bx[f][ib], delta=dp-db, c=C[f];
-      const row=document.createElement('div'); row.className='frow';
-      const lab=document.createElement('span'); lab.className='flab'; lab.textContent=f;
-      const pair=document.createElement('div'); pair.className='pair'; pair.appendChild(pairBar(dp,db));
-      const deco=document.createElement('div'); deco.className='deco'; deco.appendChild(decoBar(c));
-      const del=document.createElement('span'); del.className='delta'; del.textContent=(delta>=0?'−':'+')+Math.abs(delta).toFixed(2);
-      row.appendChild(lab);row.appendChild(pair);row.appendChild(deco);row.appendChild(del);
-      mount.appendChild(row);
-    });
-    const dSC=C.dSC.ridge_R, oTS=C.oTS.ridge_R;
-    let cap;
-    if(lg==='nba'){
-      cap=`For an established NBA player the compression is essentially the <b>box-mapping skill (ridge_R) alone</b> — `+
-          `the cross-league translate is identity (1.0). ridge_R ranges from <b>${oTS}</b> (oTS) down to <b>${dSC}</b> (dSC): `+
-          `defense compresses most because the box prior has no tracking data to see rim protection. This is intentional `+
-          `conservatism, not your pure RAPM.`;
-    } else {
-      const amped=FACK.filter(f=>C[f].translate_slope>1.0001);
-      cap=`For a ${LNAME[lg]} player, retention is box-mapping skill <b>and</b> a cross-league translate. ridge_R is below 1 `+
-          `for every factor (oTS ${oTS} … dSC ${dSC}), but the translate step <b>amplifies</b> `+
-          (amped.length?`${amped.map(f=>f+' '+C[f].translate_slope).join(', ')} `:'')+`— it does not uniformly contract. `+
-          `Plus a per-player early-career reliability ramp (not shown numerically). The box prior is intentionally conservative.`;
-    }
-    document.getElementById('pvbcap').innerHTML=cap;
-    document.getElementById('pvblegend').innerHTML=
-      `The box prior intentionally shrinks toward league average where box stats can't see your impact; it is <b>not</b> your pure RAPM. `+
-      `The gap is per-factor (no single uniform retention number), and the cross-league translate can amplify as well as shrink.`;
-  });
-}
-
 // ===== Add-to-compare tray (single-player) ==========================================
 const OKABE=['#0072B2','#E69F00','#009E73','#CC79A7'];
 let CMP=[];   // [{id,name}] staged for comparison
@@ -634,7 +516,6 @@ function showMulti(){
   document.getElementById('projseg').style.display='none';
   document.getElementById('cmptray').style.display='none';
   document.getElementById('profile').style.display='none';
-  document.getElementById('pvb').style.display='none';
   document.getElementById('modehint').textContent='Comparison overlay — prior-informed net + 6 factors for '+MULTI.length+' players. Each player has a distinct color and legend label. The density panel below overlays their true-talent uncertainty.';
   document.getElementById('pname').textContent='Comparison';
   document.getElementById('pmeta').innerHTML=MULTI.map(m=>`<a href="index.html?p=${m.id}" style="color:${m.color};font-weight:700">${m.name}</a>`).join(' · ');

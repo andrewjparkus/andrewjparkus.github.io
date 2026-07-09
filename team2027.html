@@ -202,12 +202,13 @@ function render(d){
 
   // ---- KPI strip ----
   const projW = num(team.proj_wins,1);
-  const band = (team.p10!=null && team.p90!=null) ? num(team.p10,0)+'–'+num(team.p90,0) : '–';
+  const bLo = (team.p2_5!=null?team.p2_5:team.p10), bHi = (team.p97_5!=null?team.p97_5:team.p90);
+  const band = (bLo!=null && bHi!=null) ? num(bLo,0)+'–'+num(bHi,0) : '–';
   const po = (team.playoff_prob!=null) ? (team.playoff_prob*100).toFixed(1)+'%' : '–';
   const strF = fmt(team.strength,1), oF = fmt(oR,1), dF = fmt(dR,1);
   html += '<div class="kpis">';
   html += kpi('Projected wins', projW, '82-game season');
-  html += kpi('80% range', band, 'p10–p90 wins');
+  html += kpi('95% range', band, 'p2.5–p97.5 wins');
   html += kpi('Playoff odds', po, 'from the projection');
   html += '<div class="kpi"><div class="k">Projected net</div><div class="v '+strF.cls+'">'+strF.txt+'</div><div class="x">pts/100, six factors</div></div>';
   html += '<div class="kpi"><div class="k">ORAPM</div><div class="v '+oF.cls+'">'+oF.txt+'</div><div class="x">oTS + oTOV + oSC</div></div>';
