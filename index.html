@@ -40,11 +40,8 @@
   .barrow .pctlab{width:38px;font-size:11.5px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
   .barwrap{flex:1;min-width:120px}
   /* two balanced columns: percentile bars (left) + radar (right), vertically centered to each other */
-  .profcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px 30px;align-items:center}
+  .profcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px 30px;align-items:start}
   .radarwrap{max-width:330px;margin:0 auto;width:100%}
-  /* ── density compare sub-view ── */
-  #density{display:none;margin-top:24px}
-  #densplot{margin-top:4px}
   /* offense row 1, defense row 2 (FAC order is fixed) */
   #grid{grid-template-columns:repeat(3,1fr)}
   @media(max-width:640px){#grid{grid-template-columns:repeat(2,1fr)}}
@@ -60,7 +57,7 @@
 <script src="nav.js"></script>
 <div class="wrap">
   <h1 style="margin-top:6px">Six-factor RAPM, <b>every game-day</b></h1>
-  <p class="sub">Six-factor RAPM for any NCAA, G-League or NBA player — every game-day. Toggle <b>Pure</b> · <b>Prior-informed</b> · <b>Box prior</b>.</p>
+  <p class="sub">For any NCAA, G-League or NBA player, on every game-day.</p>
   <div class="searchbox">
     <input id="q" autocomplete="off" placeholder="Search a player…  (e.g. LeBron James, Cooper Flagg)">
     <div class="drop" id="drop"></div>
@@ -103,36 +100,26 @@
 
     <!-- ── PRODUCTION PROFILE (single-player only) ── -->
     <div id="profile">
-      <div class="sectitle">Production profile <span style="font-weight:400;color:var(--faint)">· within-league percentiles, latest game-day</span></div>
       <div class="profcols">
         <div>
-          <div class="sectitle" style="margin-top:0">Offense</div>
+          <div class="sectitle" style="margin-top:0">Production profile</div>
+          <div class="sectitle">Offense</div>
           <div id="off"></div>
           <div class="sectitle">Defense</div>
           <div id="def"></div>
           <div class="legend" id="proflegend"></div>
         </div>
         <div>
-          <div class="sectitle" style="margin-top:0">Profile shape <span style="font-weight:400;color:var(--faint)">· fixed axis order</span></div>
+          <div class="sectitle" style="margin-top:0">Profile shape</div>
           <div class="radarwrap" id="radar"></div>
         </div>
       </div>
     </div>
 
-    <!-- ── DENSITY COMPARE sub-view (compare mode only) ── -->
-    <div id="density">
-      <div class="sectitle">True-talent densities
-        <span style="font-weight:400;color:var(--faint)">· N(net, se²) at each player's latest game-day</span></div>
-      <div id="densplot"></div>
-      <div class="legend">Each curve is N(net, se²): thin-sample rookies read <b>wide</b>, established stars <b>tight</b>.
-        Overlap means the gap isn't settled yet. 0 = league average. Descriptive — no projection.</div>
-    </div>
   </div>
 
   <div class="empty" id="empty">Search for a player to see their daily 6-factor RAPM trajectory.</div>
 
-  <p class="foot">Descriptive — already-measured daily RAPM, never a projection. Off-seasons collapsed (game-day axis);
-    DataBallR scale; box mode degrades gracefully where a box sidecar is missing.</p>
 </div>
 
 <script>
@@ -210,7 +197,6 @@ const MODEHINT={
 let SERIES={}, MODE=(localStorage.getItem('rapm_mode')||'prior'), PNAME='', CURID=null;
 function load(id,name){drop.style.display='none';q.value=name;history.replaceState(null,'','?p='+id);
   CURID=id; MULTI=null;
-  document.getElementById('density').style.display='none';
   const opt=u=>fetch(u).then(r=>r.ok?r.json():null).catch(()=>null);
   Promise.all([
     fetch('data/'+id+'.json').then(r=>r.json()),     // prior-informed (base; carries name)
@@ -228,6 +214,7 @@ function activeMode(){return SERIES[MODE]?MODE:'prior';}  // honor preference; f
 function setMode(m){
   if(!SERIES[m])return;                              // ignore unavailable mode (button disabled anyway)
   MODE=m; localStorage.setItem('rapm_mode',m);
+  syncSeg(); renderActive(); renderProfile();        // re-render on Pure / Prior-informed / Box toggle
 }
 function syncSeg(){
   const am=activeMode();
@@ -457,7 +444,7 @@ function renderProfile(){
     renderBars(document.getElementById('def'),DEFF,last,lq.q,lg);
     const pcts={}; FACK.forEach(f=>pcts[f]=RC.pctile(lq.q[f],last[f]));
     RC.radar(document.getElementById('radar'),FACK,pcts,accent);
-    document.getElementById('proflegend').innerHTML=`Within-${LNAME[lg]} percentile (pool n=${lq.n}) on ${last.date}. The value and percentile are always shown as text, never hue alone.`;
+    document.getElementById('proflegend').innerHTML=`Within-${LNAME[lg]} percentile (pool n=${lq.n}) on ${last.date}.`;
   });
 }
 function renderBars(mount,factors,row,q,lg){
@@ -516,7 +503,7 @@ function showMulti(){
   document.getElementById('projseg').style.display='none';
   document.getElementById('cmptray').style.display='none';
   document.getElementById('profile').style.display='none';
-  document.getElementById('modehint').textContent='Comparison overlay — prior-informed net + 6 factors for '+MULTI.length+' players. Each player has a distinct color and legend label. The density panel below overlays their true-talent uncertainty.';
+  document.getElementById('modehint').textContent='Comparison overlay — prior-informed net + 6 factors for '+MULTI.length+' players. Each player has a distinct color and legend label.';
   document.getElementById('pname').textContent='Comparison';
   document.getElementById('pmeta').innerHTML=MULTI.map(m=>`<a href="index.html?p=${m.id}" style="color:${m.color};font-weight:700">${m.name}</a>`).join(' · ');
   document.getElementById('readout').innerHTML='';
@@ -525,7 +512,6 @@ function showMulti(){
     cell.innerHTML=`<div class="ctitle"><span>${t} <span class="help" data-tip="${TIP[f]}">?</span></span><span class="v" id="vm_${f}"></span></div><div id="cm_${f}"></div>`;
     grid.appendChild(cell);});
   renderMulti();
-  renderDensity();
   window.scrollTo({top:90,behavior:'smooth'});
 }
 let MCHARTS=[], MDATES=[];
@@ -606,13 +592,5 @@ function setHoverMulti(i,line){
   }
 }
 
-// ===== Density compare sub-view (folded in from density.html) ========================
-function renderDensity(){
-  const box=document.getElementById('density');
-  if(!MULTI||MULTI.length<2){box.style.display='none';return;}
-  box.style.display='block';
-  const sel=MULTI.map(m=>({net:m.net,se:m.se||0.3,color:m.color,name:m.name}));
-  requestAnimationFrame(()=>RC.densityPlot(document.getElementById('densplot'),sel));
-}
 </script>
 </body></html>

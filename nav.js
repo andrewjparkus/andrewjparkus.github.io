@@ -21,7 +21,6 @@
     { key: "proj",     href: "projection.html", label: "2026-27" },
     { label: "Other", menu: [
       { key: "teams",  href: "teams.html", label: "Teams" },
-      { key: "trade",  href: "trade.html", label: "Trade" },
       { key: "draft",  href: "draft.html", label: "Draft" }
     ] },
     { key: "model",    href: "model.html", label: "Model" }

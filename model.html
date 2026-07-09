@@ -73,7 +73,7 @@
     .prose h2{font-size:18px}
     .fgrid{grid-template-columns:1fr 1fr}
     /* DataBallR ref table is a dense 6-col two-up; stack the right half below the
-       left so each sub-table is 3 cols and nothing scrolls sideways on mobile */
+       left so each sub-table is 3 cols and nothing scrolls horizontally on mobile */
     #reftbl thead th:nth-child(n+4){display:none}
     #reftbl,#reftbl tbody,#reftbl tr{display:block;width:100%}
     #reftbl thead{display:block}
@@ -116,7 +116,6 @@
         <a href="#ci">Confidence intervals</a>
         <a href="#accuracy">Model accuracy</a>
         <a href="#forward">Forward projection</a>
-        <a href="#ewa">Trade grades (EWA)</a>
         <a href="#limits">Limitations</a>
         <a href="#guide">Using the site</a>
       </nav>
@@ -282,12 +281,12 @@
   <p>The shrinkage happens <strong>inside the ridge</strong> — a MAP estimate where each factor's
   coefficient is pulled toward a prior mean <code>μ</code> rather than toward zero (<code>β ~ N(μ, ·)</code>).
   Its strength is the ridge penalty itself: strong when a player's decay-weighted exposure is thin
-  (rookies, call-ups, early season) and fading to near-zero as possessions pile up. So prior-informed and
-  pure stay close for established players and on the headline net; the prior mainly rescues thin-data
-  players. This replaced an earlier post-hoc blend; moving the prior <em>into</em> the solve is what
-  makes the default series behave sensibly at low data and stay causal and multi-league — but its
-  measured out-of-sample lift is <strong>modest</strong> (a few thousandths of net R², and only on the
-  factors that clear a strict held-out gate; see <a href="#accuracy">accuracy</a>).</p>
+  (rookies, call-ups, early season) and fading to near-zero as possessions pile up. So prior-informed
+  and pure track each other for established players and on the headline net; the prior mainly rescues
+  thin-data players. Moving the prior <em>into</em> the solve keeps the default series sensible at low
+  data and causal across leagues — but its measured out-of-sample lift is <strong>modest</strong> (a few
+  thousandths of net R², and only on the factors that clear a strict held-out gate; see
+  <a href="#accuracy">accuracy</a>).</p>
   <div class="callout">
     <strong>What the prior is made of.</strong> Each factor's prior mean comes from a hyper-sparse,
     <strong>frozen linear map of predictive box stats</strong> onto that component — three-point value
@@ -307,12 +306,12 @@
   <h2 id="ref">Does it match a known reference?</h2>
   <p>The pure NBA scale is tuned to reproduce <strong>DataBallR's six-factor RAPM</strong> (the public
   time-decay, pure-lineup ridge), anchored at the regular-season end. Across the players the two boards
-  share, the <strong>ordering</strong> and the <strong>full range</strong> line up closely — the leaders
-  sit near +7 to +8, the negative tail near −7 — so the model reproduces the public reference's shape,
-  not just its top names. DataBallR uses a fixed ~6-year window and this model a <strong>5-year rolling
-  window</strong>; because the <strong>550-day half-life</strong> discounts old games so steeply, the
-  exact window length barely changes a current rating, while the daily solve still runs one clean curve
-  across a 20-season career.</p>
+  share, the <strong>ordering</strong> and the <strong>full range</strong> align tightly — leaders near
+  +7 to +8, the negative tail near −7 — so the model reproduces the reference's shape, not just its top
+  names. DataBallR uses a fixed ~6-year window and this model a <strong>5-year rolling window</strong>;
+  because the <strong>550-day half-life</strong> discounts old games so steeply, the exact window length
+  barely changes a current rating, while the daily solve still runs one clean curve across a 20-season
+  career.</p>
   <div class="callout">
     <strong>Two honest caveats.</strong> The apples-to-apples comparison is the <strong>Pure</strong>
     toggle — the series literally calibrated to the public board. The Explorer <em>default</em> is the
@@ -450,8 +449,8 @@
   <h3>Predicting game margins</h3>
   <p>Feeding the team RAPM into the game model and scoring every game out-of-sample. The
   <strong>walk-forward</strong> column re-fits coefficients as of each game-day; the
-  <strong>frozen</strong> column holds the published coefficients fixed — they agree closely, so the
-  fit isn't overtuned. Margin error is in points; accuracy is straight-up win/loss.</p>
+  <strong>frozen</strong> column holds the published coefficients fixed — they agree almost exactly, so
+  the fit isn't overtuned. Margin error is in points; accuracy is straight-up win/loss.</p>
   <div class="scroll" style="max-width:560px">
     <table class="tbl" id="acc_game">
       <thead><tr>
@@ -548,21 +547,6 @@
   2026-27 season. The "Realized" column fills as games are played and the forecast is scored against
   actual wins — win or lose, the number was frozen in advance.</p>
 
-  <h3 id="clv">Closing-line value — do we beat the market?</h3>
-  <p><strong>No rating changes here.</strong> Feeding market lines back into the ratings is a
-  measured-dead lever (it makes win forecasts <em>worse</em>), so this is pure transparency: it lines
-  up our frozen pre-game margin against the sportsbook <em>closing</em> line (ESPN pickcenter) and asks
-  whether our number leads or lags the sharpest public estimate. An efficient close is very hard to
-  beat — showing that honestly is the point.</p>
-  <div id="clv_msg" class="callout" style="display:none"></div>
-  <div class="scroll" style="max-width:520px">
-    <table class="tbl" id="clv_tbl">
-      <thead><tr><th class="l">Measure</th><th>Value</th></tr></thead>
-      <tbody><tr><td class="l">…</td><td>…</td></tr></tbody>
-    </table>
-  </div>
-  <p class="cap" id="clv_cap" style="color:var(--faint);font-size:var(--fs-2)"></p>
-
   <h2 id="forward">The forward projection — 1 to 5 years out</h2>
   <p>Everything above is <strong>descriptive</strong> — already-measured RAPM. The
   <a href="projection.html">2026-27 page</a> and the Explorer's <strong>+ Projection</strong> toggle add
@@ -598,9 +582,10 @@
     <strong>Minutes feed it, but don't inflate it.</strong> A companion model projects each player's
     <strong>minutes per game</strong> (carry-forward + mean-reversion + an age curve) and allocates each
     team's 240 minutes across its roster. Those minutes drive <em>availability and team win totals</em> on
-    the 2026-27 page — not the per-100 rating itself, so no one is rewarded twice for simply playing more.
+    the 2026-27 page — not the per-100 rating itself, so no one is credited twice for simply playing more.
   </div>
 
+  <!-- EWA / Trade-grades section commented out (Trade page pulled from the site); content kept for later, not rendered.
   <h2 id="ewa">Trade grades — Expected Wins Added (EWA)</h2>
   <p>The <a href="grades.html">Grades</a> page scores every in-season trade by
   <strong>Expected Wins Added</strong>: the win-probability a moved player added for his
@@ -643,6 +628,7 @@
     three-quarters of a win to Atlanta's expected total — credited <span class="pos">+0.78</span> to
     ATL, <span class="neg">−0.78</span> to Washington on that leg.
   </div>
+  -->
 
   <h2 id="limits">Limitations &amp; honest negatives</h2>
   <p>Candor about ceilings and dead ends is part of the product. The short version:</p>
@@ -655,10 +641,6 @@
     protection, or deflections, so the defensive shot / scoring factors carry forward worst (honest
     single-season corr <code>dTS ≈ 0.30</code>, <code>dSC ≈ 0.27</code>). A tracking-defense spine is
     built but disabled.</li>
-    <li><strong>We do not beat the market.</strong> Against the sportsbook close (ESPN pickcenter) our
-    frozen pre-game margin is <em>worse</em> by ≈ <strong>0.72 pts</strong> of MAE, and feeding market
-    lines back into the ratings only makes win forecasts worse — a measured-dead lever, not an
-    unexplored one.</li>
     <li><strong>Game margins hit a floor.</strong> Out-of-sample margin RMSE ≈ <strong>14.4 pts</strong>
     against a ~16.5-pt natural spread sits near the irreducible noise of an NBA game; better ratings
     barely move it. And this is scored with <code>realized_minutes</code>, so it is rating quality
@@ -675,10 +657,6 @@
     explained ≈ 1–5% NCAA, ≈ 11% G-League) and fit only on players who <em>reached</em> the NBA, so
     prospect-board positions are driven largely by the constant — treat draft CIs as very wide by
     construction.</li>
-    <li><strong>Retired / rejected levers.</strong> A latent-ability Kalman "seam fusion", post-hoc
-    box / RAPM blending, EPM-blend projection toggles, and DARKO (redundant with EPM at r ≈ 0.89) were
-    all built or evaluated and removed for not helping. The shipped stack is deliberately the simpler
-    one that held up out-of-sample.</li>
     <li><strong>Coverage gaps.</strong> NBA play-by-play from 1997–2013 has no steals or blocks
     (structural zeros); early college seasons (2005–13) run on partial schedules
     (<code>reduced_sample</code>); and no public play-by-play exists before 1996-97 (NBA) or 2005-06
@@ -713,12 +691,6 @@
       <p>Ranked <strong>RAPM leaderboards</strong> — the full six-factor decomposition in
       NBA-equivalent pts/100, offense and defense sign-aligned so positive is always good. Click a
       column to sort by any single factor, not just net.</p>
-    </div>
-    <div class="guide">
-      <h3><a href="trade.html">Trade →</a></h3>
-      <p>Move players between two franchises; each team's <strong>expected win change (Δwins ± 80%
-      band)</strong> updates live, with a six-factor attribution. A what-if on <em>current</em>
-      ratings — not a contract or fit model.</p>
     </div>
     <div class="guide">
       <h3><a href="draft.html">Draft →</a></h3>
@@ -940,7 +912,7 @@
     var cap=document.getElementById('acc_proj_cap');
     if(cap) cap.innerHTML='Frozen-preseason as-of-snapshot evaluation (10k Monte-Carlo per season, '
       +'pooled 2024–26). EPM is a strong external forward model; the internal RAPM decomp is the shipped '
-      +'default. Blend/hybrid combinations were tested and retired — RAPM decomp is the product.';
+      +'default.';
   }
   fetch('accuracy.json').then(function(r){ if(!r.ok) throw 0; return r.json(); })
     .then(function(j){
@@ -1005,32 +977,5 @@
     });
 })();
 
-/* ---- P1.2 closing-line-value panel (transparency; ratings never change) ---- */
-(function(){
-  var msg=document.getElementById('clv_msg');
-  function show(t){ if(msg){ msg.style.display='block'; msg.textContent=t; } }
-  fetch('clv_panel.json').then(function(r){ if(!r.ok) throw 0; return r.json(); })
-    .then(function(j){
-      if(j.status!=='OK'){ show('CLV panel unavailable.'); return; }
-      var edge=j.model_ats_edge_when_disagree_ge_1p5;
-      var rows=[
-        ['Games matched to a close', j.n_matched+' / '+j.n_closing_lines+' ('+(j.match_rate*100).toFixed(0)+'%)'],
-        ['Join errors (final vs stored)', j.join_errors_final_vs_stored],
-        ['Our pre-game margin MAE', j.our_pregame_margin_mae+' pts'],
-        ['Market closing-line MAE', j.market_close_margin_mae+' pts'],
-        ['We beat the close by', j.we_beat_the_close_mae_by+' pts (negative = the close is sharper)'],
-        ['Same-side agreement', (j.side_agreement_rate*100).toFixed(0)+'%'],
-        ['Our edge when we disagree ≥1.5', edge==null?'—':(edge*100).toFixed(0)+'% (≈50% = no edge vs the close)']
-      ];
-      document.querySelector('#clv_tbl tbody').innerHTML=rows.map(function(r){
-        return '<tr><td class="l lead">'+r[0]+'</td><td>'+r[1]+'</td></tr>'; }).join('');
-      var cap=document.getElementById('clv_cap');
-      if(cap) cap.textContent=(j.date_range?('Window '+j.date_range[0]+' → '+j.date_range[1]+'. '):'')
-        +j.disclaimer;
-    })
-    .catch(function(){
-      show('The CLV panel (clv_panel.json) is not present yet — run daily_v5/build_clv.py pull then build.');
-    });
-})();
 </script>
 </body></html>

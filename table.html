@@ -14,8 +14,7 @@
     color:var(--text);outline:none;padding:6px 10px;border-radius:var(--r-1);width:180px}
   .findbox input:focus{border-color:var(--accent)}
   .tcap{color:var(--faint);font-size:11px;margin:4px 2px 8px;line-height:1.5;max-width:840px}
-  /* capped-height scroll so the sticky header has something to stick to */
-  .tablebox{max-height:560px;overflow:auto}
+  /* full static table — no inner scroll; the whole ranked list lays out inline */
   /* header ? tooltips live in the sticky thead at the top of this scroll box;
      the shared tooltip renders upward and gets clipped — flip header tips DOWN */
   .tablebox th .help[data-tip]:hover::after{bottom:auto;top:calc(100% + 6px)}
@@ -26,8 +25,6 @@
   table.tbl thead th.net{font-weight:700;color:var(--text)}
   td.pn{font-weight:600}
   td.pn .sub2{color:var(--muted);font-size:11px;font-weight:400;margin-left:7px}
-  td.trend{text-align:center;padding-top:3px;padding-bottom:3px}
-  .showall{margin:10px 0 2px}
   .nohit{color:var(--muted);font-size:12.5px;padding:18px 10px;text-align:center}
 </style></head>
 <body>
@@ -51,7 +48,6 @@
     </div>
     <p class="tcap" id="tcap"></p>
     <div class="scroll"><div class="tablebox"><table class="tbl" id="otable"></table></div></div>
-    <div class="showall"><button class="btn" id="showall" type="button" style="display:none"></button></div>
   </section>
 
   <div class="empty" id="empty">Loading tables…</div>
@@ -61,7 +57,6 @@
 
 <script>
 "use strict";
-const TOP_N=10;            // overall: rows shown before "Show all"
 const TIP={
   net:"Net RAPM = ORAPM (oTS+oTOV+oSC) + DRAPM (dTS+dTOV+dSC), points/100 on the NBA-equivalent scale.",
   ORAPM:"Offensive RAPM = oTS + oTOV + oSC, points/100 on the NBA-equivalent scale.",
@@ -86,7 +81,6 @@ function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;"
    ========================================================================= */
 let TBL=null;             // table.json
 let tableKey=null;        // current overall table key
-let showAll=false;        // overall: reveal full list
 let query='';             // overall search
 let sortKey=null;         // overall sort column (null = file order by rank)
 let sortDir=-1;           // -1 desc, +1 asc
@@ -119,10 +113,10 @@ const OCOLS=[
   {key:'dTOV',  label:'dTOV',  grp:false},
   {key:'dSC',   label:'dSC',   grp:false}
 ];
-// Each category tab is inherently sorted by its headline metric (Offense->ORAPM,
-// Defense->DRAPM, everything else->Net). Selecting a tab sets sortKey to that column so
-// BOTH the sort and the bold/emphasis land on the column the user came to look at.
-const DEFSORT={nba:'net', off:'ORAPM', def:'DRAPM', rookies:'net', draft:'net', gleague:'net', college:'net'};
+// Each category tab is inherently sorted by its headline metric (everything -> Net).
+// Selecting a tab sets sortKey to that column so BOTH the sort and the bold/emphasis
+// land on the column the user came to look at.
+const DEFSORT={nba:'net', rookies:'net', draft:'net', gleague:'net', college:'net'};
 
 function curTable(){ return TBL.tables.find(t=>t.key===tableKey); }
 
@@ -153,9 +147,7 @@ function renderOverall(){
   if(!tb){ cap.textContent=''; document.getElementById('otable').innerHTML=''; return; }
   cap.textContent=tb.sub||'';
 
-  const rows=sortedRows();
-  const total=rows.length;
-  const shown=showAll?rows:rows.slice(0,TOP_N);
+  const shown=sortedRows();   // full ranked list — static, no cap
 
   // header
   let head='<thead><tr>'+
@@ -168,13 +160,12 @@ function renderOverall(){
     const tip=TIP[c.key]?' <span class="help" data-tip="'+esc(TIP[c.key])+'">?</span>':'';
     head+='<th class="sortable'+(c.grp?' grp':'')+(emph?' net':'')+'" data-k="'+c.key+'">'+c.label+tip+arr+'</th>';
   });
-  head+='<th class="l">Trend</th>';
   head+='</tr></thead>';
 
   // body
   let body='';
   if(!shown.length){
-    body='<tr><td colspan="12"><div class="nohit">No players match “'+esc(query)+'”.</div></td></tr>';
+    body='<tr><td colspan="11"><div class="nohit">No players match “'+esc(query)+'”.</div></td></tr>';
   }else{
     for(const r of shown){
       body+='<tr>'+
@@ -186,23 +177,10 @@ function renderOverall(){
         const act=(sortKey?(sortKey===c.key):c.net);   // emphasize the active sort col; default = net (file order)
         body+='<td class="'+(act?'net ':'')+(c.grp?'grp ':'')+signCls(v)+'">'+fmt(v)+'</td>';
       });
-      body+='<td class="trend"></td>';
       body+='</tr>';
     }
   }
   document.getElementById('otable').innerHTML=head+'<tbody>'+body+'</tbody>';
-
-  // render sparklines into the Trend cells
-  if(shown.length){
-    const cells=document.querySelectorAll('#otable tbody td.trend');
-    shown.forEach((r,i)=>{
-      const cell=cells[i]; if(!cell) return;
-      if(r.spark && r.spark.length){
-        const color=(r.net>=0?'var(--pos)':'var(--neg)');
-        cell.appendChild(RC.spark(r.spark, color));
-      }
-    });
-  }
 
   // wire sortable headers
   document.querySelectorAll('#otable th.sortable').forEach(th=>{
@@ -213,17 +191,6 @@ function renderOverall(){
       renderOverall();
     };
   });
-
-  // show-all toggle
-  const sa=document.getElementById('showall');
-  if(total>TOP_N){
-    sa.style.display='';
-    sa.textContent=showAll?('Show top '+TOP_N):('Show all ('+total+')');
-    sa.classList.toggle('active',showAll);
-    sa.onclick=()=>{ showAll=!showAll; renderOverall(); };
-  }else{
-    sa.style.display='none';
-  }
 }
 
 /* =========================================================================
@@ -235,15 +202,13 @@ function refresh(){
   if(!TBL) return;
   buildSeg('tableseg', TBL.tables.map(t=>t.key),
     k=>(TBL.tables.find(t=>t.key===k)||{}).title||k, tableKey,
-    k=>{ tableKey=k; showAll=false; sortKey=DEFSORT[k]||'net'; sortDir=-1; query=''; document.getElementById('find').value=''; renderOverall(); refresh(); });
+    k=>{ tableKey=k; sortKey=DEFSORT[k]||'net'; sortDir=-1; query=''; document.getElementById('find').value=''; renderOverall(); refresh(); });
   renderOverall();
 }
 
 /* live search-within (overall) */
 document.getElementById('find').addEventListener('input',e=>{
   query=e.target.value.trim();
-  // searching reveals the full filtered list
-  showAll = query ? true : showAll;
   renderOverall();
 });
 

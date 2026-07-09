@@ -8,8 +8,6 @@
   /* page-unique: draft board */
   .wrap{max-width:1100px}
   #tbl{min-width:880px}
-  .caveat{margin-top:18px;border:1px solid #3a2a16;background:#15110a;border-left:3px solid #d99a3a;
-    padding:11px 13px;border-radius:var(--r-1);color:#e8d6b6;font-size:12px;line-height:1.55;max-width:880px}
   table.tbl tr.prow.sel>td{background:#142233}
   td.pcell .pn{font-size:13px;font-weight:600;color:var(--accent);cursor:pointer}
   td.pcell .pn.nolink{color:var(--muted);cursor:default}
@@ -38,7 +36,6 @@
   <h1 style="margin-top:6px">Draft <b>board</b> <span id="yr" style="color:var(--muted);font-weight:400"></span></h1>
   <p class="sub" id="sub">2026 prospects' college / G-League production translated to the NBA scale, with
     95% CIs. Sort any column; click a prospect for their curve.</p>
-  <div class="caveat" id="caveat">Loading…</div>
   <div class="scroll"><table class="tbl" id="tbl"></table></div>
   <div id="panel"><span class="close" onclick="closePanel()">close ✕</span>
     <h3 id="pname"></h3><p class="pmeta" id="pmeta"></p><svg id="chart"></svg></div>
@@ -73,7 +70,6 @@ fetch('draft_board_2026.json').then(r=>{ if(!r.ok) throw new Error('HTTP '+r.sta
 function init(){
   document.getElementById('msg').style.display='none';
   document.getElementById('yr').textContent="· "+DATA.meta.year+" · "+DATA.meta.draft_date;
-  document.getElementById('caveat').textContent=DATA.meta.ci_caveat+" "+DATA.meta.asof_note+".";
   // translation table in methodology
   let tt='<table><thead><tr><th class="l">factor</th><th>slope</th><th>offset</th><th>Var_translate (floor)</th></tr></thead><tbody>';
   for(const t of DATA.meta.translation){

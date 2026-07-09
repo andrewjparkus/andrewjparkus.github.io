@@ -20,8 +20,10 @@
   .teamcell img{width:22px;height:22px;flex:0 0 auto;object-fit:contain}
   .teamcell .ab{font-weight:700;font-size:13px;letter-spacing:.2px}
   td.projw{font-weight:700;font-size:13px}
-  td.range{padding:5px 8px}
+  td.range{padding:5px 4px}
   td.range svg{display:block}
+  /* 7 columns in a half-width conference table: tighten horizontal padding so Champ % fits without scroll */
+  .confs table.tbl th, .confs table.tbl td{padding-left:5px;padding-right:5px}
   td.po{font-weight:700;font-size:12.5px}
   table.tbl td.cb{color:var(--accent-ink)}    /* color-block cells: readable ink set inline */
   /* header ? tooltips live in a sticky thead inside the .scroll box — flip tips DOWN */
@@ -34,22 +36,18 @@
 <script src="charts.js"></script>
 <script src="nav.js"></script>
 <div class="wrap">
-  <h1 style="margin-top:6px">2026-27 <b>projection</b><span class="forwardtag">forward</span></h1>
-  <p class="sub" id="sub">The only forward-looking page on the site — every other page is descriptive of play already on the books. This one projects next season.
-    <a href="teams.html" style="color:var(--accent)">See 2025-26 team ratings →</a></p>
-  <p class="legend" id="legend"></p>
+  <h1 style="margin-top:6px">2026-27 <b>projection</b></h1>
+  <p class="sub" id="sub"><a href="teams.html" style="color:var(--accent)">See 2025-26 team ratings</a></p>
 
   <div class="confs" id="confs"></div>
   <div class="msg" id="msg">Loading projection…</div>
-
-  <p class="foot" id="foot"></p>
 </div>
 
 <script>
 "use strict";
 
 /* win-domain for the Proj-W colour ramp only — auto-fit to the league's 95% span in render() */
-let W_LO = 0, W_HI = 82;
+let W_LO = 0, W_HI = 82, CHAMP_MAX = 0;
 function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
 
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,
@@ -73,7 +71,7 @@ function colorCell(td, t){
 /* win-distribution heat strip: one thin bar per win-count 0..82, opacity ∝ P[team wins exactly that
    many games] from the 10k Monte-Carlo, normalized to the team's peak. FIXED 0..82 domain so every
    team shares one scale. Overlaid: the .500 (41) tick, the 95% band edges, and a mean dot. */
-const WSTRIP_W = 200, WSTRIP_H = 16;
+const WSTRIP_W = 104, WSTRIP_H = 16;
 function winStrip(hist, mean, p025, p975){
   const N = 83, W = WSTRIP_W, H = WSTRIP_H, pad = 1, bw = (W - 2 * pad) / N;
   const x = k => pad + k * bw;
@@ -92,7 +90,7 @@ function winStrip(hist, mean, p025, p975){
   svg.appendChild(RC.el("line", { x1: x(41), y1: 0, x2: x(41), y2: H, stroke: "var(--line)", "stroke-width": 1 }));  // .500
   [p025, p975].forEach(v => { if (v != null) svg.appendChild(RC.el("line", { x1: x(v), y1: 0.5, x2: x(v), y2: H - 0.5,
     stroke: "var(--text)", "stroke-width": 0.75, "stroke-opacity": 0.4 })); });                                    // 95% CI
-  svg.appendChild(RC.el("circle", { cx: x(mean), cy: H / 2, r: 2.3, fill: "var(--accent)", stroke: "var(--bg)", "stroke-width": 1 }));  // mean
+  svg.appendChild(RC.el("rect", { x: (x(mean) - 1.5).toFixed(2), y: 0.5, width: 3, height: H - 1, rx: 1, fill: "var(--accent)", stroke: "var(--bg)", "stroke-width": 0.6 }));  // mean (thick blue bar)
   return svg;
 }
 
@@ -105,8 +103,10 @@ function buildConf(name, teams){
     '<th class="l rank">#</th>'+
     '<th class="l">Team</th>'+
     '<th>Proj W <span class="help" data-tip="Monte-Carlo mean wins over 10k simulated seasons, each on its own re-drawn synthetic schedule.">?</span></th>'+
+    '<th class="l">95% CI <span class="help" data-tip="95% win-total interval (p2.5–p97.5) across the 10k simulations.">?</span></th>'+
     '<th class="l">Win distribution <span class="help" data-tip="Monte-Carlo win-total distribution on a fixed 0–82 scale: each thin bar is a win count, shaded by how often the team finished with exactly that many wins across the 10k sims. Faint ticks = 95% CI (p2.5–p97.5), dot = projected mean, vertical line = .500 (41).">?</span></th>'+
     '<th>Playoffs % <span class="help" data-tip="Share of the 10k simulations in which the team reaches the 16-team playoff field, AFTER simulating each conference\'s 7–10 play-in tournament (so finishing 7–10 no longer guarantees a seed). Hover a row for its play-in odds (top-10).">?</span></th>'+
+    '<th>Champ % <span class="help" data-tip="Share of the 10k simulations in which the team wins the title — each sim plays out the full playoff bracket (best-of-7 rounds, standard 1v8/4v5/3v6/2v7 seeding, higher seed with home court) after the play-in.">?</span></th>'+
     '</tr></thead>';
 
   let body = "";
@@ -119,16 +119,18 @@ function buildConf(name, teams){
         'class="teamcell" title="2026-27 team detail">'+logo+
         '<span class="ab">'+esc(t.franchise)+'</span></a></td>'+
       '<td class="projw cb" data-w="'+t.mc_mean_wins+'">'+t.mc_mean_wins.toFixed(1)+'</td>'+
+      '<td class="l ci">'+t.p2_5_wins.toFixed(1)+'–'+t.p97_5_wins.toFixed(1)+'</td>'+
       '<td class="l range" data-hist=\''+JSON.stringify(t.win_hist||[])+'\' data-mean="'+t.mc_mean_wins+'" data-p025="'+t.p2_5_wins+'" data-p975="'+t.p97_5_wins+'"></td>'+
       '<td class="po cb" data-p="'+t.make_playoffs_prob+'" title="Play-in (top 10): '+
         ((t.make_playin_prob!=null?t.make_playin_prob:t.make_playoffs_prob)*100).toFixed(1)+'%">'+
         (t.make_playoffs_prob*100).toFixed(1)+'%</td>'+
+      '<td class="champ cb" data-c="'+(t.championship_prob||0)+'">'+((t.championship_prob||0)*100).toFixed(1)+'%</td>'+
       '</tr>';
   });
 
   sec.innerHTML =
-    '<h2>'+esc(name)+'<span>'+sorted.length+' teams</span></h2>'+
-    '<div class="scroll"><table class="tbl" style="min-width:360px">'+head+'<tbody>'+body+'</tbody></table></div>';
+    '<h2>'+esc(name)+'</h2>'+
+    '<div class="scroll"><table class="tbl" style="min-width:430px">'+head+'<tbody>'+body+'</tbody></table></div>';
 
   // color the Proj W and Playoffs cells; draw the range bars
   sec.querySelectorAll('td.projw').forEach(td=>{
@@ -137,6 +139,9 @@ function buildConf(name, teams){
   });
   sec.querySelectorAll('td.po').forEach(td=>{
     colorCell(td, +td.getAttribute('data-p'));
+  });
+  sec.querySelectorAll('td.champ').forEach(td=>{
+    colorCell(td, CHAMP_MAX > 0 ? (+td.getAttribute('data-c')) / CHAMP_MAX : 0);
   });
   sec.querySelectorAll('td.range').forEach(td=>{
     let hist=[]; try{ hist=JSON.parse(td.getAttribute('data-hist')||'[]'); }catch(e){}
@@ -161,15 +166,8 @@ function render(data){
   if (teams.length){
     W_LO = Math.floor(Math.min.apply(null, teams.map(t=>t.p2_5_wins)) - 1);
     W_HI = Math.ceil(Math.max.apply(null, teams.map(t=>t.p97_5_wins)) + 1);
+    CHAMP_MAX = Math.max.apply(null, teams.map(t=>t.championship_prob||0));
   }
-
-  // legend: model note + roster-proxy caveat (terse)
-  const prov = provNote(meta);
-  let legend = esc(meta.note || "");
-  if (/carry-forward proxy/i.test(prov) || /carry-forward proxy/i.test(meta.note||"")){
-    legend += ' <b>Rosters are a proxy</b> — 2025-26 carried forward and aged a year; no trades, signings, or draft picks reflected.';
-  }
-  document.getElementById("legend").innerHTML = legend;
 
   // split by conference, build two tables
   const east = teams.filter(t=> (t.conf||"")==="East");
@@ -178,14 +176,6 @@ function render(data){
   confs.innerHTML = "";
   confs.appendChild(buildConf("Eastern Conference", east));
   confs.appendChild(buildConf("Western Conference", west));
-
-  // foot: synthetic schedule + MC + band composition (terse)
-  const ng = meta.n_games != null ? meta.n_games : 1230;
-  document.getElementById("foot").textContent =
-    "Win distribution: 10k Monte-Carlo, each sim on its OWN re-drawn synthetic "+ng+"-game schedule "+
-    "(HCA "+(meta.hca!=null?(+meta.hca).toFixed(2):"–")+" pts, σ "+(meta.sigma!=null?(+meta.sigma).toFixed(1):"–")+" pts/game). "+
-    "Each sim re-draws its schedule AND every rating from its own uncertainty; the heat strip is the full win-total distribution and the faint ticks mark the 95% CI (p2.5–p97.5). "+
-    "Model: "+(meta.projection_model||"carry-forward + aging")+".";
 
   document.getElementById("msg").style.display = "none";
 }
