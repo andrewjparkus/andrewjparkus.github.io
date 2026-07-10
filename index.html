@@ -73,6 +73,7 @@
         <button data-mode="pure" type="button">Pure RAPM</button>
         <button data-mode="prior" type="button">Prior-informed</button>
         <button data-mode="box" type="button">Box prior</button>
+        <button data-mode="latent" type="button" title="One continuous cross-league curve (DARKO-style fusion), colored by league">Latent</button>
       </div>
     </div>
     <div class="modehint" id="modehint"></div>
@@ -193,7 +194,8 @@ function paint(){if(!curOpts.length){drop.style.display='none';return}
 const MODEHINT={
   pure:'Pure RAPM — the prior-free six-factor decomp, calibrated to the public DataBallR ridge. One line per league.',
   prior:'Prior-informed RAPM — the same daily solve, with all six factors shrunk toward a daily box-score prior. Shrinkage is strongest where lineup data is thin (rookies, early season) and fades as exposure grows. The default.',
-  box:'Box prior — the daily, multi-league box-score skill estimate that informs the prior-informed solve. A real fitted curve (not a flat reference) with a confidence band, built from box stats across NCAA, G-League & NBA up to each day. All six factors are shown.'};
+  box:'Box prior — the daily, multi-league box-score skill estimate that informs the prior-informed solve. A real fitted curve (not a flat reference) with a confidence band, built from box stats across NCAA, G-League & NBA up to each day. All six factors are shown.',
+  latent:'Latent — one continuous cross-league curve (DARKO-style state-space fusion of the on/off RAPM + box legs), so a player who moves between leagues has a single line instead of disjoint per-league graphs. The line is colored by the league he played in each day. A smoothed forecast-flavored view — descriptive, not the projection numbers.'};
 let SERIES={}, MODE=(localStorage.getItem('rapm_mode')||'prior'), PNAME='', CURID=null;
 function load(id,name){drop.style.display='none';q.value=name;history.replaceState(null,'','?p='+id);
   CURID=id; MULTI=null;
@@ -201,11 +203,12 @@ function load(id,name){drop.style.display='none';q.value=name;history.replaceSta
   Promise.all([
     fetch('data/'+id+'.json').then(r=>r.json()),     // prior-informed (base; carries name)
     opt('data/'+id+'_pure.json'),                    // pure
-    opt('data/'+id+'_box.json')                      // box prior (daily, multi-league curve + CI band)
-  ]).then(([prior,pure,box])=>{
+    opt('data/'+id+'_box.json'),                     // box prior (daily, multi-league curve + CI band)
+    opt('data/'+id+'_latent.json')                   // latent (continuous cross-league fusion; piecewise-colored)
+  ]).then(([prior,pure,box,latent])=>{
     PNAME=prior.name||name;
-    SERIES={prior:prep(prior), pure:pure?prep(pure):null, box:box?prep(box):null};
-    RAW={prior, pure, box};
+    SERIES={prior:prep(prior), pure:pure?prep(pure):null, box:box?prep(box):null, latent:latent?prep(latent):null};
+    RAW={prior, pure, box, latent};
     show();
   });}
 let RAW={};
@@ -303,11 +306,18 @@ function Chart(mount,ser,key,proj){
       idx.forEach(i=>{up+=`${X(i).toFixed(1)},${Yb(v[i]+1.96*se[i]).toFixed(1)} `;});
       for(let k=idx.length-1;k>=0;k--){const i=idx[k];dn+=`${X(i).toFixed(1)},${Yb(v[i]-1.96*se[i]).toFixed(1)} `;}
       svg.appendChild(el('polygon',{points:up+dn,fill:'#8aa0bb','fill-opacity':.07,stroke:'none','clip-path':`url(#${cid})`}));}}
-  // one line PER league (no cross-league bridge)
-  [...new Set(ser.map(s=>s.lg))].forEach(lg=>{
-    const idx=[];for(let i=0;i<n;i++)if(ser[i].lg===lg)idx.push(i);
-    if(idx.length>1)svg.appendChild(el('polyline',{points:idx.map(i=>`${X(i).toFixed(1)},${Y(v[i]).toFixed(1)}`).join(' '),
-      fill:'none',stroke:lgColor(lg),'stroke-width':1.6,'stroke-linejoin':'round','stroke-linecap':'round'}));});
+  // Latent mode: ONE continuous cross-league line, colored per-segment by the league the player
+  // was in that day (the DARKO fusion — no seam). Every other mode: one line PER league, no bridge.
+  if(activeMode()==='latent'){
+    for(let i=1;i<n;i++){if(v[i]==null||v[i-1]==null)continue;
+      svg.appendChild(el('line',{x1:X(i-1).toFixed(1),y1:Y(v[i-1]).toFixed(1),x2:X(i).toFixed(1),y2:Y(v[i]).toFixed(1),
+        stroke:lgColor(ser[i].lg),'stroke-width':1.8,'stroke-linecap':'round'}));}
+  }else{
+    [...new Set(ser.map(s=>s.lg))].forEach(lg=>{
+      const idx=[];for(let i=0;i<n;i++)if(ser[i].lg===lg)idx.push(i);
+      if(idx.length>1)svg.appendChild(el('polyline',{points:idx.map(i=>`${X(i).toFixed(1)},${Y(v[i]).toFixed(1)}`).join(' '),
+        fill:'none',stroke:lgColor(lg),'stroke-width':1.6,'stroke-linejoin':'round','stroke-linecap':'round'}));});
+  }
   // ── FORWARD projection overlay (1-5yr trajectory, opt-in, ORANGE = projected, NOT measured) ──────
   // Drawn as a CONNECTED widening cone: a filled 80% band + one continuous dashed centre line + a dot
   // per horizon. PTg holds each point's geometry so the crosshair/readout can hover the future too.
