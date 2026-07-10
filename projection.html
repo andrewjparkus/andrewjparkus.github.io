@@ -22,9 +22,10 @@
   td.projw{font-weight:700;font-size:13px}
   td.range{padding:5px 4px}
   td.range svg{display:block}
-  /* 7 columns in a half-width conference table: tighten horizontal padding so Champ % fits without scroll */
+  /* 6 columns in a half-width conference table: tighten horizontal padding so Champ % fits without scroll */
   .confs table.tbl th, .confs table.tbl td{padding-left:5px;padding-right:5px}
   td.po{font-weight:700;font-size:12.5px}
+  td.champ{font-weight:700;font-size:12.5px}
   table.tbl td.cb{color:var(--accent-ink)}    /* color-block cells: readable ink set inline */
   /* header ? tooltips live in a sticky thead inside the .scroll box — flip tips DOWN */
   .scroll thead th .help[data-tip]:hover::after{bottom:auto;top:calc(100% + 6px)}
@@ -71,7 +72,7 @@ function colorCell(td, t){
 /* win-distribution heat strip: one thin bar per win-count 0..82, opacity ∝ P[team wins exactly that
    many games] from the 10k Monte-Carlo, normalized to the team's peak. FIXED 0..82 domain so every
    team shares one scale. Overlaid: the .500 (41) tick, the 95% band edges, and a mean dot. */
-const WSTRIP_W = 104, WSTRIP_H = 16;
+const WSTRIP_W = 200, WSTRIP_H = 16;
 function winStrip(hist, mean, p025, p975){
   const N = 83, W = WSTRIP_W, H = WSTRIP_H, pad = 1, bw = (W - 2 * pad) / N;
   const x = k => pad + k * bw;
@@ -83,7 +84,7 @@ function winStrip(hist, mean, p025, p975){
     for (let k = 0; k < Math.min(N, hist.length); k++){
       const o = Math.pow(hist[k] / mx, 0.6);          // perceptual: lift the tail so rare win-counts still read
       if (o < 0.015) continue;
-      svg.appendChild(RC.el("rect", { x: x(k).toFixed(2), y: 1, width: Math.max(bw - 0.12, 0.7).toFixed(2),
+      svg.appendChild(RC.el("rect", { x: x(k).toFixed(2), y: 1, width: bw.toFixed(2),
         height: H - 2, fill: "var(--accent)", "fill-opacity": o.toFixed(3) }));
     }
   }
@@ -103,7 +104,6 @@ function buildConf(name, teams){
     '<th class="l rank">#</th>'+
     '<th class="l">Team</th>'+
     '<th>Proj W <span class="help" data-tip="Monte-Carlo mean wins over 10k simulated seasons, each on its own re-drawn synthetic schedule.">?</span></th>'+
-    '<th class="l">95% CI <span class="help" data-tip="95% win-total interval (p2.5–p97.5) across the 10k simulations.">?</span></th>'+
     '<th class="l">Win distribution <span class="help" data-tip="Monte-Carlo win-total distribution on a fixed 0–82 scale: each thin bar is a win count, shaded by how often the team finished with exactly that many wins across the 10k sims. Faint ticks = 95% CI (p2.5–p97.5), dot = projected mean, vertical line = .500 (41).">?</span></th>'+
     '<th>Playoffs % <span class="help" data-tip="Share of the 10k simulations in which the team reaches the 16-team playoff field, AFTER simulating each conference\'s 7–10 play-in tournament (so finishing 7–10 no longer guarantees a seed). Hover a row for its play-in odds (top-10).">?</span></th>'+
     '<th>Champ % <span class="help" data-tip="Share of the 10k simulations in which the team wins the title — each sim plays out the full playoff bracket (best-of-7 rounds, standard 1v8/4v5/3v6/2v7 seeding, higher seed with home court) after the play-in.">?</span></th>'+
@@ -119,7 +119,6 @@ function buildConf(name, teams){
         'class="teamcell" title="2026-27 team detail">'+logo+
         '<span class="ab">'+esc(t.franchise)+'</span></a></td>'+
       '<td class="projw cb" data-w="'+t.mc_mean_wins+'">'+t.mc_mean_wins.toFixed(1)+'</td>'+
-      '<td class="l ci">'+t.p2_5_wins.toFixed(1)+'–'+t.p97_5_wins.toFixed(1)+'</td>'+
       '<td class="l range" data-hist=\''+JSON.stringify(t.win_hist||[])+'\' data-mean="'+t.mc_mean_wins+'" data-p025="'+t.p2_5_wins+'" data-p975="'+t.p97_5_wins+'"></td>'+
       '<td class="po cb" data-p="'+t.make_playoffs_prob+'" title="Play-in (top 10): '+
         ((t.make_playin_prob!=null?t.make_playin_prob:t.make_playoffs_prob)*100).toFixed(1)+'%">'+
