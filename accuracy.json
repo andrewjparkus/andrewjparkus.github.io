@@ -428,18 +428,18 @@
       "path": "daily_v5/out/oos/scorecard_current.parquet",
       "exists": true,
       "size": 3811,
-      "mtime": 1783663639.5111275
+      "mtime": 1783669711.4406748
     },
     "manifest": {
       "path": "daily_v5/out/oos/manifest_current.json",
       "exists": true,
-      "size": 6980,
-      "mtime": 1783663640.2062685
+      "size": 6981,
+      "mtime": 1783669712.1485376
     },
     "git": {
-      "sha": "ad359c77099cfb3cc392cd557b85735ccce28ed4",
-      "dirty": true,
-      "dirty_entries": 1
+      "sha": "ea5132c625886fc7b5704a6bd43b8c3689b57b80",
+      "dirty": false,
+      "dirty_entries": 0
     },
     "game_model_params": {
       "hca": 1.5370466094308175,
