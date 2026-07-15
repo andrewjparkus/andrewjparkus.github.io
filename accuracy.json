@@ -19,7 +19,7 @@
       "minutes_contract": "legacy_alloc_mpg",
       "availability_application": "legacy_consumer_dependent",
       "minutes_artifact": "daily_v5/out/minutes_allocation.parquet",
-      "minutes_artifact_sha256": "5b1afc29169b9bc19e144ade16aa04d4cc05129f8ca9c3105614f1d9164c40a6",
+      "minutes_artifact_sha256": "c292c4507f10910c1d3418036eb6ea5675059bb02183c0ee3e2bd9db8faa6688",
       "active_minutes_artifact": null,
       "active_minutes_artifact_sha256": null,
       "season_minutes_artifact": null,
@@ -29,9 +29,9 @@
       "replacement_tree_artifact": null,
       "replacement_tree_artifact_sha256": null,
       "gp_artifact": "daily_v5/out/gp_projection.parquet",
-      "gp_artifact_sha256": "0f6aad0d29fa1bbbb5873c7a6f0f22b79b71517048f1ce3e275849a047bf1f76",
+      "gp_artifact_sha256": "7e128d5cda1ae0d0dc0ef1d611e176fb911aaa61edf1d3037f1bf67ed6affcec",
       "minutes_distribution_artifact": "daily_v5/out/minutes_distribution.parquet",
-      "minutes_distribution_artifact_sha256": "c9b17b045d647e60c78a88d68275b3cc6ea08503effcfe961fe73d1889ad85a0",
+      "minutes_distribution_artifact_sha256": "1f25dd8680055bee33d52e7e3e71ddc75878d0002b7b3d7efc85bd5a2b8d2bdf",
       "depth_csv_artifact": "daily_v5/out/depthcharts_2026_27.csv",
       "depth_source": "owner",
       "v2_promotion_manifest": null,
@@ -428,18 +428,18 @@
       "path": "daily_v5/out/oos/scorecard_current.parquet",
       "exists": true,
       "size": 3811,
-      "mtime": 1783669711.4406748
+      "mtime": 1784134062.8325696
     },
     "manifest": {
       "path": "daily_v5/out/oos/manifest_current.json",
       "exists": true,
-      "size": 6981,
-      "mtime": 1783669712.1485376
+      "size": 7246,
+      "mtime": 1784134064.2063859
     },
     "git": {
-      "sha": "ea5132c625886fc7b5704a6bd43b8c3689b57b80",
-      "dirty": false,
-      "dirty_entries": 0
+      "sha": "4bf805a106fe185122c493761927020047f63dc4",
+      "dirty": true,
+      "dirty_entries": 29
     },
     "game_model_params": {
       "hca": 1.5370466094308175,
