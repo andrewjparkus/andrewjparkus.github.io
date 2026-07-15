@@ -8,9 +8,9 @@
   /* ── page-unique CSS only (tokens/nav/search/grid/cell/seg live in site.css) ── */
   #player{display:none;margin-top:20px}
   .phead{display:flex;align-items:baseline;gap:13px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:11px}
-  .pname{font-size:var(--fs-6);font-weight:800;letter-spacing:-.5px}
+  .pname{font-size:var(--fs-6);font-weight:700;letter-spacing:-.5px}
   .pmeta{color:var(--muted);font-size:var(--fs-2)}
-  .readout{margin-left:auto;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:150px;text-align:right}
+  .readout{margin-left:auto;font-family:var(--font-mono);font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:150px;text-align:right}
   .readout b{color:var(--text)}
   .modehint{font-size:11.5px;color:var(--faint);margin:7px 0 -4px;line-height:1.55;max-width:840px}
   /* bespoke interactive crosshair charts (owned locally) */
@@ -50,6 +50,28 @@
   .projci{stroke:var(--amber);stroke-width:1.6;stroke-linecap:butt}
   .projcap{stroke:var(--amber);stroke-width:1.6;stroke-linecap:round}
   .projdot{fill:var(--amber);stroke:var(--bg);stroke-width:1}
+  /* ── impact waterfall (6 factors → off/def; continuous play across game-days) ── */
+  #waterfall{display:none;margin-top:24px;border-top:1px solid var(--line);padding-top:6px}
+  .wfbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 5px}
+  .wfscrub{flex:1;min-width:130px;accent-color:var(--accent)}
+  .wfsum{font-family:var(--font-mono);font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;margin:0 0 4px}
+  .wfsum b{color:var(--text)}
+  .wfstack{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:720px){.wfstack{grid-template-columns:1fr}}
+  .wfchart{border:1px solid var(--line);background:var(--panel);border-radius:var(--r-1);padding:6px 9px 3px}
+  .wfhd{display:flex;justify-content:space-between;align-items:baseline;font-size:11px;font-weight:700;
+    color:#aebccd;letter-spacing:.16em;padding:1px 2px 2px}
+  :root[data-theme=light] .wfhd{color:#33425a}
+  .wfsvg{width:100%;height:auto}
+  .wfg{stroke:var(--grid);stroke-width:1}
+  .wft{fill:var(--faint);font-size:9px;font-variant-numeric:tabular-nums}
+  .wfax{stroke:var(--zero);stroke-width:1}
+  .wftr{fill:none;stroke:var(--muted);stroke-width:1.2;stroke-dasharray:3 4;opacity:.5}
+  .wfb.pos{fill:var(--pos);opacity:.9}.wfb.neg{fill:var(--neg);opacity:.9}.wfb.zero{fill:var(--zero);opacity:.6}
+  .wfb.tot.pos{fill:var(--pos);opacity:1}.wfb.tot.neg{fill:var(--neg);opacity:1}
+  .wfl{fill:var(--muted);font-size:10.5px;font-weight:700}
+  .wfv{font-size:11px;font-weight:700;font-variant-numeric:tabular-nums}
+  .wfv.pos{fill:var(--pos)}.wfv.neg{fill:var(--neg)}.wfv.zero{fill:var(--muted)}
 </style></head>
 <body>
 <nav id="topnav" data-active="explorer"></nav>
@@ -98,6 +120,19 @@
       <div id="c_net"></div>
     </div>
     <div class="grid" id="grid"></div>
+
+    <!-- ── IMPACT WATERFALL (single-player only) — 6 factors → off/def, continuous play across game-days ── -->
+    <div id="waterfall">
+      <div class="sectitle" style="margin-bottom:4px">Impact waterfall
+        <span class="help" data-tip="The six factors stacked into Offense and Defense totals for one game-day. Press Play to morph the waterfall continuously across every game-day of this player's career.">?</span>
+      </div>
+      <div class="wfbar">
+        <button class="btn" id="wfplay" type="button" style="font-weight:700">▶ Play</button>
+        <input class="wfscrub" id="wfscrub" type="range" min="0" max="0" value="0" step="1" aria-label="Scrub game-day">
+      </div>
+      <div class="wfsum" id="wfsum"></div>
+      <div class="wfstack" id="wfstack"></div>
+    </div>
 
     <!-- ── PRODUCTION PROFILE (single-player only) ── -->
     <div id="profile">
@@ -198,6 +233,7 @@ const MODEHINT={
   latent:'Latent — one continuous cross-league curve (DARKO-style state-space fusion of the on/off RAPM + box legs), so a player who moves between leagues has a single line instead of disjoint per-league graphs. The line is colored by the league he played in each day. A smoothed forecast-flavored view — descriptive, not the projection numbers.'};
 let SERIES={}, MODE=(localStorage.getItem('rapm_mode')||'prior'), PNAME='', CURID=null;
 function load(id,name){drop.style.display='none';q.value=name;history.replaceState(null,'','?p='+id);
+  if(typeof wfStop==='function')wfStop();           // cancel any waterfall sweep from the previous player
   CURID=id; MULTI=null;
   const opt=u=>fetch(u).then(r=>r.ok?r.json():null).catch(()=>null);
   Promise.all([
@@ -386,6 +422,7 @@ function setHoverAll(i,line){
   const fmt=(val,sd)=>val==null?'—':`<b>${val>=0?'+':''}${val.toFixed(2)}</b> <span style="color:var(--faint)">±${(1.96*sd).toFixed(2)}</span>`;
   document.getElementById('v_net').innerHTML=fmt(s.net,s.net_se);
   FAC.forEach(([f])=>{const e=document.getElementById('v_'+f);if(e)e.innerHTML=fmt(s[f],s[f+'_se']);});
+  if(!wfPlaying&&WFDOM&&i>=0&&i<SER.length)wfRenderAt(i);   // waterfall follows the hovered game-day
 }
 
 function show(){
@@ -427,7 +464,8 @@ function renderActive(){
   requestAnimationFrame(()=>{
     CHARTS=[Chart(document.getElementById('c_net'),SER,'net',netProj)];
     FAC.forEach(([f],i)=>CHARTS.push(Chart(document.getElementById('c_'+f),SER,f,facProj(i))));
-    setHoverAll(SER.length-1,false);                 // default readout = most recent day
+    wfInit();                                        // (re)build the waterfall for this player/mode
+    setHoverAll(SER.length-1,false);                 // default readout = most recent day (also paints the waterfall)
   });
 }
 window.addEventListener('resize',()=>{if(SER||MULTI)show_rerender();});
@@ -513,6 +551,7 @@ function showMulti(){
   document.getElementById('projseg').style.display='none';
   document.getElementById('cmptray').style.display='none';
   document.getElementById('profile').style.display='none';
+  wfStop();document.getElementById('waterfall').style.display='none';   // waterfall is single-player only
   document.getElementById('modehint').textContent='Comparison overlay — prior-informed net + 6 factors for '+MULTI.length+' players. Each player has a distinct color and legend label.';
   document.getElementById('pname').textContent='Comparison';
   document.getElementById('pmeta').innerHTML=MULTI.map(m=>`<a href="index.html?p=${m.id}" style="color:${m.color};font-weight:700">${m.name}</a>`).join(' · ');
@@ -601,6 +640,110 @@ function setHoverMulti(i,line){
     put('v_net','net',lastVal); FAC.forEach(([f])=>put('vm_'+f,f,lastVal));
   }
 }
+
+// ===== Impact waterfall (6 factors → off/def; Play morphs continuously across game-days) ==========
+// Renders the active-mode daily series (SER) as two waterfalls. It follows the line-chart hover, and
+// Play sweeps a single fractional position 0→last in one rAF loop, interpolating factors between the
+// two bracketing game-days — so the bars morph continuously with no per-step holds.
+const WF_OFF=['oTS','oTOV','oSC'], WF_DEF=['dTS','dTOV','dSC'];
+let WFDOM=null, wfPlaying=false, wfRAF=null, wfStart=0, wfPos=0, wfSweepMs=12000;
+const wfSign=v=>(v>=0?'+':'')+v.toFixed(2);
+const wfCls=v=>Math.abs(v)<0.005?'zero':(v>0?'pos':'neg');
+
+// stable y-domain per side across the whole series, so bars don't rescale during a sweep
+function wfComputeDomain(ser){
+  const dom={off:{min:0,max:0},def:{min:0,max:0}};
+  for(const s of ser){
+    for(const[side,facs]of[['off',WF_OFF],['def',WF_DEF]]){
+      let run=0;for(const f of facs){run+=s[f]||0;if(run<dom[side].min)dom[side].min=run;if(run>dom[side].max)dom[side].max=run;}
+    }
+  }
+  for(const side of['off','def']){
+    let{min,max}=dom[side];
+    if(max-min<1){const mid=(max+min)/2;min=mid-0.5;max=mid+0.5;}
+    const pad=Math.max(0.25,(max-min)*0.12);dom[side]={min:min-pad,max:max+pad};
+  }
+  return dom;
+}
+function wfInterp(i0,i1,t){const a=SER[i0],b=SER[i1]||a,r={};
+  for(const f of[...WF_OFF,...WF_DEF])r[f]=(a[f]||0)+(((b[f]||0)-(a[f]||0)))*t;return r;}
+
+function wfSvg(row,facs,title,dom){
+  const W=560,H=232,m={t:40,r:14,b:22,l:36},pw=W-m.l-m.r,ph=H-m.t-m.b;
+  const steps=facs.map(f=>({label:f,value:row[f]||0}));
+  const total=steps.reduce((a,s)=>a+s.value,0), rng=dom.max-dom.min, Y=v=>m.t+(dom.max-v)/rng*ph;
+  const count=steps.length+1, slot=pw/count, bw=Math.min(56,slot*0.5), cx=i=>m.l+slot*i+slot/2;
+  let ticks='';
+  for(let k=0;k<5;k++){const tv=dom.min+rng*k/4,yy=Y(tv);
+    ticks+=`<line class="wfg" x1="${m.l}" x2="${W-m.r}" y1="${yy.toFixed(1)}" y2="${yy.toFixed(1)}"/><text class="wft" x="${m.l-6}" y="${(yy+3).toFixed(1)}" text-anchor="end">${tv.toFixed(1)}</text>`;}
+  const drawBar=(x,v,cls,extra)=>{const y0=Y(0+(extra?extra.base:0)),y1=Y((extra?extra.base:0)+v);
+    const h=Math.max(2.5,Math.abs(y1-y0)),ry=Math.abs(y1-y0)<2.5?y1-h/2:Math.min(y0,y1);
+    const labY=v>=0?Math.max(13,ry-8):Math.min(H-m.b-2,ry+h+14);
+    return`<g><rect class="wfb ${extra&&extra.tot?'tot ':''}${cls}" x="${(x-bw/2).toFixed(1)}" y="${ry.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="3"><title>${extra&&extra.name||''} ${wfSign(v)}</title></rect>`
+      +`<text class="wfv ${cls}" x="${x.toFixed(1)}" y="${labY.toFixed(1)}" text-anchor="middle">${wfSign(v)}</text></g>`;};
+  let run=0,bars='',trace=[`${cx(0).toFixed(1)},${Y(0).toFixed(1)}`];
+  steps.forEach((s,i)=>{const x=cx(i);
+    bars+=drawBar(x,s.value,wfCls(s.value),{base:run,name:s.label})
+      +`<text class="wfl" x="${x.toFixed(1)}" y="${(H-8).toFixed(1)}" text-anchor="middle">${s.label}</text>`;
+    run+=s.value;trace.push(`${x.toFixed(1)},${Y(run).toFixed(1)}`);});
+  const tx=cx(steps.length);
+  bars+=drawBar(tx,total,wfCls(total),{base:0,tot:1,name:title})
+    +`<text class="wfl" x="${tx.toFixed(1)}" y="${(H-8).toFixed(1)}" text-anchor="middle">${title}</text>`;
+  const zeroY=Y(0);
+  return`<svg class="wfsvg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">${ticks}`
+    +`<line class="wfax" x1="${m.l}" x2="${W-m.r}" y1="${zeroY.toFixed(1)}" y2="${zeroY.toFixed(1)}"/>`
+    +`<polyline class="wftr" points="${trace.join(' ')}"/>${bars}</svg>`;
+}
+function wfRenderAt(pos){
+  if(!SER||!SER.length||!WFDOM)return;
+  const n=SER.length;pos=Math.max(0,Math.min(n-1,pos));
+  const i0=Math.floor(pos),i1=Math.min(n-1,Math.ceil(pos)),t=pos-i0;
+  const row=t===0?SER[i0]:wfInterp(i0,i1,t);
+  const off=WF_OFF.reduce((a,f)=>a+(row[f]||0),0), def=WF_DEF.reduce((a,f)=>a+(row[f]||0),0), net=off+def;
+  document.getElementById('wfstack').innerHTML=
+    `<div class="wfchart"><div class="wfhd"><span>OFFENSE</span><span class="${wfCls(off)}">${wfSign(off)}</span></div>${wfSvg(row,WF_OFF,'Off',WFDOM.off)}</div>`
+   +`<div class="wfchart"><div class="wfhd"><span>DEFENSE</span><span class="${wfCls(def)}">${wfSign(def)}</span></div>${wfSvg(row,WF_DEF,'Def',WFDOM.def)}</div>`;
+  const s=SER[Math.round(pos)];
+  document.getElementById('wfsum').innerHTML=
+    `<b>${s.date}</b> · <span style="color:${LC[s.lg]}">${LNAME[s.lg]}</span> · `
+   +`<span class="${wfCls(off)}">Off ${wfSign(off)}</span> · <span class="${wfCls(def)}">Def ${wfSign(def)}</span> → <span class="${wfCls(net)}">Net ${wfSign(net)}</span>`;
+  const sc=document.getElementById('wfscrub');if(sc&&document.activeElement!==sc)sc.value=String(Math.round(pos));
+}
+function wfSetBtn(p){const b=document.getElementById('wfplay');if(b){b.textContent=p?'❚❚ Pause':'▶ Play';b.classList.toggle('active',p);}}
+function wfStop(){wfPlaying=false;if(wfRAF)cancelAnimationFrame(wfRAF);wfRAF=null;wfSetBtn(false);}
+function wfLoop(now){
+  if(!wfPlaying)return;
+  const n=SER.length, frac=Math.min(1,(now-wfStart)/wfSweepMs);
+  wfPos=frac*(n-1);
+  wfRenderAt(wfPos);
+  setHoverAll(Math.round(wfPos),true);       // sweep the line-chart crosshair + readout in sync
+  if(frac<1){wfRAF=requestAnimationFrame(wfLoop);}
+  else{wfStop();wfPos=n-1;setHoverAll(n-1,false);}  // settle on the latest day
+}
+function wfPlay(){
+  if(!SER||SER.length<2)return;
+  if(wfPlaying){wfStop();return;}
+  const n=SER.length;
+  if(wfPos>=n-1)wfPos=0;                       // restart from the top if parked at the end
+  wfSweepMs=Math.max(6000,Math.min(16000,n*8));
+  wfPlaying=true;wfSetBtn(true);
+  wfStart=performance.now()-(wfPos/(n-1))*wfSweepMs;
+  wfRAF=requestAnimationFrame(wfLoop);
+}
+function wfInit(){                             // called from renderActive (single-player); setHoverAll paints it
+  const wf=document.getElementById('waterfall');
+  wfStop();
+  if(!SER||!SER.length){wf.style.display='none';return;}
+  wf.style.display='block';
+  WFDOM=wfComputeDomain(SER);
+  wfPos=SER.length-1;
+  const sc=document.getElementById('wfscrub');if(sc){sc.max=String(SER.length-1);sc.value=String(wfPos);}
+}
+document.getElementById('wfplay').addEventListener('click',wfPlay);
+document.getElementById('wfscrub').addEventListener('input',e=>{
+  wfStop();const i=Math.max(0,Math.min((SER?SER.length:1)-1,Math.round(Number(e.target.value)||0)));
+  wfPos=i;setHoverAll(i,true);
+});
 
 </script>
 </body></html>

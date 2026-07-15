@@ -6,6 +6,10 @@
    interface is consistent and can never drift per-page again.
    ========================================================================== */
 
+/* Type: two voices — Plex Sans (UI/prose, real tabular figures) and
+   Plex Mono (readouts, axis ticks, code: the instrument voice). */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
 /* ---- Tokens ---------------------------------------------------------------- */
 :root{
   /* dark palette (default) */
@@ -25,7 +29,8 @@
   --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:36px;
   /* radius + layout */
   --r-1:4px; --r-2:7px; --maxw:1040px;
-  --font:"Helvetica Neue",Helvetica,Arial,sans-serif;
+  --font:"IBM Plex Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
 }
 /* light theme: token-only override (toggle in nav.js, persisted in localStorage) */
 :root[data-theme=light]{
@@ -43,15 +48,16 @@
 html,body{margin:0}
 body{background:var(--bg);color:var(--text);font-family:var(--font);
   -webkit-font-smoothing:antialiased;line-height:1.5}
-svg,svg text{font-family:var(--font)}
+/* every chart's tick labels, axis numbers & radar factor names are data: mono */
+svg,svg text{font-family:var(--font-mono)}
 svg{display:block;width:100%;height:auto}
 a{color:var(--accent);text-decoration:none}
 a:hover{color:var(--text)}
 .wrap{max-width:var(--maxw);margin:0 auto;padding:var(--sp-5) 22px 70px}
 
 /* page headings */
-h1{font-size:var(--fs-5);margin:6px 0 0;font-weight:650;letter-spacing:-.2px}
-h1 b{color:var(--accent);font-weight:750}
+h1{font-size:var(--fs-5);margin:6px 0 0;font-weight:600;letter-spacing:-.2px}
+h1 b{color:var(--accent);font-weight:700}
 h1 small{font-size:12px;color:var(--muted);font-weight:500;margin-left:6px}
 .sub{color:var(--muted);font-size:var(--fs-2);margin:6px 0 0;line-height:1.5;max-width:840px}
 .note{color:var(--faint);font-size:11.5px;margin:8px 0 0;line-height:1.6;max-width:840px}
@@ -121,13 +127,15 @@ h1 small{font-size:12px;color:var(--muted);font-weight:500;margin-left:6px}
 .ctitle{font-size:11.5px;font-weight:700;color:#aebccd;display:flex;justify-content:space-between;
   align-items:baseline;padding:1px 2px 3px}
 :root[data-theme=light] .ctitle{color:#33425a}
-.ctitle .v{font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
-.ctitle .v b{color:var(--text)}
+.ctitle .v{font-family:var(--font-mono);font-size:11.5px;font-weight:500;color:var(--muted);
+  font-variant-numeric:tabular-nums}
+.ctitle .v b{color:var(--text);font-weight:600}
 /* KPI block — big number stat for team/player headers */
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:14px 0}
 .kpi{border:1px solid var(--line);background:var(--panel);padding:10px 14px;border-radius:var(--r-1)}
 .kpi .k{font-size:11px;color:var(--muted);font-weight:600}
-.kpi .v{font-size:22px;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.kpi .v{font-family:var(--font-mono);font-size:21px;font-weight:600;margin-top:2px;
+  font-variant-numeric:tabular-nums;letter-spacing:-.3px}
 .kpi .x{font-size:11px;color:var(--faint);margin-top:1px}
 
 /* ---- Segmented control + buttons ------------------------------------------ */
