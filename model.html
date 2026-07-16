@@ -190,8 +190,9 @@
   <h2 id="example">What one player's decomposition looks like</h2>
   <p>A worked example: the prior-informed daily series for one player, drawn the way the
   <a href="index.html">Explorer</a> draws it — net on top, then the six factors as small multiples.
-  The faint band is the 95% CI; it is wide early (thin sample) and tightens as minutes accumulate.
-  The number on each panel is the <strong>latest</strong> game-day value.</p>
+  The faint band is the 95% CI on the estimate itself — not a forecast; it is wide early (thin
+  sample) and tightens as minutes accumulate. The number on each panel is the <strong>latest</strong>
+  game-day value.</p>
   <div class="exhead">
     <span class="exname" id="ex_name">Loading example…</span>
     <span class="exmeta" id="ex_meta"></span>
@@ -401,6 +402,15 @@
   thin sample it balloons past ±5. Translated (college / G-League) factors add the non-shrinkable
   <code>Var_translate</code> floor in quadrature, so their bands stay permanently wide — the league
   jump is uncertain in a way more games can't fix.</p>
+  <div class="callout">
+    <strong>It measures today, not next year.</strong> This band is the uncertainty of the
+    <em>current</em> estimate — how tightly the lineup data pins down what a player has already done.
+    It is <em>not</em> a forecast, and read as one it is roughly <strong>4× too wide</strong> for a
+    starter and wider still for a rotation player: the measurement <code>se</code> (median ≈ 3.1)
+    dwarfs the median year-over-year move (≈ 0.5) in a series that is already a 700-day low-pass
+    filter. <a href="#ciforward">We score that misuse below</a>. The forward band is the amber
+    projection cone on the <a href="index.html">Explorer</a> — a separately calibrated object.
+  </div>
 
   <h3>The system at a glance</h3>
   <div class="scroll">
@@ -468,27 +478,41 @@
         <th>DARKO</th>
       </tr></thead>
       <tbody>
+        <!-- HAND-MAINTAINED TABLE: these numbers do NOT derive from an artifact, so they go stale
+             silently. They did exactly that: a Jul-6 pivot cache never picked up the Jul-15 A7
+             re-solve, and this table published the stale figures until 2026-07-16 (game-margin was
+             0.163 too pessimistic; retro win-MAE 0.86 too pessimistic). RECONCILE AGAINST
+             research/arp/RESULTS.json (anchors) AFTER ANY re-gate/re-solve/cache rebuild.
+             Corrected 2026-07-16 from the artifacts; see RESULTS.json stale_cache_correction_2026_07_16. -->
         <tr><td class="l">Frozen-preseason win-MAE (2024–26 pooled)</td>
-            <td>6.804</td><td>6.239</td><td>6.357</td><td>6.675</td></tr>
+            <td>6.804</td><td>6.239</td><td>6.414</td><td>6.675</td></tr>
         <tr><td class="l">Game-margin RMSE (walk-forward)</td>
-            <td>14.2409</td><td>14.2988</td><td>14.1975</td><td>14.83*</td></tr>
+            <td>14.0777</td><td>14.2988</td><td>14.0586</td><td>14.83*</td></tr>
         <tr><td class="l">Retro win-MAE</td>
-            <td>5.0482</td><td>4.1169</td><td>4.4482</td><td>6.71*</td></tr>
+            <td>4.1868</td><td>4.1169</td><td>4.0344</td><td>6.71*</td></tr>
         <tr><td class="l">Playoff Brier</td>
-            <td>0.10998</td><td>0.09153</td><td>0.09667</td><td>—</td></tr>
+            <td>0.10357</td><td>0.09153</td><td>0.09636</td><td>—</td></tr>
       </tbody>
     </table>
   </div>
   <p class="cap" style="color:var(--faint);font-size:var(--fs-2)">*DARKO game-margin RMSE and retro
   win-MAE are measured preseason-frozen; a fresh DARKO-daily re-score is pending in a separate harness.
   The <strong>Blend</strong> column is benchmark-only — not a product.</p>
+  <!-- Prose numbers here are hand-maintained against the table above: reconcile BOTH against
+       research/arp/RESULTS.json after any re-gate. Rewritten 2026-07-16 after the stale-cache
+       correction — the previous copy called a 0.22-point internal win a "tie" and quoted a retro
+       win-MAE gap (4.12 vs 5.05) that a stale Jul-6 pivot cache had invented. -->
   <p>The honest read is <strong>task-by-task, not a blanket winner</strong>: EPM is better at
-  season-level prediction (frozen-preseason win-MAE <strong>6.24 vs 6.80</strong>), at retro win-MAE
-  (<strong>4.12 vs 5.05</strong>), and at playoff Brier (<strong>0.092 vs 0.110</strong>); the internal
-  model <strong>ties and edges</strong> EPM on game-margin RMSE (<strong>14.24 vs 14.30</strong>). So EPM
-  is <em>not</em> strictly better on every task. The internal+EPM blend beats both on some rows, but per
-  an owner decision <strong>no EPM-RAPM blend ships</strong> — it appears here only as an informative
-  benchmark.</p>
+  season-level prediction (frozen-preseason win-MAE <strong>6.24 vs 6.80</strong>) and at playoff Brier
+  (<strong>0.092 vs 0.104</strong>), and holds a now-narrow edge on retro win-MAE
+  (<strong>4.12 vs 4.19</strong>); the internal model <strong>leads</strong> EPM on game-margin RMSE
+  (<strong>14.08 vs 14.30</strong>). So EPM is <em>not</em> strictly better on every task. The
+  internal+EPM blend beats both on some rows, but per an owner decision <strong>no EPM-RAPM blend
+  ships</strong> — it appears here only as an informative benchmark.</p>
+  <p class="cap" style="color:var(--faint);font-size:var(--fs-2)">Corrected 2026-07-16. Until that date
+  this table published figures computed from a stale cache that never picked up the 2026-07-15 re-solve,
+  which understated the internal model on two rows (game-margin RMSE by 0.16, retro win-MAE by 0.86).
+  The numbers above are the corrected ones; the error was ours and in our own disfavour.</p>
 
   <h3>Predicting game margins</h3>
   <p>Feeding the team RAPM into the game model and scoring every game out-of-sample. The
@@ -543,7 +567,7 @@
   <strong>0.498</strong>, so the tamper-evident panel refused to render on the drift — and the metric
   has now been <strong>re-frozen at its current honest value</strong>, so the panel renders again with
   the whole 0.482 → 0.498 history preserved in the append-only chain.</p>
-  <h3>Are today's player CIs a next-season forecast band?</h3>
+  <h3 id="ciforward">Are today's player CIs a next-season forecast band?</h3>
   <p>No. This diagnostic presses today's estimate SE into service against next-season RAPM. The
   table shows why that is a different product from a true forecast interval.</p>
   <div class="scroll" style="max-width:520px">
@@ -830,7 +854,8 @@
       svg.appendChild(el('line',{x1:X(i),y1:padT,x2:X(i),y2:padT+ph,stroke:'var(--line-2)','stroke-width':1}));
       if(big){var tt=el('text',{x:X(i),y:H-3,'font-size':8,fill:'var(--faint)','text-anchor':'middle'});
         tt.textContent="’"+yr.slice(2); svg.appendChild(tt);} py=yr;}}
-    // CI band
+    // CI band: measurement uncertainty on the current estimate, not a forward band (CAL-2; see
+    // research/arp/cal2_band_audit.md). Labeling only — do not narrow or rescale it (F1).
     var up='',dn='';
     for(var a=0;a<n;a++) up+=X(a).toFixed(1)+','+Y(v[a]+1.96*se[a]).toFixed(1)+' ';
     for(var b=n-1;b>=0;b--) dn+=X(b).toFixed(1)+','+Y(v[b]-1.96*se[b]).toFixed(1)+' ';
@@ -848,7 +873,7 @@
     var last=DATA[key][DATA[key].length-1], se=DATA[key+'_se'][DATA[key+'_se'].length-1];
     var val=(last>=0?'+':'')+last.toFixed(2);
     c.innerHTML='<div class="ftitle"><span>'+label+'</span>'
-      +'<span class="fval">'+val+' <span class="pm">±'+(1.96*se).toFixed(2)+'</span></span></div>'
+      +'<span class="fval">'+val+' <span class="pm" title="95% CI on the current estimate — measurement uncertainty, not a forecast">±'+(1.96*se).toFixed(2)+'</span></span></div>'
       +'<div class="fchart"></div>';
     grid.appendChild(c);
     draw(c.querySelector('.fchart'),DATA,key,big);
@@ -863,7 +888,7 @@
     document.getElementById('ex_meta').textContent=DATA.d[0]+' – '+DATA.d[DATA.d.length-1]
       +' · '+DATA.d.length+' game-days · prior-informed';
     document.getElementById('ex_caption').textContent=
-      'Latest values shown on each panel; the faint band is the 95% CI. Drawn like the Explorer (static).';
+      'Latest values shown on each panel; the faint band is the 95% CI on the estimate itself, not a forecast. Drawn like the Explorer (static).';
     cell('net','Net RAPM · ORAPM + DRAPM',true);
     FAC.forEach(function(p){ cell(p[0],p[1],false); });
     // additivity table

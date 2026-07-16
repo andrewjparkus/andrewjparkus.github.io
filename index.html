@@ -109,7 +109,7 @@
     </div>
 
     <div class="netcard">
-      <div class="ctitle"><span>Net RAPM <span style="color:var(--faint);font-weight:400">· ORAPM + DRAPM</span> <span class="help" data-tip="Net RAPM = ORAPM (oTS+oTOV+oSC) + DRAPM (dTS+dTOV+dSC), points/100 on the NBA-equivalent scale.">?</span></span>
+      <div class="ctitle"><span>Net RAPM <span style="color:var(--faint);font-weight:400">· ORAPM + DRAPM</span> <span class="help" data-tip="Net RAPM = ORAPM (oTS+oTOV+oSC) + DRAPM (dTS+dTOV+dSC), points/100 on the NBA-equivalent scale. The grey band is the 95% CI on the estimate itself — how tightly the lineup data pins down what has already happened. It is not a forecast of next season; read that way it is about 4× too wide.">?</span></span>
         <span style="display:inline-flex;align-items:center;gap:8px;margin-left:auto">
           <span id="projseg" class="seg" style="display:none" title="Overlay the 1–5 year forward projection (per-factor XGBoost; off by default)">
             <button data-proj="off" type="button" class="on">Descriptive</button>
@@ -334,7 +334,13 @@ function Chart(mount,ser,key,proj){
   for(let i=1;i<n;i++){const yr=ser[i].date.slice(0,4);if(yr!==py){
     svg.appendChild(el('line',{x1:X(i),y1:padT,x2:X(i),y2:padT+ph,stroke:'var(--line-2)','stroke-width':1}));
     const t=el('text',{x:X(i),y:H-4,'font-size':8.5,fill:'var(--faint)','text-anchor':'middle'});t.textContent="’"+yr.slice(2);svg.appendChild(t);py=yr;}}
-  // CI band (95%, faint): the de-shrunk daily SE. Drawn UNCLAMPED and clipped to the plot rect.
+  // CI band (95%, faint): the de-shrunk daily SE. This is a MEASUREMENT CI on the current estimate,
+  // NOT a forward band — see research/arp/cal2_band_audit.md (CAL-2). Read as a next-season forecast
+  // it covers 99.9% at nominal 95% (n=17,204): median se~3.13 vs median annual move ~0.54, i.e. ~4x
+  // too wide for starters and ~26x for rotation players. It is honest as labeled, so do NOT narrow,
+  // rescale or de-attenuate it (F1); the honest forward band is a separate artifact
+  // (out/conformal_bands.parquet, daily_v5/conformal.py) and is not rendered here yet.
+  // Drawn UNCLAMPED and clipped to the plot rect.
   // Early-career SE is huge (±1.96·17 ≈ ±34); the old value-clamped envelope folded flat against
   // the axis edge and, as SE wobbled day-to-day, tore into jagged dark blocks. Clipping lets the
   // envelope run off-plot cleanly, so the band hugs the line and washes where uncertain.

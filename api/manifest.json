@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "license": "CC-BY-4.0",
-  "generated": "20260715",
+  "generated": "20260716",
   "factors": {
     "oTS": "offensive true-shooting value (ALT_EFG_VALUE + ALT_FT), pts/100",
     "oTOV": "offensive ball security / turnover avoidance, pts/100",
@@ -18,9 +18,9 @@
     "gleague"
   ],
   "data_freshness": {
-    "nba": "20260715",
-    "college": "20260715",
-    "gleague": "20260715"
+    "nba": "20260716",
+    "college": "20260716",
+    "gleague": "20260716"
   },
   "minutes_source": "current",
   "minutes_provenance": {
@@ -29,7 +29,7 @@
     "minutes_contract": "legacy_alloc_mpg",
     "availability_application": "legacy_consumer_dependent",
     "minutes_artifact": "daily_v5/out/minutes_allocation.parquet",
-    "minutes_artifact_sha256": "c292c4507f10910c1d3418036eb6ea5675059bb02183c0ee3e2bd9db8faa6688",
+    "minutes_artifact_sha256": "23ba053cb662fb1db97bcd771f334aab8c5e44f804b511431edf8e21a076ca09",
     "active_minutes_artifact": null,
     "active_minutes_artifact_sha256": null,
     "season_minutes_artifact": null,
@@ -39,9 +39,9 @@
     "replacement_tree_artifact": null,
     "replacement_tree_artifact_sha256": null,
     "gp_artifact": "daily_v5/out/gp_projection.parquet",
-    "gp_artifact_sha256": "7e128d5cda1ae0d0dc0ef1d611e176fb911aaa61edf1d3037f1bf67ed6affcec",
+    "gp_artifact_sha256": "bdc83c32519cbe44b7d4bcae5417beab159e92bd69554bcc752c8651baf16d60",
     "minutes_distribution_artifact": "daily_v5/out/minutes_distribution.parquet",
-    "minutes_distribution_artifact_sha256": "1f25dd8680055bee33d52e7e3e71ddc75878d0002b7b3d7efc85bd5a2b8d2bdf",
+    "minutes_distribution_artifact_sha256": "7605b31108197ec7c61f39fe4f699e7b076bbca3efd389ca98d5bfe6565c1d93",
     "depth_csv_artifact": "daily_v5/out/depthcharts_2026_27.csv",
     "depth_source": "owner",
     "v2_promotion_manifest": null,
@@ -74,7 +74,7 @@
   "changelog": [
     {
       "v": "1.0.0",
-      "date": "20260715",
+      "date": "20260716",
       "note": "initial public export"
     }
   ]

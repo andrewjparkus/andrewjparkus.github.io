@@ -1,0 +1,380 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Metric leaderboard &mdash; Daily RAPM</title>
+<link rel="stylesheet" href="site.css">
+<link rel="icon" href="favicon.svg"><link rel="manifest" href="manifest.webmanifest">
+<style>
+  .doc{max-width:var(--maxw);margin:0 auto;padding:var(--sp-5) 22px 80px}
+  .doc h1 small{display:block;margin:0}
+  .lede{color:var(--muted);font-size:var(--fs-4);font-style:italic;margin:8px 0 0;line-height:1.6;max-width:820px}
+  .doc h2{font-size:var(--fs-5);font-weight:700;margin:38px 0 6px;padding-top:16px;
+    border-top:1px solid var(--line);letter-spacing:-.2px;scroll-margin-top:62px}
+  .doc h2:first-of-type{border-top:0;padding-top:6px}
+  .doc p{color:var(--text);font-size:var(--fs-4);line-height:1.65;max-width:820px}
+  .doc p.small{font-size:var(--fs-2);color:var(--muted)}
+  .doc strong{color:var(--text);font-weight:700}
+  .doc em{color:var(--muted)}
+  .doc code{background:var(--panel-3);border:1px solid var(--line);border-radius:var(--r-1);
+    padding:1px 5px;font-size:12px;color:var(--accent);font-family:var(--font-mono)}
+  .doc ul{max-width:820px;padding-left:20px}
+  .doc li{color:var(--text);font-size:var(--fs-4);line-height:1.6;margin:6px 0}
+  .doc li::marker{color:var(--faint)}
+  table.tbl td.note-cell,table.tbl th.note-cell{white-space:normal;color:var(--muted);font-size:11.5px}
+  table.tbl td.lead{font-weight:600}
+  .tag{font-size:10px;font-weight:700;letter-spacing:.3px;padding:1px 6px;border-radius:3px;
+    background:var(--panel-3);color:var(--muted);border:1px solid var(--line)}
+  .tag.pub{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);border-color:transparent}
+  .tag.vint{background:transparent}
+  .tag.cov{background:color-mix(in srgb,var(--amber) 15%,transparent);color:var(--amber);border-color:transparent}
+  .benchrow>td{background:color-mix(in srgb,var(--faint) 8%,transparent)}
+  .bench{font-weight:700;color:var(--amber);font-size:11px}
+  /* honesty callout + the coverage column that keeps bpm/raptor from reading as "far worse" */
+  .callout.caution{border-left-color:var(--amber)}
+  .covbad{color:var(--amber);font-weight:700}
+  .covok{color:var(--muted)}
+  table.tbl th.cc,table.tbl td.cc{color:var(--muted)}
+  table.tbl tbody td.cc{color:var(--text)}
+  table.tbl th.sub,.sub{font-size:10px;color:var(--faint);font-weight:600;letter-spacing:.02em}
+  table.tbl thead tr:last-child th{border-bottom:1px solid var(--line)}
+  /* per-source cards */
+  .srcgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:16px 0}
+  .srccard{border:1px solid var(--line);background:var(--panel);border-radius:var(--r-1);padding:13px 14px}
+  .srchd{font-size:var(--fs-4);font-weight:700;color:var(--text);letter-spacing:-.2px}
+  .srcblurb{margin:5px 0 10px;font-size:var(--fs-2);color:var(--muted);line-height:1.5}
+  .srcstats{display:flex;flex-wrap:wrap;gap:6px 16px;margin-bottom:10px}
+  .srcstat{display:flex;flex-direction:column;line-height:1.25}
+  .srcstat .k{font-size:10px;color:var(--faint);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+  .srcstat .v{font-family:var(--font-mono);font-size:13px;color:var(--text);font-variant-numeric:tabular-nums}
+  .srctags{display:flex;gap:6px;flex-wrap:wrap}
+  @media(max-width:560px){.doc{padding:18px 14px 60px}.doc h2{font-size:18px}}
+</style></head>
+<body>
+<nav id="topnav" data-active="metrics"></nav>
+<script src="charts.js"></script>
+<script src="nav.js"></script>
+
+<div class="doc">
+  <h1>The metric leaderboard <small>six impact metrics, two honest tasks</small></h1>
+  <p class="lede">Six public and internal player-impact metrics &mdash; our RAPM decomposition,
+  Dunks&nbsp;&amp;&nbsp;Threes' EPM, DARKO, Box&nbsp;Plus-Minus, RAPTOR and WAR &mdash; scored on the
+  same two out-of-sample tasks, on one normalized panel, with the leakage rules stated in the open.
+  Lower is better in every table. No public site publishes this side-by-side; this page is it.</p>
+
+  <div class="callout">
+    <strong>What makes it honest.</strong> Every rating is used only <em>as it was knowable at the
+    time</em>: game predictions are walk-forward (a rating as of the day <em>before</em> tip, never
+    after), and the season task freezes each source at the prior season's end and asks it to predict
+    a team's <em>next</em>-season margin. Each source also carries a <code>model_vintage</code> flag
+    &mdash; whether the number is the metric as it was <em>published live</em>, or a current-model
+    <em>retro re-fit</em> over as-of data &mdash; so a re-run never masquerades as a live track record.
+    Where a source's panel thins, its coverage is printed <em>next to its result</em> rather than left
+    to flatter the rest of the table: two of the six carry a <span class="tag cov">coverage-limited</span>
+    tag, and the reason they trail is spelled out rather than banked.
+    The internal+EPM blend appears once, labeled <span class="bench">benchmark-only &mdash; not a product</span>: no EPM-RAPM blend ships as a product.
+  </div>
+
+  <h2 id="game">Task&nbsp;A &mdash; predicting game margins (walk-forward)</h2>
+  <p>Feed each source's team rating into the shared game model and score the predicted margin against
+  the actual result, <strong>out-of-sample</strong>, over every game of 2024&ndash;26
+  (<strong>n&nbsp;=&nbsp;3,242 games</strong>). RMSE is in points; each rating is causal
+  &mdash; as of the day before the game, so no game informs its own prediction. DARKO appears twice:
+  a fresh <span class="tag">daily</span> re-score that updates within the season, and the
+  <span class="tag">frozen</span> pre-season snapshot (the only DARKO on disk for older seasons),
+  which is necessarily staler.</p>
+  <div class="scroll">
+    <table class="tbl">
+      <thead><tr>
+        <th class="l">Source</th><th>RMSE</th>
+        <th class="grp">2024</th><th>2025</th><th>2026</th>
+        <th class="l note-cell">Basis</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="l lead">Internal RAPM</td><td>14.0777</td>
+            <td class="grp">14.0145</td><td>14.1381</td><td>14.0805</td>
+            <td class="l note-cell">daily board, causal as-of D&minus;1</td></tr>
+        <tr><td class="l lead">EPM</td><td>14.2988</td>
+            <td class="grp">14.2243</td><td>14.1966</td><td>14.4740</td>
+            <td class="l note-cell">daily impact cache</td></tr>
+        <tr><td class="l lead">DARKO&nbsp;<span class="tag">daily</span></td><td>14.4305</td>
+            <td class="grp">14.3437</td><td>14.2516</td><td>14.6928</td>
+            <td class="l note-cell">per-game-date re-score, 96.1% player coverage</td></tr>
+        <tr><td class="l lead">DARKO&nbsp;<span class="tag">frozen</span></td><td>14.8278</td>
+            <td class="grp">14.6768</td><td>14.5855</td><td>15.2140</td>
+            <td class="l note-cell">pre-season-frozen (staler, no in-season update)</td></tr>
+        <tr class="benchrow"><td class="l lead">Internal + EPM blend</td><td>14.0586</td>
+            <td class="grp">&mdash;</td><td>&mdash;</td><td>&mdash;</td>
+            <td class="l note-cell"><span class="bench">benchmark-only &mdash; not a product</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="small">Pooled and per-season RMSE from <code>out/p2_0/darko_daily_rescore.json</code>; the
+  blend row from <code>out/p2_0/composite_report.json</code>. Internal <strong>leads</strong> EPM here by <strong>0.2211</strong> &mdash; 4.4&times; the &plusmn;0.05 noise band, and the one task where the internal decomposition is not beaten
+  (<strong>14.0777</strong> vs <strong>14.2988</strong>). The blend edges internal
+  by only <strong>0.0191</strong>
+  (<strong>14.0586</strong>) &mdash; <span class="bench">benchmark-only &mdash; not a product</span>.</p>
+
+  <h2 id="season">Task&nbsp;B &mdash; retrodicting next season's team margin</h2>
+  <p>The projection test, and the row where the two publicly-famous box metrics join. Freeze each
+  source at a season's <strong>end</strong>, roll the roster forward with minutes-continuity weighting
+  (the Snarr&nbsp;2020 convention), and predict each team's <strong>next</strong>-season net margin.
+  Pooled over <strong>360 team-seasons, 2015&ndash;2026</strong>; strictly out-of-sample &mdash; the
+  next season is never in the fit. RMSE is points of team margin; <code>corr</code> is with realized
+  margin; <code>scale&nbsp;b</code> is the fitted shrink slope.</p>
+  <div class="scroll">
+    <table class="tbl">
+      <thead><tr>
+        <th class="rank">#</th><th class="l">Source</th>
+        <th>Team-margin RMSE</th><th>Corr</th><th>Scale&nbsp;b</th>
+        <th class="grp">Panel coverage<br>2015&nbsp;&rarr;&nbsp;2026</th>
+      </tr></thead>
+      <tbody>
+<tr><td class="rank">1</td><td class="l lead">EPM</td><td>2.878</td><td>0.814</td><td>0.818</td><td class="grp"><span class="covok">91%&nbsp;&rarr;&nbsp;89%</span></td></tr>
+<tr><td class="rank">2</td><td class="l lead">DARKO</td><td>3.01</td><td>0.794</td><td>0.892</td><td class="grp"><span class="covok">91%&nbsp;&rarr;&nbsp;89%</span></td></tr>
+<tr><td class="rank">3</td><td class="l lead">Internal RAPM</td><td>3.129</td><td>0.775</td><td>0.84</td><td class="grp"><span class="covok">91%&nbsp;&rarr;&nbsp;89%</span></td></tr>
+<tr><td class="rank">4</td><td class="l lead">BPM <span class="tag pub">public</span> <span class="tag cov">coverage-limited</span></td><td>3.709</td><td>0.663</td><td>0.46</td><td class="grp"><span class="covbad">90%&nbsp;&rarr;&nbsp;32%</span></td></tr>
+<tr><td class="rank">5</td><td class="l lead">RAPTOR <span class="tag pub">public</span> <span class="tag cov">coverage-limited</span></td><td>3.761</td><td>0.651</td><td>0.425</td><td class="grp"><span class="covbad">90%&nbsp;&rarr;&nbsp;32%</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="small">From <code>out/p2_0/metric_retrodiction.json</code>; the coverage column from
+  <code>out/p2_0/metric_retrodiction_deep.json</code>. EPM leads
+  (<strong>2.878</strong>), DARKO and the internal decomposition follow
+  (<strong>3.01</strong> / <strong>3.129</strong>).
+  The bottom two rows come with a caveat that changes how you should read them &mdash; it is the next
+  paragraph, not a footnote.</p>
+
+  <div class="callout caution">
+    <strong>BPM and RAPTOR are not "far behind" &mdash; read the coverage column first.</strong>
+    Most of that gap is <em>a coverage artifact, not a quality result</em>: the BPM/RAPTOR panel holds
+    ~90% of league minutes through 2020 and then decays to 32% by
+    2026, so across the back half of this window the test is scoring the holes in their
+    panel &mdash; where missing players are replacement-filled &mdash; rather than the metric itself.
+    Score them where their coverage is intact and the gap all but closes: in
+    2015-2020, BPM's corr (<strong>0.822</strong>) sits with EPM
+    (<strong>0.829</strong>) and DARKO
+    (<strong>0.834</strong>), and BPM's RMSE
+    (<strong>2.664</strong>) <em>beats</em> our own internal
+    decomposition's (<strong>2.768</strong>). Only in
+    2021-2026, as the panel thins, does BPM's corr crater to
+    <strong>0.593</strong>. That is the signature of a thinning panel, not
+    of a degrading metric. Internal, EPM and DARKO hold 87&ndash;92% coverage
+    in <em>every</em> season 2003-2026, so comparisons among those three are coverage-clean
+    throughout; the two public box metrics deserve the asterisk this column gives them.
+  </div>
+
+  <h2 id="deep">The same test, twice as deep &mdash; 2003-2026</h2>
+  <p>The games spine now reaches 2001-02, so the season task runs over
+  <strong>718 team-seasons (2003-2026)</strong> &mdash; double the anchor above.
+  This is <strong>additive context, not a redefinition</strong>: the frozen
+  2015-2026 anchor (n&nbsp;=&nbsp;360) remains the pinned number every other result on
+  this site is comparable to, and the deep runner reproduced it <em>exactly</em> &mdash; every source,
+  every figure, delta 0.0000. That non-regression is what licenses showing the wider window at all;
+  this exporter refuses to build if it ever stops holding.</p>
+  <div class="scroll">
+    <table class="tbl">
+      <thead><tr>
+        <th class="l">Source</th>
+        <th>RMSE</th><th class="cc">Corr</th>
+        <th class="grp">RMSE</th><th class="cc">Corr</th>
+        <th class="grp">RMSE</th><th class="cc">Corr</th>
+      </tr>
+      <tr>
+        <th class="l sub">window</th>
+        <th class="sub" colspan="2">full 2003-2026 &middot; n&nbsp;=&nbsp;718</th>
+        <th class="sub grp" colspan="2">2015-2026 anchor &middot; n&nbsp;=&nbsp;360</th>
+        <th class="sub grp" colspan="2">deep 2003-2014 &middot; n&nbsp;=&nbsp;358</th>
+      </tr></thead>
+      <tbody>
+<tr><td class="l lead">EPM</td><td>2.836</td><td class="cc">0.798</td><td class="grp">2.878</td><td class="cc">0.814</td><td class="grp">2.762</td><td class="cc">0.782</td></tr>
+<tr><td class="l lead">DARKO</td><td>2.866</td><td class="cc">0.793</td><td class="grp">3.01</td><td class="cc">0.794</td><td class="grp">2.692</td><td class="cc">0.795</td></tr>
+<tr><td class="l lead">Internal RAPM</td><td>3.007</td><td class="cc">0.769</td><td class="grp">3.129</td><td class="cc">0.775</td><td class="grp">2.869</td><td class="cc">0.762</td></tr>
+<tr><td class="l lead">BPM <span class="tag cov">coverage-limited</span></td><td>3.41</td><td class="cc">0.688</td><td class="grp">3.709</td><td class="cc">0.663</td><td class="grp">3.001</td><td class="cc">0.736</td></tr>
+<tr><td class="l lead">RAPTOR <span class="tag cov">coverage-limited</span></td><td>3.449</td><td class="cc">0.68</td><td class="grp">3.761</td><td class="cc">0.651</td><td class="grp">2.97</td><td class="cc">0.743</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="small">From <code>out/p2_0/metric_retrodiction_deep.json</code>, reconciled to the
+  <code>deep_history_additive</code> block of <code>RESULTS.json</code>. The deep window is
+  358 rather than 360 team-seasons because 2002-03 and 2003-04 were 29-team seasons.
+  The ordering is stable: the internal decomposition is the third-best impact metric behind EPM and
+  DARKO in <em>every</em> window here.</p>
+
+  <div class="callout caution">
+    <strong>Compare RMSE only down a column, never across &mdash; corr is the scale-free read.</strong>
+    Realized team-margin SD climbs <strong>4.44</strong> (2003-2014) &rarr;
+    <strong>4.96</strong> (2015-2026) &rarr; <strong>5.22</strong>
+    (2021-2026): NBA teams simply finish further apart than they used to. Every source's RMSE
+    is therefore <em>mechanically</em> lower in the deep window &mdash; that is the target getting
+    easier, not the metrics predicting the 2000s better. Wherever these cross-era numbers appear,
+    corr is the column that means something.
+  </div>
+
+  <h2 id="eras">What the deep history changes &mdash; EPM's lead is recent</h2>
+  <p>Split the 24 seasons into three windows and read the scale-free column. The first two are
+  <em>parity-coverage</em> eras (every source ~90%); only the last one has the BPM/RAPTOR panel gap.</p>
+  <div class="scroll">
+    <table class="tbl">
+      <thead><tr>
+        <th class="l">Source &mdash; corr with realized margin</th>
+        <th>2003-2014<br><span class="sub">n&nbsp;=&nbsp;358</span></th>
+        <th class="grp">2015-2020<br><span class="sub">n&nbsp;=&nbsp;180</span></th>
+        <th class="grp">2021-2026<br><span class="sub">n&nbsp;=&nbsp;180</span></th>
+      </tr></thead>
+      <tbody>
+<tr><td class="l lead">EPM</td><td>0.782</td><td class="grp">0.829</td><td class="grp">0.814</td></tr>
+<tr><td class="l lead">DARKO</td><td>0.795</td><td class="grp">0.834</td><td class="grp">0.761</td></tr>
+<tr><td class="l lead">Internal RAPM</td><td>0.762</td><td class="grp">0.807</td><td class="grp">0.752</td></tr>
+<tr><td class="l lead">BPM <span class="tag cov">coverage-limited</span></td><td>0.736</td><td class="grp">0.822</td><td class="grp">0.593</td></tr>
+<tr><td class="l lead">RAPTOR <span class="tag cov">coverage-limited</span></td><td>0.743</td><td class="grp">0.808</td><td class="grp">0.58</td></tr>
+<tr class="total"><td class="l">BPM&nbsp;/&nbsp;RAPTOR panel coverage</td><td>90%</td><td class="grp">89%</td><td class="grp"><span class="covbad">54%</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="small">Corr from the <code>equal_coverage_splits</code> block of
+  <code>metric_retrodiction_deep.json</code>; the coverage row is the mean of the per-season panel
+  minutes-coverage series in the same artifact.</p>
+  <p><strong>DARKO, not EPM, leads the older eras.</strong> DARKO wins
+  2003-2014 (<strong>0.795</strong> vs EPM's
+  <strong>0.782</strong>) <em>and</em> 2015-2020
+  (<strong>0.834</strong> vs <strong>0.829</strong>).
+  EPM only pulls ahead in 2021-2026 (<strong>0.814</strong> vs
+  <strong>0.761</strong>) &mdash; and that single era carries EPM's
+  full-window and anchor win. Both sources hold ~90% coverage in every era, so this is a real finding
+  and not a data gap: <strong>EPM's edge is recent, not longstanding.</strong> Twelve extra seasons
+  turned a standing assumption into a dated one &mdash; which is the entire argument for keeping this
+  page honest rather than tidy.</p>
+
+  <h2 id="sources">The panel &mdash; one row per metric</h2>
+  <p>All six metrics live in a single normalized panel keyed on the NBA player id
+  (<code>out/external_metrics/metric_panel.parquet</code>), so every comparison above is
+  apples-to-apples. Coverage, span, and the two honesty flags per source:</p>
+  <div class="srcgrid">
+        <div class="srccard">
+          <div class="srchd">Internal RAPM</div>
+          <p class="srcblurb">Our six-factor daily RAPM decomposition; the season-END board snapshot per player.</p>
+          <div class="srcstats">
+            <div class="srcstat"><span class="k">seasons</span><span class="v">1997&ndash;2026</span></div>
+            <div class="srcstat"><span class="k">rows</span><span class="v">20,328</span></div>
+            <div class="srcstat"><span class="k">players</span><span class="v">2,588</span></div>
+            
+          </div>
+          <div class="srctags">
+            <span class="tag">season-end</span>
+            <span class="tag vint">retro re-fit</span>
+          </div>
+        </div>
+        <div class="srccard">
+          <div class="srchd">EPM</div>
+          <p class="srcblurb">Dunks &amp; Threes' Estimated Plus-Minus, from the daily impact cache.</p>
+          <div class="srcstats">
+            <div class="srcstat"><span class="k">seasons</span><span class="v">2002&ndash;2026</span></div>
+            <div class="srcstat"><span class="k">rows</span><span class="v">955,442</span></div>
+            <div class="srcstat"><span class="k">players</span><span class="v">2,566</span></div>
+            
+          </div>
+          <div class="srctags">
+            <span class="tag">daily as-of</span>
+            <span class="tag vint">retro re-fit</span>
+          </div>
+        </div>
+        <div class="srccard">
+          <div class="srchd">DARKO</div>
+          <p class="srcblurb">Public daily-updated box model (per-game-date history pull).</p>
+          <div class="srcstats">
+            <div class="srcstat"><span class="k">seasons</span><span class="v">1997&ndash;2026</span></div>
+            <div class="srcstat"><span class="k">rows</span><span class="v">1,077,693</span></div>
+            <div class="srcstat"><span class="k">players</span><span class="v">2,580</span></div>
+            
+          </div>
+          <div class="srctags">
+            <span class="tag">daily as-of</span>
+            <span class="tag vint">retro re-fit</span>
+          </div>
+        </div>
+        <div class="srccard">
+          <div class="srchd">BPM / VORP</div>
+          <p class="srcblurb">Basketball-Reference Box Plus-Minus, joined via the bbref crosswalk.</p>
+          <div class="srcstats">
+            <div class="srcstat"><span class="k">seasons</span><span class="v">1977&ndash;2025</span></div>
+            <div class="srcstat"><span class="k">rows</span><span class="v">19,217</span></div>
+            <div class="srcstat"><span class="k">players</span><span class="v">3,254</span></div>
+            <div class="srcstat"><span class="k">bbref join</span><span class="v">92%</span></div>
+          </div>
+          <div class="srctags">
+            <span class="tag">season-end</span>
+            <span class="tag vint">live published</span>
+          </div>
+        </div>
+        <div class="srccard">
+          <div class="srchd">RAPTOR</div>
+          <p class="srcblurb">Neil Paine's estimated RAPTOR (the public 538-lineage box+plus-minus estimate).</p>
+          <div class="srcstats">
+            <div class="srcstat"><span class="k">seasons</span><span class="v">1977&ndash;2025</span></div>
+            <div class="srcstat"><span class="k">rows</span><span class="v">19,217</span></div>
+            <div class="srcstat"><span class="k">players</span><span class="v">3,254</span></div>
+            <div class="srcstat"><span class="k">bbref join</span><span class="v">92%</span></div>
+          </div>
+          <div class="srctags">
+            <span class="tag">season-end</span>
+            <span class="tag vint">live published</span>
+          </div>
+        </div>
+        <div class="srccard">
+          <div class="srchd">WAR</div>
+          <p class="srcblurb">Neil Paine wins-above-replacement, the season-total win-value line.</p>
+          <div class="srcstats">
+            <div class="srcstat"><span class="k">seasons</span><span class="v">1977&ndash;2025</span></div>
+            <div class="srcstat"><span class="k">rows</span><span class="v">19,217</span></div>
+            <div class="srcstat"><span class="k">players</span><span class="v">3,254</span></div>
+            <div class="srcstat"><span class="k">bbref join</span><span class="v">92%</span></div>
+          </div>
+          <div class="srctags">
+            <span class="tag">season-end</span>
+            <span class="tag vint">live published</span>
+          </div>
+        </div>
+  </div>
+  <p class="small">Rows, players and spans from <code>metric_panel_manifest.json</code>; the
+  <code>snapshot_kind</code> and <code>model_vintage</code> flags read directly from the panel.
+  <strong>retro re-fit</strong> = the current model re-run over as-of data (EPM's date-backfill,
+  DARKO's history pull, our own board); <strong>live published</strong> = the metric as it was
+  published at the time (BPM, RAPTOR, WAR).</p>
+
+  <h2 id="methods">Methods &amp; leakage rules</h2>
+  <ul>
+    <li><strong>Task A is walk-forward.</strong> Each rating is taken <em>as of the day before</em>
+    the game it predicts (as-of&nbsp;&le;&nbsp;D&minus;1); a game never informs its own prediction.
+    Pooled over 3,242 regular-season games, 2024&ndash;26.</li>
+    <li><strong>Task B is out-of-sample by construction.</strong> A source is frozen at season
+    <em>N</em>'s end and scored on season <em>N+1</em>'s realized team margin; the target season is
+    never in the fit. Rosters roll forward with Snarr-2020 minutes-continuity weighting. Pooled over
+    360 team-seasons, 2015&ndash;2026.</li>
+    <li><strong>Apples-to-apples minutes.</strong> EPM and DARKO are scored with <em>our</em> pre-game
+    recent-minute shares, not their own projected minutes, so the comparison isolates the rating from
+    each vendor's minutes model.</li>
+    <li><strong>Coverage is reported, not hidden.</strong> A metric whose panel is missing players is
+    replacement-filled, and the test then scores the gap instead of the metric. BPM and RAPTOR fall
+    from ~90% of minutes through 2020 to 32% by 2026, so both
+    carry a <span class="tag cov">coverage-limited</span> tag and their headline deficit is explicitly
+    <em>not</em> presented as a quality verdict. Internal, EPM and DARKO hold
+    87&ndash;92% in every season 2003-2026.</li>
+    <li><strong>RMSE within a window, corr across.</strong> Realized team-margin SD rises
+    4.44&nbsp;&rarr;&nbsp;4.96&nbsp;&rarr;&nbsp;5.22 across these eras, so cross-era RMSE
+    comparisons are mechanically misleading. Corr is the scale-free read and is published beside every
+    RMSE here.</li>
+    <li><strong>Vintage honesty.</strong> EPM (date-backfill), DARKO (history pull) and the internal
+    board are current-model <em>retro re-fits</em> over as-of data &mdash; flagged as such, never sold
+    as a live track record. BPM, RAPTOR and WAR are the metrics as <em>published</em>.</li>
+    <li><strong>DARKO, two ways.</strong> The daily re-score updates within the season (~96% player
+    coverage); only pre-season-frozen DARKO exists on disk for older seasons, and it is reported
+    separately because it is staler, not because it is worse by design.</li>
+    <li><strong>No blend ships.</strong> The internal+EPM blend is shown once, as an informative
+    benchmark only. Per an owner decision, <span class="bench">benchmark-only &mdash; not a product</span> &mdash; no EPM-RAPM blend is a product.</li>
+  </ul>
+
+  <p class="foot">Built 2026-07-16 by <code>daily_v5/build_metrics_site.py</code>. Every number on this
+  page is re-read from a named artifact and reconciled against <code>research/arp/RESULTS.json</code>
+  at build time; the exporter fails closed rather than publish a drifted figure. Descriptive,
+  out-of-sample scoreboards &mdash; not a forward projection.</p>
+</div>
+</body></html>
