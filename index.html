@@ -95,7 +95,7 @@
         <button data-mode="pure" type="button">Pure RAPM</button>
         <button data-mode="prior" type="button">Prior-informed</button>
         <button data-mode="box" type="button">Box prior</button>
-        <button data-mode="latent" type="button" title="One continuous cross-league curve (DARKO-style fusion), colored by league">Latent</button>
+        <button data-mode="latent" type="button" title="One continuous cross-league curve over the daily prior-informed board; colored by league. Display-only.">Latent</button>
       </div>
     </div>
     <div class="modehint" id="modehint"></div>
@@ -229,8 +229,9 @@ function paint(){if(!curOpts.length){drop.style.display='none';return}
 const MODEHINT={
   pure:'Pure RAPM — the prior-free six-factor decomp, calibrated to the public DataBallR ridge. One line per league.',
   prior:'Prior-informed RAPM — the same daily solve, with all six factors shrunk toward a daily box-score prior. Shrinkage is strongest where lineup data is thin (rookies, early season) and fades as exposure grows. The default.',
-  box:'Box prior — the daily, multi-league box-score skill estimate that informs the prior-informed solve. A real fitted curve (not a flat reference) with a confidence band, built from box stats across NCAA, G-League & NBA up to each day. All six factors are shown.',
-  latent:'Latent — one continuous cross-league curve (DARKO-style state-space fusion of the on/off RAPM + box legs), so a player who moves between leagues has a single line instead of disjoint per-league graphs. The line is colored by the league he played in each day. A smoothed forecast-flavored view — descriptive, not the projection numbers.'};
+  box:'Box prior — the daily-refit box+EPM basis the prior-informed solve shrinks toward, re-fit every game-day on that day\'s prior-free cross-section (no seasonal steps). Shown at its honest scale, so it reads cooler than the board — especially on defense. Built from box stats across NCAA, G-League & NBA up to each day; all six factors, with a confidence band.',
+  latent:'Latent — one continuous cross-league curve: a DARKO-style state-space pass over the daily prior-informed board, so a player who moves between leagues has a single line instead of disjoint per-league graphs. Colored by the league played each day. Display-only.'};
+const MODEHINT_LATENT_ALIAS='Latent — single-league player: the latent equals the prior-informed board (no cross-league bridge needed).';
 let SERIES={}, MODE=(localStorage.getItem('rapm_mode')||'prior'), PNAME='', CURID=null;
 function load(id,name){drop.style.display='none';q.value=name;history.replaceState(null,'','?p='+id);
   if(typeof wfStop==='function')wfStop();           // cancel any waterfall sweep from the previous player
@@ -243,11 +244,16 @@ function load(id,name){drop.style.display='none';q.value=name;history.replaceSta
     opt('data/'+id+'_latent.json')                   // latent (continuous cross-league fusion; piecewise-colored)
   ]).then(([prior,pure,box,latent])=>{
     PNAME=prior.name||name;
-    SERIES={prior:prep(prior), pure:pure?prep(pure):null, box:box?prep(box):null, latent:latent?prep(latent):null};
+    const priorPrep=prep(prior);
+    // plan45 B1 (D3): single-league players have no _latent.json; alias Latent to the prior board
+    // (latent === board when there is no cross-league bridge) so the tab is never a dead greyed button.
+    LATENT_ALIAS=!latent;
+    SERIES={prior:priorPrep, pure:pure?prep(pure):null, box:box?prep(box):null,
+            latent:latent?prep(latent):priorPrep};
     RAW={prior, pure, box, latent};
     show();
   });}
-let RAW={};
+let RAW={}, LATENT_ALIAS=false;
 
 function activeMode(){return SERIES[MODE]?MODE:'prior';}  // honor preference; fall back per-player without dropping it
 function setMode(m){
@@ -261,7 +267,7 @@ function syncSeg(){
     const avail=!!SERIES[b.dataset.mode];
     b.disabled=!avail; b.classList.toggle('on',avail&&b.dataset.mode===am);
   });
-  document.getElementById('modehint').textContent=MODEHINT[am];
+  document.getElementById('modehint').textContent=(am==='latent'&&LATENT_ALIAS)?MODEHINT_LATENT_ALIAS:MODEHINT[am];
 }
 document.querySelectorAll('#modeseg button').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
 
@@ -332,7 +338,9 @@ function Chart(mount,ser,key,proj){
   // Early-career SE is huge (±1.96·17 ≈ ±34); the old value-clamped envelope folded flat against
   // the axis edge and, as SE wobbled day-to-day, tore into jagged dark blocks. Clipping lets the
   // envelope run off-plot cleanly, so the band hugs the line and washes where uncertain.
-  {const Yb=val=>padT+ph-(val-ymin)/(ymax-ymin)*ph;          // unclamped Y for the band envelope
+  // plan45 B3 (D3): suppress the band in latent mode — the latent sidecar's SE is a Kalman smoothing
+  // SE (~29x tighter than the true ability CI), so a band there would be quantitatively misleading.
+  if(activeMode()!=='latent'){const Yb=val=>padT+ph-(val-ymin)/(ymax-ymin)*ph;          // unclamped Y for the band envelope
     const idx=[];for(let i=0;i<n;i++)if(v[i]!=null&&se[i]!=null)idx.push(i);
     if(idx.length>1){
       const cid='ciclip_'+key, clip=el('clipPath',{id:cid}), defs=el('defs');
@@ -346,8 +354,13 @@ function Chart(mount,ser,key,proj){
   // was in that day (the DARKO fusion — no seam). Every other mode: one line PER league, no bridge.
   if(activeMode()==='latent'){
     for(let i=1;i<n;i++){if(v[i]==null||v[i-1]==null)continue;
-      svg.appendChild(el('line',{x1:X(i-1).toFixed(1),y1:Y(v[i-1]).toFixed(1),x2:X(i).toFixed(1),y2:Y(v[i]).toFixed(1),
-        stroke:lgColor(ser[i].lg),'stroke-width':1.8,'stroke-linecap':'round'}));}
+      // plan45 B5: dash the connector across a >30-day cross-league gap (rookie debut / league switch
+      // is information arrival, not smooth continuity) so a >1 net debut step reads as a gap, not a bug.
+      const bridge=((new Date(ser[i].date)-new Date(ser[i-1].date))/864e5>30)&&ser[i].lg!==ser[i-1].lg;
+      const a={x1:X(i-1).toFixed(1),y1:Y(v[i-1]).toFixed(1),x2:X(i).toFixed(1),y2:Y(v[i]).toFixed(1),
+        stroke:lgColor(ser[i].lg),'stroke-width':1.8,'stroke-linecap':'round'};
+      if(bridge){a['stroke-dasharray']='3,3';a['stroke-opacity']=0.5;}
+      svg.appendChild(el('line',a));}
   }else{
     [...new Set(ser.map(s=>s.lg))].forEach(lg=>{
       const idx=[];for(let i=0;i<n;i++)if(ser[i].lg===lg)idx.push(i);

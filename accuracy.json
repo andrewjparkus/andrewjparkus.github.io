@@ -428,18 +428,18 @@
       "path": "daily_v5/out/oos/scorecard_current.parquet",
       "exists": true,
       "size": 3811,
-      "mtime": 1784134062.8325696
+      "mtime": 1784168247.6098971
     },
     "manifest": {
       "path": "daily_v5/out/oos/manifest_current.json",
       "exists": true,
       "size": 7246,
-      "mtime": 1784134064.2063859
+      "mtime": 1784168248.9406877
     },
     "git": {
-      "sha": "4bf805a106fe185122c493761927020047f63dc4",
-      "dirty": true,
-      "dirty_entries": 29
+      "sha": "76702bf6684572d2c7cbfdb9d75dd38f4f68192b",
+      "dirty": false,
+      "dirty_entries": 0
     },
     "game_model_params": {
       "hca": 1.5370466094308175,
@@ -463,26 +463,26 @@
     "source": "daily_v5/out/p2_0/verify_composite/frozen_preseason_all.json",
     "pooled": {
       "rapm_decomp": {
-        "win_mae": 6.8848,
-        "brier": 0.17895
+        "win_mae": 6.804,
+        "brier": 0.17822
       },
       "pure_epm": {
-        "win_mae": 6.1834,
-        "brier": 0.16413
+        "win_mae": 6.2391,
+        "brier": 0.16643
       }
     },
     "per_season": {
       "2024": {
-        "rapm_decomp": 6.374973333333334,
-        "pure_epm": 5.989913333333334
+        "rapm_decomp": 6.304860000000001,
+        "pure_epm": 6.099366666666667
       },
       "2025": {
-        "rapm_decomp": 6.717680000000001,
-        "pure_epm": 5.9974066666666666
+        "rapm_decomp": 6.654646666666666,
+        "pure_epm": 6.05596
       },
       "2026": {
-        "rapm_decomp": 7.561726666666668,
-        "pure_epm": 6.56286
+        "rapm_decomp": 7.452446666666666,
+        "pure_epm": 6.562080000000001
       }
     }
   }
