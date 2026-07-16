@@ -8,8 +8,8 @@
  * never per-page, so the bar can never drift again. Styling lives in site.css
  * (.topnav/.tab/...), which every page links — nav.js no longer injects CSS.
  *
- * Top bar: Explorer · Tables · 2026-27 · Other ▾ · Model. The "Other" dropdown holds
- * measured 2025-26 Teams plus Trade / Draft; Grades is reached from the Trade
+ * Top bar: Explorer · Tables · 2026-27 · Other ▾ · Model · Metrics. The "Other" dropdown
+ * holds measured 2025-26 Teams plus Trade / Draft; Grades is reached from the Trade
  * page (so it sets data-active="trade" to light the right top item).
  */
 (function () {
@@ -21,10 +21,10 @@
     { key: "proj",     href: "projection.html", label: "2026-27" },
     { label: "Other", menu: [
       { key: "teams",  href: "teams.html", label: "Teams" },
-      { key: "draft",  href: "draft.html", label: "Draft" },
-      { key: "metrics", href: "metrics.html", label: "Metrics" }
+      { key: "draft",  href: "draft.html", label: "Draft" }
     ] },
-    { key: "model",    href: "model.html", label: "Model" }
+    { key: "model",    href: "model.html", label: "Model" },
+    { key: "metrics",  href: "metrics.html", label: "Metrics" }
   ];
 
   function esc(s) {

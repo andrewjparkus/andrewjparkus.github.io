@@ -19,7 +19,7 @@
       "minutes_contract": "legacy_alloc_mpg",
       "availability_application": "legacy_consumer_dependent",
       "minutes_artifact": "daily_v5/out/minutes_allocation.parquet",
-      "minutes_artifact_sha256": "23ba053cb662fb1db97bcd771f334aab8c5e44f804b511431edf8e21a076ca09",
+      "minutes_artifact_sha256": "29cc855f3830979e40229366847f1054264c7c2231a04899be1560949b8dd0e7",
       "active_minutes_artifact": null,
       "active_minutes_artifact_sha256": null,
       "season_minutes_artifact": null,
@@ -29,9 +29,9 @@
       "replacement_tree_artifact": null,
       "replacement_tree_artifact_sha256": null,
       "gp_artifact": "daily_v5/out/gp_projection.parquet",
-      "gp_artifact_sha256": "bdc83c32519cbe44b7d4bcae5417beab159e92bd69554bcc752c8651baf16d60",
+      "gp_artifact_sha256": "a44a8bb0be82042413e4c2aea7eed6edaf6502293270cb2396a3e15dd5e72573",
       "minutes_distribution_artifact": "daily_v5/out/minutes_distribution.parquet",
-      "minutes_distribution_artifact_sha256": "7605b31108197ec7c61f39fe4f699e7b076bbca3efd389ca98d5bfe6565c1d93",
+      "minutes_distribution_artifact_sha256": "89869f25accf4ddd67cfda17193403dc101afd837641e8c1b74baf36c0e2b773",
       "depth_csv_artifact": "daily_v5/out/depthcharts_2026_27.csv",
       "depth_source": "owner",
       "v2_promotion_manifest": null,
@@ -428,18 +428,18 @@
       "path": "daily_v5/out/oos/scorecard_current.parquet",
       "exists": true,
       "size": 3811,
-      "mtime": 1784226244.206166
+      "mtime": 1784240673.3748155
     },
     "manifest": {
       "path": "daily_v5/out/oos/manifest_current.json",
       "exists": true,
-      "size": 7246,
-      "mtime": 1784226245.5439584
+      "size": 7245,
+      "mtime": 1784240674.8397913
     },
     "git": {
-      "sha": "e191253f270f0ec6aa8e002057f18584d75778dc",
-      "dirty": false,
-      "dirty_entries": 0
+      "sha": "ddf8024779aa0fe04b2aabf6cf7111afc492e6a4",
+      "dirty": true,
+      "dirty_entries": 1
     },
     "game_model_params": {
       "hca": 1.5370466094308175,

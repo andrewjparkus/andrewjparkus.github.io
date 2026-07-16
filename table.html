@@ -168,9 +168,15 @@ function renderOverall(){
     body='<tr><td colspan="11"><div class="nohit">No players match “'+esc(query)+'”.</div></td></tr>';
   }else{
     for(const r of shown){
+      // Name links to the player's Explorer profile. The exporter only emits r.pid for ids that
+      // exist in the deployed players.json, so a missing pid = no profile -> plain text, never a
+      // dead link (a bogus ?p= silently lands on the Explorer's Jokic default). Styling comes from
+      // the global site.css `a` rule, same as the team pages.
+      const nm=esc(r.name);
+      const pcell=r.pid?'<a href="index.html?p='+encodeURIComponent(r.pid)+'">'+nm+'</a>':nm;
       body+='<tr>'+
         '<td class="rank">'+(r.rank!=null?r.rank:'')+'</td>'+
-        '<td class="l pn">'+esc(r.name)+
+        '<td class="l pn">'+pcell+
           (r.sub?'<span class="sub2">'+esc(r.sub)+'</span>':'')+'</td>';
       OCOLS.forEach(c=>{
         const v=r[c.key];
