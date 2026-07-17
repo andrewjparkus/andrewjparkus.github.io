@@ -157,6 +157,21 @@
     2003-2026.
   </div>
 
+  <div class="callout">
+    <strong>A correction we owe you &mdash; RAPTOR's earlier number was not reproducible, and that was our
+    mistake.</strong> The RAPTOR season-retrodiction figure we published before this build depended on an
+    arbitrary internal row ordering. RAPTOR reaches our panel as three differently-computed variants filed
+    under one <code>source</code> label, all stamped with the same season-end date; our scorer picked among
+    them by whatever order the rows happened to sit in, so the published value could swing between two
+    genuinely different metrics across <strong>18,556 player-seasons</strong>. That was a data-handling
+    defect on our side, and the number was <em>not reproducible</em>. It is now pinned to a single named
+    variant &mdash; Neil&nbsp;Paine's estimated RAPTOR &mdash; and is deterministic: the same inputs give
+    the same value every time, and a fail-closed guard makes the build refuse rather than silently re-roll.
+    One caveat on reading the change: RAPTOR's current value <em>also</em> moved because of the
+    coverage-crosswalk expansion that landed in the same build (the bbref id recovery described above), so
+    the shift from the old published figure is <strong>not attributable to this fix alone</strong>.
+  </div>
+
   <h2 id="deep">The same test, twice as deep &mdash; 2003-2026</h2>
   <p>The games spine now reaches 2001-02, so the season task runs over
   <strong>718 team-seasons (2003-2026)</strong> &mdash; double the anchor above.

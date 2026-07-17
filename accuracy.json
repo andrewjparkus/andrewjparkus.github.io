@@ -634,16 +634,16 @@
       "path": "daily_v5/out/oos/scorecard_current.parquet",
       "exists": true,
       "size": 3811,
-      "mtime": 1784320943.5433357
+      "mtime": 1784322868.9089458
     },
     "manifest": {
       "path": "daily_v5/out/oos/manifest_current.json",
       "exists": true,
       "size": 7245,
-      "mtime": 1784320944.8321626
+      "mtime": 1784322870.2589028
     },
     "git": {
-      "sha": "65bc7b071c4caaf328939edb14b34996fc2262bc",
+      "sha": "29021433b346bc620bc9ffe2127cf63ac85f0016",
       "dirty": true,
       "dirty_entries": 1
     },
