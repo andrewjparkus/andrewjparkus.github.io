@@ -418,7 +418,7 @@
   "model_page": {
     "status": "available",
     "schema": "model_page_accuracy.v1",
-    "n_games": 3242,
+    "n_games": 3237,
     "table": {
       "columns": [
         {
@@ -454,11 +454,11 @@
           "label": "Frozen-preseason win-MAE (2024\u201326 pooled)",
           "dp": 3,
           "cells": {
-            "internal": 6.804,
-            "epm": 6.239,
-            "blend": 6.414,
+            "internal": 6.824,
+            "epm": 6.263,
+            "blend": 6.419,
             "darko_daily": null,
-            "darko_frozen": 6.675
+            "darko_frozen": 6.682
           }
         },
         {
@@ -466,11 +466,11 @@
           "label": "Game-margin RMSE (walk-forward)",
           "dp": 4,
           "cells": {
-            "internal": 14.0777,
-            "epm": 14.2988,
-            "blend": 14.0586,
-            "darko_daily": 14.4305,
-            "darko_frozen": 14.8278
+            "internal": 14.0794,
+            "epm": 14.2758,
+            "blend": 14.0532,
+            "darko_daily": 14.4071,
+            "darko_frozen": 14.8137
           }
         },
         {
@@ -478,11 +478,11 @@
           "label": "Retro win-MAE",
           "dp": 4,
           "cells": {
-            "internal": 4.1868,
-            "epm": 4.1169,
-            "blend": 4.0344,
+            "internal": 4.1955,
+            "epm": 4.1453,
+            "blend": 4.048,
             "darko_daily": null,
-            "darko_frozen": 6.706
+            "darko_frozen": 6.7212
           }
         },
         {
@@ -490,11 +490,11 @@
           "label": "Playoff Brier",
           "dp": 5,
           "cells": {
-            "internal": 0.10357,
-            "epm": 0.09153,
-            "blend": 0.09636,
+            "internal": 0.10286,
+            "epm": 0.0908,
+            "blend": 0.09573,
             "darko_daily": null,
-            "darko_frozen": 0.17056
+            "darko_frozen": 0.16982
           }
         }
       ]
@@ -503,13 +503,13 @@
       {
         "row": "frozen_preseason",
         "label": "Frozen-preseason win-MAE (2024\u201326 pooled)",
-        "internal": 6.804,
-        "epm": 6.2391,
-        "gap_epm_minus_internal": -0.5649,
+        "internal": 6.8239,
+        "epm": 6.2635,
+        "gap_epm_minus_internal": -0.5604,
         "band": 0.05,
         "leader": "epm",
-        "band_multiple": 11.3,
-        "text": "EPM <strong>leads</strong> on Frozen-preseason win-MAE (2024\u201326 pooled) by <strong>0.5649</strong> (<strong>6.239 vs 6.804</strong>, EPM vs internal) &mdash; 11.3&times; the &plusmn;0.05 noise band",
+        "band_multiple": 11.21,
+        "text": "EPM <strong>leads</strong> on Frozen-preseason win-MAE (2024\u201326 pooled) by <strong>0.5604</strong> (<strong>6.263 vs 6.824</strong>, EPM vs internal) &mdash; 11.2&times; the &plusmn;0.05 noise band",
         "dp": 3,
         "prose_label": "season-level prediction",
         "prose_metric": "frozen-preseason win-MAE",
@@ -518,13 +518,13 @@
       {
         "row": "game_margin",
         "label": "Game-margin RMSE (walk-forward)",
-        "internal": 14.0777,
-        "epm": 14.2988,
-        "gap_epm_minus_internal": 0.2211,
+        "internal": 14.0794,
+        "epm": 14.2758,
+        "gap_epm_minus_internal": 0.1964,
         "band": 0.05,
         "leader": "internal",
-        "band_multiple": 4.42,
-        "text": "Internal <strong>leads</strong> on Game-margin RMSE (walk-forward) by <strong>0.2211</strong> (<strong>14.2988 vs 14.0777</strong>, EPM vs internal) &mdash; 4.4&times; the &plusmn;0.05 noise band",
+        "band_multiple": 3.93,
+        "text": "Internal <strong>leads</strong> on Game-margin RMSE (walk-forward) by <strong>0.1964</strong> (<strong>14.2758 vs 14.0794</strong>, EPM vs internal) &mdash; 3.9&times; the &plusmn;0.05 noise band",
         "dp": 4,
         "prose_label": "game-margin RMSE",
         "prose_metric": null,
@@ -533,13 +533,13 @@
       {
         "row": "retro_win_mae",
         "label": "Retro win-MAE",
-        "internal": 4.186788888888889,
-        "epm": 4.116891111111111,
-        "gap_epm_minus_internal": -0.069898,
+        "internal": 4.195464444444444,
+        "epm": 4.145293333333334,
+        "gap_epm_minus_internal": -0.050171,
         "band": 0.05,
         "leader": "epm",
-        "band_multiple": 1.4,
-        "text": "EPM <strong>leads</strong> on Retro win-MAE by <strong>0.0699</strong> (<strong>4.1169 vs 4.1868</strong>, EPM vs internal) &mdash; 1.4&times; the &plusmn;0.05 noise band",
+        "band_multiple": 1.0,
+        "text": "EPM <strong>leads</strong> on Retro win-MAE by <strong>0.0502</strong> (<strong>4.1453 vs 4.1955</strong>, EPM vs internal) &mdash; 1.0&times; the &plusmn;0.05 noise band",
         "dp": 4,
         "prose_label": "retro win-MAE",
         "prose_metric": null,
@@ -548,20 +548,20 @@
       {
         "row": "playoff_brier",
         "label": "Playoff Brier",
-        "internal": 0.10357315311111111,
-        "epm": 0.09153345377777779,
-        "gap_epm_minus_internal": -0.01204,
+        "internal": 0.10286246844444447,
+        "epm": 0.09079613555555556,
+        "gap_epm_minus_internal": -0.012066,
         "band": null,
         "leader": "epm",
         "band_multiple": null,
-        "text": "EPM is ahead on Playoff Brier (<strong>0.09153 vs 0.10357</strong>, EPM vs internal) &mdash; no noise band is defined for this metric, so the margin is reported without a significance claim",
+        "text": "EPM is ahead on Playoff Brier (<strong>0.09080 vs 0.10286</strong>, EPM vs internal) &mdash; no noise band is defined for this metric, so the margin is reported without a significance claim",
         "dp": 5,
         "prose_label": "playoff Brier",
         "prose_metric": null,
         "prose_dp": 3
       }
     ],
-    "headline_prose": "The honest read is <strong>task-by-task, not a blanket winner</strong>. EPM is ahead on season-level prediction (frozen-preseason win-MAE <strong>6.24 vs 6.80</strong>), retro win-MAE (<strong>4.12 vs 4.19</strong>), and playoff Brier (<strong>0.092 vs 0.104</strong>). The internal model <strong>leads</strong> EPM on game-margin RMSE (<strong>14.30 vs 14.08</strong>) &mdash; EPM is <em>not</em> strictly better on every task. EPM's retro win-MAE edge is <strong>narrow</strong> &mdash; only 1.4&times; the &plusmn;0.05 noise band. The internal+EPM blend beats both on some rows; per an owner decision <strong>no EPM-RAPM blend ships</strong>, so it appears here only as an informative benchmark.",
+    "headline_prose": "The honest read is <strong>task-by-task, not a blanket winner</strong>. EPM is ahead on season-level prediction (frozen-preseason win-MAE <strong>6.26 vs 6.82</strong>), retro win-MAE (<strong>4.15 vs 4.20</strong>), and playoff Brier (<strong>0.091 vs 0.103</strong>). The internal model <strong>leads</strong> EPM on game-margin RMSE (<strong>14.28 vs 14.08</strong>) &mdash; EPM is <em>not</em> strictly better on every task. EPM's retro win-MAE edge is <strong>narrow</strong> &mdash; only 1&times; the &plusmn;0.05 noise band. The internal+EPM blend beats both on some rows; per an owner decision <strong>no EPM-RAPM blend ships</strong>, so it appears here only as an informative benchmark.",
     "darko_note": "<strong>DARKO daily</strong> is a per-game-date re-score at 96.1% player coverage &mdash; it is the like-for-like comparison for game margins, since our own board also updates daily. <strong>DARKO frozen</strong> is pre-season-frozen with no in-season update, so its frozen-preseason, retro and Brier cells are all measured pre-season-frozen and it is disadvantaged on the walk-forward game-margin row. The <strong>Blend</strong> column is benchmark-only &mdash; not a product.",
     "darko_daily_coverage": 0.961,
     "overlap": {
@@ -634,18 +634,18 @@
       "path": "daily_v5/out/oos/scorecard_current.parquet",
       "exists": true,
       "size": 3811,
-      "mtime": 1784268550.7663002
+      "mtime": 1784276272.8990185
     },
     "manifest": {
       "path": "daily_v5/out/oos/manifest_current.json",
       "exists": true,
-      "size": 7246,
-      "mtime": 1784268552.101929
+      "size": 7245,
+      "mtime": 1784276274.2456732
     },
     "git": {
-      "sha": "7dbc721a609dd7160242e07d6c4d8225228b2fbd",
+      "sha": "a504243d48c09fad05c36124a39e54c8f7a19f40",
       "dirty": true,
-      "dirty_entries": 39
+      "dirty_entries": 5
     },
     "game_model_params": {
       "hca": 1.5370466094308175,
@@ -669,26 +669,26 @@
     "source": "daily_v5/out/p2_0/verify_composite/frozen_preseason_all.json",
     "pooled": {
       "rapm_decomp": {
-        "win_mae": 6.804,
-        "brier": 0.17822
+        "win_mae": 6.8239,
+        "brier": 0.17771
       },
       "pure_epm": {
-        "win_mae": 6.2391,
-        "brier": 0.16643
+        "win_mae": 6.2635,
+        "brier": 0.16666
       }
     },
     "per_season": {
       "2024": {
-        "rapm_decomp": 6.304860000000001,
-        "pure_epm": 6.099366666666667
+        "rapm_decomp": 6.281666666666667,
+        "pure_epm": 6.144359999999998
       },
       "2025": {
-        "rapm_decomp": 6.654646666666666,
-        "pure_epm": 6.05596
+        "rapm_decomp": 6.637633333333333,
+        "pure_epm": 6.049340000000001
       },
       "2026": {
-        "rapm_decomp": 7.452446666666666,
-        "pure_epm": 6.562080000000001
+        "rapm_decomp": 7.552499999999999,
+        "pure_epm": 6.596653333333334
       }
     }
   }
