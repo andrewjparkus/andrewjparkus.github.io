@@ -64,15 +64,16 @@
     <strong>What makes it honest.</strong> Ratings are used only as they were knowable: Task&nbsp;A
     walk-forward, Task&nbsp;B frozen at the prior season's end. A <code>model_vintage</code> flag marks
     each source <em>published live</em> or <em>retro re-fit</em> &mdash; a re-run never poses as a track
-    record. Thin coverage is printed beside the result: two of six are
-    <span class="tag cov">coverage-limited</span>. The internal+EPM blend appears once, labeled
-    <span class="bench">benchmark-only &mdash; not a product</span>. Full rules in <a href="#methods">Methods</a>.
+    record. Panel coverage is printed beside every result; since the Q12 crosswalk fix all six sources
+    are coverage-clean (BPM and RAPTOR no longer carry the <span class="tag cov">coverage-limited</span>
+    flag). The internal+EPM blend appears once, labeled <span class="bench">benchmark-only &mdash; not a product</span>. Full rules in
+    <a href="#methods">Methods</a>.
   </div>
 
   <h2 id="game">Task&nbsp;A &mdash; predicting game margins (walk-forward)</h2>
   <p>Each source's rating goes into the shared game model; the predicted margin is scored against the
   result, <strong>out-of-sample</strong>, over every game of 2024&ndash;26
-  (<strong>n&nbsp;=&nbsp;3,242 games</strong>). RMSE in points; ratings causal as-of
+  (<strong>n&nbsp;=&nbsp;3,237 games</strong>). RMSE in points; ratings causal as-of
   D&minus;1. DARKO appears twice: a <span class="tag">daily</span> re-score that updates in-season, and
   the <span class="tag">frozen</span> pre-season snapshot &mdash; the only DARKO on disk for older
   seasons, and staler.</p>
@@ -84,29 +85,29 @@
         <th class="l note-cell">Basis</th>
       </tr></thead>
       <tbody>
-        <tr><td class="l lead">Internal RAPM</td><td>14.0777</td>
-            <td class="grp">14.0145</td><td>14.1381</td><td>14.0805</td>
+        <tr><td class="l lead">Internal RAPM</td><td>14.0794</td>
+            <td class="grp">14.0184</td><td>14.1258</td><td>14.0941</td>
             <td class="l note-cell">daily board, causal as-of D&minus;1</td></tr>
-        <tr><td class="l lead">EPM</td><td>14.2988</td>
-            <td class="grp">14.2243</td><td>14.1966</td><td>14.4740</td>
+        <tr><td class="l lead">EPM</td><td>14.2758</td>
+            <td class="grp">14.2396</td><td>14.1734</td><td>14.4136</td>
             <td class="l note-cell">daily impact cache</td></tr>
-        <tr><td class="l lead">DARKO&nbsp;<span class="tag">daily</span></td><td>14.4305</td>
-            <td class="grp">14.3437</td><td>14.2516</td><td>14.6928</td>
+        <tr><td class="l lead">DARKO&nbsp;<span class="tag">daily</span></td><td>14.4071</td>
+            <td class="grp">14.3564</td><td>14.2286</td><td>14.6338</td>
             <td class="l note-cell">per-game-date re-score, 96.1% player coverage</td></tr>
-        <tr><td class="l lead">DARKO&nbsp;<span class="tag">frozen</span></td><td>14.8278</td>
-            <td class="grp">14.6768</td><td>14.5855</td><td>15.2140</td>
+        <tr><td class="l lead">DARKO&nbsp;<span class="tag">frozen</span></td><td>14.8137</td>
+            <td class="grp">14.6917</td><td>14.5680</td><td>15.1751</td>
             <td class="l note-cell">pre-season-frozen; no in-season update</td></tr>
-        <tr class="benchrow"><td class="l lead">Internal + EPM blend</td><td>14.0586</td>
+        <tr class="benchrow"><td class="l lead">Internal + EPM blend</td><td>14.0532</td>
             <td class="grp">&mdash;</td><td>&mdash;</td><td>&mdash;</td>
             <td class="l note-cell"><span class="bench">benchmark-only &mdash; not a product</span></td></tr>
       </tbody>
     </table>
   </div>
   <p class="small">RMSE from <code>out/p2_0/darko_daily_rescore.json</code>; blend row from
-  <code>out/p2_0/composite_report.json</code>. Internal <strong>leads</strong> EPM here by <strong>0.2211</strong> &mdash; 4.4&times; the &plusmn;0.05 noise band, and the one task where the internal decomposition is not beaten
-  (<strong>14.0777</strong> vs <strong>14.2988</strong>). The blend edges internal
-  by <strong>0.0191</strong>
-  (<strong>14.0586</strong>) &mdash; <span class="bench">benchmark-only &mdash; not a product</span>.</p>
+  <code>out/p2_0/composite_report.json</code>. Internal <strong>leads</strong> EPM here by <strong>0.1964</strong> &mdash; 3.9&times; the &plusmn;0.05 noise band, and the one task where the internal decomposition is not beaten
+  (<strong>14.0794</strong> vs <strong>14.2758</strong>). The blend edges internal
+  by <strong>0.0262</strong>
+  (<strong>14.0532</strong>) &mdash; <span class="bench">benchmark-only &mdash; not a product</span>.</p>
 
   <h2 id="season">Task&nbsp;B &mdash; retrodicting next season's team margin</h2>
   <p>Freeze each source at a season's <strong>end</strong>, roll rosters forward with
@@ -122,35 +123,38 @@
         <th class="grp">Panel coverage<br>2015&nbsp;&rarr;&nbsp;2026</th>
       </tr></thead>
       <tbody>
-<tr><td class="rank">1</td><td class="l lead">EPM</td><td>2.878</td><td>0.814</td><td>0.818</td><td class="grp"><span class="covok">91%&nbsp;&rarr;&nbsp;89%</span></td></tr>
-<tr><td class="rank">2</td><td class="l lead">DARKO</td><td>3.01</td><td>0.794</td><td>0.892</td><td class="grp"><span class="covok">91%&nbsp;&rarr;&nbsp;89%</span></td></tr>
-<tr><td class="rank">3</td><td class="l lead">Internal RAPM</td><td>3.129</td><td>0.775</td><td>0.84</td><td class="grp"><span class="covok">91%&nbsp;&rarr;&nbsp;89%</span></td></tr>
-<tr><td class="rank">4</td><td class="l lead">BPM <span class="tag pub">public</span> <span class="tag cov">coverage-limited</span></td><td>3.709</td><td>0.663</td><td>0.46</td><td class="grp"><span class="covbad">90%&nbsp;&rarr;&nbsp;32%</span></td></tr>
-<tr><td class="rank">5</td><td class="l lead">RAPTOR <span class="tag pub">public</span> <span class="tag cov">coverage-limited</span></td><td>3.761</td><td>0.651</td><td>0.425</td><td class="grp"><span class="covbad">90%&nbsp;&rarr;&nbsp;32%</span></td></tr>
+<tr><td class="rank">1</td><td class="l lead">EPM</td><td>2.881</td><td>0.814</td><td>0.82</td><td class="grp"><span class="covok">91%&nbsp;&rarr;&nbsp;89%</span></td></tr>
+<tr><td class="rank">2</td><td class="l lead">BPM <span class="tag pub">public</span></td><td>2.999</td><td>0.797</td><td>0.586</td><td class="grp"><span class="covok">90%&nbsp;&rarr;&nbsp;88%</span></td></tr>
+<tr><td class="rank">3</td><td class="l lead">RAPTOR <span class="tag pub">public</span></td><td>3.005</td><td>0.796</td><td>0.586</td><td class="grp"><span class="covok">90%&nbsp;&rarr;&nbsp;88%</span></td></tr>
+<tr><td class="rank">4</td><td class="l lead">DARKO</td><td>3.015</td><td>0.794</td><td>0.893</td><td class="grp"><span class="covok">91%&nbsp;&rarr;&nbsp;89%</span></td></tr>
+<tr><td class="rank">5</td><td class="l lead">Internal RAPM</td><td>3.134</td><td>0.775</td><td>0.842</td><td class="grp"><span class="covok">91%&nbsp;&rarr;&nbsp;89%</span></td></tr>
       </tbody>
     </table>
   </div>
   <p class="small">From <code>out/p2_0/metric_retrodiction.json</code>; coverage column from
-  <code>out/p2_0/metric_retrodiction_deep.json</code>. EPM leads
-  (<strong>2.878</strong>); DARKO and the internal decomposition follow
-  (<strong>3.01</strong> / <strong>3.129</strong>).
-  Read the caveat below before you read the bottom two rows.</p>
+  <code>out/p2_0/metric_retrodiction_deep.json</code>. Ranked best&rarr;worst by team-margin RMSE:
+  EPM&nbsp;2.881, BPM&nbsp;2.999, RAPTOR&nbsp;3.005, DARKO&nbsp;3.015, Internal RAPM&nbsp;3.134. EPM leads; our internal decomposition ranks
+  <strong>last of five</strong> now that the BPM/RAPTOR coverage gap is closed &mdash; read
+  the note below.</p>
 
   <div class="callout caution">
-    <strong>BPM and RAPTOR are not "far behind" &mdash; read the coverage column first.</strong>
-    Most of that gap is <em>a coverage artifact, not a quality result</em>. Their panel holds
-    ~90% of league minutes through 2020, then decays to 32% by
-    2026; missing players are replacement-filled, so the back half of this window scores
-    the holes in their panel, not the metric. At parity coverage in 2015-2020, BPM's corr
-    (<strong>0.822</strong>) sits with EPM
-    (<strong>0.829</strong>) and DARKO
-    (<strong>0.834</strong>), and BPM's RMSE
-    (<strong>2.664</strong>) <em>beats</em> our internal decomposition's
-    (<strong>2.768</strong>). BPM's corr only craters to
-    <strong>0.593</strong> in 2021-2026, as the panel thins &mdash;
-    a thinning panel, not a degrading metric. Internal, EPM and DARKO hold
-    87&ndash;92% in <em>every</em> season 2003-2026: coverage-clean
-    throughout.
+    <strong>The coverage gap is closed &mdash; and the honest result is that BPM beats us.</strong>
+    BPM and RAPTOR used to be scored partly on holes in a stale crosswalk: their panel held
+    ~90% of league minutes through 2020 but only a fraction of the recent seasons.
+    Expanding the bbref crosswalk (Q12; bbref join now 100%) lifts their post-2020 coverage
+    back to ~88% &mdash; on par with the id-native sources &mdash; so the eval now scores the
+    metric, not the gap. With that fixed, BPM (<strong>2.999</strong>) and RAPTOR
+    (<strong>3.005</strong>) both <em>beat</em> our internal decomposition
+    (<strong>3.134</strong>), which now ranks <strong>last of
+    five</strong>. And it is a coverage artifact, <em>proven</em>: holding everything else fixed, the
+    crosswalk expansion moved BPM by <strong>exactly 0.000</strong> in both parity-coverage windows
+    (2015-2020 and 2003-2014) and lifted only the thin 2021-2026 window &mdash;
+    a metric that were merely worse could not be repaired by an id join. At parity coverage in
+    2015-2020, BPM's RMSE (<strong>2.661</strong>) already
+    <em>beat</em> our internal decomposition's (<strong>2.764</strong>).
+    The price of being right about coverage is that a free public box score out-retrodicts our RAPM.
+    Internal, EPM and DARKO hold 87&ndash;92% coverage in <em>every</em> season
+    2003-2026.
   </div>
 
   <h2 id="deep">The same test, twice as deep &mdash; 2003-2026</h2>
@@ -175,31 +179,33 @@
         <th class="sub grp" colspan="2">deep 2003-2014 &middot; n&nbsp;=&nbsp;358</th>
       </tr></thead>
       <tbody>
-<tr><td class="l lead">EPM</td><td>2.836</td><td class="cc">0.798</td><td class="grp">2.878</td><td class="cc">0.814</td><td class="grp">2.762</td><td class="cc">0.782</td></tr>
-<tr><td class="l lead">DARKO</td><td>2.866</td><td class="cc">0.793</td><td class="grp">3.01</td><td class="cc">0.794</td><td class="grp">2.692</td><td class="cc">0.795</td></tr>
-<tr><td class="l lead">Internal RAPM</td><td>3.007</td><td class="cc">0.769</td><td class="grp">3.129</td><td class="cc">0.775</td><td class="grp">2.869</td><td class="cc">0.762</td></tr>
-<tr><td class="l lead">BPM <span class="tag cov">coverage-limited</span></td><td>3.41</td><td class="cc">0.688</td><td class="grp">3.709</td><td class="cc">0.663</td><td class="grp">3.001</td><td class="cc">0.736</td></tr>
-<tr><td class="l lead">RAPTOR <span class="tag cov">coverage-limited</span></td><td>3.449</td><td class="cc">0.68</td><td class="grp">3.761</td><td class="cc">0.651</td><td class="grp">2.97</td><td class="cc">0.743</td></tr>
+<tr><td class="l lead">EPM</td><td>2.837</td><td class="cc">0.798</td><td class="grp">2.881</td><td class="cc">0.814</td><td class="grp">2.762</td><td class="cc">0.782</td></tr>
+<tr><td class="l lead">DARKO</td><td>2.869</td><td class="cc">0.793</td><td class="grp">3.015</td><td class="cc">0.794</td><td class="grp">2.692</td><td class="cc">0.795</td></tr>
+<tr><td class="l lead">Internal RAPM</td><td>3.01</td><td class="cc">0.769</td><td class="grp">3.134</td><td class="cc">0.775</td><td class="grp">2.869</td><td class="cc">0.762</td></tr>
+<tr><td class="l lead">BPM</td><td>3.014</td><td class="cc">0.768</td><td class="grp">2.999</td><td class="cc">0.797</td><td class="grp">3.001</td><td class="cc">0.736</td></tr>
+<tr><td class="l lead">RAPTOR</td><td>3.032</td><td class="cc">0.765</td><td class="grp">3.005</td><td class="cc">0.796</td><td class="grp">3.023</td><td class="cc">0.732</td></tr>
       </tbody>
     </table>
   </div>
   <p class="small">From <code>out/p2_0/metric_retrodiction_deep.json</code>, reconciled to
   <code>deep_history_additive</code> in <code>RESULTS.json</code>. The deep window is 358,
-  not 360, team-seasons: 2002-03 and 2003-04 had 29 teams. Ordering is stable &mdash; internal is
-  third behind EPM and DARKO in <em>every</em> window.</p>
+  not 360, team-seasons: 2002-03 and 2003-04 had 29 teams. Ordering is <em>not</em> stable across
+  windows: on the 2015-26 anchor the internal decomposition ranks last of five (BPM and
+  RAPTOR now above it), while over the full 2003-2026 window it ranks third.</p>
 
   <div class="callout caution">
     <strong>Compare RMSE only down a column, never across &mdash; corr is the scale-free read.</strong>
     Realized team-margin SD climbs <strong>4.44</strong> (2003-2014) &rarr;
-    <strong>4.96</strong> (2015-2026) &rarr; <strong>5.22</strong>
+    <strong>4.97</strong> (2015-2026) &rarr; <strong>5.24</strong>
     (2021-2026): teams finish further apart than they used to. Every source's RMSE is
     therefore <em>mechanically</em> lower in the deep window &mdash; an easier target, not better
     prediction of the 2000s.
   </div>
 
   <h2 id="eras">What the deep history changes &mdash; EPM's lead is recent</h2>
-  <p>Three windows, corr only. The first two are <em>parity-coverage</em> eras (every source ~90%);
-  only the last has the BPM/RAPTOR panel gap.</p>
+  <p>Three windows, corr only. Since the Q12 crosswalk fix all three are <em>parity-coverage</em> eras
+  (every source ~90% of minutes); the BPM/RAPTOR panel gap that once distorted the last window is
+  closed.</p>
   <div class="scroll">
     <table class="tbl">
       <thead><tr>
@@ -209,12 +215,12 @@
         <th class="grp">2021-2026<br><span class="sub">n&nbsp;=&nbsp;180</span></th>
       </tr></thead>
       <tbody>
-<tr><td class="l lead">EPM</td><td>0.782</td><td class="grp">0.829</td><td class="grp">0.814</td></tr>
-<tr><td class="l lead">DARKO</td><td>0.795</td><td class="grp">0.834</td><td class="grp">0.761</td></tr>
+<tr><td class="l lead">EPM</td><td>0.782</td><td class="grp">0.83</td><td class="grp">0.814</td></tr>
+<tr><td class="l lead">DARKO</td><td>0.795</td><td class="grp">0.834</td><td class="grp">0.762</td></tr>
 <tr><td class="l lead">Internal RAPM</td><td>0.762</td><td class="grp">0.807</td><td class="grp">0.752</td></tr>
-<tr><td class="l lead">BPM <span class="tag cov">coverage-limited</span></td><td>0.736</td><td class="grp">0.822</td><td class="grp">0.593</td></tr>
-<tr><td class="l lead">RAPTOR <span class="tag cov">coverage-limited</span></td><td>0.743</td><td class="grp">0.808</td><td class="grp">0.58</td></tr>
-<tr class="total"><td class="l">BPM&nbsp;/&nbsp;RAPTOR panel coverage</td><td>90%</td><td class="grp">89%</td><td class="grp"><span class="covbad">54%</span></td></tr>
+<tr><td class="l lead">BPM</td><td>0.736</td><td class="grp">0.823</td><td class="grp">0.776</td></tr>
+<tr><td class="l lead">RAPTOR</td><td>0.732</td><td class="grp">0.821</td><td class="grp">0.775</td></tr>
+<tr class="total"><td class="l">BPM&nbsp;/&nbsp;RAPTOR panel coverage</td><td>90%</td><td class="grp">89%</td><td class="grp"><span class="covok">89%</span></td></tr>
       </tbody>
     </table>
   </div>
@@ -224,9 +230,9 @@
   <p><strong>DARKO, not EPM, leads the older eras.</strong> DARKO wins
   2003-2014 (<strong>0.795</strong> vs
   <strong>0.782</strong>) <em>and</em> 2015-2020
-  (<strong>0.834</strong> vs <strong>0.829</strong>).
+  (<strong>0.834</strong> vs <strong>0.83</strong>).
   EPM pulls ahead only in 2021-2026 (<strong>0.814</strong> vs
-  <strong>0.761</strong>) &mdash; and that one era carries its full-window
+  <strong>0.762</strong>) &mdash; and that one era carries its full-window
   and anchor win. Both hold ~90% coverage in every era, so this is a finding, not a data gap:
   <strong>EPM's edge is recent, not longstanding.</strong></p>
 
@@ -282,9 +288,9 @@
           <p class="srcblurb">Basketball-Reference Box Plus-Minus, joined via the bbref crosswalk.</p>
           <div class="srcstats">
             <div class="srcstat"><span class="k">seasons</span><span class="v">1977&ndash;2025</span></div>
-            <div class="srcstat"><span class="k">rows</span><span class="v">19,217</span></div>
-            <div class="srcstat"><span class="k">players</span><span class="v">3,254</span></div>
-            <div class="srcstat"><span class="k">bbref join</span><span class="v">92%</span></div>
+            <div class="srcstat"><span class="k">rows</span><span class="v">20,813</span></div>
+            <div class="srcstat"><span class="k">players</span><span class="v">3,872</span></div>
+            <div class="srcstat"><span class="k">bbref join</span><span class="v">100%</span></div>
           </div>
           <div class="srctags">
             <span class="tag">season-end</span>
@@ -296,9 +302,9 @@
           <p class="srcblurb">Neil Paine's estimated RAPTOR (the public 538-lineage box+plus-minus).</p>
           <div class="srcstats">
             <div class="srcstat"><span class="k">seasons</span><span class="v">1977&ndash;2025</span></div>
-            <div class="srcstat"><span class="k">rows</span><span class="v">19,217</span></div>
-            <div class="srcstat"><span class="k">players</span><span class="v">3,254</span></div>
-            <div class="srcstat"><span class="k">bbref join</span><span class="v">92%</span></div>
+            <div class="srcstat"><span class="k">rows</span><span class="v">20,813</span></div>
+            <div class="srcstat"><span class="k">players</span><span class="v">3,872</span></div>
+            <div class="srcstat"><span class="k">bbref join</span><span class="v">100%</span></div>
           </div>
           <div class="srctags">
             <span class="tag">season-end</span>
@@ -310,9 +316,9 @@
           <p class="srcblurb">Neil Paine wins-above-replacement; the season-total win-value line.</p>
           <div class="srcstats">
             <div class="srcstat"><span class="k">seasons</span><span class="v">1977&ndash;2025</span></div>
-            <div class="srcstat"><span class="k">rows</span><span class="v">19,217</span></div>
-            <div class="srcstat"><span class="k">players</span><span class="v">3,254</span></div>
-            <div class="srcstat"><span class="k">bbref join</span><span class="v">92%</span></div>
+            <div class="srcstat"><span class="k">rows</span><span class="v">20,813</span></div>
+            <div class="srcstat"><span class="k">players</span><span class="v">3,872</span></div>
+            <div class="srcstat"><span class="k">bbref join</span><span class="v">100%</span></div>
           </div>
           <div class="srctags">
             <span class="tag">season-end</span>
@@ -329,7 +335,7 @@
   <h2 id="methods">Methods &amp; leakage rules</h2>
   <ul>
     <li><strong>Task A is walk-forward.</strong> Each rating is as of the day before the game it
-    predicts (as-of&nbsp;&le;&nbsp;D&minus;1); no game informs its own prediction. 3,242
+    predicts (as-of&nbsp;&le;&nbsp;D&minus;1); no game informs its own prediction. 3,237
     regular-season games, 2024&ndash;26.</li>
     <li><strong>Task B is out-of-sample.</strong> Each source is frozen at season <em>N</em>'s end and
     scored on season <em>N+1</em>'s realized team margin; the target season is never in the fit.
@@ -339,13 +345,14 @@
     recent-minute shares, not their own projections &mdash; the test isolates the rating from each
     vendor's minutes model.</li>
     <li><strong>Coverage is reported, not hidden.</strong> Missing players are replacement-filled, so
-    the test scores the gap, not the metric. BPM and RAPTOR fall from ~90% of minutes
-    through 2020 to 32% by 2026: hence the
-    <span class="tag cov">coverage-limited</span> tag, and why their deficit is <em>not</em> a quality
-    verdict. Internal, EPM and DARKO hold 87&ndash;92% in every season
-    2003-2026.</li>
+    thin coverage would score the gap, not the metric. Since the Q12 bbref-crosswalk expansion (join now
+    100%) BPM and RAPTOR hold ~90% of minutes through 2020 and ~88%
+    by 2026 &mdash; no longer decaying, on par with Internal, EPM and DARKO
+    (87&ndash;92% every season 2003-2026). Their season-retrodiction
+    result is now a clean quality read, so BPM's win over the internal decomposition is not a coverage
+    mirage.</li>
     <li><strong>RMSE within a window, corr across.</strong> Team-margin SD rises
-    4.44&nbsp;&rarr;&nbsp;4.96&nbsp;&rarr;&nbsp;5.22 across these eras, so cross-era RMSE
+    4.44&nbsp;&rarr;&nbsp;4.97&nbsp;&rarr;&nbsp;5.24 across these eras, so cross-era RMSE
     is mechanically misleading. Corr is published beside every RMSE here.</li>
     <li><strong>Vintage honesty.</strong> EPM (date-backfill), DARKO (history pull) and the internal
     board are current-model <em>retro re-fits</em> over as-of data, flagged as such &mdash; never sold
@@ -357,7 +364,7 @@
     benchmark. Per an owner decision it is <span class="bench">benchmark-only &mdash; not a product</span> &mdash; no EPM-RAPM blend ships.</li>
   </ul>
 
-  <p class="foot">Built 2026-07-16 by <code>daily_v5/build_metrics_site.py</code>. Every number is
+  <p class="foot">Built 2026-07-17 by <code>daily_v5/build_metrics_site.py</code>. Every number is
   re-read from a named artifact and reconciled against <code>research/arp/RESULTS.json</code> at build
   time; the exporter fails closed rather than publish a drifted figure. Descriptive out-of-sample
   scoreboards &mdash; not a forward projection.</p>
