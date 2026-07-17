@@ -16,5 +16,11 @@
   "date_range": [
     "2026-03-01",
     "2026-03-10"
-  ]
+  ],
+  "replay_artifact": "daily_v5/out/p2_0/replay_2026_games.parquet",
+  "replay_artifact_sha256": "2daffaf759367387fca4bfc42e75e1815e20d5294c671867f65b962941df5dca",
+  "replay_artifact_bytes": 438456,
+  "basis_verified": false,
+  "basis_note": "PROVENANCE, NOT A GUARD: the sha256 identifies which replay bytes this panel consumed; it cannot show they were computed from the current board. replay_2026.py records no basis stamp, so nothing downstream can verify it. Treat these margins as as-of `replay_generated`, not as-of today.",
+  "replay_generated": "2026-07-08T17:34:40+00:00"
 }

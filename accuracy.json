@@ -19,7 +19,7 @@
       "minutes_contract": "legacy_alloc_mpg",
       "availability_application": "legacy_consumer_dependent",
       "minutes_artifact": "daily_v5/out/minutes_allocation.parquet",
-      "minutes_artifact_sha256": "29cc855f3830979e40229366847f1054264c7c2231a04899be1560949b8dd0e7",
+      "minutes_artifact_sha256": "94e46348d731a55c906b967abe8c57d08cae7907b6ab39967e8122f0ea29ae10",
       "active_minutes_artifact": null,
       "active_minutes_artifact_sha256": null,
       "season_minutes_artifact": null,
@@ -29,9 +29,9 @@
       "replacement_tree_artifact": null,
       "replacement_tree_artifact_sha256": null,
       "gp_artifact": "daily_v5/out/gp_projection.parquet",
-      "gp_artifact_sha256": "a44a8bb0be82042413e4c2aea7eed6edaf6502293270cb2396a3e15dd5e72573",
+      "gp_artifact_sha256": "7ed7ff2ddd72b70d8218e5c9a424725ba90a4dde1711000a9f1e112381fee44f",
       "minutes_distribution_artifact": "daily_v5/out/minutes_distribution.parquet",
-      "minutes_distribution_artifact_sha256": "89869f25accf4ddd67cfda17193403dc101afd837641e8c1b74baf36c0e2b773",
+      "minutes_distribution_artifact_sha256": "135e218243572256095f145eeff422f608331263f1b46f035dc4664a7fed4c0b",
       "depth_csv_artifact": "daily_v5/out/depthcharts_2026_27.csv",
       "depth_source": "owner",
       "v2_promotion_manifest": null,
@@ -415,6 +415,212 @@
       "minutes_value_scorecard_parquet": "daily_v5/out/oos/minutes_value_scorecard.parquet"
     }
   },
+  "model_page": {
+    "status": "available",
+    "schema": "model_page_accuracy.v1",
+    "n_games": 3242,
+    "table": {
+      "columns": [
+        {
+          "key": "internal",
+          "label": "Internal"
+        },
+        {
+          "key": "epm",
+          "label": "EPM"
+        },
+        {
+          "key": "blend",
+          "label": "Blend",
+          "bench": true,
+          "tip": "Offline internal+EPM average \u2014 a benchmark only, not a shipped product."
+        },
+        {
+          "key": "darko_daily",
+          "label": "DARKO",
+          "tag": "daily",
+          "tip": "Per-game-date re-score \u2014 the like-for-like daily comparison."
+        },
+        {
+          "key": "darko_frozen",
+          "label": "DARKO",
+          "tag": "frozen",
+          "tip": "Pre-season-frozen; no in-season update."
+        }
+      ],
+      "rows": [
+        {
+          "key": "frozen_preseason",
+          "label": "Frozen-preseason win-MAE (2024\u201326 pooled)",
+          "dp": 3,
+          "cells": {
+            "internal": 6.804,
+            "epm": 6.239,
+            "blend": 6.414,
+            "darko_daily": null,
+            "darko_frozen": 6.675
+          }
+        },
+        {
+          "key": "game_margin",
+          "label": "Game-margin RMSE (walk-forward)",
+          "dp": 4,
+          "cells": {
+            "internal": 14.0777,
+            "epm": 14.2988,
+            "blend": 14.0586,
+            "darko_daily": 14.4305,
+            "darko_frozen": 14.8278
+          }
+        },
+        {
+          "key": "retro_win_mae",
+          "label": "Retro win-MAE",
+          "dp": 4,
+          "cells": {
+            "internal": 4.1868,
+            "epm": 4.1169,
+            "blend": 4.0344,
+            "darko_daily": null,
+            "darko_frozen": 6.706
+          }
+        },
+        {
+          "key": "playoff_brier",
+          "label": "Playoff Brier",
+          "dp": 5,
+          "cells": {
+            "internal": 0.10357,
+            "epm": 0.09153,
+            "blend": 0.09636,
+            "darko_daily": null,
+            "darko_frozen": 0.17056
+          }
+        }
+      ]
+    },
+    "verdicts": [
+      {
+        "row": "frozen_preseason",
+        "label": "Frozen-preseason win-MAE (2024\u201326 pooled)",
+        "internal": 6.804,
+        "epm": 6.2391,
+        "gap_epm_minus_internal": -0.5649,
+        "band": 0.05,
+        "leader": "epm",
+        "band_multiple": 11.3,
+        "text": "EPM <strong>leads</strong> on Frozen-preseason win-MAE (2024\u201326 pooled) by <strong>0.5649</strong> (<strong>6.239 vs 6.804</strong>, EPM vs internal) &mdash; 11.3&times; the &plusmn;0.05 noise band",
+        "dp": 3,
+        "prose_label": "season-level prediction",
+        "prose_metric": "frozen-preseason win-MAE",
+        "prose_dp": 2
+      },
+      {
+        "row": "game_margin",
+        "label": "Game-margin RMSE (walk-forward)",
+        "internal": 14.0777,
+        "epm": 14.2988,
+        "gap_epm_minus_internal": 0.2211,
+        "band": 0.05,
+        "leader": "internal",
+        "band_multiple": 4.42,
+        "text": "Internal <strong>leads</strong> on Game-margin RMSE (walk-forward) by <strong>0.2211</strong> (<strong>14.2988 vs 14.0777</strong>, EPM vs internal) &mdash; 4.4&times; the &plusmn;0.05 noise band",
+        "dp": 4,
+        "prose_label": "game-margin RMSE",
+        "prose_metric": null,
+        "prose_dp": 2
+      },
+      {
+        "row": "retro_win_mae",
+        "label": "Retro win-MAE",
+        "internal": 4.186788888888889,
+        "epm": 4.116891111111111,
+        "gap_epm_minus_internal": -0.069898,
+        "band": 0.05,
+        "leader": "epm",
+        "band_multiple": 1.4,
+        "text": "EPM <strong>leads</strong> on Retro win-MAE by <strong>0.0699</strong> (<strong>4.1169 vs 4.1868</strong>, EPM vs internal) &mdash; 1.4&times; the &plusmn;0.05 noise band",
+        "dp": 4,
+        "prose_label": "retro win-MAE",
+        "prose_metric": null,
+        "prose_dp": 2
+      },
+      {
+        "row": "playoff_brier",
+        "label": "Playoff Brier",
+        "internal": 0.10357315311111111,
+        "epm": 0.09153345377777779,
+        "gap_epm_minus_internal": -0.01204,
+        "band": null,
+        "leader": "epm",
+        "band_multiple": null,
+        "text": "EPM is ahead on Playoff Brier (<strong>0.09153 vs 0.10357</strong>, EPM vs internal) &mdash; no noise band is defined for this metric, so the margin is reported without a significance claim",
+        "dp": 5,
+        "prose_label": "playoff Brier",
+        "prose_metric": null,
+        "prose_dp": 3
+      }
+    ],
+    "headline_prose": "The honest read is <strong>task-by-task, not a blanket winner</strong>. EPM is ahead on season-level prediction (frozen-preseason win-MAE <strong>6.24 vs 6.80</strong>), retro win-MAE (<strong>4.12 vs 4.19</strong>), and playoff Brier (<strong>0.092 vs 0.104</strong>). The internal model <strong>leads</strong> EPM on game-margin RMSE (<strong>14.30 vs 14.08</strong>) &mdash; EPM is <em>not</em> strictly better on every task. EPM's retro win-MAE edge is <strong>narrow</strong> &mdash; only 1.4&times; the &plusmn;0.05 noise band. The internal+EPM blend beats both on some rows; per an owner decision <strong>no EPM-RAPM blend ships</strong>, so it appears here only as an informative benchmark.",
+    "darko_note": "<strong>DARKO daily</strong> is a per-game-date re-score at 96.1% player coverage &mdash; it is the like-for-like comparison for game margins, since our own board also updates daily. <strong>DARKO frozen</strong> is pre-season-frozen with no in-season update, so its frozen-preseason, retro and Brier cells are all measured pre-season-frozen and it is disadvantaged on the walk-forward game-margin row. The <strong>Blend</strong> column is benchmark-only &mdash; not a product.",
+    "darko_daily_coverage": 0.961,
+    "overlap": {
+      "table_net_corr": 0.8875,
+      "table_n": 17204,
+      "matched_years": [
+        2021,
+        2022,
+        2023,
+        2024,
+        2025
+      ],
+      "single_season_n": 2157,
+      "n_fiveyr": 2157,
+      "fiveyr_r_allrows": 0.904289,
+      "n_fiveyr_allrows": 3464,
+      "matched_fiveyr_r": 0.892502,
+      "matched_single_season_r": 0.497664,
+      "inflation": 0.394838,
+      "per_factor_single_season": {
+        "oTS": 0.4939,
+        "oTOV": 0.4561,
+        "oSC": 0.3994,
+        "dTS": 0.302,
+        "dTOV": 0.4852,
+        "dSC": 0.2658
+      },
+      "best_factors": [
+        "oTS",
+        "dTOV"
+      ],
+      "noisiest_factor": "dSC",
+      "prose": "Net carries forward at <strong>r &asymp; 0.89</strong> against a five-year-trailing target (the table above, n&nbsp;=&nbsp;17,204) &mdash; but that is inflated by <em>window overlap</em>: the target board shares most of today's data. Scored over the same 2021\u20132025 transition blocks &mdash; the very same <strong>2,157</strong> player-seasons on both sides &mdash; the same board reaches <strong>r = 0.893</strong> against that overlapping target but only <strong>0.498</strong> against a genuinely <strong>non-overlapping single-season</strong> target &mdash; an overlap inflation of <strong>0.395</strong>, not skill. Shooting efficiency (oTS &asymp; 0.49) and forcing turnovers (dTOV &asymp; 0.49) carry forward best; defensive second-chance (dSC &asymp; 0.27) is the noisiest.",
+      "_note": "gap = retro_net_report.json `inflation`: row-matched, so both legs are the SAME 2157 rows (n_fiveyr == n_single_season, enforced by _gate_overlap_identity). NOT next_season.net.corr - single_season_pooled_r: those are different panels (n=17204 vs n=2157) and subtracting them is a cross-sample error."
+    },
+    "forward_skill": {
+      "published_progress": 0.48,
+      "stored": 0.497664,
+      "drift_vs_published": 0.0177,
+      "published_str": "0.48",
+      "stored_str": "0.498",
+      "artifact": "daily_v5/out/oos/retro_net_report.json"
+    },
+    "forecast_frozen": "2026-07-17",
+    "forecast_freeze_note": "Committed <strong>2026-07-17</strong>, before the 2026-27 season. \u201cRealized\u201d fills as games are played and the forecast is scored against actual wins \u2014 win or lose, the number was frozen in advance.",
+    "provenance": {
+      "frozen_preseason": "daily_v5/out/p2_0/verify_composite/frozen_preseason_all.json",
+      "game_margin": "daily_v5/out/p2_0/darko_daily_rescore.json (+ composite_report.json for the blend)",
+      "retro_win_mae_playoff_brier": "daily_v5/out/p2_0/composite_report.json marginal_contribution",
+      "overlap": "daily_v5/out/oos/retro_net_report.json",
+      "forecast_frozen": "daily_v5/out/scoreboard.json forecasts[].frozen",
+      "forward_skill": "daily_v5/out/scoreboard.json backfill[forward_skill_single_season]",
+      "anchors": "research/arp/RESULTS.json anchors",
+      "unanchored": [
+        "retro_win_mae.darko_frozen",
+        "playoff_brier.darko_frozen"
+      ]
+    }
+  },
   "minutes_gp": {
     "status": "not_available",
     "reason": "minutes/GP committee metrics are only attached for the canonical accuracy build"
@@ -428,18 +634,18 @@
       "path": "daily_v5/out/oos/scorecard_current.parquet",
       "exists": true,
       "size": 3811,
-      "mtime": 1784240673.3748155
+      "mtime": 1784268550.7663002
     },
     "manifest": {
       "path": "daily_v5/out/oos/manifest_current.json",
       "exists": true,
-      "size": 7245,
-      "mtime": 1784240674.8397913
+      "size": 7246,
+      "mtime": 1784268552.101929
     },
     "git": {
-      "sha": "ddf8024779aa0fe04b2aabf6cf7111afc492e6a4",
+      "sha": "7dbc721a609dd7160242e07d6c4d8225228b2fbd",
       "dirty": true,
-      "dirty_entries": 1
+      "dirty_entries": 39
     },
     "game_model_params": {
       "hca": 1.5370466094308175,

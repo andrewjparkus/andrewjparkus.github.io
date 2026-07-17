@@ -232,6 +232,12 @@ const MODEHINT={
   box:'Box prior — the daily-refit box+EPM basis the prior-informed solve shrinks toward, re-fit every game-day on that day\'s prior-free cross-section (no seasonal steps). Shown at its honest scale, so it reads cooler than the board — especially on defense. Built from box stats across NCAA, G-League & NBA up to each day; all six factors, with a confidence band.',
   latent:'Latent — one continuous cross-league curve: a DARKO-style state-space pass over the daily prior-informed board, so a player who moves between leagues has a single line instead of disjoint per-league graphs. Colored by the league played each day. Display-only.'};
 const MODEHINT_LATENT_ALIAS='Latent — single-league player: the latent equals the prior-informed board (no cross-league bridge needed).';
+// DISPLAY-ONLY SMOOTHING DISCLOSURE (fence F3, owner-reopened 2026-07-17). A smoothed number that
+// does not say it is smoothed is a lie, so the Box hint states the filter in plain language. It is
+// DERIVED, not hand-written: build_site_box.py stamps `sm` (the window) into _box.json only when it
+// actually smoothed, so this sentence appears if and only if the plotted curve really was filtered,
+// and always quotes the true window. Nothing to keep in sync by hand.
+const boxSmoothNote=w=>` Display-smoothed: each of the six factors is filtered along time with a trailing ${w}-game-day median (NBA days only; the plotted net is the sum of the smoothed factors). This changes ONLY what is drawn — it removes a day-to-day wobble that carries no durable information. The underlying rating, the prior and the projection are all computed from the unsmoothed values and are untouched by it. The confidence band is not smoothed.`;
 let SERIES={}, MODE=(localStorage.getItem('rapm_mode')||'prior'), PNAME='', CURID=null;
 function load(id,name){drop.style.display='none';q.value=name;history.replaceState(null,'','?p='+id);
   if(typeof wfStop==='function')wfStop();           // cancel any waterfall sweep from the previous player
@@ -248,12 +254,14 @@ function load(id,name){drop.style.display='none';q.value=name;history.replaceSta
     // plan45 B1 (D3): single-league players have no _latent.json; alias Latent to the prior board
     // (latent === board when there is no cross-league bridge) so the tab is never a dead greyed button.
     LATENT_ALIAS=!latent;
+    BOX_SM=(box&&box.sm)||0;                        // per-player: what was actually applied (F3)
     SERIES={prior:priorPrep, pure:pure?prep(pure):null, box:box?prep(box):null,
             latent:latent?prep(latent):priorPrep};
     RAW={prior, pure, box, latent};
     show();
   });}
-let RAW={}, LATENT_ALIAS=false;
+let RAW={}, LATENT_ALIAS=false, BOX_SM=0;   // BOX_SM: trailing-median window build_site_box.py
+//   actually applied to this player's box curve (0/absent = not smoothed). Drives the F3 disclosure.
 
 function activeMode(){return SERIES[MODE]?MODE:'prior';}  // honor preference; fall back per-player without dropping it
 function setMode(m){
@@ -267,7 +275,9 @@ function syncSeg(){
     const avail=!!SERIES[b.dataset.mode];
     b.disabled=!avail; b.classList.toggle('on',avail&&b.dataset.mode===am);
   });
-  document.getElementById('modehint').textContent=(am==='latent'&&LATENT_ALIAS)?MODEHINT_LATENT_ALIAS:MODEHINT[am];
+  let hint=(am==='latent'&&LATENT_ALIAS)?MODEHINT_LATENT_ALIAS:MODEHINT[am];
+  if(am==='box'&&BOX_SM>1)hint+=boxSmoothNote(BOX_SM);   // disclose the filter iff it was applied
+  document.getElementById('modehint').textContent=hint;
 }
 document.querySelectorAll('#modeseg button').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
 

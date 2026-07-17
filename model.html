@@ -440,45 +440,23 @@
   site; <strong>EPM</strong> is Dunks &amp; Threes'; <strong>DARKO</strong> is the public daily-updated
   box model; the <strong>Blend</strong> column is an offline internal+EPM average shown <strong>only as a
   benchmark — not a product</strong> (no EPM-RAPM blend ships). Lower is better in every row.</p>
+  <!-- DERIVED FROM accuracy.json `model_page` (daily_v5/model_accuracy_block.py, called by
+       build_accuracy.py). The table, the caption below it and the task-by-task paragraph are ALL
+       computed from named artifacts at build time -- frozen_preseason_all.json,
+       darko_daily_rescore.json, composite_report.json -- and cross-checked against
+       research/arp/RESULTS.json anchors. The exporter RAISES rather than publish a number or a
+       characterisation the anchors no longer support, so none of this can go stale by omission.
+       DO NOT hand-type a number back into this section: that is exactly what rotted twice
+       (a Jul-6 pivot cache, and a "DARKO re-score is pending" caption that outlived its own
+       re-score by 1.5h and overstated our lead over DARKO 2.13x in our favour). -->
   <div class="scroll" style="max-width:660px">
-    <table class="tbl">
-      <thead><tr>
-        <th class="l">Task</th><th>Internal</th><th>EPM</th>
-        <th>Blend <span class="help" data-tip="Offline internal+EPM average — a benchmark only, not a shipped product.">?</span></th>
-        <th>DARKO</th>
-      </tr></thead>
-      <tbody>
-        <!-- HAND-MAINTAINED TABLE: these numbers do NOT derive from an artifact, so they go stale
-             silently. They did exactly that: a Jul-6 pivot cache never picked up the Jul-15 A7
-             re-solve, and this table published the stale figures until 2026-07-16 (game-margin was
-             0.163 too pessimistic; retro win-MAE 0.86 too pessimistic). RECONCILE AGAINST
-             research/arp/RESULTS.json (anchors) AFTER ANY re-gate/re-solve/cache rebuild.
-             Corrected 2026-07-16 from the artifacts; see RESULTS.json stale_cache_correction_2026_07_16. -->
-        <tr><td class="l">Frozen-preseason win-MAE (2024–26 pooled)</td>
-            <td>6.804</td><td>6.239</td><td>6.414</td><td>6.675</td></tr>
-        <tr><td class="l">Game-margin RMSE (walk-forward)</td>
-            <td>14.0777</td><td>14.2988</td><td>14.0586</td><td>14.83*</td></tr>
-        <tr><td class="l">Retro win-MAE</td>
-            <td>4.1868</td><td>4.1169</td><td>4.0344</td><td>6.71*</td></tr>
-        <tr><td class="l">Playoff Brier</td>
-            <td>0.10357</td><td>0.09153</td><td>0.09636</td><td>—</td></tr>
-      </tbody>
+    <table class="tbl" id="acc_cmp">
+      <thead><tr><th class="l">Task</th><th>…</th></tr></thead>
+      <tbody><tr><td class="l">…</td><td>…</td></tr></tbody>
     </table>
   </div>
-  <p class="cap" style="color:var(--faint);font-size:var(--fs-2)">*DARKO game-margin RMSE and retro
-  win-MAE are measured preseason-frozen; a fresh DARKO-daily re-score is pending in a separate harness.
-  The <strong>Blend</strong> column is benchmark-only — not a product.</p>
-  <!-- Prose numbers here are hand-maintained against the table above: reconcile BOTH against
-       research/arp/RESULTS.json after any re-gate. Rewritten 2026-07-16 after the stale-cache
-       correction — the previous copy called a 0.22-point internal win a "tie" and quoted a retro
-       win-MAE gap (4.12 vs 5.05) that a stale Jul-6 pivot cache had invented. -->
-  <p>The honest read is <strong>task-by-task, not a blanket winner</strong>. EPM is better at
-  season-level prediction (frozen-preseason win-MAE <strong>6.24 vs 6.80</strong>) and at playoff Brier
-  (<strong>0.092 vs 0.104</strong>), and holds a now-narrow edge on retro win-MAE
-  (<strong>4.12 vs 4.19</strong>). But the internal model <strong>leads</strong> EPM on game-margin RMSE
-  (<strong>14.08 vs 14.30</strong>) — EPM is <em>not</em> strictly better on every task. The
-  internal+EPM blend beats both on some rows; per an owner decision <strong>no EPM-RAPM blend
-  ships</strong>, so it appears here only as an informative benchmark.</p>
+  <p class="cap" id="acc_cmp_cap" style="color:var(--faint);font-size:var(--fs-2)"></p>
+  <p id="acc_cmp_verdict"></p>
   <p class="cap" style="color:var(--faint);font-size:var(--fs-2)">Corrected 2026-07-16. Until then this
   table published figures from a stale cache that never picked up the 2026-07-15 re-solve, understating
   the internal model on two rows (game-margin RMSE by 0.16, retro win-MAE by 0.86). The numbers above are
@@ -524,14 +502,25 @@
       <tbody><tr><td class="l">…</td><td>…</td><td>…</td></tr></tbody>
     </table>
   </div>
-  <p>Net carries forward at <strong>r ≈ 0.89</strong> against a five-year-trailing target — but that is
-  inflated by <em>window overlap</em>: the target board shares most of today's data. Against a genuinely
-  <strong>non-overlapping single-season</strong> target the honest forward correlation is only
-  <strong>≈ 0.50</strong> (0.498); the ~0.41 gap is pure overlap inflation, not skill. Shooting
-  efficiency (oTS ≈ 0.49) and forcing turnovers (dTOV ≈ 0.49) carry forward best; defensive
-  second-chance (dSC ≈ 0.27) is the noisiest. The frozen scoreboard below first published this figure at
-  <strong>0.48</strong>; today's refresh nudged it to <strong>0.498</strong> — see how that drift was
-  handled.</p>
+  <!-- DERIVED FROM accuracy.json `model_page.overlap` (out/oos/retro_net_report.json).
+       The overlap gap MUST come from retro_net's own `inflation` field, whose two endpoints
+       (fiveyr_pooled_r 0.904, single_season_pooled_r 0.498) are scored on the SAME transition
+       blocks -- retro_net.py:297 calls that "apples-to-apples". The old copy paired that gap with
+       r ≈ 0.89, which is the scorecard panel's number (n=17,204, a different and 8x larger
+       sample), so the reader's own arithmetic failed: 0.89 − 0.498 = 0.39, not 0.41. Both
+       endpoints are now published from the matched sample, so the subtraction closes on the page.
+       Do NOT "fix" this by subtracting the table's 0.89 from 0.498 — that is a cross-sample
+       error, and it was proposed once already (S2/D6). model_accuracy_block._gate_overlap_identity
+       raises if retro_net ever stops computing inflation on one sample. -->
+  <p id="acc_overlap">…</p>
+  <!-- DERIVED (spans) FROM accuracy.json `model_page.forward_skill` (= scoreboard.json
+       backfill[forward_skill_single_season]). This drift is narrated TWICE on this page and the
+       two tellings used to disagree — here "0.48", below "0.482". ledger.py:96 pins
+       published_progress = 0.48 and no artifact anywhere contains 0.482. Both are now rendered
+       from the same entry, so they cannot drift apart again. -->
+  <p>The frozen scoreboard below first published this figure at
+  <strong><span id="fs_pub_a">…</span></strong>; today's refresh nudged it to
+  <strong><span id="fs_now_a">…</span></strong> — see how that drift was handled.</p>
   <h3 id="ciforward">Are today's player CIs a next-season forecast band?</h3>
   <p>No. This diagnostic presses today's estimate SE into service against next-season RAPM; the table
   shows why that is a different product from a true forecast interval.</p>
@@ -553,15 +542,38 @@
   </div>
 
   <h3 id="scoreboard">Frozen forecast scoreboard — tamper-evident accuracy</h3>
-  <p>Every accuracy number on this page is re-derived from a frozen on-disk artifact and hash-chained
-  into an append-only ledger (<code>daily_v5/ledger.py</code> → <code>out/ledger.jsonl</code>). If a
-  figure no longer reproduces within <strong>±0.01</strong>, this panel <strong>refuses to
-  render</strong> rather than show a stale number. Season-ahead forecasts (2026-27 team win totals +
-  playoff odds) are hash-committed <em>before</em> the season tips, with git commit timestamps as the
-  tamper-evidence authority. It has fired: when today's refresh nudged the honest single-season
-  forward-skill correlation <strong>0.482 → 0.498</strong>, the panel refused to render. The metric has
-  since been <strong>re-frozen at its current honest value (0.498)</strong>, so the panel renders again
-  with the full drift preserved in the hash chain — nothing quietly overwritten.</p>
+  <!-- D8 (S2 audit, 2026-07-16) softened an "append-only / nothing quietly overwritten" claim by
+       rewording this prose to match ledger.py's docstring "exactly". 2026-07-17: THE DOCSTRING
+       ITSELF WAS FALSE, so the reworded prose inherited the error — it credited the chain with
+       "detection of in-place edits between commits" of a file that is gitignored
+       (.gitignore:14 → daily_v5/out/) and has never been committed to anything. The real and only
+       public trail is THIS repo's scoreboard.json history. Verified 2026-07-17: OKC 63.6 (frozen
+       07-07) → 66.0 (07-15) → 66.1 (07-16), each its own public commit; and the published
+       forecasts carry no chain fields at all, so chain_ok is not externally checkable.
+       LESSON (F15): "match the docstring" is a fixed-point check, not a truth check.
+       Do not re-strengthen this claim without first making build() append AND publishing the
+       chain fields. See ledger.py's header for the full measurement. -->
+  <p>Every accuracy number on this page is re-derived from a frozen on-disk artifact, and every
+  frozen forecast is re-checked against the source file it names. If a figure no longer reproduces
+  within <strong>±0.01</strong>, or a forecast no longer matches its source, this panel
+  <strong>refuses to render</strong> rather than show a stale number.</p>
+
+  <p><strong>What actually makes this falsifiable</strong>, stated precisely, because the weaker
+  version of this paragraph was wrong twice: season-ahead forecasts (2026-27 win totals + playoff
+  odds) are published in <code>scoreboard.json</code>, and <strong>every vintage of that file is
+  committed to this site's public git repo, timestamped, before the season tips</strong>. That
+  history is the whole of the tamper-evidence — you can read what we predicted and when, and we
+  cannot quietly revise it. What is <em>not</em> evidence: the <code>chain_ok</code> flag. It is an
+  internal integrity check over a build ledger that is never published, and that is rebuilt from
+  scratch at each freeze — so it verifies a file we just wrote, and it cannot tell you a forecast
+  was never re-frozen. Only the git history can. The re-freezes are real and visible there: OKC ran
+  <strong>63.6 → 66.0 → 66.1 → 64.6</strong> across four public vintages as the roster and the
+  depth chart were corrected.</p>
+
+  <p>The refusal has fired for real: when a refresh nudged the honest single-season forward-skill
+  correlation <strong><span id="fs_pub_b">…</span> → <span id="fs_now_b">…</span></strong>, the
+  panel refused to render. The metric has since been <strong>re-frozen at its current honest value
+  (<span id="fs_now_c">…</span>)</strong>, and the prior vintage is preserved in git.</p>
   <div id="sb_msg" class="callout" style="display:none"></div>
   <div class="scroll" style="max-width:660px">
     <table class="tbl" id="sb_backfill">
@@ -577,9 +589,14 @@
       <tbody><tr><td class="l">…</td><td>…</td><td>…</td><td>…</td><td>…</td></tr></tbody>
     </table>
   </div>
-  <p class="cap" style="color:var(--faint);font-size:var(--fs-2)">Committed 2026-07-07, before the
-  2026-27 season. "Realized" fills as games are played and the forecast is scored against actual wins —
-  win or lose, the number was frozen in advance.</p>
+  <!-- DERIVED FROM accuracy.json `model_page.forecast_freeze_note` (= scoreboard.json
+       forecasts[].frozen). This caption used to hard-type "Committed 2026-07-07" while every one
+       of the 30 forecasts carried frozen:"2026-07-16" — asserting a commitment NINE DAYS EARLIER
+       than the real one, i.e. the direction that flatters a falsifiability claim, on the very
+       panel whose entire point is falsifiability. NEVER type this date: it is the one number on
+       the page a reader is being asked to take on trust. model_accuracy_block raises if the 30
+       forecasts ever disagree on their freeze date. -->
+  <p class="cap" id="sb_fc_cap" style="color:var(--faint);font-size:var(--fs-2)"></p>
 
   <h2 id="forward">The forward projection — 1 to 5 years out</h2>
   <p>The <a href="projection.html">2026-27 page</a> and the Explorer's <strong>+ Projection</strong>
@@ -956,9 +973,56 @@
       +'pooled 2024–26). EPM is a strong external forward model; the internal RAPM decomp is the shipped '
       +'default.';
   }
+  /* ---- model_page: the DERIVED comparison table + prose (plan 47 M3 / F13).
+     Every value and every characterisation here is computed by daily_v5/model_accuracy_block.py
+     from named artifacts and gated against research/arp/RESULTS.json. This renderer must stay a
+     dumb printer: do NOT compute a number, a verdict or a date here, and never fall back to a
+     literal — an absent block leaves the "…" placeholder, which is the fail-closed outcome. ---- */
+  function fillCmp(mp){
+    if(!mp || mp.status!=='available' || !mp.table) return;
+    var cols=mp.table.columns||[];
+    var th='<tr><th class="l">Task</th>';
+    cols.forEach(function(c,i){
+      var tag=c.tag?'&nbsp;<span class="tag">'+c.tag+'</span>':'';
+      var help=c.tip?' <span class="help" data-tip="'+c.tip.replace(/"/g,'&quot;')+'">?</span>':'';
+      th+='<th'+(i===0?'':'')+'>'+c.label+tag+help+'</th>';
+    });
+    th+='</tr>';
+    var thead=document.querySelector('#acc_cmp thead'); if(thead) thead.innerHTML=th;
+    var h='';
+    (mp.table.rows||[]).forEach(function(r){
+      h+='<tr><td class="l">'+r.label+'</td>';
+      cols.forEach(function(c){
+        var v=r.cells?r.cells[c.key]:null;
+        h+='<td>'+(v==null?'—':(+v).toFixed(r.dp))+'</td>';
+      });
+      h+='</tr>';
+    });
+    document.querySelector('#acc_cmp tbody').innerHTML=h;
+    var cap=document.getElementById('acc_cmp_cap');
+    if(cap&&mp.darko_note) cap.innerHTML=mp.darko_note;
+    var vd=document.getElementById('acc_cmp_verdict');
+    if(vd&&mp.headline_prose) vd.innerHTML=mp.headline_prose;
+    var ov=document.getElementById('acc_overlap');
+    if(ov&&mp.overlap&&mp.overlap.prose) ov.innerHTML=mp.overlap.prose;
+    var fc=document.getElementById('sb_fc_cap');
+    if(fc&&mp.forecast_freeze_note) fc.innerHTML=mp.forecast_freeze_note;
+    /* the forward-skill drift is narrated in two places; both fill from ONE artifact entry so
+       they can never disagree again (they did: 0.48 here vs 0.482 below, and 0.482 was in no
+       artifact at all). */
+    var fs=mp.forward_skill;
+    if(fs){
+      [['fs_pub_a',fs.published_str],['fs_now_a',fs.stored_str],
+       ['fs_pub_b',fs.published_str],['fs_now_b',fs.stored_str],
+       ['fs_now_c',fs.stored_str]].forEach(function(p){
+        var el=document.getElementById(p[0]); if(el) el.textContent=p[1];
+      });
+    }
+  }
   fetch('accuracy.json').then(function(r){ if(!r.ok) throw 0; return r.json(); })
     .then(function(j){
       if(msg) msg.style.display='none';
+      if(j.model_page) fillCmp(j.model_page);
       if(j.projection_accuracy_frozen_preseason) fillProj(j.projection_accuracy_frozen_preseason);
       if(j.game_margin){
         fillGame(j.game_margin);
