@@ -504,14 +504,15 @@
   </div>
   <!-- DERIVED FROM accuracy.json `model_page.overlap` (out/oos/retro_net_report.json).
        The overlap gap MUST come from retro_net's own `inflation` field, whose two endpoints
-       (fiveyr_pooled_r 0.904, single_season_pooled_r 0.498) are scored on the SAME transition
-       blocks -- retro_net.py:297 calls that "apples-to-apples". The old copy paired that gap with
-       r ≈ 0.89, which is the scorecard panel's number (n=17,204, a different and 8x larger
-       sample), so the reader's own arithmetic failed: 0.89 − 0.498 = 0.39, not 0.41. Both
-       endpoints are now published from the matched sample, so the subtraction closes on the page.
-       Do NOT "fix" this by subtracting the table's 0.89 from 0.498 — that is a cross-sample
-       error, and it was proposed once already (S2/D6). model_accuracy_block._gate_overlap_identity
-       raises if retro_net ever stops computing inflation on one sample. -->
+       (fiveyr_pooled_r 0.893, single_season_pooled_r 0.498) are BOTH scored on the row-matched
+       n=2,157 sample -- retro_net._print_report calls that "apples-to-apples". Their difference IS
+       the published gap: 0.893 − 0.498 = 0.394838. The old copy hard-coded the ALL-ROWS fiveyr
+       0.904 (n=3,464) as the top endpoint, which made it a cross-sample subtraction against the
+       n=2,157 honest leg; L10 (2026-07-17) re-cut both legs to the matched sample. Do NOT "fix"
+       this by subtracting the table's r ≈ 0.89 (the scorecard panel, n=17,204, a different and 8x
+       larger sample) from 0.498 — that is the same cross-sample error, proposed once already
+       (S2/D6). model_accuracy_block._gate_overlap_identity raises if retro_net ever stops
+       computing inflation on one sample. -->
   <p id="acc_overlap">…</p>
   <!-- DERIVED (spans) FROM accuracy.json `model_page.forward_skill` (= scoreboard.json
        backfill[forward_skill_single_season]). This drift is narrated TWICE on this page and the

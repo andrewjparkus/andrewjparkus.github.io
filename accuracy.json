@@ -19,7 +19,7 @@
       "minutes_contract": "legacy_alloc_mpg",
       "availability_application": "legacy_consumer_dependent",
       "minutes_artifact": "daily_v5/out/minutes_allocation.parquet",
-      "minutes_artifact_sha256": "94e46348d731a55c906b967abe8c57d08cae7907b6ab39967e8122f0ea29ae10",
+      "minutes_artifact_sha256": "faa01c050d2ae129e7e336ea11197a6b2c9974f4a407c1c1c27620f2aab5996c",
       "active_minutes_artifact": null,
       "active_minutes_artifact_sha256": null,
       "season_minutes_artifact": null,
@@ -29,9 +29,9 @@
       "replacement_tree_artifact": null,
       "replacement_tree_artifact_sha256": null,
       "gp_artifact": "daily_v5/out/gp_projection.parquet",
-      "gp_artifact_sha256": "7ed7ff2ddd72b70d8218e5c9a424725ba90a4dde1711000a9f1e112381fee44f",
+      "gp_artifact_sha256": "99aa6aa1c6bcea599b6c8a158c9edc807b4a2cb1535f74e88b6bc2e651e04892",
       "minutes_distribution_artifact": "daily_v5/out/minutes_distribution.parquet",
-      "minutes_distribution_artifact_sha256": "135e218243572256095f145eeff422f608331263f1b46f035dc4664a7fed4c0b",
+      "minutes_distribution_artifact_sha256": "f791eae473e103b5287d0123a1a5c5ef4888bcf52c00b46170c87d791cdba64c",
       "depth_csv_artifact": "daily_v5/out/depthcharts_2026_27.csv",
       "depth_source": "owner",
       "v2_promotion_manifest": null,
@@ -605,8 +605,8 @@
       "stored_str": "0.498",
       "artifact": "daily_v5/out/oos/retro_net_report.json"
     },
-    "forecast_frozen": "2026-07-17",
-    "forecast_freeze_note": "Committed <strong>2026-07-17</strong>, before the 2026-27 season. \u201cRealized\u201d fills as games are played and the forecast is scored against actual wins \u2014 win or lose, the number was frozen in advance.",
+    "forecast_frozen": "2026-07-19",
+    "forecast_freeze_note": "Committed <strong>2026-07-19</strong>, before the 2026-27 season. \u201cRealized\u201d fills as games are played and the forecast is scored against actual wins \u2014 win or lose, the number was frozen in advance.",
     "provenance": {
       "frozen_preseason": "daily_v5/out/p2_0/verify_composite/frozen_preseason_all.json",
       "game_margin": "daily_v5/out/p2_0/darko_daily_rescore.json (+ composite_report.json for the blend)",
@@ -634,18 +634,18 @@
       "path": "daily_v5/out/oos/scorecard_current.parquet",
       "exists": true,
       "size": 3811,
-      "mtime": 1784322868.9089458
+      "mtime": 1784512859.6374497
     },
     "manifest": {
       "path": "daily_v5/out/oos/manifest_current.json",
       "exists": true,
-      "size": 7245,
-      "mtime": 1784322870.2589028
+      "size": 7246,
+      "mtime": 1784512860.9256241
     },
     "git": {
-      "sha": "29021433b346bc620bc9ffe2127cf63ac85f0016",
-      "dirty": true,
-      "dirty_entries": 1
+      "sha": "508d6d6b96febf757d499be8eb18223dbd6e4efc",
+      "dirty": false,
+      "dirty_entries": 0
     },
     "game_model_params": {
       "hca": 1.5370466094308175,

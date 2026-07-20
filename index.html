@@ -237,7 +237,7 @@ const MODEHINT_LATENT_ALIAS='Latent — single-league player: the latent equals 
 // DERIVED, not hand-written: build_site_box.py stamps `sm` (the window) into _box.json only when it
 // actually smoothed, so this sentence appears if and only if the plotted curve really was filtered,
 // and always quotes the true window. Nothing to keep in sync by hand.
-const boxSmoothNote=w=>` Display-smoothed: each of the six factors is filtered along time with a trailing ${w}-game-day median (NBA days only; the plotted net is the sum of the smoothed factors). This changes ONLY what is drawn — it removes a day-to-day wobble that carries no durable information. The underlying rating, the prior and the projection are all computed from the unsmoothed values and are untouched by it. The confidence band is not smoothed.`;
+const boxSmoothNote=w=>` Display-smoothed: each of the six factors is filtered along time with a trailing ${w}-point median, reset at every season break (NBA days only; the plotted net is the sum of the smoothed factors). This changes ONLY what is drawn — it removes a day-to-day wobble that carries no durable information. The underlying rating, the prior and the projection are all computed from the unsmoothed values and are untouched by it. The confidence band is not smoothed.`;
 let SERIES={}, MODE=(localStorage.getItem('rapm_mode')||'prior'), PNAME='', CURID=null;
 function load(id,name){drop.style.display='none';q.value=name;history.replaceState(null,'','?p='+id);
   if(typeof wfStop==='function')wfStop();           // cancel any waterfall sweep from the previous player
