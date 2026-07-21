@@ -11,7 +11,8 @@
  */
 (function (root) {
   var NS = "http://www.w3.org/2000/svg";
-  var LC = { nba: "#4aa8ff", gleague: "#2dd4bf", college: "#b27bff" };
+  var LC = { nba: "#4aa8ff", gleague: "#ff9138", college: "#ff5f8f" };
+  var LVAR = { nba: "--nba", gleague: "--gleague", college: "--college" };
 
   // SVG element builder (the old el()/elns()).
   function el(tag, attrs) {
@@ -19,7 +20,16 @@
     for (var k in attrs) if (attrs[k] != null) e.setAttribute(k, attrs[k]);
     return e;
   }
-  function leagueColor(lg) { return LC[lg] || "var(--accent)"; }
+  // Read the CSS var so charts follow the light/dark theme, as the header claims.
+  // LC{} is the fallback for non-DOM contexts (node tests) and for an unset var.
+  function leagueColor(lg) {
+    var v = LVAR[lg];
+    if (v && typeof getComputedStyle === "function" && typeof document !== "undefined") {
+      var c = getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+      if (c) return c;
+    }
+    return LC[lg] || "var(--accent)";
+  }
 
   /* ---- pure math (also node-exported) ------------------------------------ */
   // percentile in [0,1] from an array of sorted quantile edges (binary search).

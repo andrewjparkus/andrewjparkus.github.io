@@ -55,19 +55,15 @@
 
 <div class="doc">
   <h1>The metric leaderboard <small>six impact metrics, two honest tasks</small></h1>
-  <p class="lede">Six player-impact metrics &mdash; our RAPM decomposition, Dunks&nbsp;&amp;&nbsp;Threes'
-  EPM, DARKO, Box&nbsp;Plus-Minus, RAPTOR and WAR &mdash; on two out-of-sample tasks, one normalized
-  panel, leakage rules in the open. Lower is better everywhere. No public site publishes this
-  side-by-side.</p>
+  <p class="lede">Our six-factor RAPM decomposition against Dunks&nbsp;&amp;&nbsp;Threes' EPM, DARKO,
+  Box&nbsp;Plus-Minus, RAPTOR and WAR &mdash; one normalized panel, leakage rules in the open, lower is
+  better everywhere. No public site publishes this side-by-side.</p>
 
   <div class="callout">
-    <strong>What makes it honest.</strong> Ratings are used only as they were knowable: Task&nbsp;A
-    walk-forward, Task&nbsp;B frozen at the prior season's end. A <code>model_vintage</code> flag marks
-    each source <em>published live</em> or <em>retro re-fit</em> &mdash; a re-run never poses as a track
-    record. Panel coverage is printed beside every result; since the Q12 crosswalk fix all six sources
-    are coverage-clean (BPM and RAPTOR no longer carry the <span class="tag cov">coverage-limited</span>
-    flag). The internal+EPM blend appears once, labeled <span class="bench">benchmark-only &mdash; not a product</span>. Full rules in
-    <a href="#methods">Methods</a>.
+    <strong>What makes it honest.</strong> Every rating is used only as it was knowable &mdash;
+    Task&nbsp;A walk-forward, Task&nbsp;B frozen at the prior season's end &mdash; and a
+    <code>model_vintage</code> flag marks each source <em>published live</em> or <em>retro re-fit</em>,
+    so a re-run never poses as a track record. Full rules in <a href="#methods">Methods</a>.
   </div>
 
   <h2 id="game">Task&nbsp;A &mdash; predicting game margins (walk-forward)</h2>
@@ -142,34 +138,30 @@
     BPM and RAPTOR used to be scored partly on holes in a stale crosswalk: their panel held
     ~90% of league minutes through 2020 but only a fraction of the recent seasons.
     Expanding the bbref crosswalk (Q12; bbref join now 100%) lifts their post-2020 coverage
-    back to ~88% &mdash; on par with the id-native sources &mdash; so the eval now scores the
-    metric, not the gap. With that fixed, BPM (<strong>2.999</strong>) and RAPTOR
+    to ~88%, on par with the id-native sources, so the eval now scores the metric rather than
+    the gap. BPM (<strong>2.999</strong>) and RAPTOR
     (<strong>3.005</strong>) both <em>beat</em> our internal decomposition
     (<strong>3.134</strong>), which now ranks <strong>last of
-    five</strong>. And it is a coverage artifact, <em>proven</em>: holding everything else fixed, the
-    crosswalk expansion moved BPM by <strong>exactly 0.000</strong> in both parity-coverage windows
-    (2015-2020 and 2003-2014) and lifted only the thin 2021-2026 window &mdash;
-    a metric that were merely worse could not be repaired by an id join. At parity coverage in
-    2015-2020, BPM's RMSE (<strong>2.661</strong>) already
-    <em>beat</em> our internal decomposition's (<strong>2.764</strong>).
+    five</strong>. That it was an artifact is <em>proven</em>, not asserted: varying only the crosswalk
+    moved BPM by <strong>exactly 0.000</strong> in both parity-coverage windows (2015-2020 and
+    2003-2014) and lifted only the thin 2021-2026 window &mdash; an id join cannot repair
+    a metric that was merely worse. At parity in 2015-2020, BPM
+    (<strong>2.661</strong>) already beat us
+    (<strong>2.764</strong>).
     The price of being right about coverage is that a free public box score out-retrodicts our RAPM.
-    Internal, EPM and DARKO hold 87&ndash;92% coverage in <em>every</em> season
-    2003-2026.
   </div>
 
   <div class="callout">
     <strong>A correction we owe you &mdash; RAPTOR's earlier number was not reproducible, and that was our
-    mistake.</strong> The RAPTOR season-retrodiction figure we published before this build depended on an
-    arbitrary internal row ordering. RAPTOR reaches our panel as three differently-computed variants filed
-    under one <code>source</code> label, all stamped with the same season-end date; our scorer picked among
-    them by whatever order the rows happened to sit in, so the published value could swing between two
-    genuinely different metrics across <strong>18,556 player-seasons</strong>. That was a data-handling
-    defect on our side, and the number was <em>not reproducible</em>. It is now pinned to a single named
-    variant &mdash; Neil&nbsp;Paine's estimated RAPTOR &mdash; and is deterministic: the same inputs give
-    the same value every time, and a fail-closed guard makes the build refuse rather than silently re-roll.
-    One caveat on reading the change: RAPTOR's current value <em>also</em> moved because of the
-    coverage-crosswalk expansion that landed in the same build (the bbref id recovery described above), so
-    the shift from the old published figure is <strong>not attributable to this fix alone</strong>.
+    mistake.</strong> RAPTOR reaches our panel as three differently-computed variants filed under one
+    <code>source</code> label, all stamped with the same season-end date, and our scorer picked among them
+    by whatever order the rows happened to sit in &mdash; so the figure we published before this build
+    could swing between two genuinely different metrics across <strong>18,556 player-seasons</strong>. A
+    data-handling defect on our side, and the number was <em>not reproducible</em>. It is now pinned to one
+    named variant &mdash; Neil&nbsp;Paine's estimated RAPTOR &mdash; and deterministic, with a fail-closed
+    guard that makes the build refuse rather than silently re-roll. One caveat on reading the change:
+    RAPTOR's value <em>also</em> moved with the crosswalk expansion that landed in the same build, so the
+    shift from the old published figure is <strong>not attributable to this fix alone</strong>.
   </div>
 
   <h2 id="deep">The same test, twice as deep &mdash; 2003-2026</h2>
@@ -218,9 +210,8 @@
   </div>
 
   <h2 id="eras">What the deep history changes &mdash; EPM's lead is recent</h2>
-  <p>Three windows, corr only. Since the Q12 crosswalk fix all three are <em>parity-coverage</em> eras
-  (every source ~90% of minutes); the BPM/RAPTOR panel gap that once distorted the last window is
-  closed.</p>
+  <p>Three windows, corr only &mdash; all three at <em>parity coverage</em> (every source ~90% of
+  minutes).</p>
   <div class="scroll">
     <table class="tbl">
       <thead><tr>
@@ -349,29 +340,20 @@
 
   <h2 id="methods">Methods &amp; leakage rules</h2>
   <ul>
-    <li><strong>Task A is walk-forward.</strong> Each rating is as of the day before the game it
-    predicts (as-of&nbsp;&le;&nbsp;D&minus;1); no game informs its own prediction. 3,237
-    regular-season games, 2024&ndash;26.</li>
-    <li><strong>Task B is out-of-sample.</strong> Each source is frozen at season <em>N</em>'s end and
-    scored on season <em>N+1</em>'s realized team margin; the target season is never in the fit.
-    Rosters roll forward with Snarr-2020 minutes-continuity weighting. 360 team-seasons,
-    2015&ndash;2026.</li>
+    <li><strong>Nothing sees its own outcome.</strong> Task&nbsp;A ratings are as of the day before the
+    game they predict (as-of&nbsp;&le;&nbsp;D&minus;1); Task&nbsp;B sources are frozen at season
+    <em>N</em>'s end and scored on season <em>N+1</em>, so the target season is never in the fit.</li>
     <li><strong>Apples-to-apples minutes.</strong> EPM and DARKO are scored with <em>our</em> pre-game
     recent-minute shares, not their own projections &mdash; the test isolates the rating from each
     vendor's minutes model.</li>
     <li><strong>Coverage is reported, not hidden.</strong> Missing players are replacement-filled, so
     thin coverage would score the gap, not the metric. Since the Q12 bbref-crosswalk expansion (join now
     100%) BPM and RAPTOR hold ~90% of minutes through 2020 and ~88%
-    by 2026 &mdash; no longer decaying, on par with Internal, EPM and DARKO
-    (87&ndash;92% every season 2003-2026). Their season-retrodiction
-    result is now a clean quality read, so BPM's win over the internal decomposition is not a coverage
-    mirage.</li>
+    by 2026, on par with Internal, EPM and DARKO (87&ndash;92%
+    every season 2003-2026) &mdash; so BPM's win is not a coverage mirage.</li>
     <li><strong>RMSE within a window, corr across.</strong> Team-margin SD rises
     4.44&nbsp;&rarr;&nbsp;4.97&nbsp;&rarr;&nbsp;5.24 across these eras, so cross-era RMSE
     is mechanically misleading. Corr is published beside every RMSE here.</li>
-    <li><strong>Vintage honesty.</strong> EPM (date-backfill), DARKO (history pull) and the internal
-    board are current-model <em>retro re-fits</em> over as-of data, flagged as such &mdash; never sold
-    as a live track record. BPM, RAPTOR and WAR are as <em>published</em>.</li>
     <li><strong>DARKO, two ways.</strong> The daily re-score updates in-season (~96% player coverage);
     only pre-season-frozen DARKO exists on disk for older seasons &mdash; staler, not worse by
     design.</li>
@@ -379,7 +361,7 @@
     benchmark. Per an owner decision it is <span class="bench">benchmark-only &mdash; not a product</span> &mdash; no EPM-RAPM blend ships.</li>
   </ul>
 
-  <p class="foot">Built 2026-07-19 by <code>daily_v5/build_metrics_site.py</code>. Every number is
+  <p class="foot">Built 2026-07-21 by <code>daily_v5/build_metrics_site.py</code>. Every number is
   re-read from a named artifact and reconciled against <code>research/arp/RESULTS.json</code> at build
   time; the exporter fails closed rather than publish a drifted figure. Descriptive out-of-sample
   scoreboards &mdash; not a forward projection.</p>

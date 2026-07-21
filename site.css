@@ -17,8 +17,10 @@
   --line:#1b2532; --line-2:#121a25; --navbg:#0a0e16;
   --text:#e7eef7; --muted:#7c8ca2; --faint:#566377;
   --accent:#56b6ff; --accent-ink:#06121f; --grid:#161f2c;
-  /* league colors */
-  --nba:#4aa8ff; --gleague:#2dd4bf; --college:#b27bff;
+  /* league colors — NBA blue / G-League orange / NCAA rose. Three different HUE
+     FAMILIES on purpose: the old teal+purple pair sat 39 deg from NBA blue in Lab
+     hue and collapsed to dE 1.1 under deuteranopia (i.e. identical). */
+  --nba:#4aa8ff; --gleague:#ff9138; --college:#ff5f8f;
   /* status / sign colors */
   --pos:#3ddc97; --neg:#ff6b6b; --zero:#5d6b7e;
   /* page-specific accents kept as tokens so they theme too */
@@ -38,7 +40,7 @@
   --line:#d7e0ec; --line-2:#e6edf5; --navbg:#ffffff;
   --text:#0e1828; --muted:#566476; --faint:#8a98ab;
   --accent:#1f7ae0; --accent-ink:#ffffff; --grid:#e6edf5;
-  --nba:#1f7ae0; --gleague:#0e9e8c; --college:#7a45d6;
+  --nba:#1f7ae0; --gleague:#c05600; --college:#c81e5a;
   --pos:#11a06a; --neg:#d4393a; --zero:#7a8aa0;
   --pure:#1f7ae0; --box:#d9802f; --amp:#0e9e8c;
 }
@@ -113,8 +115,12 @@ h1 small{font-size:12px;color:var(--muted);font-weight:500;margin-left:6px}
 /* ---- Badges (league) + chips ---------------------------------------------- */
 .badge{font-size:9.5px;padding:1px 5px;font-weight:700;letter-spacing:.3px;border-radius:3px}
 .b-n{background:rgba(74,168,255,.16);color:#9fccff}
-.b-g{background:rgba(45,212,191,.16);color:#7fe9d8}
-.b-c{background:rgba(178,123,255,.16);color:#cfb0ff}
+.b-g{background:rgba(255,145,56,.16);color:#ffc48f}
+.b-c{background:rgba(255,95,143,.16);color:#ffa8c4}
+/* badges had no light-theme override at all — dark tints were bleeding into light */
+:root[data-theme=light] .b-n{background:rgba(31,122,224,.16);color:#14508f}
+:root[data-theme=light] .b-g{background:rgba(192,86,0,.16);color:#8a3d00}
+:root[data-theme=light] .b-c{background:rgba(200,30,90,.16);color:#8f1440}
 .chip{font-size:12px;padding:5px 11px;background:var(--panel);border:1px solid var(--line);
   color:var(--muted);cursor:pointer;border-radius:var(--r-1)}
 .chip:hover{color:var(--text);border-color:var(--accent)}

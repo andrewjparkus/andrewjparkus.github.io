@@ -14,6 +14,13 @@
     color:var(--text);outline:none;padding:6px 10px;border-radius:var(--r-1);width:180px}
   .findbox input:focus{border-color:var(--accent)}
   .tcap{color:var(--faint);font-size:11px;margin:4px 2px 8px;line-height:1.5;max-width:840px}
+  /* mode hint — same rule as the Explorer's (index.html:15); the .seg control itself is the
+     shared site.css class, so the toggle looks identical on both pages */
+  .modehint{font-size:11.5px;color:var(--faint);margin:7px 0 -4px;line-height:1.55;max-width:840px}
+  .modehint b{color:var(--muted);font-weight:600}
+  /* a cell the active basis structurally does not carry (ORAPM/DRAPM in box mode) — an em-dash,
+     deliberately heavier than fmt()'s en-dash for an ordinary missing value */
+  td.na{color:var(--faint);cursor:help}
   /* full static table — no inner scroll; the whole ranked list lays out inline */
   /* header ? tooltips live in the sticky thead at the top of this scroll box;
      the shared tooltip renders upward and gets clipped — flip header tips DOWN */
@@ -46,6 +53,19 @@
       <div class="seg" id="tableseg"></div>
       <div class="findbox"><input id="find" type="text" placeholder="Search this table…" autocomplete="off"></div>
     </div>
+    <div class="selrow">
+      <span class="seglab">Rating</span>
+      <!-- Same .seg classes and the same localStorage key ('rapm_mode') as the Explorer's
+           #modeseg, so a mode chosen on one page is already selected on the other. Latent is
+           deliberately absent here: there is no season-aggregate latent artifact and latent is
+           movers-only, so it would be an empty column, not a mode. -->
+      <div class="seg" id="modeseg">
+        <button data-mode="pure" type="button">Pure RAPM</button>
+        <button data-mode="prior" type="button">Prior-informed</button>
+        <button data-mode="box" type="button">Box prior</button>
+      </div>
+    </div>
+    <div class="modehint" id="modehint"></div>
     <p class="tcap" id="tcap"></p>
     <div class="scroll"><div class="tablebox"><table class="tbl" id="otable"></table></div></div>
   </section>
@@ -86,6 +106,57 @@ let sortKey=null;         // overall sort column (null = file order by rank)
 let sortDir=-1;           // -1 desc, +1 asc
 
 /* =========================================================================
+   RATING MODE  (mirrors the Explorer's #modeseg; shares localStorage 'rapm_mode')
+   ========================================================================= */
+const MODELAB={pure:'Pure RAPM', prior:'Prior-informed', box:'Box prior'};
+const MODEHINT={
+  pure:'Pure RAPM — the prior-free six-factor decomp, calibrated to the public DataBallR ridge.',
+  prior:'Prior-informed RAPM — the same daily solve, with all six factors shrunk toward a daily box-score prior. Shrinkage is strongest where lineup data is thin (rookies, early season) and fades as exposure grows. The default.',
+  box:'Box prior — the daily-refit box+EPM basis the prior-informed solve shrinks toward, re-fit every game-day on that day’s prior-free cross-section. Shown at its honest scale, so it reads cooler than the board — especially on defense.'};
+// Rendered only when the exporter STAMPED the equality (build_table_site.py derives it by
+// comparing every emitted cell), so this sentence cannot outlive the fact it describes.
+const SAMENOTE=m=>' On this table '+MODELAB[m]+' and Prior-informed are the same numbers — the prior is applied to NBA rows only, so the college / G-League boards are identical under both.';
+const SPLITNOTE=' ORAPM / DRAPM show — in this mode: the box basis publishes the six factors and net, not the offence/defence split. Nothing is invented to fill them.';
+// The board is capped, and each mode ranks a DIFFERENT set into that cap, so table.json ships the
+// union of every mode's top-cap and the page slices per mode. Without this a player who is top-500
+// in box but 700th in prior would simply not exist on the page.
+const CAPNOTE=(n,cap)=>' Showing the top '+cap+' by this mode, drawn from a '+n+'-row union across modes.';
+
+// MODE is the user's stored preference and is NEVER overwritten by a fallback: a table that
+// cannot serve it (or a mode this page does not implement, e.g. 'latent' from the Explorer)
+// falls back for display only, so returning to the Explorer still finds the original choice.
+let MODE=localStorage.getItem('rapm_mode')||'prior';
+// A table.json predating the toggle has no `modes`/`cap`/`m` — treat it as prior-only rather
+// than greying out every button, so this page still renders if it is deployed ahead of a
+// build_table_site.py run (deploy_site.sh:356 ships them together, but order is not enforced).
+function modeOK(m){ const tb=curTable(); return !!(tb&&(tb.modes||['prior']).indexOf(m)>=0); }
+function activeMode(){ return modeOK(MODE)?MODE:'prior'; }
+function vals(r,m){ return m==='prior'?r:((r&&r.m&&r.m[m])||{}); }
+
+function setMode(m){
+  if(!modeOK(m))return;                       // button is disabled anyway
+  MODE=m; localStorage.setItem('rapm_mode',m);
+  syncMode(); renderOverall();
+}
+function syncMode(){
+  const am=activeMode(), tb=curTable();
+  document.querySelectorAll('#modeseg button').forEach(b=>{
+    const ok=modeOK(b.dataset.mode);
+    b.disabled=!ok; b.classList.toggle('on', ok&&b.dataset.mode===am);
+  });
+  let hint=MODEHINT[am]||'';
+  if(tb&&(tb.same_as_prior||[]).indexOf(am)>=0) hint+=SAMENOTE(am);
+  if(am==='box') hint+=SPLITNOTE;
+  if(tb&&tb.cap&&tb.rows.length>tb.cap) hint+=CAPNOTE(tb.rows.length,tb.cap);
+  document.getElementById('modehint').textContent=hint;
+  // the scale sentence is mode-dependent — never leave the prior string over box numbers
+  const sub=document.getElementById('sub');
+  if(TBL&&TBL.meta.scales&&TBL.meta.scales[am])
+    sub.textContent='Six-factor RAPM leaderboards — sortable. '+TBL.meta.scales[am];
+}
+document.querySelectorAll('#modeseg button').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
+
+/* =========================================================================
    SHARED: segmented control builder
    ========================================================================= */
 function buildSeg(id, items, getLabel, cur, onpick){
@@ -118,11 +189,16 @@ const OCOLS=[
 // land on the column the user came to look at.
 const DEFSORT={nba:'net', rookies:'net', draft:'net', gleague:'net', college:'net'};
 
-function curTable(){ return TBL.tables.find(t=>t.key===tableKey); }
+function curTable(){ return TBL?TBL.tables.find(t=>t.key===tableKey):null; }   // null-safe: the mode
+// buttons exist before table.json resolves, and modeOK()/syncMode() run off them.
 
 function sortedRows(){
   const tb=curTable(); if(!tb) return [];
-  let rows=tb.rows.slice();
+  const m=activeMode(), cap=tb.cap;
+  // Slice to the ACTIVE mode's own top-cap. tb.rows is the union of every mode's top-cap, so a
+  // row is shown iff this mode ranks it — that is what makes switching mode an honest re-rank
+  // instead of a re-sort inside a set some other metric chose.
+  let rows=tb.rows.filter(r=>{ const k=vals(r,m).rank; return k!=null && (cap==null||k<=cap); });
   if(query){
     const q=query.toLowerCase();
     rows=rows.filter(r=>String(r.name||'').toLowerCase().includes(q)
@@ -130,21 +206,32 @@ function sortedRows(){
   }
   if(sortKey){
     rows.sort((a,b)=>{
-      const av=a[sortKey], bv=b[sortKey];
+      const av=vals(a,m)[sortKey], bv=vals(b,m)[sortKey];
       const an=(av==null||isNaN(av)), bn=(bv==null||isNaN(bv));
       if(an&&bn) return 0; if(an) return 1; if(bn) return -1;   // nulls last
       return (av-bv)*sortDir;
     });
   }else{
-    rows.sort((a,b)=>a.rank-b.rank);    // file order (already net-ranked)
+    rows.sort((a,b)=>vals(a,m).rank-vals(b,m).rank);   // this mode's own ranking
   }
   return rows;
+}
+
+// Which columns the ACTIVE basis structurally does not carry — derived, not declared: a column
+// is "absent" only if every row in this table is null for it under this mode. So if the box basis
+// ever starts publishing ORAPM/DRAPM, the em-dashes become numbers with no code change here.
+let MISS={};
+function computeMiss(){
+  const tb=curTable(), m=activeMode(); MISS={};
+  if(!tb) return;
+  OCOLS.forEach(c=>{ MISS[c.key]=tb.rows.every(r=>vals(r,m)[c.key]==null); });
 }
 
 function renderOverall(){
   const tb=curTable();
   const cap=document.getElementById('tcap');
   if(!tb){ cap.textContent=''; document.getElementById('otable').innerHTML=''; return; }
+  computeMiss();
   cap.textContent=tb.sub||'';
 
   const shown=sortedRows();   // full ranked list — static, no cap
@@ -167,7 +254,9 @@ function renderOverall(){
   if(!shown.length){
     body='<tr><td colspan="11"><div class="nohit">No players match “'+esc(query)+'”.</div></td></tr>';
   }else{
+    const m=activeMode();
     for(const r of shown){
+      const V=vals(r,m);
       // Name links to the player's Explorer profile. The exporter only emits r.pid for ids that
       // exist in the deployed players.json, so a missing pid = no profile -> plain text, never a
       // dead link (a bogus ?p= silently lands on the Explorer's Jokic default). Styling comes from
@@ -175,13 +264,20 @@ function renderOverall(){
       const nm=esc(r.name);
       const pcell=r.pid?'<a href="index.html?p='+encodeURIComponent(r.pid)+'">'+nm+'</a>':nm;
       body+='<tr>'+
-        '<td class="rank">'+(r.rank!=null?r.rank:'')+'</td>'+
+        '<td class="rank">'+(V.rank!=null?V.rank:'')+'</td>'+
         '<td class="l pn">'+pcell+
           (r.sub?'<span class="sub2">'+esc(r.sub)+'</span>':'')+'</td>';
       OCOLS.forEach(c=>{
-        const v=r[c.key];
+        const v=V[c.key];
         const act=(sortKey?(sortKey===c.key):c.net);   // emphasize the active sort col; default = net (file order)
-        body+='<td class="'+(act?'net ':'')+(c.grp?'grp ':'')+signCls(v)+'">'+fmt(v)+'</td>';
+        // A column the active basis does not carry (ORAPM/DRAPM under box) renders an em-dash,
+        // not a number: the split is absent from that basis, so there is nothing honest to print.
+        if(v==null && MISS[c.key]){
+          body+='<td class="'+(act?'net ':'')+(c.grp?'grp ':'')+'na" title="Not carried on the '
+               +MODELAB[m]+' basis">—</td>';
+        }else{
+          body+='<td class="'+(act?'net ':'')+(c.grp?'grp ':'')+signCls(v)+'">'+fmt(v)+'</td>';
+        }
       });
       body+='</tr>';
     }
@@ -208,7 +304,8 @@ function refresh(){
   if(!TBL) return;
   buildSeg('tableseg', TBL.tables.map(t=>t.key),
     k=>(TBL.tables.find(t=>t.key===k)||{}).title||k, tableKey,
-    k=>{ tableKey=k; sortKey=DEFSORT[k]||'net'; sortDir=-1; query=''; document.getElementById('find').value=''; renderOverall(); refresh(); });
+    k=>{ tableKey=k; sortKey=DEFSORT[k]||'net'; sortDir=-1; query=''; document.getElementById('find').value=''; refresh(); });
+  syncMode();          // per-table availability + the mode-dependent hint / scale sentence
   renderOverall();
 }
 

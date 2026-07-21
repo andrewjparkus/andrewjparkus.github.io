@@ -50,7 +50,8 @@
   .winbar .fill{position:absolute;top:0;bottom:0;left:0;background:var(--accent);opacity:.55}
   table.tbl tr.total td.wins .winwrap .wn{color:var(--accent)}
   /* depth chart (G/F/C columns) — mirrors team.html */
-  .depth{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:2px}
+  .depth{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:2px}
+  @media(max-width:1000px){.depth{grid-template-columns:repeat(3,1fr)}}
   @media(max-width:680px){.depth{grid-template-columns:repeat(2,1fr)}}
   .depthcol{border:1px solid var(--line);background:var(--panel);border-radius:var(--r-1);padding:5px 6px 7px;min-width:0}
   .depthcol h4{margin:0 0 6px;font-size:11px;font-weight:700;color:#aebccd;letter-spacing:.4px;
@@ -297,9 +298,10 @@ function render(d){
   // ---- depth chart (by listed position, G/F/C) ----
   html += '<div class="sectitle">Depth chart <span style="font-weight:400;color:var(--faint)">· by listed position</span></div>';
   html += '<div class="depth" id="depth"></div>';
-  html += '<div class="cap">Roster shape by <b>listed / primary</b> position collapsed to Guard / Forward / Center '
-    + '(not a lineup). Unlabeled players drop to <b>Unlisted</b>. Within a column, ordered by projected wins '
-    + 'contributed; the chip is projected net (pts/100), red→green on the −5…+5 scale.</div>';
+  html += '<div class="cap">Roster shape by <b>listed / primary</b> position (not a lineup). Players listed only '
+    + 'as G or F — no five-slot listing to split — drop to <b>Unlisted</b> rather than be guessed into one. '
+    + 'Within a column, ordered by projected wins contributed; the chip is projected net (pts/100), '
+    + 'red→green on the −5…+5 scale.</div>';
 
   if(meta.note){ html += '<div class="cap" style="margin-top:6px;color:var(--faint)">'+esc(meta.note)+'</div>'; }
 
@@ -345,13 +347,12 @@ function drawStrip(teamF, leagueAvg){
 }
 
 // ---- depth chart (ported from team.html; own net = p.net, contribution = p.proj_wins) ----
-const POS_COLS = ["G","F","C"], POS_LABEL = {G:"G",F:"F",C:"C"};
+// 5 listed slots; a bare "G"/"F" is not guessed into a slot and drops to Unlisted.
+const POS_COLS = ["PG","SG","SF","PF","C"];
+const POS_LABEL = {PG:"PG",SG:"SG",SF:"SF",PF:"PF",C:"C"};
 function posBucket(pos){
   const p = String(pos||"").toUpperCase();
-  if(p==="PG"||p==="SG"||p==="G") return "G";
-  if(p==="SF"||p==="PF"||p==="F") return "F";
-  if(p==="C") return "C";
-  return null;
+  return POS_LABEL[p] ? p : null;
 }
 function netChip(net){
   if(net==null||isNaN(net)) return '<span class="nchip" style="background:var(--grid);color:var(--muted)">–</span>';
@@ -370,7 +371,7 @@ function depthPlayerRow(p){
 function drawDepth(roster){
   const host = document.getElementById('depth');
   if(!host) return;
-  const cols = {G:[],F:[],C:[]}, unlisted = [];
+  const cols = Object.fromEntries(POS_COLS.map(c=>[c,[]])), unlisted = [];
   (roster||[]).forEach(p=>{ const b=posBucket(p.pos); if(b) cols[b].push(p); else unlisted.push(p); });
   const byContrib = (a,b)=>((b.proj_wins||0)-(a.proj_wins||0));
   let h = '';

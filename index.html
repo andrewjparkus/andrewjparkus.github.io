@@ -229,16 +229,18 @@ function paint(){if(!curOpts.length){drop.style.display='none';return}
 const MODEHINT={
   pure:'Pure RAPM — the prior-free six-factor decomp, calibrated to the public DataBallR ridge. One line per league.',
   prior:'Prior-informed RAPM — the same daily solve, with all six factors shrunk toward a daily box-score prior. Shrinkage is strongest where lineup data is thin (rookies, early season) and fades as exposure grows. The default.',
-  box:'Box prior — the daily-refit box+EPM basis the prior-informed solve shrinks toward, re-fit every game-day on that day\'s prior-free cross-section (no seasonal steps). Shown at its honest scale, so it reads cooler than the board — especially on defense. Built from box stats across NCAA, G-League & NBA up to each day; all six factors, with a confidence band.',
+  box:'Box prior — what the prior-informed solve shrinks toward. Re-fit every game-day from box stats across NCAA, G-League & NBA, on that day\'s prior-free cross-section. Shown at its honest scale, so it reads cooler than the board, especially on defense.',
   latent:'Latent — one continuous cross-league curve: a DARKO-style state-space pass over the daily prior-informed board, so a player who moves between leagues has a single line instead of disjoint per-league graphs. Colored by the league played each day. Display-only.'};
 const MODEHINT_LATENT_ALIAS='Latent — single-league player: the latent equals the prior-informed board (no cross-league bridge needed).';
-// DISPLAY-ONLY SMOOTHING DISCLOSURE (fence F3, owner-reopened 2026-07-17). A smoothed number that
-// does not say it is smoothed is a lie, so the Box hint states the filter in plain language. It is
-// DERIVED, not hand-written: build_site_box.py stamps `sm` (the window) into _box.json only when it
-// actually smoothed, so this sentence appears if and only if the plotted curve really was filtered,
-// and always quotes the true window. Nothing to keep in sync by hand.
-const boxSmoothNote=w=>` Display-smoothed: each of the six factors is filtered along time with a trailing ${w}-point median, reset at every season break (NBA days only; the plotted net is the sum of the smoothed factors). This changes ONLY what is drawn — it removes a day-to-day wobble that carries no durable information. The underlying rating, the prior and the projection are all computed from the unsmoothed values and are untouched by it. The confidence band is not smoothed.`;
-let SERIES={}, MODE=(localStorage.getItem('rapm_mode')||'prior'), PNAME='', CURID=null;
+// DISPLAY-ONLY SMOOTHING DISCLOSURE (fence F3, owner-reopened 2026-07-17). DORMANT since 2026-07-21:
+// the owner reverted the smoother, so deploy_site.sh no longer sets BOX_SMOOTH_W, build_site_box.py
+// never stamps `sm`, and this sentence never renders. Kept wired, not deleted, because the disclosure
+// must ship in the same motion as the filter if the filter ever comes back — a smoothed number that
+// does not say it is smoothed is a lie. It is DERIVED: the window quoted is whatever was applied.
+const boxSmoothNote=w=>` Display-smoothed: each of the six factors is filtered along time with a trailing ${w}-point median, reset at every season break (NBA days only). This changes only what is drawn. The rating, the prior and the projection all use the unsmoothed values, and the confidence band is not smoothed.`;
+// Default mode is 'latent' (owner call 2026-07-21). Latent is DISPLAY-ONLY — fence F4 stands, it
+// does not feed the board, the prior or the projection; this changes which series the chart opens on.
+let SERIES={}, MODE=(localStorage.getItem('rapm_mode')||'latent'), PNAME='', CURID=null;
 function load(id,name){drop.style.display='none';q.value=name;history.replaceState(null,'','?p='+id);
   if(typeof wfStop==='function')wfStop();           // cancel any waterfall sweep from the previous player
   CURID=id; MULTI=null;
@@ -263,7 +265,7 @@ function load(id,name){drop.style.display='none';q.value=name;history.replaceSta
 let RAW={}, LATENT_ALIAS=false, BOX_SM=0;   // BOX_SM: trailing-median window build_site_box.py
 //   actually applied to this player's box curve (0/absent = not smoothed). Drives the F3 disclosure.
 
-function activeMode(){return SERIES[MODE]?MODE:'prior';}  // honor preference; fall back per-player without dropping it
+function activeMode(){return SERIES[MODE]?MODE:'latent';}  // honor preference; fall back per-player without dropping it
 function setMode(m){
   if(!SERIES[m])return;                              // ignore unavailable mode (button disabled anyway)
   MODE=m; localStorage.setItem('rapm_mode',m);
@@ -354,9 +356,13 @@ function Chart(mount,ser,key,proj){
   // Early-career SE is huge (±1.96·17 ≈ ±34); the old value-clamped envelope folded flat against
   // the axis edge and, as SE wobbled day-to-day, tore into jagged dark blocks. Clipping lets the
   // envelope run off-plot cleanly, so the band hugs the line and washes where uncertain.
-  // plan45 B3 (D3): suppress the band in latent mode — the latent sidecar's SE is a Kalman smoothing
-  // SE (~29x tighter than the true ability CI), so a band there would be quantitatively misleading.
-  if(activeMode()!=='latent'){const Yb=val=>padT+ph-(val-ymin)/(ymax-ymin)*ph;          // unclamped Y for the band envelope
+  // plan45 B3 (D3): suppress the band when a REAL latent sidecar is plotted — its SE is a Kalman
+  // smoothing SE (~29x tighter than the true ability CI), so a band there would be misleading.
+  // But when Latent is ALIASED to the prior board (single-league players, ~84% of the published set)
+  // the plotted series IS the prior series, so the prior's own SE is the correct band and is drawn.
+  // Suppressing it there would have hidden a valid band from most of the site once Latent became
+  // the default mode.
+  if(activeMode()!=='latent'||LATENT_ALIAS){const Yb=val=>padT+ph-(val-ymin)/(ymax-ymin)*ph;          // unclamped Y for the band envelope
     const idx=[];for(let i=0;i<n;i++)if(v[i]!=null&&se[i]!=null)idx.push(i);
     if(idx.length>1){
       const cid='ciclip_'+key, clip=el('clipPath',{id:cid}), defs=el('defs');

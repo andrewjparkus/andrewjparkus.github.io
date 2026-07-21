@@ -34,8 +34,9 @@
   table.tbl td.rg .sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:baseline;border:1px solid rgba(0,0,0,.18)}
   :root[data-theme=light] table.tbl td.rg .sw{border-color:rgba(0,0,0,.22)}
   table.tbl td.rg .nv{font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
-  /* depth chart: 3 position columns (G/F/C), players bucketed + ordered by contribution */
-  .depth{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:2px}
+  /* depth chart: 5 position columns (PG/SG/SF/PF/C), ordered by contribution */
+  .depth{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:2px}
+  @media(max-width:1000px){.depth{grid-template-columns:repeat(3,1fr)}}
   @media(max-width:680px){.depth{grid-template-columns:repeat(2,1fr)}}
   .depthcol{border:1px solid var(--line);background:var(--panel);border-radius:var(--r-1);
     padding:5px 6px 7px;min-width:0}
@@ -227,9 +228,10 @@ function render(d){
   // ---- depth chart (roster shape by listed position) ----
   html += '<div class="sectitle">Depth chart <span style="font-weight:400;color:var(--faint)">· by listed position</span></div>';
   html += '<div class="depth" id="depth"></div>';
-  html += '<div class="cap">Roster shape by <b>listed / primary</b> position collapsed to Guard / Forward / '
-    + 'Center, not a lineup. Unlabeled players drop to <b>Unlisted</b>. Within a column, ordered by '
-    + 'minute-weighted net contribution; the chip is own net (pts/100), red→green on the −5…+5 scale.</div>';
+  html += '<div class="cap">Roster shape by <b>listed / primary</b> position, not a lineup. Players listed only '
+    + 'as G or F — no five-slot listing to split — drop to <b>Unlisted</b> rather than be guessed into one. '
+    + 'Within a column, ordered by minute-weighted net contribution; the chip is own net (pts/100), '
+    + 'red→green on the −5…+5 scale.</div>';
 
   document.getElementById('wrap').innerHTML = html;
 
@@ -241,16 +243,16 @@ function render(d){
 }
 
 // ---- DEPTH CHART -----------------------------------------------------------
-// Bucket roster players by primary position into 3 columns (G/F/C); guards
-// (PG/SG/G) -> G, forwards (SF/PF/F) -> F; UNK + anything unmapped -> "Unlisted".
-const POS_COLS = ["G","F","C"];
-const POS_LABEL = {G:"G",F:"F",C:"C"};
+// Bucket roster players by primary position into the 5 listed slots. The feed has
+// carried PG/SG/SF/PF/C all along (build_positions.py `pos5`); the old 3-column
+// G/F/C view was a render-time collapse that threw that away.
+// A bare "G"/"F" (coarse college-sourced listing) is NOT guessed into PG-vs-SG or
+// SF-vs-PF — it drops to Unlisted, same as a blank. Bare "C" is unambiguous.
+const POS_COLS = ["PG","SG","SF","PF","C"];
+const POS_LABEL = {PG:"PG",SG:"SG",SF:"SF",PF:"PF",C:"C"};
 function posBucket(pos){
   const p = String(pos||"").toUpperCase();
-  if(p==="PG"||p==="SG"||p==="G") return "G";   // guards
-  if(p==="SF"||p==="PF"||p==="F") return "F";   // forwards
-  if(p==="C") return "C";                        // centers
-  return null;                                   // UNK / blank -> Unlisted
+  return POS_LABEL[p] ? p : null;                 // G / F / UNK / blank -> Unlisted
 }
 function netChip(net){
   if(net==null||isNaN(net))
@@ -276,7 +278,7 @@ function depthPlayerRow(p){
 function drawDepth(roster){
   const host = document.getElementById('depth');
   if(!host) return;
-  const cols = {G:[],F:[],C:[]}, unlisted = [];
+  const cols = Object.fromEntries(POS_COLS.map(c=>[c,[]])), unlisted = [];
   (roster||[]).forEach(p=>{
     const b = posBucket(p.pos);
     if(b) cols[b].push(p); else unlisted.push(p);
