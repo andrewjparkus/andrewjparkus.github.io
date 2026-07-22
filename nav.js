@@ -9,8 +9,8 @@
  * (.topnav/.tab/...), which every page links — nav.js no longer injects CSS.
  *
  * Top bar: Explorer · Tables · 2026-27 · Other ▾ · Model · Metrics. The "Other" dropdown
- * holds measured 2025-26 Teams plus Trade / Draft; Grades is reached from the Trade
- * page (so it sets data-active="trade" to light the right top item).
+ * holds measured 2025-26 Teams plus Trade / Draft / Margin history; Grades is reached from
+ * the Trade page (so it sets data-active="trade" to light the right top item).
  */
 (function () {
   "use strict";
@@ -21,7 +21,10 @@
     { key: "proj",     href: "projection.html", label: "2026-27" },
     { label: "Other", menu: [
       { key: "teams",  href: "teams.html", label: "Teams" },
-      { key: "draft",  href: "draft.html", label: "Draft" }
+      { key: "draft",  href: "draft.html", label: "Draft" },
+      // 24-season equal-information margin comparison; sibling of Metrics, filed under
+      // Other so the top bar stays at six items.
+      { key: "marginhistory", href: "margin_history.html", label: "Margin history" }
     ] },
     { key: "model",    href: "model.html", label: "Model" },
     { key: "metrics",  href: "metrics.html", label: "Metrics" }
