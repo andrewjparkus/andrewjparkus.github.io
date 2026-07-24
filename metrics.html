@@ -81,8 +81,8 @@
         <th class="l note-cell">Basis</th>
       </tr></thead>
       <tbody>
-        <tr><td class="l lead">Internal RAPM</td><td>14.0794</td>
-            <td class="grp">14.0184</td><td>14.1258</td><td>14.0941</td>
+        <tr><td class="l lead">Internal RAPM</td><td>14.0710</td>
+            <td class="grp">14.0189</td><td>14.1151</td><td>14.0792</td>
             <td class="l note-cell">daily board, causal as-of D&minus;1</td></tr>
         <tr><td class="l lead">EPM</td><td>14.2758</td>
             <td class="grp">14.2396</td><td>14.1734</td><td>14.4136</td>
@@ -93,7 +93,7 @@
         <tr><td class="l lead">DARKO&nbsp;<span class="tag">frozen</span></td><td>14.8137</td>
             <td class="grp">14.6917</td><td>14.5680</td><td>15.1751</td>
             <td class="l note-cell">pre-season-frozen; no in-season update</td></tr>
-        <tr class="benchrow"><td class="l lead">Internal + EPM blend</td><td>14.0532</td>
+        <tr class="benchrow"><td class="l lead">Internal + EPM blend</td><td>14.0471</td>
             <td class="grp">&mdash;</td><td>&mdash;</td><td>&mdash;</td>
             <td class="l note-cell"><span class="bench">benchmark-only &mdash; not a product</span></td></tr>
       </tbody>
@@ -104,10 +104,10 @@
   <a href="margin_history.html">The parity re-run &mdash; same test, 24 seasons, every arm on the
   same minutes</a> shows what that is worth.</p>
   <p class="small">RMSE from <code>out/p2_0/darko_daily_rescore.json</code>; blend row from
-  <code>out/p2_0/composite_report.json</code>. Internal <strong>leads</strong> EPM here by <strong>0.1964</strong> &mdash; 3.9&times; the &plusmn;0.05 noise band, and the one task where the internal decomposition is not beaten
-  (<strong>14.0794</strong> vs <strong>14.2758</strong>). The blend edges internal
-  by <strong>0.0262</strong>
-  (<strong>14.0532</strong>) &mdash; <span class="bench">benchmark-only &mdash; not a product</span>.</p>
+  <code>out/p2_0/composite_report.json</code>. Internal <strong>leads</strong> EPM here by <strong>0.2048</strong> &mdash; 4.1&times; the &plusmn;0.05 noise band, and the one task where the internal decomposition is not beaten
+  (<strong>14.0710</strong> vs <strong>14.2758</strong>). The blend edges internal
+  by <strong>0.0239</strong>
+  (<strong>14.0471</strong>) &mdash; <span class="bench">benchmark-only &mdash; not a product</span>.</p>
 
   <h2 id="season">Task&nbsp;B &mdash; retrodicting next season's team margin</h2>
   <p>Freeze each source at a season's <strong>end</strong>, roll rosters forward with

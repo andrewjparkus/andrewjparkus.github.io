@@ -466,9 +466,9 @@
           "label": "Game-margin RMSE (walk-forward)",
           "dp": 4,
           "cells": {
-            "internal": 14.0794,
+            "internal": 14.071,
             "epm": 14.2758,
-            "blend": 14.0532,
+            "blend": 14.0471,
             "darko_daily": 14.4071,
             "darko_frozen": 14.8137
           }
@@ -478,9 +478,9 @@
           "label": "Retro win-MAE",
           "dp": 4,
           "cells": {
-            "internal": 4.1955,
+            "internal": 4.1878,
             "epm": 4.1453,
-            "blend": 4.048,
+            "blend": 4.0421,
             "darko_daily": null,
             "darko_frozen": 6.7212
           }
@@ -490,9 +490,9 @@
           "label": "Playoff Brier",
           "dp": 5,
           "cells": {
-            "internal": 0.10286,
+            "internal": 0.10245,
             "epm": 0.0908,
-            "blend": 0.09573,
+            "blend": 0.09551,
             "darko_daily": null,
             "darko_frozen": 0.16982
           }
@@ -518,13 +518,13 @@
       {
         "row": "game_margin",
         "label": "Game-margin RMSE (walk-forward)",
-        "internal": 14.0794,
+        "internal": 14.071,
         "epm": 14.2758,
-        "gap_epm_minus_internal": 0.1964,
+        "gap_epm_minus_internal": 0.2048,
         "band": 0.05,
         "leader": "internal",
-        "band_multiple": 3.93,
-        "text": "Internal <strong>leads</strong> on Game-margin RMSE (walk-forward) by <strong>0.1964</strong> (<strong>14.2758 vs 14.0794</strong>, EPM vs internal) &mdash; 3.9&times; the &plusmn;0.05 noise band",
+        "band_multiple": 4.1,
+        "text": "Internal <strong>leads</strong> on Game-margin RMSE (walk-forward) by <strong>0.2048</strong> (<strong>14.2758 vs 14.0710</strong>, EPM vs internal) &mdash; 4.1&times; the &plusmn;0.05 noise band",
         "dp": 4,
         "prose_label": "game-margin RMSE",
         "prose_metric": null,
@@ -533,13 +533,13 @@
       {
         "row": "retro_win_mae",
         "label": "Retro win-MAE",
-        "internal": 4.195464444444444,
+        "internal": 4.187848888888889,
         "epm": 4.145293333333334,
-        "gap_epm_minus_internal": -0.050171,
+        "gap_epm_minus_internal": -0.042556,
         "band": 0.05,
-        "leader": "epm",
-        "band_multiple": 1.0,
-        "text": "EPM <strong>leads</strong> on Retro win-MAE by <strong>0.0502</strong> (<strong>4.1453 vs 4.1955</strong>, EPM vs internal) &mdash; 1.0&times; the &plusmn;0.05 noise band",
+        "leader": "tied",
+        "band_multiple": 0.85,
+        "text": "Internal and EPM are <strong>tied</strong> on Retro win-MAE (gap -0.0426, inside the &plusmn;0.05 noise band)",
         "dp": 4,
         "prose_label": "retro win-MAE",
         "prose_metric": null,
@@ -548,20 +548,20 @@
       {
         "row": "playoff_brier",
         "label": "Playoff Brier",
-        "internal": 0.10286246844444447,
+        "internal": 0.1024542037777778,
         "epm": 0.09079613555555556,
-        "gap_epm_minus_internal": -0.012066,
+        "gap_epm_minus_internal": -0.011658,
         "band": null,
         "leader": "epm",
         "band_multiple": null,
-        "text": "EPM is ahead on Playoff Brier (<strong>0.09080 vs 0.10286</strong>, EPM vs internal) &mdash; no noise band is defined for this metric, so the margin is reported without a significance claim",
+        "text": "EPM is ahead on Playoff Brier (<strong>0.09080 vs 0.10245</strong>, EPM vs internal) &mdash; no noise band is defined for this metric, so the margin is reported without a significance claim",
         "dp": 5,
         "prose_label": "playoff Brier",
         "prose_metric": null,
         "prose_dp": 3
       }
     ],
-    "headline_prose": "The honest read is <strong>task-by-task, not a blanket winner</strong>. EPM is ahead on season-level prediction (frozen-preseason win-MAE <strong>6.26 vs 6.82</strong>), retro win-MAE (<strong>4.15 vs 4.20</strong>), and playoff Brier (<strong>0.091 vs 0.103</strong>). The internal model <strong>leads</strong> EPM on game-margin RMSE (<strong>14.28 vs 14.08</strong>) &mdash; EPM is <em>not</em> strictly better on every task. EPM's retro win-MAE edge is <strong>narrow</strong> &mdash; only 1&times; the &plusmn;0.05 noise band. The internal+EPM blend beats both on some rows; per an owner decision <strong>no EPM-RAPM blend ships</strong>, so it appears here only as an informative benchmark.",
+    "headline_prose": "The honest read is <strong>task-by-task, not a blanket winner</strong>. EPM is ahead on season-level prediction (frozen-preseason win-MAE <strong>6.26 vs 6.82</strong>) and playoff Brier (<strong>0.091 vs 0.102</strong>). The internal model <strong>leads</strong> EPM on game-margin RMSE (<strong>14.28 vs 14.07</strong>) &mdash; EPM is <em>not</em> strictly better on every task. They are <strong>tied</strong> on retro win-MAE, inside the &plusmn;0.05 noise band. The internal+EPM blend beats both on some rows; per an owner decision <strong>no EPM-RAPM blend ships</strong>, so it appears here only as an informative benchmark.",
     "darko_note": "<strong>DARKO daily</strong> is a per-game-date re-score at 96.1% player coverage &mdash; it is the like-for-like comparison for game margins, since our own board also updates daily. <strong>DARKO frozen</strong> is pre-season-frozen with no in-season update, so its frozen-preseason, retro and Brier cells are all measured pre-season-frozen and it is disadvantaged on the walk-forward game-margin row. The <strong>Blend</strong> column is benchmark-only &mdash; not a product.",
     "darko_daily_coverage": 0.961,
     "overlap": {
@@ -634,18 +634,18 @@
       "path": "daily_v5/out/oos/scorecard_current.parquet",
       "exists": true,
       "size": 3811,
-      "mtime": 1784903080.6240299
+      "mtime": 1784907091.840722
     },
     "manifest": {
       "path": "daily_v5/out/oos/manifest_current.json",
       "exists": true,
       "size": 7245,
-      "mtime": 1784903081.8691676
+      "mtime": 1784907093.0943785
     },
     "git": {
       "sha": "8db1e1c15bf984f76cf15cbefd3fadd6cb5a305e",
       "dirty": true,
-      "dirty_entries": 3
+      "dirty_entries": 7
     },
     "game_model_params": {
       "hca": 1.5370466094308175,
