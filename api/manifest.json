@@ -1,0 +1,81 @@
+{
+  "version": "1.0.0",
+  "license": "CC-BY-4.0",
+  "generated": "20260724",
+  "factors": {
+    "oTS": "offensive true-shooting value (ALT_EFG_VALUE + ALT_FT), pts/100",
+    "oTOV": "offensive ball security / turnover avoidance, pts/100",
+    "oSC": "offensive SECOND-CHANCE value (not raw oREB count), pts/100",
+    "dTS": "defensive true-shooting conceded, pts/100 (WEAK: no tracking data, OOF R2~0.18)",
+    "dTOV": "defensive turnovers forced, pts/100",
+    "dSC": "defensive second-chance conceded, pts/100 (WEAK: no tracking data, OOF R2~0.15)",
+    "net": "net rating, reconciled as the sum of the six factor estimates, pts/100"
+  },
+  "scale": "pts/100 possessions",
+  "leagues": [
+    "nba",
+    "college",
+    "gleague"
+  ],
+  "data_freshness": {
+    "nba": "20260724",
+    "college": "20260724",
+    "gleague": "20260724"
+  },
+  "minutes_source": "current",
+  "minutes_provenance": {
+    "minutes_source": "current",
+    "minutes_model_version": "current",
+    "minutes_contract": "legacy_alloc_mpg",
+    "availability_application": "legacy_consumer_dependent",
+    "minutes_artifact": "daily_v5/out/minutes_allocation.parquet",
+    "minutes_artifact_sha256": "faa01c050d2ae129e7e336ea11197a6b2c9974f4a407c1c1c27620f2aab5996c",
+    "active_minutes_artifact": null,
+    "active_minutes_artifact_sha256": null,
+    "season_minutes_artifact": null,
+    "season_minutes_artifact_sha256": null,
+    "replacement_minutes_artifact": null,
+    "replacement_minutes_artifact_sha256": null,
+    "replacement_tree_artifact": null,
+    "replacement_tree_artifact_sha256": null,
+    "gp_artifact": "daily_v5/out/gp_projection.parquet",
+    "gp_artifact_sha256": "99aa6aa1c6bcea599b6c8a158c9edc807b4a2cb1535f74e88b6bc2e651e04892",
+    "minutes_distribution_artifact": "daily_v5/out/minutes_distribution.parquet",
+    "minutes_distribution_artifact_sha256": "f791eae473e103b5287d0123a1a5c5ef4888bcf52c00b46170c87d791cdba64c",
+    "depth_csv_artifact": "daily_v5/out/depthcharts_2026_27.csv",
+    "depth_source": "owner",
+    "v2_promotion_manifest": null,
+    "v2_promotion_manifest_sha256": null,
+    "v3_promotion_manifest": null,
+    "v3_promotion_manifest_sha256": null,
+    "v4_promotion_manifest": null,
+    "v4_promotion_manifest_sha256": null,
+    "v5_promotion_manifest": null,
+    "v5_promotion_manifest_sha256": null,
+    "v6_promotion_manifest": null,
+    "v6_promotion_manifest_sha256": null,
+    "v7_promotion_manifest": null,
+    "v7_promotion_manifest_sha256": null,
+    "v8_promotion_manifest": null,
+    "v8_promotion_manifest_sha256": null,
+    "v9_promotion_manifest": null,
+    "v9_promotion_manifest_sha256": null,
+    "v10_promotion_manifest": null,
+    "v10_promotion_manifest_sha256": null,
+    "v1_0_promotion_manifest": null,
+    "v1_0_promotion_manifest_sha256": null
+  },
+  "war_note": "descriptive accrual; win-slope = phi(HCA/sigma)/sigma ~ 2.27 wins/pt over 82 games; $/win is a market convention, not a model output; ~17% of board names are id-ambiguous and get no WAR",
+  "ci_note": "CIs are de-shrunk ridge SEs (nominal); system nominal-90% covers ~88%",
+  "caveats": [
+    "breakout alerts lag real change ~weeks (700-day half-life)",
+    "dTS/dSC are weak (no tracking data)"
+  ],
+  "changelog": [
+    {
+      "v": "1.0.0",
+      "date": "20260724",
+      "note": "initial public export"
+    }
+  ]
+}

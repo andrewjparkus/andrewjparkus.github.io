@@ -1,0 +1,695 @@
+{
+  "schema": "accuracy.v2",
+  "meta": {
+    "generated": null,
+    "label": "current",
+    "note": "Descriptive model. These are the out-of-sample scorecards produced by daily_v5/oos_harness.py: game-margin walkforward/frozen scoring, interval coverage, and next-season predictiveness of net plus the six factors.",
+    "source_scorecard": "daily_v5/out/oos/scorecard_current.parquet",
+    "source_manifest": "daily_v5/out/oos/manifest_current.json",
+    "caveats": [
+      "game_margin uses walkforward and frozen views; strict_pregame is not_available until roster/minute inputs exclude realized_minutes.",
+      "game accuracy currently uses realized_minutes for team aggregation, so it is rating quality given realized usage rather than strict_pregame forecasting.",
+      "today-estimate SE is not the same as next-season forecast interval; ci_next_season is diagnostic and intentionally over-covers.",
+      "candidate comparisons require block-aware CIs from paired residual/detail artifacts."
+    ],
+    "minutes_source": "current",
+    "minutes_provenance": {
+      "minutes_source": "current",
+      "minutes_model_version": "current",
+      "minutes_contract": "legacy_alloc_mpg",
+      "availability_application": "legacy_consumer_dependent",
+      "minutes_artifact": "daily_v5/out/minutes_allocation.parquet",
+      "minutes_artifact_sha256": "faa01c050d2ae129e7e336ea11197a6b2c9974f4a407c1c1c27620f2aab5996c",
+      "active_minutes_artifact": null,
+      "active_minutes_artifact_sha256": null,
+      "season_minutes_artifact": null,
+      "season_minutes_artifact_sha256": null,
+      "replacement_minutes_artifact": null,
+      "replacement_minutes_artifact_sha256": null,
+      "replacement_tree_artifact": null,
+      "replacement_tree_artifact_sha256": null,
+      "gp_artifact": "daily_v5/out/gp_projection.parquet",
+      "gp_artifact_sha256": "99aa6aa1c6bcea599b6c8a158c9edc807b4a2cb1535f74e88b6bc2e651e04892",
+      "minutes_distribution_artifact": "daily_v5/out/minutes_distribution.parquet",
+      "minutes_distribution_artifact_sha256": "f791eae473e103b5287d0123a1a5c5ef4888bcf52c00b46170c87d791cdba64c",
+      "depth_csv_artifact": "daily_v5/out/depthcharts_2026_27.csv",
+      "depth_source": "owner",
+      "v2_promotion_manifest": null,
+      "v2_promotion_manifest_sha256": null,
+      "v3_promotion_manifest": null,
+      "v3_promotion_manifest_sha256": null,
+      "v4_promotion_manifest": null,
+      "v4_promotion_manifest_sha256": null,
+      "v5_promotion_manifest": null,
+      "v5_promotion_manifest_sha256": null,
+      "v6_promotion_manifest": null,
+      "v6_promotion_manifest_sha256": null,
+      "v7_promotion_manifest": null,
+      "v7_promotion_manifest_sha256": null,
+      "v8_promotion_manifest": null,
+      "v8_promotion_manifest_sha256": null,
+      "v9_promotion_manifest": null,
+      "v9_promotion_manifest_sha256": null,
+      "v10_promotion_manifest": null,
+      "v10_promotion_manifest_sha256": null,
+      "v1_0_promotion_manifest": null,
+      "v1_0_promotion_manifest_sha256": null
+    }
+  },
+  "game_margin": {
+    "units": {
+      "margin_rmse": "points",
+      "margin_mae": "points",
+      "brier": "dimensionless",
+      "logloss": "dimensionless",
+      "accuracy": "fraction"
+    },
+    "walkforward": {
+      "margin_rmse": 14.3957,
+      "margin_mae": 11.2756,
+      "brier": 0.2025,
+      "logloss": 0.5919,
+      "accuracy": 0.6942
+    },
+    "frozen": {
+      "margin_rmse": 14.3744,
+      "margin_mae": 11.2556,
+      "brier": 0.2022,
+      "logloss": 0.5913,
+      "accuracy": 0.696
+    },
+    "strict_pregame": {
+      "status": "not_available",
+      "reason": "requires pregame-known rosters and minutes; current game score uses realized_minutes"
+    },
+    "ci_coverage": {
+      "50": 0.5088,
+      "80": 0.8054,
+      "90": 0.9027
+    }
+  },
+  "game_calibration": {
+    "win_probability": {
+      "walkforward": {
+        "brier": 0.2025,
+        "logloss": 0.5919,
+        "accuracy": 0.6942
+      },
+      "frozen": {
+        "brier": 0.2022,
+        "logloss": 0.5913,
+        "accuracy": 0.696
+      }
+    },
+    "interval_coverage": {
+      "50": {
+        "nominal": 0.5,
+        "realized": 0.5088,
+        "n": 1079,
+        "units": "fraction"
+      },
+      "80": {
+        "nominal": 0.8,
+        "realized": 0.8054,
+        "n": 1079,
+        "units": "fraction"
+      },
+      "90": {
+        "nominal": 0.9,
+        "realized": 0.9027,
+        "n": 1079,
+        "units": "fraction"
+      }
+    },
+    "minute_mode": "realized_minutes",
+    "strict_pregame": {
+      "status": "not_available"
+    }
+  },
+  "next_season": {
+    "units": {
+      "rmse": "points per 100 possessions",
+      "corr": "Pearson r"
+    },
+    "factors": {
+      "net": {
+        "rmse": 1.0028,
+        "corr": 0.8875,
+        "n": 17204,
+        "units": {
+          "rmse": "points per 100 possessions",
+          "corr": "Pearson r"
+        }
+      },
+      "oTS": {
+        "rmse": 0.7214,
+        "corr": 0.8746,
+        "n": 17204,
+        "units": {
+          "rmse": "points per 100 possessions",
+          "corr": "Pearson r"
+        }
+      },
+      "oTOV": {
+        "rmse": 0.2654,
+        "corr": 0.8838,
+        "n": 17204,
+        "units": {
+          "rmse": "points per 100 possessions",
+          "corr": "Pearson r"
+        }
+      },
+      "oSC": {
+        "rmse": 0.3759,
+        "corr": 0.8577,
+        "n": 17204,
+        "units": {
+          "rmse": "points per 100 possessions",
+          "corr": "Pearson r"
+        }
+      },
+      "dTS": {
+        "rmse": 0.5371,
+        "corr": 0.8826,
+        "n": 17204,
+        "units": {
+          "rmse": "points per 100 possessions",
+          "corr": "Pearson r"
+        }
+      },
+      "dTOV": {
+        "rmse": 0.2283,
+        "corr": 0.8732,
+        "n": 17204,
+        "units": {
+          "rmse": "points per 100 possessions",
+          "corr": "Pearson r"
+        }
+      },
+      "dSC": {
+        "rmse": 0.2781,
+        "corr": 0.7984,
+        "n": 17204,
+        "units": {
+          "rmse": "points per 100 possessions",
+          "corr": "Pearson r"
+        }
+      }
+    },
+    "net": {
+      "rmse": 1.0028,
+      "corr": 0.8875
+    },
+    "oTS": {
+      "rmse": 0.7214,
+      "corr": 0.8746
+    },
+    "oTOV": {
+      "rmse": 0.2654,
+      "corr": 0.8838
+    },
+    "oSC": {
+      "rmse": 0.3759,
+      "corr": 0.8577
+    },
+    "dTS": {
+      "rmse": 0.5371,
+      "corr": 0.8826
+    },
+    "dTOV": {
+      "rmse": 0.2283,
+      "corr": 0.8732
+    },
+    "dSC": {
+      "rmse": 0.2781,
+      "corr": 0.7984
+    }
+  },
+  "next_season_ci": {
+    "units": "fraction",
+    "factors": {
+      "net": {
+        "50": {
+          "nominal": 0.5,
+          "realized": 0.9111,
+          "n": 17204,
+          "units": "fraction"
+        },
+        "80": {
+          "nominal": 0.8,
+          "realized": 0.991,
+          "n": 17204,
+          "units": "fraction"
+        },
+        "90": {
+          "nominal": 0.9,
+          "realized": 0.998,
+          "n": 17204,
+          "units": "fraction"
+        }
+      },
+      "oTS": {
+        "50": {
+          "nominal": 0.5,
+          "realized": 0.8638,
+          "n": 17204,
+          "units": "fraction"
+        },
+        "80": {
+          "nominal": 0.8,
+          "realized": 0.9769,
+          "n": 17204,
+          "units": "fraction"
+        },
+        "90": {
+          "nominal": 0.9,
+          "realized": 0.9927,
+          "n": 17204,
+          "units": "fraction"
+        }
+      },
+      "oTOV": {
+        "50": {
+          "nominal": 0.5,
+          "realized": 0.8604,
+          "n": 17204,
+          "units": "fraction"
+        },
+        "80": {
+          "nominal": 0.8,
+          "realized": 0.9751,
+          "n": 17204,
+          "units": "fraction"
+        },
+        "90": {
+          "nominal": 0.9,
+          "realized": 0.9922,
+          "n": 17204,
+          "units": "fraction"
+        }
+      },
+      "oSC": {
+        "50": {
+          "nominal": 0.5,
+          "realized": 0.8722,
+          "n": 17204,
+          "units": "fraction"
+        },
+        "80": {
+          "nominal": 0.8,
+          "realized": 0.9797,
+          "n": 17204,
+          "units": "fraction"
+        },
+        "90": {
+          "nominal": 0.9,
+          "realized": 0.9949,
+          "n": 17204,
+          "units": "fraction"
+        }
+      },
+      "dTS": {
+        "50": {
+          "nominal": 0.5,
+          "realized": 0.9346,
+          "n": 17204,
+          "units": "fraction"
+        },
+        "80": {
+          "nominal": 0.8,
+          "realized": 0.9956,
+          "n": 17204,
+          "units": "fraction"
+        },
+        "90": {
+          "nominal": 0.9,
+          "realized": 0.9994,
+          "n": 17204,
+          "units": "fraction"
+        }
+      },
+      "dTOV": {
+        "50": {
+          "nominal": 0.5,
+          "realized": 0.8905,
+          "n": 17204,
+          "units": "fraction"
+        },
+        "80": {
+          "nominal": 0.8,
+          "realized": 0.9874,
+          "n": 17204,
+          "units": "fraction"
+        },
+        "90": {
+          "nominal": 0.9,
+          "realized": 0.9964,
+          "n": 17204,
+          "units": "fraction"
+        }
+      },
+      "dSC": {
+        "50": {
+          "nominal": 0.5,
+          "realized": 0.9266,
+          "n": 17204,
+          "units": "fraction"
+        },
+        "80": {
+          "nominal": 0.8,
+          "realized": 0.9949,
+          "n": 17204,
+          "units": "fraction"
+        },
+        "90": {
+          "nominal": 0.9,
+          "realized": 0.9992,
+          "n": 17204,
+          "units": "fraction"
+        }
+      }
+    },
+    "net": {
+      "50": 0.9111,
+      "80": 0.991,
+      "90": 0.998
+    },
+    "oTS": {
+      "50": 0.8638,
+      "80": 0.9769,
+      "90": 0.9927
+    },
+    "oTOV": {
+      "50": 0.8604,
+      "80": 0.9751,
+      "90": 0.9922
+    },
+    "oSC": {
+      "50": 0.8722,
+      "80": 0.9797,
+      "90": 0.9949
+    },
+    "dTS": {
+      "50": 0.9346,
+      "80": 0.9956,
+      "90": 0.9994
+    },
+    "dTOV": {
+      "50": 0.8905,
+      "80": 0.9874,
+      "90": 0.9964
+    },
+    "dSC": {
+      "50": 0.9266,
+      "80": 0.9949,
+      "90": 0.9992
+    }
+  },
+  "projection": {
+    "status": "not_available",
+    "reason": "projection committees have not emitted canonical scoreboard metrics",
+    "value_scorecards": {
+      "projection_value_scorecard": "daily_v5/out/oos/projection_value_scorecard.json",
+      "projection_value_scorecard_parquet": "daily_v5/out/oos/projection_value_scorecard.parquet",
+      "minutes_value_scorecard": "daily_v5/out/oos/minutes_value_scorecard.json",
+      "minutes_value_scorecard_parquet": "daily_v5/out/oos/minutes_value_scorecard.parquet"
+    }
+  },
+  "model_page": {
+    "status": "available",
+    "schema": "model_page_accuracy.v1",
+    "n_games": 3237,
+    "table": {
+      "columns": [
+        {
+          "key": "internal",
+          "label": "Internal"
+        },
+        {
+          "key": "epm",
+          "label": "EPM"
+        },
+        {
+          "key": "blend",
+          "label": "Blend",
+          "bench": true,
+          "tip": "Offline internal+EPM average \u2014 a benchmark only, not a shipped product."
+        },
+        {
+          "key": "darko_daily",
+          "label": "DARKO",
+          "tag": "daily",
+          "tip": "Per-game-date re-score \u2014 the like-for-like daily comparison."
+        },
+        {
+          "key": "darko_frozen",
+          "label": "DARKO",
+          "tag": "frozen",
+          "tip": "Pre-season-frozen; no in-season update."
+        }
+      ],
+      "rows": [
+        {
+          "key": "frozen_preseason",
+          "label": "Frozen-preseason win-MAE (2024\u201326 pooled)",
+          "dp": 3,
+          "cells": {
+            "internal": 6.824,
+            "epm": 6.263,
+            "blend": 6.419,
+            "darko_daily": null,
+            "darko_frozen": 6.682
+          }
+        },
+        {
+          "key": "game_margin",
+          "label": "Game-margin RMSE (walk-forward)",
+          "dp": 4,
+          "cells": {
+            "internal": 14.0794,
+            "epm": 14.2758,
+            "blend": 14.0532,
+            "darko_daily": 14.4071,
+            "darko_frozen": 14.8137
+          }
+        },
+        {
+          "key": "retro_win_mae",
+          "label": "Retro win-MAE",
+          "dp": 4,
+          "cells": {
+            "internal": 4.1955,
+            "epm": 4.1453,
+            "blend": 4.048,
+            "darko_daily": null,
+            "darko_frozen": 6.7212
+          }
+        },
+        {
+          "key": "playoff_brier",
+          "label": "Playoff Brier",
+          "dp": 5,
+          "cells": {
+            "internal": 0.10286,
+            "epm": 0.0908,
+            "blend": 0.09573,
+            "darko_daily": null,
+            "darko_frozen": 0.16982
+          }
+        }
+      ]
+    },
+    "verdicts": [
+      {
+        "row": "frozen_preseason",
+        "label": "Frozen-preseason win-MAE (2024\u201326 pooled)",
+        "internal": 6.8239,
+        "epm": 6.2635,
+        "gap_epm_minus_internal": -0.5604,
+        "band": 0.05,
+        "leader": "epm",
+        "band_multiple": 11.21,
+        "text": "EPM <strong>leads</strong> on Frozen-preseason win-MAE (2024\u201326 pooled) by <strong>0.5604</strong> (<strong>6.263 vs 6.824</strong>, EPM vs internal) &mdash; 11.2&times; the &plusmn;0.05 noise band",
+        "dp": 3,
+        "prose_label": "season-level prediction",
+        "prose_metric": "frozen-preseason win-MAE",
+        "prose_dp": 2
+      },
+      {
+        "row": "game_margin",
+        "label": "Game-margin RMSE (walk-forward)",
+        "internal": 14.0794,
+        "epm": 14.2758,
+        "gap_epm_minus_internal": 0.1964,
+        "band": 0.05,
+        "leader": "internal",
+        "band_multiple": 3.93,
+        "text": "Internal <strong>leads</strong> on Game-margin RMSE (walk-forward) by <strong>0.1964</strong> (<strong>14.2758 vs 14.0794</strong>, EPM vs internal) &mdash; 3.9&times; the &plusmn;0.05 noise band",
+        "dp": 4,
+        "prose_label": "game-margin RMSE",
+        "prose_metric": null,
+        "prose_dp": 2
+      },
+      {
+        "row": "retro_win_mae",
+        "label": "Retro win-MAE",
+        "internal": 4.195464444444444,
+        "epm": 4.145293333333334,
+        "gap_epm_minus_internal": -0.050171,
+        "band": 0.05,
+        "leader": "epm",
+        "band_multiple": 1.0,
+        "text": "EPM <strong>leads</strong> on Retro win-MAE by <strong>0.0502</strong> (<strong>4.1453 vs 4.1955</strong>, EPM vs internal) &mdash; 1.0&times; the &plusmn;0.05 noise band",
+        "dp": 4,
+        "prose_label": "retro win-MAE",
+        "prose_metric": null,
+        "prose_dp": 2
+      },
+      {
+        "row": "playoff_brier",
+        "label": "Playoff Brier",
+        "internal": 0.10286246844444447,
+        "epm": 0.09079613555555556,
+        "gap_epm_minus_internal": -0.012066,
+        "band": null,
+        "leader": "epm",
+        "band_multiple": null,
+        "text": "EPM is ahead on Playoff Brier (<strong>0.09080 vs 0.10286</strong>, EPM vs internal) &mdash; no noise band is defined for this metric, so the margin is reported without a significance claim",
+        "dp": 5,
+        "prose_label": "playoff Brier",
+        "prose_metric": null,
+        "prose_dp": 3
+      }
+    ],
+    "headline_prose": "The honest read is <strong>task-by-task, not a blanket winner</strong>. EPM is ahead on season-level prediction (frozen-preseason win-MAE <strong>6.26 vs 6.82</strong>), retro win-MAE (<strong>4.15 vs 4.20</strong>), and playoff Brier (<strong>0.091 vs 0.103</strong>). The internal model <strong>leads</strong> EPM on game-margin RMSE (<strong>14.28 vs 14.08</strong>) &mdash; EPM is <em>not</em> strictly better on every task. EPM's retro win-MAE edge is <strong>narrow</strong> &mdash; only 1&times; the &plusmn;0.05 noise band. The internal+EPM blend beats both on some rows; per an owner decision <strong>no EPM-RAPM blend ships</strong>, so it appears here only as an informative benchmark.",
+    "darko_note": "<strong>DARKO daily</strong> is a per-game-date re-score at 96.1% player coverage &mdash; it is the like-for-like comparison for game margins, since our own board also updates daily. <strong>DARKO frozen</strong> is pre-season-frozen with no in-season update, so its frozen-preseason, retro and Brier cells are all measured pre-season-frozen and it is disadvantaged on the walk-forward game-margin row. The <strong>Blend</strong> column is benchmark-only &mdash; not a product.",
+    "darko_daily_coverage": 0.961,
+    "overlap": {
+      "table_net_corr": 0.8875,
+      "table_n": 17204,
+      "matched_years": [
+        2021,
+        2022,
+        2023,
+        2024,
+        2025
+      ],
+      "single_season_n": 2157,
+      "n_fiveyr": 2157,
+      "fiveyr_r_allrows": 0.904289,
+      "n_fiveyr_allrows": 3464,
+      "matched_fiveyr_r": 0.892502,
+      "matched_single_season_r": 0.497664,
+      "inflation": 0.394838,
+      "per_factor_single_season": {
+        "oTS": 0.4939,
+        "oTOV": 0.4561,
+        "oSC": 0.3994,
+        "dTS": 0.302,
+        "dTOV": 0.4852,
+        "dSC": 0.2658
+      },
+      "best_factors": [
+        "oTS",
+        "dTOV"
+      ],
+      "noisiest_factor": "dSC",
+      "prose": "Net carries forward at <strong>r &asymp; 0.89</strong> against a five-year-trailing target (the table above, n&nbsp;=&nbsp;17,204) &mdash; but that is inflated by <em>window overlap</em>: the target board shares most of today's data. Scored over the same 2021\u20132025 transition blocks &mdash; the very same <strong>2,157</strong> player-seasons on both sides &mdash; the same board reaches <strong>r = 0.893</strong> against that overlapping target but only <strong>0.498</strong> against a genuinely <strong>non-overlapping single-season</strong> target &mdash; an overlap inflation of <strong>0.395</strong>, not skill. Shooting efficiency (oTS &asymp; 0.49) and forcing turnovers (dTOV &asymp; 0.49) carry forward best; defensive second-chance (dSC &asymp; 0.27) is the noisiest.",
+      "_note": "gap = retro_net_report.json `inflation`: row-matched, so both legs are the SAME 2157 rows (n_fiveyr == n_single_season, enforced by _gate_overlap_identity). NOT next_season.net.corr - single_season_pooled_r: those are different panels (n=17204 vs n=2157) and subtracting them is a cross-sample error."
+    },
+    "forward_skill": {
+      "published_progress": 0.48,
+      "stored": 0.497664,
+      "drift_vs_published": 0.0177,
+      "published_str": "0.48",
+      "stored_str": "0.498",
+      "artifact": "daily_v5/out/oos/retro_net_report.json"
+    },
+    "forecast_frozen": "2026-07-24",
+    "forecast_freeze_note": "Committed <strong>2026-07-24</strong>, before the 2026-27 season. \u201cRealized\u201d fills as games are played and the forecast is scored against actual wins \u2014 win or lose, the number was frozen in advance.",
+    "provenance": {
+      "frozen_preseason": "daily_v5/out/p2_0/verify_composite/frozen_preseason_all.json",
+      "game_margin": "daily_v5/out/p2_0/darko_daily_rescore.json (+ composite_report.json for the blend)",
+      "retro_win_mae_playoff_brier": "daily_v5/out/p2_0/composite_report.json marginal_contribution",
+      "overlap": "daily_v5/out/oos/retro_net_report.json",
+      "forecast_frozen": "daily_v5/out/scoreboard.json forecasts[].frozen",
+      "forward_skill": "daily_v5/out/scoreboard.json backfill[forward_skill_single_season]",
+      "anchors": "research/arp/RESULTS.json anchors",
+      "unanchored": [
+        "retro_win_mae.darko_frozen",
+        "playoff_brier.darko_frozen"
+      ]
+    }
+  },
+  "minutes_gp": {
+    "status": "not_available",
+    "reason": "minutes/GP committee metrics are only attached for the canonical accuracy build"
+  },
+  "translation": {
+    "status": "not_available",
+    "reason": "translation committees have not emitted canonical scoreboard metrics"
+  },
+  "artifact_versions": {
+    "scorecard": {
+      "path": "daily_v5/out/oos/scorecard_current.parquet",
+      "exists": true,
+      "size": 3811,
+      "mtime": 1784903080.6240299
+    },
+    "manifest": {
+      "path": "daily_v5/out/oos/manifest_current.json",
+      "exists": true,
+      "size": 7245,
+      "mtime": 1784903081.8691676
+    },
+    "git": {
+      "sha": "8db1e1c15bf984f76cf15cbefd3fadd6cb5a305e",
+      "dirty": true,
+      "dirty_entries": 3
+    },
+    "game_model_params": {
+      "hca": 1.5370466094308175,
+      "sigma": 14.374403787753343,
+      "burn_in_date": "2025-11-10",
+      "fit_window": "expanding-walk-forward-2wk",
+      "oos": {
+        "margin_rmse": 14.395672971994209,
+        "margin_rmse_se": 0.3098890652628952,
+        "margin_mae": 11.275577440422758,
+        "brier": 0.2024693256488907,
+        "brier_se": 0.00473472384497239,
+        "logloss": 0.591940984270203,
+        "accuracy": 0.6941612604263206
+      }
+    }
+  },
+  "projection_accuracy_frozen_preseason": {
+    "status": "available",
+    "protocol": "frozen-preseason single as-of snapshot before each season; pooled 2024-26 win MAE + playoff Brier",
+    "source": "daily_v5/out/p2_0/verify_composite/frozen_preseason_all.json",
+    "pooled": {
+      "rapm_decomp": {
+        "win_mae": 6.8239,
+        "brier": 0.17771
+      },
+      "pure_epm": {
+        "win_mae": 6.2635,
+        "brier": 0.16666
+      }
+    },
+    "per_season": {
+      "2024": {
+        "rapm_decomp": 6.281666666666667,
+        "pure_epm": 6.144359999999998
+      },
+      "2025": {
+        "rapm_decomp": 6.637633333333333,
+        "pure_epm": 6.049340000000001
+      },
+      "2026": {
+        "rapm_decomp": 7.552499999999999,
+        "pure_epm": 6.596653333333334
+      }
+    }
+  }
+}
