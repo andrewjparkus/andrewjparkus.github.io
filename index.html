@@ -16,9 +16,6 @@
   /* bespoke interactive crosshair charts (owned locally) */
   .crosshair{stroke:#3a4862;stroke-width:1;stroke-dasharray:3 3;pointer-events:none}
   .hdot{pointer-events:none;stroke:var(--bg);stroke-width:1.2}
-  /* plan49 W6: played-vs-carried board-day markers. .pgmiss = carried/decayed (no box row). */
-  .pgdot{pointer-events:none}
-  .pgmiss{stroke-opacity:.5}
   .grid svg,.netcard svg{touch-action:none}
   /* add-to-compare affordance in the player header */
   .cmpadd{font-size:12px;font-weight:600;color:var(--muted);background:var(--panel);border:1px solid var(--line);
@@ -100,7 +97,6 @@
   .projconn{stroke:var(--amber);stroke-width:1.4;fill:none;stroke-dasharray:4 2;stroke-linejoin:round;stroke-linecap:round;opacity:.65}
   .projci{stroke:var(--amber);stroke-width:1.6;stroke-linecap:butt}
   .projcap{stroke:var(--amber);stroke-width:1.6;stroke-linecap:round}
-  .projdot{fill:var(--amber);stroke:var(--bg);stroke-width:1}
   /* ── impact waterfall (6 factors → off/def; continuous play across game-days) ── */
   #waterfall{display:none;margin-top:24px;border-top:1px solid var(--line);padding-top:6px}
   .wfbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 5px}
@@ -513,20 +509,9 @@ function Chart(mount,ser,key,proj,extras){
         seg.push(`${X(i).toFixed(1)},${Y(v[i]).toFixed(1)}`);}
       flush();});
   }
-  // ── plan49 W6: played-vs-carried markers ────────────────────────────────────────────────────────
-  // A dot per drawn board-day, styled by pg: FILLED = he had a box row that day (played), HOLLOW+faint
-  // = carried/decayed. SOURCE of pg is out/box_panel_<lg> (build_site.played_flags), so pg==1 means "a
-  // box row exists", nothing softer -- a 0 is "no box row" (injured, sat, OR just a league solve-day his
-  // team didn't play), NOT necessarily a missed game. The decay tail past a player's last game is the run
-  // of hollow markers. HONEST SCOPE (build_pages._downsample docstring): after STEP=3 striding the
-  // surviving pg==1 markers are a ~1-in-STEP SAMPLE of his games (only the LAST played index is pinned
-  // exact), so this distinguishes played from carried PER DRAWN POINT; it does NOT claim to mark every game.
-  // pg==null (pure/box/real-latent sidecars don't carry pg) -> no marker, i.e. mode unchanged.
-  for(let i=0;i<n;i++){if(v[i]==null||ser[i].pg==null)continue;
-    const col=SIDEC||lgColor(ser[i].lg), a={class:'pgdot',cx:X(i).toFixed(1),cy:Y(v[i]).toFixed(1)};
-    if(ser[i].pg===1){a.r=1.8;a.fill=col;}
-    else{a.class='pgdot pgmiss';a.r=1.6;a.fill='none';a.stroke=col;a['stroke-width']=0.9;}
-    svg.appendChild(el('circle',a));}
+  // plan49 W6 played/carried per-board-day dots REMOVED (owner 2026-07-24: too much clutter). The
+  // decay TAIL itself still renders (site_active.trim carries it); only the per-point markers are gone.
+  // pg is still emitted in the base sidecar but no longer drawn.
   // ── plan49 W2: extra series (ORAPM / DRAPM) on the SAME axis, in the W1 side colours ─────────────
   // NO CONFIDENCE BAND, deliberately. se_ORAPM / se_DRAPM are not stored anywhere. The only way to
   // manufacture one is to root-sum-square the three factor SEs and re-apply kappa=1.00917
@@ -558,7 +543,7 @@ function Chart(mount,ser,key,proj,extras){
     svg.appendChild(el('polyline',{class:'projconn',points:mid}));
     // a dot + year tick at each horizon; keep the geometry for hover
     PTg=PT.map((t,h)=>{const xp=XP(h), yc=Y(t.val);
-      svg.appendChild(el('circle',{class:'projdot',cx:xp,cy:yc,r:2.6}));
+      // projection-horizon dot REMOVED (owner 2026-07-24: no dots). The dashed cone line + year tick remain.
       if(t.season){const tk=el('text',{x:xp,y:H-4,'font-size':8,fill:'var(--amber)','text-anchor':'middle'});tk.textContent="’"+String(t.season).slice(2);svg.appendChild(tk);}
       return {x:xp, y:yc, val:t.val, se:t.se, season:t.season};});
   }
@@ -572,13 +557,13 @@ function Chart(mount,ser,key,proj,extras){
         const g=PTg[i-n];
         if(!g){cross.setAttribute('visibility','hidden');dot.setAttribute('visibility','hidden');return;}
         cross.setAttribute('x1',g.x);cross.setAttribute('x2',g.x);cross.setAttribute('visibility',line?'visible':'hidden');
-        dot.setAttribute('cx',g.x);dot.setAttribute('cy',g.y);dot.setAttribute('fill','var(--amber)');dot.setAttribute('visibility','visible');return;}
+        dot.setAttribute('cx',g.x);dot.setAttribute('cy',g.y);dot.setAttribute('fill','var(--amber)');dot.setAttribute('visibility',line?'visible':'hidden');return;}
       if(i<0||i>=n){cross.setAttribute('visibility','hidden');dot.setAttribute('visibility','hidden');return;}
       cross.setAttribute('x1',X(i));cross.setAttribute('x2',X(i));cross.setAttribute('visibility',line?'visible':'hidden');
       // Same null trap as the polyline above: Y(null) parks the dot at Y(0), which reads as a
       // real measured point on a date this series has no value for. Hide it, keep the crosshair.
       if(v[i]==null){dot.setAttribute('visibility','hidden');return;}
-      dot.setAttribute('cx',X(i));dot.setAttribute('cy',Y(v[i]));dot.setAttribute('fill',SIDEC||lgColor(ser[i].lg));dot.setAttribute('visibility','visible');},
+      dot.setAttribute('cx',X(i));dot.setAttribute('cy',Y(v[i]));dot.setAttribute('fill',SIDEC||lgColor(ser[i].lg));dot.setAttribute('visibility',line?'visible':'hidden');},
     valAt(i){return (i>=n&&PTg)?{v:PTg[i-n].val,se:PTg[i-n].se}:{v:v[i],se:se[i]};}};
   ov.addEventListener('pointermove',e=>{const r=svg.getBoundingClientRect();
     const sx=(e.clientX-r.left)/r.width*W;
@@ -893,9 +878,9 @@ function ChartMulti(mount,key){
       if(i<0||i>=n){cross.setAttribute('visibility','hidden');dots.forEach(d=>d.setAttribute('visibility','hidden'));return;}
       cross.setAttribute('x1',X(i));cross.setAttribute('x2',X(i));cross.setAttribute('visibility','visible');
       MULTI.forEach((m,k)=>showDot(k,i));
-    }else{                                    // default: each player's OWN latest point (not one shared date)
+    }else{                                    // at rest: clean lines, no dots (owner 2026-07-24) — dots appear on hover
       cross.setAttribute('visibility','hidden');
-      MULTI.forEach((m,k)=>{lastIdx[k]<0?dots[k].setAttribute('visibility','hidden'):showDot(k,lastIdx[k]);});
+      dots.forEach(d=>d.setAttribute('visibility','hidden'));
     }}};
   ov.addEventListener('pointermove',e=>{const r=svg.getBoundingClientRect();const sx=(e.clientX-r.left)/r.width*W;let i=Math.round((sx-padL)/pw*(n-1));i=Math.max(0,Math.min(n-1,i));setHoverMulti(i,true);});
   ov.addEventListener('pointerleave',()=>setHoverMulti(n-1,false));

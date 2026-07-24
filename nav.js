@@ -9,8 +9,10 @@
  * (.topnav/.tab/...), which every page links — nav.js no longer injects CSS.
  *
  * Top bar: Explorer · Tables · 2026-27 · Other ▾ · Model · Metrics. The "Other" dropdown
- * holds measured 2025-26 Teams plus Trade / Draft / Margin history; Grades is reached from
- * the Trade page (so it sets data-active="trade" to light the right top item).
+ * holds measured 2025-26 Teams plus Draft; Grades is reached from the Trade page (so it sets
+ * data-active="trade" to light the right top item). The equal-information Margin-history page
+ * was folded into Metrics (2026-07-24) and dropped from this menu; margin_history.html remains
+ * as a redirect stub.
  */
 (function () {
   "use strict";
@@ -21,10 +23,11 @@
     { key: "proj",     href: "projection.html", label: "2026-27" },
     { label: "Other", menu: [
       { key: "teams",  href: "teams.html", label: "Teams" },
-      { key: "draft",  href: "draft.html", label: "Draft" },
-      // 24-season equal-information margin comparison; sibling of Metrics, filed under
-      // Other so the top bar stays at six items.
-      { key: "marginhistory", href: "margin_history.html", label: "Margin history" }
+      { key: "draft",  href: "draft.html", label: "Draft" }
+      // "Margin history" was FOLDED INTO the Metrics page (2026-07-24): the equal-information
+      // 24-season margin comparison now lives inside metrics.html (Task A + its "Go deeper"
+      // deep-dive), so it is no longer a separate destination. margin_history.html still exists
+      // as a redirect stub -> metrics.html#game for any bookmarked link.
     ] },
     { key: "model",    href: "model.html", label: "Model" },
     { key: "metrics",  href: "metrics.html", label: "Metrics" }

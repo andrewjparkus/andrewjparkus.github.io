@@ -19,7 +19,7 @@
       "minutes_contract": "legacy_alloc_mpg",
       "availability_application": "legacy_consumer_dependent",
       "minutes_artifact": "daily_v5/out/minutes_allocation.parquet",
-      "minutes_artifact_sha256": "faa01c050d2ae129e7e336ea11197a6b2c9974f4a407c1c1c27620f2aab5996c",
+      "minutes_artifact_sha256": "18b25b4611baf5a229c76d1180da2d28daef6abad6fa623e8acdb5d92970a75a",
       "active_minutes_artifact": null,
       "active_minutes_artifact_sha256": null,
       "season_minutes_artifact": null,
@@ -29,9 +29,9 @@
       "replacement_tree_artifact": null,
       "replacement_tree_artifact_sha256": null,
       "gp_artifact": "daily_v5/out/gp_projection.parquet",
-      "gp_artifact_sha256": "99aa6aa1c6bcea599b6c8a158c9edc807b4a2cb1535f74e88b6bc2e651e04892",
+      "gp_artifact_sha256": "bf309d2266f82b460eb2b300f3bceab70e0c01a434f411cae9acabc8ed19374a",
       "minutes_distribution_artifact": "daily_v5/out/minutes_distribution.parquet",
-      "minutes_distribution_artifact_sha256": "f791eae473e103b5287d0123a1a5c5ef4888bcf52c00b46170c87d791cdba64c",
+      "minutes_distribution_artifact_sha256": "d39714210cfb1e1482a972e9ee2132ec68ab40ef7196085874d03874fa040437",
       "depth_csv_artifact": "daily_v5/out/depthcharts_2026_27.csv",
       "depth_source": "owner",
       "v2_promotion_manifest": null,
@@ -634,18 +634,18 @@
       "path": "daily_v5/out/oos/scorecard_current.parquet",
       "exists": true,
       "size": 3811,
-      "mtime": 1784907091.840722
+      "mtime": 1784927338.4181187
     },
     "manifest": {
       "path": "daily_v5/out/oos/manifest_current.json",
       "exists": true,
-      "size": 7245,
-      "mtime": 1784907093.0943785
+      "size": 7246,
+      "mtime": 1784927339.6501338
     },
     "git": {
-      "sha": "8db1e1c15bf984f76cf15cbefd3fadd6cb5a305e",
+      "sha": "f0dbdd48b6a1c7df53a4219d6cb824f730f97f1d",
       "dirty": true,
-      "dirty_entries": 7
+      "dirty_entries": 11
     },
     "game_model_params": {
       "hca": 1.5370466094308175,
