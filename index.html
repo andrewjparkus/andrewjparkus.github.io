@@ -27,39 +27,39 @@
   .pc-cell{display:flex;flex-direction:column;gap:1px;padding:0 11px;border-right:1px solid var(--line)}
   .pc-cell:first-child{padding-left:0}.pc-cell:last-child{border-right:none;padding-right:0}
   .pc-val{font-size:var(--fs-3);font-weight:600;color:var(--text)}
-  .pc-lab{font-size:9.5px;letter-spacing:.09em;color:var(--faint);text-transform:uppercase}
+  .pc-lab{font-size:10.5px;letter-spacing:.08em;color:var(--faint);text-transform:uppercase}
   .pc-shoot .pc-val{color:var(--muted)}
   @media(max-width:520px){.pcard{align-items:flex-start}.pc-name{font-size:var(--fs-5)}
     .pc-face,.pc-mono{width:60px;height:60px;flex-basis:60px}}
   .pmeta{color:var(--muted);font-size:var(--fs-2)}
-  .readout{font-family:var(--font-mono);font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:150px;text-align:left}
+  .readout{font-family:var(--font-mono);font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:150px;text-align:left}
   .readout b{color:var(--text)}
-  .modehint{font-size:11.5px;color:var(--faint);margin:7px 0 -4px;line-height:1.55;max-width:840px}
+  .modehint{font-size:12px;color:var(--faint);margin:7px 0 -4px;line-height:1.55;max-width:840px}
   /* bespoke interactive crosshair charts (owned locally) */
   .crosshair{stroke:#3a4862;stroke-width:1;stroke-dasharray:3 3;pointer-events:none}
   .hdot{pointer-events:none;stroke:var(--bg);stroke-width:1.2}
   .grid svg,.netcard svg{touch-action:none}
   /* add-to-compare affordance in the player header */
-  .cmpadd{font-size:12px;font-weight:600;color:var(--muted);background:var(--panel);border:1px solid var(--line);
+  .cmpadd{font-size:12.5px;font-weight:600;color:var(--muted);background:var(--panel);border:1px solid var(--line);
     padding:5px 11px;cursor:pointer;border-radius:var(--r-1)}
   .cmpadd:hover{color:var(--text);border-color:var(--accent)}
   .cmptray{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0 0}
   .cmptray .seglab{align-self:center}
   .cmpchip{display:inline-flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);
-    padding:4px 9px;font-size:12px;border-radius:var(--r-1)}
+    padding:4px 9px;font-size:12.5px;border-radius:var(--r-1)}
   .cmpchip .sw{width:10px;height:10px;border-radius:2px}
   .cmpchip .x{cursor:pointer;color:var(--muted);font-weight:700;margin-left:1px}
   .cmpchip .x:hover{color:var(--neg)}
-  .cmpgo{font-size:12px;font-weight:700;color:var(--accent-ink);background:var(--accent);border:none;
+  .cmpgo{font-size:12.5px;font-weight:700;color:var(--accent-ink);background:var(--accent);border:none;
     padding:5px 12px;cursor:pointer;border-radius:var(--r-1)}
   .cmpgo:disabled{opacity:.4;cursor:not-allowed}
   /* ── production profile section ── */
   #profile{display:none;margin-top:28px;border-top:1px solid var(--line);padding-top:6px}
   .barrow{display:flex;align-items:center;gap:10px;margin:7px 0}
-  .barrow .lab{width:48px;font-size:12.5px;font-weight:700;color:#cdd9e6;font-variant-numeric:tabular-nums}
+  .barrow .lab{width:54px;font-size:13.5px;font-weight:700;color:#cdd9e6;font-variant-numeric:tabular-nums}
   :root[data-theme=light] .barrow .lab{color:#33425a}
-  .barrow .val{width:60px;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}
-  .barrow .pctlab{width:38px;font-size:11.5px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+  .barrow .val{width:66px;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}
+  .barrow .pctlab{width:44px;font-size:12.5px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
   .barwrap{flex:1;min-width:120px}
   /* two balanced columns: percentile bars (left) + radar (right), vertically centered to each other */
   .profcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px 30px;align-items:start}
@@ -92,17 +92,17 @@
      guard against a grid item refusing to shrink below its content, NOT a fix for an observed
      bug: measured at 1280, plain `repeat(3,1fr)` yields the identical 151px tracks and the same
      scrollWidth 1280 == clientWidth. Kept because it costs one token; do not cite it as a fix. */
-  .drill{font:inherit;font-size:10.5px;font-weight:600;letter-spacing:.02em;margin-left:6px;
+  .drill{font:inherit;font-size:11px;font-weight:600;letter-spacing:.02em;margin-left:6px;
     padding:1px 6px;border:1px solid var(--line);border-radius:999px;background:none;
     color:var(--faint);cursor:pointer;vertical-align:middle}
   .drill:hover{color:var(--text);border-color:var(--faint)}
   .drill.on{color:var(--bg);background:var(--faint);border-color:var(--faint)}
   .atompanel{display:none;margin-top:8px;border-top:1px solid var(--line);padding-top:8px}
-  .atomnote{font-size:11.5px;line-height:1.5;color:var(--faint);margin-bottom:8px}
+  .atomnote{font-size:12px;line-height:1.5;color:var(--faint);margin-bottom:8px}
   .atomgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 12px}
   @media(max-width:640px){.atomgrid{grid-template-columns:minmax(0,1fr)}}
-  .atitle{display:flex;justify-content:space-between;align-items:baseline;gap:6px;
-    font-size:11px;color:var(--faint);margin-bottom:2px}
+  .atitle{display:flex;align-items:baseline;gap:7px;
+    font-size:12px;color:var(--faint);margin-bottom:3px}
   .atitle .v{font-variant-numeric:tabular-nums;color:var(--text)}
   /* At 151px wide an 11-season career puts Chart()'s year ticks 6.7px apart with 15.3px labels —
      measured overlap, unreadable. Hide the LABELS only; the year GRIDLINES stay, and the parent
@@ -123,23 +123,23 @@
   #waterfall{display:none;margin-top:24px;border-top:1px solid var(--line);padding-top:6px}
   .wfbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 5px}
   .wfscrub{flex:1;min-width:130px;accent-color:var(--accent)}
-  .wfsum{font-family:var(--font-mono);font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;margin:0 0 4px}
+  .wfsum{font-family:var(--font-mono);font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;margin:0 0 4px}
   .wfsum b{color:var(--text)}
   .wfstack{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   @media(max-width:720px){.wfstack{grid-template-columns:1fr}}
   .wfchart{border:1px solid var(--line);background:var(--panel);border-radius:var(--r-1);padding:6px 9px 3px}
-  .wfhd{display:flex;justify-content:space-between;align-items:baseline;font-size:11px;font-weight:700;
+  .wfhd{display:flex;align-items:baseline;gap:9px;font-size:11.5px;font-weight:700;
     color:#aebccd;letter-spacing:.16em;padding:1px 2px 2px}
   :root[data-theme=light] .wfhd{color:#33425a}
   .wfsvg{width:100%;height:auto}
   .wfg{stroke:var(--grid);stroke-width:1}
-  .wft{fill:var(--faint);font-size:9px;font-variant-numeric:tabular-nums}
+  .wft{fill:var(--faint);font-size:11px;font-variant-numeric:tabular-nums}
   .wfax{stroke:var(--zero);stroke-width:1}
   .wftr{fill:none;stroke:var(--muted);stroke-width:1.2;stroke-dasharray:3 4;opacity:.5}
   .wfb.pos{fill:var(--pos);opacity:.9}.wfb.neg{fill:var(--neg);opacity:.9}.wfb.zero{fill:var(--zero);opacity:.6}
   .wfb.tot.pos{fill:var(--pos);opacity:1}.wfb.tot.neg{fill:var(--neg);opacity:1}
-  .wfl{fill:var(--muted);font-size:10.5px;font-weight:700}
-  .wfv{font-size:11px;font-weight:700;font-variant-numeric:tabular-nums}
+  .wfl{fill:var(--muted);font-size:12px;font-weight:700}
+  .wfv{font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums}
   .wfv.pos{fill:var(--pos)}.wfv.neg{fill:var(--neg)}.wfv.zero{fill:var(--muted)}
 </style></head>
 <body>
@@ -180,6 +180,9 @@
 
     <div class="netcard">
       <div class="ctitle"><span>Net RAPM <span style="color:var(--faint);font-weight:400">· ORAPM + DRAPM</span> <span class="help" data-tip="Net RAPM = ORAPM (oTS+oTOV+oSC) + DRAPM (dTS+dTOV+dSC), points/100 on the NBA-equivalent scale. The grey band is the 95% CI on the estimate itself — how tightly the lineup data pins down what has already happened. It is not a forecast of next season; read that way it is about 4× too wide.">?</span></span>
+        <!-- the readout sits NEXT TO its own label, same lockup as the six factor cells below.
+             It used to live at the far end of the control group, ~700px from the words "Net RAPM". -->
+        <span class="v" id="v_net"></span>
         <span style="display:inline-flex;align-items:center;gap:8px;margin-left:auto">
           <!-- plan49 W2: draw ORAPM (oTS+oTOV+oSC) and DRAPM (dTS+dTOV+dSC) on the SAME net axis.
                They sum vertically to the net line. Defensive factors are already sign-flipped so
@@ -195,7 +198,6 @@
             <button data-proj="off" type="button" class="on">Descriptive</button>
             <button data-proj="on"  type="button">+ Projection</button>
           </span>
-          <span class="v" id="v_net"></span>
         </span></div>
       <div id="c_net"></div>
     </div>
@@ -450,8 +452,8 @@ function sideColor(key){return key[0]==='o'?cssvar('--off'):key[0]==='d'?cssvar(
 // them — see the band comment below for why inventing an SE here was refused.
 function Chart(mount,ser,key,proj,extras){
   const SIDEC=sideColor(key);      // non-null only inside the 3x2 factor grid
-  const W=mount.clientWidth||320, H=mount===document.getElementById('c_net')?190:150;
-  const padL=30,padR=7,padT=8,padB=15, pw=W-padL-padR, ph=H-padT-padB;
+  const W=mount.clientWidth||320, H=mount===document.getElementById('c_net')?206:166;
+  const padL=38,padR=8,padT=9,padB=18, pw=W-padL-padR, ph=H-padT-padB;
   const n=ser.length;
   const v   = ser.map(s=>s[key]);
   const se  = ser.map(s=>s[key+'_se']);
@@ -475,12 +477,12 @@ function Chart(mount,ser,key,proj,extras){
   const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,preserveAspectRatio:'none'});
   [0,.5,1].forEach(f=>{const yv=ymin+(ymax-ymin)*f, y=Y(yv);
     svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'var(--grid)','stroke-width':1}));
-    const t=el('text',{x:padL-4,y:y+3,'font-size':9,fill:'var(--faint)','text-anchor':'end'});t.textContent=(yv>=0?'+':'')+yv.toFixed(1);svg.appendChild(t);});
+    const t=el('text',{x:padL-6,y:y+4,'font-size':11,fill:'var(--faint)','text-anchor':'end'});t.textContent=(yv>=0?'+':'')+yv.toFixed(1);svg.appendChild(t);});
   if(ymin<0&&ymax>0){const y=Y(0);svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'var(--zero)','stroke-width':1}));}
   let py=ser[0].date.slice(0,4);
   for(let i=1;i<n;i++){const yr=ser[i].date.slice(0,4);if(yr!==py){
     svg.appendChild(el('line',{x1:X(i),y1:padT,x2:X(i),y2:padT+ph,stroke:'var(--line-2)','stroke-width':1}));
-    const t=el('text',{x:X(i),y:H-4,'font-size':8.5,fill:'var(--faint)','text-anchor':'middle'});t.textContent="’"+yr.slice(2);svg.appendChild(t);py=yr;}}
+    const t=el('text',{x:X(i),y:H-5,'font-size':10.5,fill:'var(--faint)','text-anchor':'middle'});t.textContent="’"+yr.slice(2);svg.appendChild(t);py=yr;}}
   // CI band (95%, faint): the de-shrunk daily SE. This is a MEASUREMENT CI on the current estimate,
   // NOT a forward band — see research/arp/cal2_band_audit.md (CAL-2). Read as a next-season forecast
   // it covers 99.9% at nominal 95% (n=17,204): median se~3.13 vs median annual move ~0.54, i.e. ~4x
@@ -506,7 +508,7 @@ function Chart(mount,ser,key,proj,extras){
       let up='',dn='';
       idx.forEach(i=>{up+=`${X(i).toFixed(1)},${Yb(v[i]+1.96*se[i]).toFixed(1)} `;});
       for(let k=idx.length-1;k>=0;k--){const i=idx[k];dn+=`${X(i).toFixed(1)},${Yb(v[i]-1.96*se[i]).toFixed(1)} `;}
-      svg.appendChild(el('polygon',{points:up+dn,fill:'#8aa0bb','fill-opacity':.07,stroke:'none','clip-path':`url(#${cid})`}));}}
+      svg.appendChild(el('polygon',{points:up+dn,class:'ciband',stroke:'none','clip-path':`url(#${cid})`}));}}
   // Latent mode: ONE continuous cross-league line, colored per-segment by the league the player
   // was in that day (the DARKO fusion — no seam). Every other mode: one line PER league, no bridge.
   if(activeMode()==='latent'){
@@ -910,8 +912,8 @@ function renderMulti(){
   });
 }
 function ChartMulti(mount,key){
-  const W=mount.clientWidth||320, H=mount===document.getElementById('c_net')?190:150;
-  const padL=30,padR=7,padT=8,padB=15, pw=W-padL-padR, ph=H-padT-padB;
+  const W=mount.clientWidth||320, H=mount===document.getElementById('c_net')?206:166;
+  const padL=38,padR=8,padT=9,padB=18, pw=W-padL-padR, ph=H-padT-padB;
   const n=MDATES.length;
   let pool=[];MULTI.forEach(m=>MDATES.forEach(d=>{const s=m.map[d];if(s&&s[key]!=null)pool.push(s[key]);}));
   let lo=Math.min(...pool), hi=Math.max(...pool), c=(lo+hi)/2, half=Math.max((hi-lo)/2*1.06,0.15);
@@ -921,12 +923,12 @@ function ChartMulti(mount,key){
   const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,preserveAspectRatio:'none'});
   [0,.5,1].forEach(f=>{const yv=ymin+(ymax-ymin)*f, y=Y(yv);
     svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'var(--grid)','stroke-width':1}));
-    const t=el('text',{x:padL-4,y:y+3,'font-size':9,fill:'var(--faint)','text-anchor':'end'});t.textContent=(yv>=0?'+':'')+yv.toFixed(1);svg.appendChild(t);});
+    const t=el('text',{x:padL-6,y:y+4,'font-size':11,fill:'var(--faint)','text-anchor':'end'});t.textContent=(yv>=0?'+':'')+yv.toFixed(1);svg.appendChild(t);});
   if(ymin<0&&ymax>0){const y=Y(0);svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'var(--zero)','stroke-width':1}));}
   let py=MDATES[0].slice(0,4);
   for(let i=1;i<n;i++){const yr=MDATES[i].slice(0,4);if(yr!==py){
     svg.appendChild(el('line',{x1:X(i),y1:padT,x2:X(i),y2:padT+ph,stroke:'var(--line-2)','stroke-width':1}));
-    const t=el('text',{x:X(i),y:H-4,'font-size':8.5,fill:'var(--faint)','text-anchor':'middle'});t.textContent="’"+yr.slice(2);svg.appendChild(t);py=yr;}}
+    const t=el('text',{x:X(i),y:H-5,'font-size':10.5,fill:'var(--faint)','text-anchor':'middle'});t.textContent="’"+yr.slice(2);svg.appendChild(t);py=yr;}}
   // Draw each player's OWN consecutive points (break only on a league change). Players are
   // downsampled independently, so their absolute dates rarely align — iterating the union and
   // flushing on every interleaved date shattered each line into invisible 1-point segments.
@@ -1004,10 +1006,10 @@ function wfInterp(i0,i1,t){const a=SER[i0],b=SER[i1]||a,r={};
   for(const f of[...WF_OFF,...WF_DEF])r[f]=(a[f]||0)+(((b[f]||0)-(a[f]||0)))*t;return r;}
 
 function wfSvg(row,facs,title,dom){
-  const W=560,H=232,m={t:40,r:14,b:22,l:36},pw=W-m.l-m.r,ph=H-m.t-m.b;
+  const W=472,H=200,m={t:34,r:12,b:20,l:34},pw=W-m.l-m.r,ph=H-m.t-m.b;
   const steps=facs.map(f=>({label:f,value:row[f]||0}));
   const total=steps.reduce((a,s)=>a+s.value,0), rng=dom.max-dom.min, Y=v=>m.t+(dom.max-v)/rng*ph;
-  const count=steps.length+1, slot=pw/count, bw=Math.min(56,slot*0.5), cx=i=>m.l+slot*i+slot/2;
+  const count=steps.length+1, slot=pw/count, bw=Math.min(52,slot*0.5), cx=i=>m.l+slot*i+slot/2;
   let ticks='';
   for(let k=0;k<5;k++){const tv=dom.min+rng*k/4,yy=Y(tv);
     ticks+=`<line class="wfg" x1="${m.l}" x2="${W-m.r}" y1="${yy.toFixed(1)}" y2="${yy.toFixed(1)}"/><text class="wft" x="${m.l-6}" y="${(yy+3).toFixed(1)}" text-anchor="end">${tv.toFixed(1)}</text>`;}

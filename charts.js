@@ -102,7 +102,7 @@
 
   // horizontal within-league percentile bar (profile). pct in [0,1]; returns <svg>.
   function pctBar(val, pct, accent, label) {
-    var W = 300, H = 18, px = Math.max(2, Math.round(pct * W));
+    var W = 300, H = 20, px = Math.max(2, Math.round(pct * W));
     accent = accent || "var(--accent)";
     var svg = el("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", height: H, role: "img",
       "aria-label": (label || "") + " " + val.toFixed(2) + ", " + Math.round(pct * 100) + "th percentile" });
@@ -125,7 +125,7 @@
     facs.forEach(function (f, k) {
       var a = -Math.PI / 2 + k * 2 * Math.PI / n;
       svg.appendChild(el("line", { x1: cx, y1: cy, x2: cx + Math.cos(a) * R, y2: cy + Math.sin(a) * R, stroke: "var(--line)", "stroke-width": 1 }));
-      var t = el("text", { x: cx + Math.cos(a) * (R + 14), y: cy + Math.sin(a) * (R + 14) + 3, "font-size": 10, fill: "#aebccd", "text-anchor": "middle" });
+      var t = el("text", { x: cx + Math.cos(a) * (R + 17), y: cy + Math.sin(a) * (R + 17) + 4, "font-size": 11.5, fill: "#aebccd", "text-anchor": "middle" });
       t.textContent = f; svg.appendChild(t);
     });
     var pp = facs.map(function (f, k) { var a = -Math.PI / 2 + k * 2 * Math.PI / n, r = R * (pcts[f] || 0);
@@ -174,8 +174,8 @@
       g += '<path d="' + path + '" fill="none" stroke="' + leagueColor(lg) + '" stroke-width="1.8"/>';
     }
     g += '<line x1="' + m.l + '" y1="' + m.t + '" x2="' + m.l + '" y2="' + (H - m.b) + '" stroke="var(--line)"/>';
-    g += '<text x="' + m.l + '" y="' + (m.t + 9) + '" fill="var(--muted)" font-size="10">' + v1.toFixed(1) + '</text>';
-    g += '<text x="' + m.l + '" y="' + (H - m.b) + '" fill="var(--muted)" font-size="10">' + v0.toFixed(1) + '</text>';
+    g += '<text x="' + m.l + '" y="' + (m.t + 9) + '" fill="var(--muted)" font-size="11">' + v1.toFixed(1) + '</text>';
+    g += '<text x="' + m.l + '" y="' + (H - m.b) + '" fill="var(--muted)" font-size="11">' + v0.toFixed(1) + '</text>';
     mount.innerHTML = g;
     return true;
   }
@@ -195,11 +195,11 @@
     var svg = el("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img",
       "aria-label": "true-talent density overlay; each player a Gaussian N(net, se^2)" });
     svg.appendChild(el("line", { x1: X(0), y1: mt, x2: X(0), y2: mt + ph, stroke: "#2b3a51", "stroke-width": 1.5 }));
-    var z = el("text", { x: X(0), y: H - 9, "font-size": 10, fill: "var(--muted)", "text-anchor": "middle" });
+    var z = el("text", { x: X(0), y: H - 9, "font-size": 11, fill: "var(--muted)", "text-anchor": "middle" });
     z.textContent = "0 (league avg)"; svg.appendChild(z);
     for (var v = Math.ceil(lo); v <= Math.floor(hi); v += 2) {
       svg.appendChild(el("line", { x1: X(v), y1: mt + ph, x2: X(v), y2: mt + ph + 4, stroke: "#2b3a51" }));
-      var t = el("text", { x: X(v), y: H - 9, "font-size": 9.5, fill: "var(--faint)", "text-anchor": "middle" });
+      var t = el("text", { x: X(v), y: H - 9, "font-size": 10.5, fill: "var(--faint)", "text-anchor": "middle" });
       t.textContent = (v > 0 ? "+" : "") + v; svg.appendChild(t);
     }
     sel.forEach(function (s) {

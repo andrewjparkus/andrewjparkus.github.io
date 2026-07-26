@@ -25,8 +25,11 @@
   --pos:#3ddc97; --neg:#ff6b6b; --zero:#5d6b7e;
   /* page-specific accents kept as tokens so they theme too */
   --pure:#56b6ff; --box:#f2a154; --amp:#2dd4bf; --amber:#f0b429; --whisk:#56b6ff;
-  /* type scale */
-  --fs-1:11px; --fs-2:12.5px; --fs-3:13.5px; --fs-4:15px; --fs-5:20px; --fs-6:25px;
+  /* type scale — bumped one notch 2026-07-26 (owner: "the text and numbers are small"). The old
+     scale bottomed out at 9-11px on readouts and axis ticks, which is below comfortable reading
+     size on a 1280 desktop; every page draws its type from these six tokens, so the whole site
+     moves together and nothing can drift back per-page. */
+  --fs-1:11.5px; --fs-2:13px; --fs-3:14px; --fs-4:15.5px; --fs-5:22px; --fs-6:26px;
   /* spacing scale (4px base) */
   --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:36px;
   /* radius + layout */
@@ -60,15 +63,15 @@ a:hover{color:var(--text)}
 /* page headings */
 h1{font-size:var(--fs-5);margin:6px 0 0;font-weight:600;letter-spacing:-.2px}
 h1 b{color:var(--accent);font-weight:700}
-h1 small{font-size:12px;color:var(--muted);font-weight:500;margin-left:6px}
+h1 small{font-size:12.5px;color:var(--muted);font-weight:500;margin-left:6px}
 .sub{color:var(--muted);font-size:var(--fs-2);margin:6px 0 0;line-height:1.5;max-width:840px}
-.note{color:var(--faint);font-size:11.5px;margin:8px 0 0;line-height:1.6;max-width:840px}
+.note{color:var(--faint);font-size:12px;margin:8px 0 0;line-height:1.6;max-width:840px}
 .sectitle{font-size:var(--fs-3);font-weight:700;color:#aebccd;margin:22px 0 8px;letter-spacing:.2px}
 :root[data-theme=light] .sectitle{color:#33425a}
-.legend{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.6;max-width:840px}
-.foot{color:var(--faint);font-size:11px;margin-top:28px;line-height:1.7;max-width:840px}
-.cap{color:var(--faint);font-size:10.5px;margin-top:var(--sp-3);line-height:1.55;max-width:840px}
-.empty,.msg{color:var(--muted);text-align:center;padding:72px 0;font-size:14.5px}
+.legend{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.6;max-width:840px}
+.foot{color:var(--faint);font-size:11.5px;margin-top:28px;line-height:1.7;max-width:840px}
+.cap{color:var(--faint);font-size:11.5px;margin-top:var(--sp-3);line-height:1.55;max-width:840px}
+.empty,.msg{color:var(--muted);text-align:center;padding:72px 0;font-size:15px}
 
 /* ---- Nav (moved out of nav.js so it themes + can't drift) ------------------ */
 .topnav{border-bottom:1px solid var(--line);background:var(--navbg);position:sticky;top:0;z-index:50}
@@ -96,7 +99,7 @@ h1 small{font-size:12px;color:var(--muted);font-weight:500;margin-left:6px}
 .topnav .navmenu-item.active{color:var(--accent)}
 .topnav .navspace{flex:1 1 auto}
 .topnav .themebtn{cursor:pointer;background:none;border:1px solid var(--line);color:var(--muted);
-  font:inherit;font-size:13px;line-height:1;padding:6px 9px;border-radius:var(--r-1);white-space:nowrap}
+  font:inherit;font-size:13.5px;line-height:1;padding:6px 9px;border-radius:var(--r-1);white-space:nowrap}
 .topnav .themebtn:hover{color:var(--text);border-color:var(--accent)}
 
 /* ---- Search box (Explorer / compare) -------------------------------------- */
@@ -113,7 +116,7 @@ h1 small{font-size:12px;color:var(--muted);font-weight:500;margin-left:6px}
 .opt .meta{font-size:var(--fs-1);color:var(--muted);display:flex;gap:7px;align-items:center}
 
 /* ---- Badges (league) + chips ---------------------------------------------- */
-.badge{font-size:9.5px;padding:1px 5px;font-weight:700;letter-spacing:.3px;border-radius:3px}
+.badge{font-size:10px;padding:1.5px 5px;font-weight:700;letter-spacing:.3px;border-radius:3px}
 .b-n{background:rgba(74,168,255,.16);color:#9fccff}
 .b-g{background:rgba(255,145,56,.16);color:#ffc48f}
 .b-c{background:rgba(255,95,143,.16);color:#ffa8c4}
@@ -121,7 +124,7 @@ h1 small{font-size:12px;color:var(--muted);font-weight:500;margin-left:6px}
 :root[data-theme=light] .b-n{background:rgba(31,122,224,.16);color:#14508f}
 :root[data-theme=light] .b-g{background:rgba(192,86,0,.16);color:#8a3d00}
 :root[data-theme=light] .b-c{background:rgba(200,30,90,.16);color:#8f1440}
-.chip{font-size:12px;padding:5px 11px;background:var(--panel);border:1px solid var(--line);
+.chip{font-size:12.5px;padding:5px 11px;background:var(--panel);border:1px solid var(--line);
   color:var(--muted);cursor:pointer;border-radius:var(--r-1)}
 .chip:hover{color:var(--text);border-color:var(--accent)}
 
@@ -130,48 +133,60 @@ h1 small{font-size:12px;color:var(--muted);font-weight:500;margin-left:6px}
 .netcard{border:1px solid var(--line);background:var(--panel);margin:14px 0;padding:6px 8px 2px;border-radius:var(--r-1)}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:10px}
 .cell{border:1px solid var(--line);background:var(--panel);padding:5px 7px 2px;border-radius:var(--r-1)}
-.ctitle{font-size:11.5px;font-weight:700;color:#aebccd;display:flex;justify-content:space-between;
-  align-items:baseline;padding:1px 2px 3px}
+/* Panel header = a LOCKUP, not a justified row. It used to be `justify-content:space-between`,
+   which on a 493px factor cell threw the label ("oTOV") hard left and the number ("−0.59 ±0.69")
+   hard right with ~380px of nothing between them — you had to saccade across the card to pair a
+   name with its value (owner, 2026-07-26). Label and number now sit adjacent at the left and read
+   as one unit; anything that still wants the right edge asks for it with `margin-left:auto`
+   (the net card's off/def + projection controls do exactly that). */
+.ctitle{font-size:12.5px;font-weight:700;color:#aebccd;display:flex;gap:var(--sp-2);
+  align-items:baseline;padding:2px 2px 6px}
 :root[data-theme=light] .ctitle{color:#33425a}
-.ctitle .v{font-family:var(--font-mono);font-size:11.5px;font-weight:500;color:var(--muted);
-  font-variant-numeric:tabular-nums}
+/* the number is the panel's headline, so it outranks its own label in size */
+.ctitle .v{font-family:var(--font-mono);font-size:15px;font-weight:600;color:var(--text);
+  font-variant-numeric:tabular-nums;letter-spacing:-.2px;line-height:1}
 .ctitle .v b{color:var(--text);font-weight:600}
+/* The trailing ±SE (and the opt-in O/D split) are qualifiers on the headline, not headlines.
+   Scoped to spans that FOLLOW the <b> deliberately: in compare mode setHoverMulti's put() fills
+   .v with one bare <span> per player and no <b> at all, and those spans ARE the headline — a plain
+   `.ctitle .v span` rule would shrink every compared player's number to footnote size. */
+.ctitle .v b ~ span{font-size:11.5px;font-weight:500;letter-spacing:0}
 /* KPI block — big number stat for team/player headers */
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:14px 0}
 .kpi{border:1px solid var(--line);background:var(--panel);padding:10px 14px;border-radius:var(--r-1)}
-.kpi .k{font-size:11px;color:var(--muted);font-weight:600}
-.kpi .v{font-family:var(--font-mono);font-size:21px;font-weight:600;margin-top:2px;
+.kpi .k{font-size:11.5px;color:var(--muted);font-weight:600}
+.kpi .v{font-family:var(--font-mono);font-size:22px;font-weight:600;margin-top:2px;
   font-variant-numeric:tabular-nums;letter-spacing:-.3px}
-.kpi .x{font-size:11px;color:var(--faint);margin-top:1px}
+.kpi .x{font-size:11.5px;color:var(--faint);margin-top:1px}
 
 /* ---- Segmented control + buttons ------------------------------------------ */
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--r-2);overflow:hidden;background:var(--panel-2)}
-.seg button{font:inherit;font-size:12px;font-weight:600;color:var(--muted);background:none;border:none;
+.seg button{font:inherit;font-size:12.5px;font-weight:600;color:var(--muted);background:none;border:none;
   padding:6px 12px;cursor:pointer;transition:background .12s,color .12s;white-space:nowrap}
 .seg button:hover{color:var(--text)}
 .seg button.on{color:var(--accent-ink);background:var(--accent)}
 .seg button:disabled{opacity:.32;cursor:not-allowed}
 .seg button:disabled:hover{color:var(--muted)}
-.seglab{font-size:11.5px;color:var(--faint);margin-right:2px}
-.btn{font-size:12px;font-weight:600;color:var(--muted);background:var(--panel);border:1px solid var(--line);
+.seglab{font-size:12px;color:var(--faint);margin-right:2px}
+.btn{font-size:12.5px;font-weight:600;color:var(--muted);background:var(--panel);border:1px solid var(--line);
   padding:6px 12px;cursor:pointer;border-radius:var(--r-1)}
 .btn:hover{color:var(--text);border-color:var(--accent)}
 .btn.active{color:var(--text);border-color:var(--accent);background:var(--panel-3)}
 
 /* ---- The ONE table (Tables / Teams / Trade / Draft) ----------------------- */
 .scroll{overflow-x:auto;border:1px solid var(--line);background:var(--panel);border-radius:var(--r-1)}
-table.tbl{border-collapse:collapse;width:100%;font-size:12.5px;
+table.tbl{border-collapse:collapse;width:100%;font-size:13px;
   font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
 /* compact body cells everywhere (matches the Team page) — keeps every table consistent
    and stops the Tables page / trade ledger from rendering at the 16px browser default */
 table.tbl th,table.tbl td{padding:6px 8px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line-2)}
-table.tbl tbody td{font-size:12.5px}
-table.tbl thead th{font-size:11px;color:var(--muted);font-weight:600;background:var(--panel-2);
+table.tbl tbody td{font-size:13px}
+table.tbl thead th{font-size:11.5px;color:var(--muted);font-weight:600;background:var(--panel-2);
   border-bottom:1px solid var(--line);position:sticky;top:0;z-index:1}
 table.tbl thead th.sortable{cursor:pointer;user-select:none}
 table.tbl thead th.sortable:hover{color:var(--text)}
 table.tbl th.l,table.tbl td.l{text-align:left}
-table.tbl td.rank{color:var(--muted);font-size:12px;width:28px}
+table.tbl td.rank{color:var(--muted);font-size:12.5px;width:30px}
 table.tbl tbody tr:hover>td{background:var(--panel-3)}
 table.tbl th.grp{color:#9fb0c4;border-left:1px solid var(--line)}
 table.tbl td.grp{border-left:1px solid var(--line-2)}
@@ -191,12 +206,18 @@ table.tbl tr.total td{border-top:1px solid var(--line);border-bottom:none;font-w
 :root[data-theme=light] .callout{color:#2a3a52}
 
 /* ---- Chart helpers (used by charts.js output) ----------------------------- */
+/* 95% measurement CI envelope. Themed here rather than hard-coded on the polygon: the dark-mode
+   wash (#8aa0bb @ .07) all but vanished on the white light-mode panel, so light gets its own
+   darker, slightly stronger step. Do not narrow or rescale the band itself (F1) — this is purely
+   how visible the same envelope is. */
+.ciband{fill:#8aa0bb;fill-opacity:.07}
+:root[data-theme=light] .ciband{fill:#61728a;fill-opacity:.15}
 .crosshair{stroke:#3a4862;stroke-width:1;stroke-dasharray:3 3;pointer-events:none}
 .hdot{pointer-events:none;stroke:var(--bg);stroke-width:1.2}
 .spark{display:inline-block;vertical-align:middle}
 
 /* ---- Inline methodology tooltip ( ? next to a factor ) -------------------- */
-.help{display:inline-block;width:13px;height:13px;line-height:11px;text-align:center;font-size:9px;
+.help{display:inline-block;width:14px;height:14px;line-height:12px;text-align:center;font-size:10px;
   font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:50%;cursor:help;
   vertical-align:middle;position:relative;top:-1px}
 .help:hover{color:var(--text);border-color:var(--accent)}
@@ -205,7 +226,7 @@ table.tbl tr.total td{border-top:1px solid var(--line);border-bottom:none;font-w
 .help[data-tip]:hover::after{
   content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);
   background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:var(--r-1);
-  padding:6px 9px;font-size:11.5px;font-weight:400;line-height:1.4;width:max-content;max-width:240px;
+  padding:7px 10px;font-size:12px;font-weight:400;line-height:1.45;width:max-content;max-width:260px;
   white-space:normal;text-align:left;z-index:60;box-shadow:0 6px 18px rgba(0,0,0,.4);pointer-events:none}
 .help[data-tip]:hover::before{
   content:'';position:absolute;left:50%;bottom:calc(100% + 1px);transform:translateX(-50%);
@@ -213,20 +234,20 @@ table.tbl tr.total td{border-top:1px solid var(--line);border-bottom:none;font-w
 
 /* ---- Command palette (Cmd-K / "/" global search; built by nav.js) --------- */
 .navsearch{cursor:pointer;background:none;border:1px solid var(--line);color:var(--muted);font:inherit;
-  font-size:12px;line-height:1;padding:6px 9px;border-radius:var(--r-1);white-space:nowrap;margin-right:6px}
+  font-size:12.5px;line-height:1;padding:6px 9px;border-radius:var(--r-1);white-space:nowrap;margin-right:6px}
 .navsearch:hover{color:var(--text);border-color:var(--accent)}
 .navsearch b{color:var(--faint);font-weight:600;margin-left:6px;letter-spacing:.3px}
 .pal-bg{position:fixed;inset:0;background:rgba(4,7,12,.55);z-index:100;display:none;
   align-items:flex-start;justify-content:center;padding-top:11vh}
 .pal-bg.open{display:flex}
 .pal{width:min(560px,92vw);background:var(--panel);border:1px solid var(--line);border-radius:var(--r-2);
-  box-shadow:0 18px 60px rgba(0,0,0,.5);overflow:hidden}
+  box-shadow:0 12px 34px rgba(0,0,0,.42);overflow:hidden}
 .pal>input{width:100%;padding:14px 16px;font-size:15px;background:var(--panel);border:none;
   border-bottom:1px solid var(--line);color:var(--text);outline:none}
 .pal-list{max-height:48vh;overflow-y:auto}
 .pal-list .opt{border-bottom:1px solid var(--line-2)}
-.pal-empty{padding:18px;color:var(--muted);font-size:13px;text-align:center}
-.pal-hint{display:flex;gap:14px;padding:7px 14px;border-top:1px solid var(--line-2);font-size:10.5px;color:var(--faint)}
+.pal-empty{padding:18px;color:var(--muted);font-size:13.5px;text-align:center}
+.pal-hint{display:flex;gap:14px;padding:7px 14px;border-top:1px solid var(--line-2);font-size:11px;color:var(--faint)}
 .pal-hint b{color:var(--muted);font-weight:600}
 
 /* ---- Responsive ----------------------------------------------------------- */

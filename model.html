@@ -57,10 +57,10 @@
   .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
   .fcell{border:1px solid var(--line);background:var(--panel);border-radius:var(--r-1);padding:8px 9px 4px}
   .fcell.net{grid-column:1 / -1}
-  .fcell .ftitle{display:flex;justify-content:space-between;align-items:baseline;
-    font-size:var(--fs-2);font-weight:600;color:var(--muted);margin-bottom:2px}
-  .fcell .fval{font-variant-numeric:tabular-nums;font-weight:700;font-size:var(--fs-3);color:var(--text)}
-  .fcell .fval .pm{color:var(--faint);font-weight:400;font-size:11px}
+  .fcell .ftitle{display:flex;gap:7px;align-items:baseline;
+    font-size:var(--fs-2);font-weight:600;color:var(--muted);margin-bottom:3px}
+  .fcell .fval{font-variant-numeric:tabular-nums;font-weight:700;font-size:15px;color:var(--text);letter-spacing:-.2px}
+  .fcell .fval .pm{color:var(--faint);font-weight:400;font-size:11.5px;letter-spacing:0}
   .fcell svg{display:block;width:100%}
   @media(max-width:860px){
     .doclayout{grid-template-columns:1fr;gap:6px}
@@ -780,8 +780,8 @@
 
   // small-multiple chart: mirrors the Explorer's Chart() idiom (band + per-league polyline), static.
   function draw(mount,d,key,big){
-    var W=mount.clientWidth||240, H=big?120:84;
-    var padL=26,padR=5,padT=6,padB=12, pw=W-padL-padR, ph=H-padT-padB;
+    var W=mount.clientWidth||240, H=big?140:104;
+    var padL=34,padR=6,padT=7,padB=16, pw=W-padL-padR, ph=H-padT-padB;
     var n=d.d.length, v=d[key], se=d[key+'_se'];
     var pool=v.filter(function(x){return x!=null;});
     var lo=Math.min.apply(null,pool), hi=Math.max.apply(null,pool);
@@ -793,21 +793,21 @@
       'aria-label':key+' daily series for '+d.name});
     [0,.5,1].forEach(function(f){var yv=ymin+(ymax-ymin)*f, y=Y(yv);
       svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'var(--grid)','stroke-width':1}));
-      var t=el('text',{x:padL-4,y:y+3,'font-size':8,fill:'var(--faint)','text-anchor':'end'});
+      var t=el('text',{x:padL-5,y:y+4,'font-size':10.5,fill:'var(--faint)','text-anchor':'end'});
       t.textContent=(yv>=0?'+':'')+yv.toFixed(1); svg.appendChild(t);});
     if(ymin<0&&ymax>0){var yz=Y(0);svg.appendChild(el('line',{x1:padL,y1:yz,x2:W-padR,y2:yz,stroke:'var(--zero)','stroke-width':1}));}
     // season gridlines (light)
     var py=d.d[0].slice(0,4);
     for(var i=1;i<n;i++){var yr=d.d[i].slice(0,4); if(yr!==py){
       svg.appendChild(el('line',{x1:X(i),y1:padT,x2:X(i),y2:padT+ph,stroke:'var(--line-2)','stroke-width':1}));
-      if(big){var tt=el('text',{x:X(i),y:H-3,'font-size':8,fill:'var(--faint)','text-anchor':'middle'});
+      if(big){var tt=el('text',{x:X(i),y:H-4,'font-size':10.5,fill:'var(--faint)','text-anchor':'middle'});
         tt.textContent="’"+yr.slice(2); svg.appendChild(tt);} py=yr;}}
     // CI band: measurement uncertainty on the current estimate, not a forward band (CAL-2; see
     // research/arp/cal2_band_audit.md). Labeling only — do not narrow or rescale it (F1).
     var up='',dn='';
     for(var a=0;a<n;a++) up+=X(a).toFixed(1)+','+Y(v[a]+1.96*se[a]).toFixed(1)+' ';
     for(var b=n-1;b>=0;b--) dn+=X(b).toFixed(1)+','+Y(v[b]-1.96*se[b]).toFixed(1)+' ';
-    svg.appendChild(el('polygon',{points:up+dn,fill:'#8aa0bb','fill-opacity':.08,stroke:'none'}));
+    svg.appendChild(el('polygon',{points:up+dn,class:'ciband',stroke:'none'}));
     // one polyline per league
     var lgs={}; d.lg.forEach(function(l,i){(lgs[l]=lgs[l]||[]).push(i);});
     Object.keys(lgs).forEach(function(lg){var idx=lgs[lg]; if(idx.length<2)return;
