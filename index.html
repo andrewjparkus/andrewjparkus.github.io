@@ -9,8 +9,30 @@
   #player{display:none;margin-top:20px}
   .phead{display:flex;align-items:baseline;gap:13px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:11px}
   .pname{font-size:var(--fs-6);font-weight:700;letter-spacing:-.5px}
+  /* ── player card (headshot + name + age + per-game box line) — Explorer-only ── */
+  .pcard{display:none;gap:var(--sp-4);align-items:center;background:var(--panel);
+    border:1px solid var(--line);border-radius:var(--r-2);padding:var(--sp-3) var(--sp-4);margin-bottom:14px}
+  .pc-face,.pc-mono{width:76px;height:76px;flex:0 0 76px;border-radius:var(--r-2);
+    background:var(--panel-3);border:1px solid var(--line)}
+  .pc-face{object-fit:cover;object-position:top}
+  .pc-mono{display:flex;align-items:center;justify-content:center;font-family:var(--font);
+    font-weight:700;font-size:25px;color:var(--muted);letter-spacing:.5px}
+  .pc-body{flex:1;min-width:0}
+  .pc-name{font-size:var(--fs-6);font-weight:700;letter-spacing:-.5px;line-height:1.12}
+  .pc-sub{display:flex;gap:9px;align-items:center;flex-wrap:wrap;font-size:var(--fs-2);
+    color:var(--muted);margin:3px 0 9px}
+  .pc-sub .pos{font-weight:700;color:var(--text);letter-spacing:.02em}
+  .pc-strip{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end}
+  .pc-group{display:flex;font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+  .pc-cell{display:flex;flex-direction:column;gap:1px;padding:0 11px;border-right:1px solid var(--line)}
+  .pc-cell:first-child{padding-left:0}.pc-cell:last-child{border-right:none;padding-right:0}
+  .pc-val{font-size:var(--fs-3);font-weight:600;color:var(--text)}
+  .pc-lab{font-size:9.5px;letter-spacing:.09em;color:var(--faint);text-transform:uppercase}
+  .pc-shoot .pc-val{color:var(--muted)}
+  @media(max-width:520px){.pcard{align-items:flex-start}.pc-name{font-size:var(--fs-5)}
+    .pc-face,.pc-mono{width:60px;height:60px;flex-basis:60px}}
   .pmeta{color:var(--muted);font-size:var(--fs-2)}
-  .readout{margin-left:auto;font-family:var(--font-mono);font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:150px;text-align:right}
+  .readout{font-family:var(--font-mono);font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:150px;text-align:left}
   .readout b{color:var(--text)}
   .modehint{font-size:11.5px;color:var(--faint);margin:7px 0 -4px;line-height:1.55;max-width:840px}
   /* bespoke interactive crosshair charts (owned locally) */
@@ -134,6 +156,7 @@
   <div class="cmptray" id="suggest"></div>
 
   <div id="player">
+    <div class="pcard" id="pcard"></div>
     <div class="phead">
       <span class="pname" id="pname"></span>
       <span class="pmeta" id="pmeta"></span>
@@ -307,9 +330,13 @@ const MODEHINT_LATENT_ALIAS='Latent — single-league player: the latent equals 
 // must ship in the same motion as the filter if the filter ever comes back — a smoothed number that
 // does not say it is smoothed is a lie. It is DERIVED: the window quoted is whatever was applied.
 const boxSmoothNote=w=>` Display-smoothed: each of the six factors is filtered along time with a trailing ${w}-point median, reset at every season break (NBA days only). This changes only what is drawn. The rating, the prior and the projection all use the unsmoothed values, and the confidence band is not smoothed.`;
-// Default mode is 'latent' (owner call 2026-07-21). Latent is DISPLAY-ONLY — fence F4 stands, it
-// does not feed the board, the prior or the projection; this changes which series the chart opens on.
-let SERIES={}, MODE=(localStorage.getItem('rapm_mode')||'latent'), PNAME='', CURID=null;
+// Default mode is 'prior' (owner 2026-07-24; supersedes the 2026-07-21 latent default). Latent stays
+// DISPLAY-ONLY (fence F4) and selectable; it just no longer opens by default. One-time
+// migration flips the old latent default (or unset) to prior; explicit pure/box choices survive,
+// and latent stays selectable (clicking it persists, and the flag stops re-migration).
+let _sm=localStorage.getItem('rapm_mode');
+if(!localStorage.getItem('rapm_dflt_v3')){ if(!_sm||_sm==='latent'){_sm='prior';localStorage.setItem('rapm_mode','prior');} localStorage.setItem('rapm_dflt_v3','1'); }
+let SERIES={}, MODE=(_sm||'prior'), PNAME='', CURID=null;
 function load(id,name){drop.style.display='none';q.value=name;history.replaceState(null,'','?p='+id);
   if(typeof wfStop==='function')wfStop();           // cancel any waterfall sweep from the previous player
   CURID=id; MULTI=null;
@@ -346,7 +373,7 @@ function load(id,name){drop.style.display='none';q.value=name;history.replaceSta
 let RAW={}, LATENT_ALIAS=false, BOX_SM=0;   // BOX_SM: trailing-median window build_site_box.py
 //   actually applied to this player's box curve (0/absent = not smoothed). Drives the F3 disclosure.
 
-function activeMode(){return SERIES[MODE]?MODE:'latent';}  // honor preference; fall back per-player without dropping it
+function activeMode(){return SERIES[MODE]?MODE:'prior';}  // honor preference; fall back per-player without dropping it
 function setMode(m){
   if(!SERIES[m])return;                              // ignore unavailable mode (button disabled anyway)
   MODE=m; localStorage.setItem('rapm_mode',m);
@@ -613,10 +640,53 @@ function setHoverAll(i,line){
   if(!wfPlaying&&WFDOM&&i>=0&&i<SER.length)wfRenderAt(i);   // waterfall follows the hovered game-day
 }
 
+// ── player card (headshot + name + age + per-game box line) ──────────────────────────────────
+// Data rides in the base sidecar as prior.card (build_site.py + card_data.py). Absent -> render the
+// old text header instead (no crash). The card is basis-independent (box stats don't change with the
+// Pure/Prior/Box/Latent toggle), so it is painted once in show() and never from setMode/renderActive.
+function faceErr(img){                              // advance the CDN candidate chain; monogram at the end
+  let s;try{s=JSON.parse(img.dataset.srcs||'[]');}catch(e){s=[];}
+  const i=(+img.dataset.i||0)+1;
+  if(i<s.length){img.dataset.i=i;img.src=s[i];return;}
+  const m=document.createElement('span');m.className='pc-mono';m.textContent=img.dataset.mono||'';
+  img.replaceWith(m);
+}
+// Card HELD OFF (owner 2026-07-24): ship it only once AST/STL/BLK are sourced correctly — the box
+// parse leaves 18 rotation stars (Doncic/Jokic) with 0 assists. Flip CARD_ENABLED to true after the
+// assist fix. All card code (card_data.py, #pcard, faceErr) stays wired and ready.
+const CARD_ENABLED=false;
+function renderCard(){
+  const box=document.getElementById('pcard'), pn=document.getElementById('pname');
+  const c=CARD_ENABLED&&RAW.prior&&RAW.prior.card;
+  if(!c){box.style.display='none';box.innerHTML='';pn.style.display='';return;}
+  pn.style.display='none';                          // the card owns the name
+  const initials=(PNAME.match(/\p{L}+/gu)||[PNAME]).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+  const faces=Array.isArray(c.face)?c.face:[];
+  const num=v=>v==null?'—':(v>=0?'':'')+v.toFixed(1);
+  const pct=v=>v==null?'—':(v*100).toFixed(1)+'%';
+  const cell=(v,l)=>`<div class="pc-cell"><span class="pc-val">${v}</span><span class="pc-lab">${l}</span></div>`;
+  const lg=SERIES.prior[SERIES.prior.length-1].lg;
+  const sub=[c.pos?`<span class="pos">${c.pos}</span>`:'',
+             `<span style="color:${LC[lg]};font-weight:700">${LNAME[lg]}</span>`,
+             c.age!=null?`Age ${c.age}`:''].filter(Boolean).join('<span style="color:var(--faint)">·</span>');
+  box.innerHTML=
+    `<img class="pc-face" alt="" loading="lazy" decoding="async"
+       src="${faces[0]||''}" data-srcs='${JSON.stringify(faces).replace(/'/g,'&#39;')}'
+       data-i="0" data-mono="${initials}" onerror="faceErr(this)">`
+   +`<div class="pc-body"><div class="pc-name">${PNAME}</div>`
+   +`<div class="pc-sub">${sub}</div>`
+   +`<div class="pc-strip">`
+   +`<div class="pc-group">${cell(num(c.pts),'PTS')}${cell(num(c.reb),'REB')}${cell(num(c.ast),'AST')}${cell(num(c.stl),'STL')}${cell(num(c.blk),'BLK')}</div>`
+   +`<div class="pc-group pc-shoot">${cell(pct(c.fg),'FG%')}${cell(pct(c.tp),'3P%')}${cell(pct(c.ft),'FT%')}</div>`
+   +`</div></div>`;
+  if(!faces.length)faceErr(box.querySelector('.pc-face'));   // no candidates -> straight to monogram
+  box.style.display='flex';
+}
 function show(){
   document.getElementById('empty').style.display='none';
   document.getElementById('player').style.display='block';
   document.getElementById('pname').textContent=PNAME;
+  renderCard();
   document.getElementById('modeseg').style.display='inline-flex';
   document.getElementById('cmptray').style.display='flex';
   // build the 6-factor grid cells once
@@ -813,6 +883,8 @@ function showMulti(){
   document.getElementById('projseg').style.display='none';
   document.getElementById('odseg').style.display='none';   // off/def split is single-player only
   document.getElementById('cmptray').style.display='none';
+  document.getElementById('pcard').style.display='none';    // card is single-player only
+  document.getElementById('pname').style.display='';        // restore the text header for the compare title
   document.getElementById('profile').style.display='none';
   wfStop();document.getElementById('waterfall').style.display='none';   // waterfall is single-player only
   document.getElementById('modehint').textContent='Comparison overlay — prior-informed net + 6 factors for '+MULTI.length+' players. Each player has a distinct color and legend label.';

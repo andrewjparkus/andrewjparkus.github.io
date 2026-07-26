@@ -605,8 +605,8 @@
       "stored_str": "0.498",
       "artifact": "daily_v5/out/oos/retro_net_report.json"
     },
-    "forecast_frozen": "2026-07-24",
-    "forecast_freeze_note": "Committed <strong>2026-07-24</strong>, before the 2026-27 season. \u201cRealized\u201d fills as games are played and the forecast is scored against actual wins \u2014 win or lose, the number was frozen in advance.",
+    "forecast_frozen": "2026-07-25",
+    "forecast_freeze_note": "Committed <strong>2026-07-25</strong>, before the 2026-27 season. \u201cRealized\u201d fills as games are played and the forecast is scored against actual wins \u2014 win or lose, the number was frozen in advance.",
     "provenance": {
       "frozen_preseason": "daily_v5/out/p2_0/verify_composite/frozen_preseason_all.json",
       "game_margin": "daily_v5/out/p2_0/darko_daily_rescore.json (+ composite_report.json for the blend)",
@@ -634,18 +634,18 @@
       "path": "daily_v5/out/oos/scorecard_current.parquet",
       "exists": true,
       "size": 3811,
-      "mtime": 1784927338.4181187
+      "mtime": 1785036539.184157
     },
     "manifest": {
       "path": "daily_v5/out/oos/manifest_current.json",
       "exists": true,
-      "size": 7246,
-      "mtime": 1784927339.6501338
+      "size": 7245,
+      "mtime": 1785036540.5033393
     },
     "git": {
-      "sha": "f0dbdd48b6a1c7df53a4219d6cb824f730f97f1d",
+      "sha": "10ef8f735a3507f99280f1a7b9b02782bafb59b1",
       "dirty": true,
-      "dirty_entries": 11
+      "dirty_entries": 6
     },
     "game_model_params": {
       "hca": 1.5370466094308175,
