@@ -183,7 +183,14 @@ function render(d){
     const mu = leagueAvg[f];
     leagueAvg["sd_"+f] = v.length ? (Math.sqrt(v.reduce((a,b)=>a+(b-mu)*(b-mu),0)/v.length)||1e-9) : 1e-9;
   });
-  const oR = OFF.reduce((a,f)=>a+(teamF[f]||0),0), dR = DEF.reduce((a,f)=>a+(teamF[f]||0),0);
+  // plan 50 W3a: team.strength is on the board's RAW scale, whose 30-team mean is ~-3.73, NOT 0.
+  // A net rating is by definition relative to league average, and this centring is verified, not
+  // assumed: regressing published wins on published strength puts league-mean strength at exactly
+  // 41.00 wins (slope 2.255). Uncentred, every team on this page read ~3.73 points too low.
+  const allS = Object.values(d.teams||{}).map(t=>Number(t && t.strength)).filter(x=>!isNaN(x));
+  const leagueNet = allS.length ? allS.reduce((a,b)=>a+b,0)/allS.length : 0;
+  const oR = OFF.reduce((a,f)=>a+((teamF[f]||0)-(leagueAvg[f]||0)),0),
+        dR = DEF.reduce((a,f)=>a+((teamF[f]||0)-(leagueAvg[f]||0)),0);
 
   const cr = confRank(d, team.conf, abbr);
   const confLabel = (team.conf||"") + (cr.rank ? " · "+ord(cr.rank) : "")
@@ -206,14 +213,20 @@ function render(d){
   const bLo = (team.p2_5!=null?team.p2_5:team.p10), bHi = (team.p97_5!=null?team.p97_5:team.p90);
   const band = (bLo!=null && bHi!=null) ? num(bLo,0)+'–'+num(bHi,0) : '–';
   const po = (team.playoff_prob!=null) ? (team.playoff_prob*100).toFixed(1)+'%' : '–';
-  const strF = fmt(team.strength,1), oF = fmt(oR,1), dF = fmt(dR,1);
+  const strF = fmt(team.strength - leagueNet,1), oF = fmt(oR,1), dF = fmt(dR,1);
   html += '<div class="kpis">';
   html += kpi('Projected wins', projW, '82-game season');
-  html += kpi('95% range', band, 'p2.5–p97.5 wins');
+  // plan 50 W3e/W1/W2: this label was false — the old p2.5–p97.5 band covered 79.4% and the
+  // p10–p90 band 62.5% against nominal 80%. W1 fixed the cause (build_projection.SE_DESMOOTH)
+  // and daily_v5/harness/team_band.py now SCORES the band on 360 team-seasons before every
+  // deploy: p10–p90 covers 0.744–0.875 and p2.5–p97.5 covers 0.892–0.983, the range spanning a
+  // roster-pessimistic and a leak-optimistic basis. Nominal is now defensible; the caveat is not
+  // decoration. If you change the band, re-run that gate and re-read these numbers off it.
+  html += kpi('95% range', band, 'p2.5–p97.5 · measured 89–98%');
   html += kpi('Playoff odds', po, 'from the projection');
-  html += '<div class="kpi"><div class="k">Projected net</div><div class="v '+strF.cls+'">'+strF.txt+'</div><div class="x">pts/100, six factors</div></div>';
-  html += '<div class="kpi"><div class="k">ORAPM</div><div class="v '+oF.cls+'">'+oF.txt+'</div><div class="x">oTS + oTOV + oSC</div></div>';
-  html += '<div class="kpi"><div class="k">DRAPM</div><div class="v '+dF.cls+'">'+dF.txt+'</div><div class="x">dTS + dTOV + dSC (sign-flipped)</div></div>';
+  html += '<div class="kpi"><div class="k">Projected net</div><div class="v '+strF.cls+'">'+strF.txt+'</div><div class="x">pts/100 vs league average</div></div>';
+  html += '<div class="kpi"><div class="k">ORAPM</div><div class="v '+oF.cls+'">'+oF.txt+'</div><div class="x">oTS + oTOV + oSC, vs league</div></div>';
+  html += '<div class="kpi"><div class="k">DRAPM</div><div class="v '+dF.cls+'">'+dF.txt+'</div><div class="x">dTS + dTOV + dSC, vs league</div></div>';
   html += '</div>';
   html += '<div class="cap">A <b>forward projection</b>, not a measured result. Player ratings are carried '
     + 'forward and aged to 2026-27 (per-factor aging); wins, band and playoff odds come from the same '
@@ -222,7 +235,7 @@ function render(d){
   if(flags.length || team.uncertainty){
     const u = team.uncertainty || {};
     html += '<div class="cap">Uncertainty: '
-      + (u.win_band_width!=null ? 'win band '+num(u.win_band_width,1) : 'win band –')
+      + (u.win_band_width!=null ? 'win band '+num(u.win_band_width,1)+' (p10–p90, measured 74–88% coverage)' : 'win band –')
       + (u.gp_uncertainty_games_weighted!=null ? ' · GP '+num(u.gp_uncertainty_games_weighted,1) : '')
       + (u.minutes_uncertainty_mpg_weighted!=null ? ' · minutes '+num(u.minutes_uncertainty_mpg_weighted,1) : '')
       + (flags.length ? ' · flags: '+flags.map(flagLabel).map(esc).join(', ') : '')
@@ -287,12 +300,17 @@ function render(d){
   const winsSum = roster.reduce((a,p)=>a+((p && p.proj_wins!=null && !isNaN(p.proj_wins))?Number(p.proj_wins):0),0);
   const totalWins = (team.proj_wins!=null) ? Number(team.proj_wins) : winsSum;
   html += '<tr class="total"><td class="l pl">TOTAL</td><td class="l">–</td><td class="mpg">–</td><td class="gp">–</td>'
-    + rgCell(team.strength,'grp')
+    + rgCell(team.strength - leagueNet,'grp')
     + '<td class="wins grp"><div class="winwrap"><span class="winbar"><span class="fill" style="width:100%"></span></span><span class="wn">'+num(totalWins,1)+'</span></div></td>'
     + '</tr></tbody></table></div>';
-  html += '<div class="cap"><b>MPG</b> = curated depth-chart minutes. <b>Exp GP</b> = expected games played, '
+  // plan 50 W3c: the old caption said "curated depth-chart minutes". It is not — ZERO of the 538
+  // published rows carry a proj_min in depthcharts_2026_27.csv. The chart supplies the roster and
+  // the role; every MPG on this page comes out of the minutes model.
+  html += '<div class="cap"><b>MPG</b> = <b>modeled</b> minutes (build_minutes_model); the curated depth chart '
+    + 'supplies the roster and each player\'s role, not his minutes. <b>Exp GP</b> = expected games played, '
     + 'role-conditioned by projected minutes; the small low–high is the 80% range. <b>Wins contributed</b> sums to '
-    + num(totalWins,1) + ' (the projected total). Net colored red→green on a fixed −5…+5 NBA-net scale. '
+    + num(totalWins,1) + ' (the projected total). Player net is colored red→green on a fixed −5…+5 NBA-net scale; '
+    + 'the TOTAL row is the team\'s projected net vs league average. '
     + 'Named players link to the <a href="index.html">Explorer</a>; <span class="rk">R</span> marks a cold-start rookie.</div>';
 
   // ---- depth chart (by listed position, G/F/C) ----

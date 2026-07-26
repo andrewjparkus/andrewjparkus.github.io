@@ -77,7 +77,8 @@ function winStrip(hist, mean, p025, p975){
   const N = 83, W = WSTRIP_W, H = WSTRIP_H, pad = 1, bw = (W - 2 * pad) / N;
   const x = k => pad + k * bw;
   const svg = RC.el("svg", { viewBox: "0 0 " + W + " " + H, width: W, height: H, class: "winstrip",
-    role: "img", "aria-label": "win-total distribution, projected mean " + mean + ", 95% CI " + p025 + " to " + p975 });
+    role: "img", "aria-label": "win-total distribution, projected mean " + mean
+      + ", p2.5 to p97.5 band " + p025 + " to " + p975 + " (measured coverage 89 to 98 percent)" });
   svg.appendChild(RC.el("rect", { x: 0, y: 0, width: W, height: H, rx: 2, fill: "var(--grid)", "fill-opacity": 0.35 }));
   if (Array.isArray(hist) && hist.length){
     const mx = Math.max.apply(null, hist) || 1;
@@ -103,8 +104,14 @@ function buildConf(name, teams){
   let head = '<thead><tr>'+
     '<th class="l rank">#</th>'+
     '<th class="l">Team</th>'+
-    '<th>Proj W <span class="help" data-tip="Monte-Carlo mean wins over 10k simulated seasons, each on its own re-drawn synthetic schedule.">?</span></th>'+
-    '<th class="l">Win distribution <span class="help" data-tip="Monte-Carlo win-total distribution on a fixed 0–82 scale: each thin bar is a win count, shaded by how often the team finished with exactly that many wins across the 10k sims. Faint ticks = 95% CI (p2.5–p97.5), dot = projected mean, vertical line = .500 (41).">?</span></th>'+
+    // plan 50 W12: said "each on its own re-drawn synthetic schedule" — false on the published
+    // kernel, which replays one fixed slate. Measured cost of the omission: 0.2 wins of per-team sd.
+    '<th>Proj W <span class="help" data-tip="Monte-Carlo mean wins over 10k simulated seasons on one fixed balanced synthetic slate. Schedule luck is not propagated — measured across 40 legal slates it is worth about 0.2 wins of per-team spread.">?</span></th>'+
+    // plan 50 W3e/W1/W2: this said "95% CI" while the band actually covered 79.4%. The CAUSE is
+    // now fixed (build_projection.SE_DESMOOTH) and daily_v5/harness/team_band.py scores the band
+    // on 360 team-seasons as a fail-closed deploy gate. Re-read these numbers off that gate if
+    // the band ever changes again — do not let this string drift back into an unmeasured claim.
+    '<th class="l">Win distribution <span class="help" data-tip="Monte-Carlo win-total distribution on a fixed 0–82 scale: each thin bar is a win count, shaded by how often the team finished with exactly that many wins across the 10k sims. Faint ticks = the p2.5–p97.5 band; replayed over 360 historical team-seasons it covers 89–98%, the range spanning a roster-pessimistic and a leak-optimistic replay. Dot = projected mean, vertical line = .500 (41).">?</span></th>'+
     '<th>Playoffs % <span class="help" data-tip="Share of the 10k simulations in which the team reaches the 16-team playoff field, AFTER simulating each conference\'s 7–10 play-in tournament (so finishing 7–10 no longer guarantees a seed). Hover a row for its play-in odds (top-10).">?</span></th>'+
     '<th>Champ % <span class="help" data-tip="Share of the 10k simulations in which the team wins the title — each sim plays out the full playoff bracket (best-of-7 rounds, standard 1v8/4v5/3v6/2v7 seeding, higher seed with home court) after the play-in.">?</span></th>'+
     '</tr></thead>';

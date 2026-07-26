@@ -23,7 +23,11 @@
     { key: "proj",     href: "projection.html", label: "2026-27" },
     { label: "Other", menu: [
       { key: "teams",  href: "teams.html", label: "Teams" },
-      { key: "draft",  href: "draft.html", label: "Draft" }
+      { key: "draft",  href: "draft.html", label: "Draft" },
+      // The closing-line baseline (2026-07-26). Kept a separate destination rather than folded
+      // into Metrics: it is the only page that scores us against a NON-public forecaster, and
+      // it is the only one whose headline we lose.
+      { key: "vegas",  href: "vegas.html", label: "Vs. Vegas" }
       // "Margin history" was FOLDED INTO the Metrics page (2026-07-24): the equal-information
       // 24-season margin comparison now lives inside metrics.html (Task A + its "Go deeper"
       // deep-dive), so it is no longer a separate destination. margin_history.html still exists
