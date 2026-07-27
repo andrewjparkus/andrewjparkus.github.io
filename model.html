@@ -211,9 +211,45 @@
   // small-multiple chart: mirrors the Explorer's Chart() idiom (band + per-league polyline), static.
   function draw(mount,d,key,big){
     var W=mount.clientWidth||240, H=big?140:104;
-    var padL=37,padR=6,padT=7,padB=17, pw=W-padL-padR, ph=H-padT-padB;
+    // FS is the y-tick face, and it is 12 to match index.html's gridZero(...,12) — the same number
+    // in both files, because it is the same axis. It was 11.5 here, and the half-pixel was not
+    // free: MEASURED off the rendered 1280 PNG, the "0" is a thin ring that at 11.5 never lands a
+    // fully-covered pixel, so its darkest pixel reached only rgb(111,123,142) on --panel
+    // rgb(14,20,29) = 4.31:1 dark and 4.42:1 light — UNDER the 4.5:1 text floor, even though the
+    // --zero token itself is 5.48:1 dark / 6.02:1 light. At 12 the same glyph hits the hinting grid
+    // and renders the token essentially undiluted — rgb(126,140,160) = 5.41:1 in the net cell, one
+    // step off the token's own 127,141,161 — and 4.53:1 dark / 4.67:1 light in the factor cells,
+    // which smear slightly (see the zero-line note below). Every one of those clears 4.5. So 12 is
+    // what makes the label legible AS TEXT rather than merely as a mark. Re-derive: screenshot at
+    // 1280 in each theme, sample the extreme pixel of the "0" against the cell background.
+    // (Season-year labels stay 11.5 — index.html's are 11.5 too, they are --faint, and --faint
+    // measures 4.85:1 dark / 5.34:1 light at that size, over the floor. Same rule, different
+    // answer, because those glyphs are not a thin ring.)
+    var FS=12;
+    // Tick drop threshold, in tick font sizes — index.html's TICK_CLEAR, same value on purpose.
+    // Its justification (ink box 8.66px tall at this face and size, so 1x leaves only 3.34px of
+    // white between two surviving labels and they read as one stack; 1.5x leaves 9.34px) is
+    // measured over gridZero() there and transfers unchanged, because FS 12 makes this the same
+    // rendered face at the same size. See the (a)/(b) note below for what it costs on THESE cells.
+    var TICK_CLEAR=1.5;
+    // padL is sized off the WIDEST tick label, not eyeballed. MEASURED with getBBox(): the tick
+    // face advances exactly 7.2px per character at FS 12 ("-2.9".width = 28.81 over 4 chars,
+    // "0".width = 7.2), so a 5-character label such as "+12.6" is 36.0 wide. Labels are
+    // text-anchor:end at x = padL-5, so their left edge sits at padL-5-width. At the old padL 37
+    // (and the old 11.5 face, 34.5 wide) that left edge was -2.5: the "+" of "+12.6" was cut off by
+    // the SVG's own left edge, while every 4-char label reported a comfortable +4.4. padL 46 puts
+    // the 5-char left edge at 46-5-36.0 = +5.0, restoring the margin the 4-char labels always had.
+    // Deliberately NOT index.html's padL 41: measured there, "+12.6" at the same 12px face still
+    // reports getBBox().x = -1, so 41 is this same bug one pixel smaller — matching it would have
+    // copied the defect. Cost of 46: 9px of plot width off 262 on a factor cell (3.4%) and off 933
+    // on the net cell (1.0%).
+    var padL=46,padR=6,padT=7,padB=17, pw=W-padL-padR, ph=H-padT-padB;
     var n=d.d.length, v=d[key], se=d[key+'_se'];
     var pool=v.filter(function(x){return x!=null;});
+    pool.push(0);            // 0 always in the domain, so the zero line is unconditional and the
+                             // six factor cells share one baseline — a page whose whole point is
+                             // that the pieces add up to the net cannot have each piece framed on
+                             // its own private axis. Cost measured in index.html's Chart().
     var lo=Math.min.apply(null,pool), hi=Math.max.apply(null,pool);
     var c=(lo+hi)/2, half=Math.max((hi-lo)/2*1.06,0.15);
     var ymin=c-half, ymax=c+half;
@@ -221,11 +257,65 @@
     var Y=function(val){return padT+ph-(Math.max(ymin,Math.min(ymax,val))-ymin)/(ymax-ymin)*ph;};
     var svg=el('svg',{viewBox:'0 0 '+W+' '+H,preserveAspectRatio:'none',role:'img',
       'aria-label':key+' daily series for '+d.name});
+    // Ticks + zero line. THIS BLOCK AND gridZero() IN index.html ARE DELIBERATELY PARALLEL: one
+    // axis drawn twice, because this page draws its own small multiples instead of calling the
+    // Explorer's Chart(). Same two drop rules, same order, same TICK_CLEAR, same (a)/(b) labels —
+    // a change to either belongs in the other, and the constants above exist so the two can be
+    // diffed by eye. The long rationale for BOTH rules lives over gridZero() in index.html; what
+    // follows is only what is different here, which is the cell geometry.
+    //
+    //   (a) TOO CLOSE — within FS*TICK_CLEAR of the zero rule, so the two labels clump.
+    //   (b) LABEL IS THE ORIGIN — the tick's own formatted text is "+0.0"/"-0.0", which contradicts
+    //       the "0" on the --zero line however far away it sits. Tests the FORMATTED LABEL, not the
+    //       value, because that is what the reader sees.
+    //
+    // These cells are much shorter than the Explorer's (ph 80 and 116 against its 138 and 178), so
+    // the two rules divide differently and it is worth writing down where. Re-derive by replaying
+    // this exact arithmetic — padT/padB, the Math.round(Y(0))+0.5 snap, FS, TICK_CLEAR — over a
+    // grid of (lo,hi) with lo<=0<=hi (pool.push(0) guarantees it), lo in [-0.6,0], hi in [0,0.6],
+    // 0.0025 steps, 174,243 tick draws per cell size:
+    //   - FACTOR cell (ph=80): rule (b) fires 0 times. The 0.15 floor on `half` means a tick whose
+    //     label rounds to 0.0 (|value| < 0.05) can never be more than 0.05/0.30*80 = 13.3px from
+    //     the zero line, always inside the 18px threshold. (b) is dead weight here — and kept
+    //     anyway, because it is not dead on the cell below.
+    //   - NET cell (ph=116): rule (b) fires 294 times, on all three ticks (33 at f=0, 183 at f=0.5,
+    //     78 at f=1), at 18.5-19.5px from the zero line — past (a), so (a) alone would DRAW them.
+    //     Worked case: lo=0, hi=0.20 puts the f=0 tick at "-0.0" 18.5px under a "0". That is an
+    //     ordinary near-replacement flat series, not a contrivance.
+    // At the OLD 1x threshold (a) let far more through — 491 and 2,738 draws respectively — so most
+    // of what (b) catches on a factor cell was absorbed by raising TICK_CLEAR, not by (b) itself.
+    // Both rules together never strip a panel bare: the fewest grid ticks surviving anywhere in
+    // that scan is 2, for either cell, because tick spacing is ph/2 (40px and 58px) and both exceed
+    // 2*18=36px, so at most one tick can ever be dropped by (a) and at most one by (b).
+    // This page's example is pinned to Jokic, who trips neither rule, so the fault was LATENT here
+    // and live in the Explorer. It is fixed here because the two blocks move together.
+    //
+    // --zero labels its own line, same ink for the mark and its name. MEASURED off the rendered
+    // 1280 PNG against the cell background: the line row is rgb(127,141,161) on rgb(14,20,29) =
+    // 5.48:1 dark and rgb(86,100,120) on white = 6.02:1 light, both over the 3:1 mark floor.
+    // For the LABELS, quoting the worst case rather than the best: sweeping every glyph of every
+    // y-axis label in all seven cells, the floor is the "0" at 4.53:1 dark / 4.67:1 light, and the
+    // faintest --faint tick is 4.75 / 5.19 — all over the 4.5:1 text floor. The net cell reads
+    // higher (5.41 / 6.02) because its viewBox width equals its layout width exactly; the factor
+    // cells scale 305 units into a fractional width, which smears each glyph over one more column
+    // and costs ~0.9. That spread is why the FS note above matters: at 11.5 the same "0" measured
+    // 4.31:1 dark / 4.42:1 light and MISSED the floor.
+    // half-pixel snap: 1 viewBox unit == 1 CSS px here too (.fcell svg{width:100%}), and a 1px
+    // stroke on an integer y splits across two device rows at half alpha — measured 2.74:1 on the
+    // Explorer's identical line, under the 3:1 mark floor. Snapped, the rows immediately above and
+    // below sample as bare --panel, which is the check that it covers exactly one row.
+    var yz=Math.round(Y(0))+0.5;
     [0,.5,1].forEach(function(f){var yv=ymin+(ymax-ymin)*f, y=Y(yv);
+      var txt=(yv>=0?'+':'')+yv.toFixed(1);
+      if(Math.abs(y-yz)<FS*TICK_CLEAR) return;                  // (a) too close to the zero rule
+      if(txt==='+0.0'||txt==='-0.0') return;                    // (b) this tick IS the origin
       svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'var(--grid)','stroke-width':1}));
-      var t=el('text',{x:padL-5,y:y+4,'font-size':11.5,fill:'var(--faint)','text-anchor':'end'});
-      t.textContent=(yv>=0?'+':'')+yv.toFixed(1); svg.appendChild(t);});
-    if(ymin<0&&ymax>0){var yz=Y(0);svg.appendChild(el('line',{x1:padL,y1:yz,x2:W-padR,y2:yz,stroke:'var(--zero)','stroke-width':1}));}
+      var t=el('text',{x:padL-5,y:y+4,'font-size':FS,fill:'var(--faint)','text-anchor':'end'});
+      t.textContent=txt; svg.appendChild(t);});
+    svg.appendChild(el('line',{x1:padL,y1:yz,x2:W-padR,y2:yz,stroke:'var(--zero)','stroke-width':1}));
+    // "0", not "+0.0": the other ticks are signed magnitudes, this one is the origin.
+    var t0=el('text',{x:padL-5,y:yz+4,'font-size':FS,fill:'var(--zero)','text-anchor':'end'});
+    t0.textContent='0'; svg.appendChild(t0);
     // season gridlines (light)
     var py=d.d[0].slice(0,4);
     for(var i=1;i<n;i++){var yr=d.d[i].slice(0,4); if(yr!==py){

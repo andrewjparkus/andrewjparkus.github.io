@@ -46,16 +46,9 @@
      variant are one-line overrides instead of duplicated rules. --pnw is a
      PREFERRED width, not a clamp: a name longer than it widens the column
      rather than being truncated. */
-  /* --rail is the magnitude chart's frame and zero tick. It CANNOT be --grid, which is a surface
-     token: measured 1.11:1 against the row and 1.01:1 against a hovered row, so the frame vanished
-     under the pointer — no separate hovered value would have saved it. --zero is the token for a
-     value sitting at zero, which is exactly what the tick marks, and after the 2026-07-27 palette
-     lift it clears the 3:1 mark floor on BOTH the resting and the hovered row in BOTH themes —
-     measured from rendered pixels: 5.48:1 dark / 6.02:1 light on the row, 4.98:1 / 5.01:1 on a
-     hovered row. One token covers all four cases, so there is no hovered-row rail. */
-  .tablebox{--rkw:46px;--pnw:198px;--bar:#6d7e94;--edge:rgba(0,0,0,.8);--rail:var(--zero)}
+  .tablebox{--rkw:46px;--pnw:198px;--edge:rgba(0,0,0,.8)}
   .tablebox.wide{--pnw:250px}
-  :root[data-theme=light] .tablebox{--bar:#67788f;--edge:rgba(16,32,56,.22)}
+  :root[data-theme=light] .tablebox{--edge:rgba(16,32,56,.22)}
 
   /* The header only LOOKED sticky: .scroll's overflow-x:auto makes .scroll the
      sticky scrollport in BOTH axes, and it has no height limit, so the thead
@@ -142,31 +135,6 @@
      no pointer, no hover-to-full-ink and no click. cursor:help matches the em-dash cells below
      it, which carry the same explanation. */
   #otable thead th.dead{cursor:help}
-  /* in-cell magnitude. The bar's LENGTH is the value and its SIDE of the zero
-     tick is the sign, so the mark is one neutral colour — sign is already
-     carried by the number's colour, and greying the bar keeps --pos/--neg
-     meaning sign and nothing else. Track sits left of the number, never behind
-     it, so the bar can be full-strength (measured 4.45:1 dark, 4.51:1 light, and
-     4.05:1 / 3.75:1 on a hovered row) instead of a wash the number has to fight. */
-  #otable td.sortcol{position:relative;padding-left:62px}
-  /* rail / zero tick / bar, same three-part form as the team page's factor profile.
-     The rail is what makes it read as a chart: without it the bar and the tick
-     together looked like a little flag glyph floating next to the number.
-     The rail is a HAIRLINE FRAME, not a filled track. A fill dark enough to sit under
-     the bar is invisible (that was the bug); a fill light enough to clear 3:1 would be a
-     slab the bar could not read against. A frame lets rail, tick and bar each composite
-     onto the row itself, so all three are measurable against one background. */
-  .mb{position:absolute;left:9px;top:50%;margin-top:-5px;width:44px;height:10px;
-    box-shadow:inset 0 0 0 1px var(--rail)}
-  /* The tick overhangs the frame by 2px top and bottom — an axis tick, not an inlay. That
-     overhang is what makes zero survive a POSITIVE bar: the bar starts at the tick and used to
-     paint straight over it (both at left:50%), so a positive row had no tick pixel anywhere.
-     Now the tick is above the bar in paint order AND its ends are outside the bar entirely. */
-  .mb::before{content:'';position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;
-    background:var(--rail);z-index:2}
-  /* inset 1px vertically so the fill sits INSIDE the frame instead of overpainting its top and
-     bottom edges — a frame you raised to 3:1 and then covered is no frame */
-  .mb i{position:absolute;top:1px;bottom:1px;min-width:1px;background:var(--bar);z-index:1}
   /* a cell the active basis structurally does not carry (ORAPM/DRAPM in box mode)
      — an em-dash, deliberately heavier than fmt()'s en-dash for an ordinary
      missing value */
@@ -181,8 +149,6 @@
     .tablebox{--rkw:36px;--pnw:140px}
     .tablebox.wide{--pnw:160px}
     #otable th,#otable td{padding:6px 7px}
-    #otable td.sortcol{padding-left:56px}
-    .mb{left:7px;width:40px}
   }
 </style></head>
 <body>
@@ -264,7 +230,7 @@ let query='';             // overall search
 let sortKey=null;         // overall sort column (null = file order by rank)
 let sortDir=-1;           // -1 desc, +1 asc
 let POOL=0;               // rows this mode ranks into the cap = the search hit count's denominator
-let POOLROWS=[];          // …those same rows, BEFORE the search filter (bar domain + band note)
+let POOLROWS=[];          // …those same rows, BEFORE the search filter (the band note's basis)
 const Z95=1.959964;       // 95% band = Z95 x se_net, same constant the retired Draft page used
 
 /* =========================================================================
@@ -370,7 +336,7 @@ function sortedRows(){
   // instead of a re-sort inside a set some other metric chose.
   let rows=tb.rows.filter(r=>{ const k=vals(r,m).rank; return k!=null && (cap==null||k<=cap); });
   POOL=rows.length;                       // denominator for the search hit count
-  POOLROWS=rows;                          // the mode's whole board: what the chart is scaled to
+  POOLROWS=rows;                          // the mode's whole board: what the band note describes
   if(query){
     const q=query.toLowerCase();
     rows=rows.filter(r=>String(r.name||'').toLowerCase().includes(q)
@@ -404,18 +370,6 @@ function computeMiss(){
 // wearing the full sorted treatment. sortKey itself is KEPT — same rule as MODE — so switching
 // back to a basis that carries the column restores the sort the reader actually chose.
 function activeSort(){ return (sortKey && !MISS[sortKey]) ? sortKey : null; }
-
-// Magnitude cue for the sorted column only. Scale is SYMMETRIC about zero and set by the largest
-// absolute value in the MODE'S WHOLE BOARD — never by the search result. Scaling to the filtered
-// set meant one hit painted a full-length bar: searching "Christian Braun" (Net −0.86, 186th of
-// 500) drew exactly the half-rail Jokic's +10.53 gets unfiltered, i.e. the same length meaning two
-// different values with nothing on screen naming the domain. Search now filters the list without
-// touching the chart. Mode and table switches still rescale, because each is a different board.
-function bar(v,M){
-  if(v==null||isNaN(v)||!M) return '';
-  const w=Math.min(Math.abs(v)/M,1)*50;
-  return '<span class="mb"><i style="left:'+((v>=0?50:50-w).toFixed(1))+'%;width:'+w.toFixed(1)+'%"></i></span>';
-}
 
 // What the ordering is worth, derived from the board on screen so it can never outlive the
 // numbers. The retired Draft page sold itself on "with 95% bands" and said the bands overlap for
@@ -456,11 +410,7 @@ function renderOverall(){
   const shown=sortedRows();   // full ranked list — static, no cap
   const m=activeMode();
   const skey=activeSort()||'net';
-  // symmetric domain for the sorted column's bars — POOLROWS, not `shown`: the chart is scaled to
-  // the board, so searching cannot rescale it (see bar()).
-  let M=0;
-  for(const r of POOLROWS){ const v=vals(r,m)[skey];
-    if(v!=null&&!isNaN(v)) M=Math.max(M,Math.abs(v)); }
+  // POOLROWS, not `shown`: the note describes the board, so searching cannot restate it.
   document.getElementById('bandnote').textContent=bandNote(POOLROWS,m);
 
   document.getElementById('hits').textContent =
@@ -511,7 +461,7 @@ function renderOverall(){
           (r.sub?'<span class="sub2">'+esc(r.sub)+'</span>':'')+'</td>';
       OCOLS.forEach(c=>{
         const v=V[c.key], act=(skey===c.key);
-        let cls=(act?'net sortcol ':(c.tot?'tot ':''))+(c.grp?'grp ':'');
+        let cls=(act?'net ':(c.tot?'tot ':''))+(c.grp?'grp ':'');
         // A column the active basis does not carry (ORAPM/DRAPM under box) renders an em-dash,
         // not a number: the split is absent from that basis, so there is nothing honest to print.
         if(v==null && MISS[c.key]){
@@ -521,7 +471,7 @@ function renderOverall(){
           // register (two decimals). Only where the row actually has one — never a filled-in zero.
           const se=(c.net && V.se_net!=null && !isNaN(V.se_net))
             ? '<span class="se">±'+(Z95*V.se_net).toFixed(2)+'</span>' : '';
-          body+='<td class="'+cls+signCls(v)+'">'+(act?bar(v,M):'')+fmt(v)+se+'</td>';
+          body+='<td class="'+cls+signCls(v)+'">'+fmt(v)+se+'</td>';
         }
       });
       body+='</tr>';

@@ -853,7 +853,22 @@ function render(d){
   });
   const repShare = allMin>0 ? (repMin/allMin)*100 : 0;
   html += '<section class="panel"><div class="phead"><h2>Roster</h2>'
-    + '<span class="psub">'+roster.length+' players · grouped by listed position</span>'
+    + '<span class="psub">'+roster.length+' players · grouped by position</span>'
+    // Why a listed CENTRE can sit under WINGS. The depth chart these minutes were allocated on files
+    // a roster as guards, wings and bigs, and that assignment disagrees with the listed position on
+    // 110 of the 444 published rows that carry both — so the reader meets the explanation at the
+    // grouping itself. The tip used to offer only the mild case ("a shooting guard who plays on the
+    // wing"), which does not prepare anyone for the three loud ones: NYK Andre Drummond (C, 20.8
+    // MPG) and OKC Jalen Williams (PG, 33.8) and ATL Devin Carter (PG, 19.8) all render under WINGS.
+    // New York is the worst of it, because taking its one wing-filed centre out of BIGS leaves that
+    // group with exactly one player (Karl-Anthony Towns) — the only one-player family group in the
+    // league, and a shape that reads as a broken join unless the reader was told to expect it. The
+    // tip now names the loud case and its consequence, in that order.
+    + ' <span class="help" data-tip="Groups are the depth chart\'s own — guards, wings and bigs —'
+    + ' not the five listed positions. The two disagree on 110 of the 444 rows carrying both,'
+    + ' sometimes loudly: a listed centre or point guard can be filed under WINGS, which can leave'
+    + ' BIGS with a single player. Each player\'s listed position, where he has one, sits beside his'
+    + ' role.">?</span>'
     + (thin ? ' <span class="badge b-g" data-tip="'+num(repShare,1)+'% of this roster\'s projected'
               + ' minutes go to players with no rated history, filled in at replacement level.">'
               + num(repShare,1)+'% replacement minutes</span>' : '')
@@ -871,26 +886,55 @@ function render(d){
     + '<div class="rnum rn-w">Wins <span class="help" data-tip="Each player\'s share of the team\'s projected wins; the column sums to the team total.">?</span></div>'
     + '</div></div>';
 
-  const groups = Object.fromEntries(POS_SLOTS.map(c=>[c,[]]));
-  const unlisted = [];
-  roster.forEach(p=>{ const b = posBucket(p && p.pos); if(b) groups[b].push(p); else unlisted.push(p||{}); });
+  // The family is a CURATED fact, read straight off the feed — the page does not re-derive one from
+  // `pos`. A row with no family is a row nothing in the data can place, never a row we declined to
+  // classify.
+  const groups = Object.fromEntries(FAMILIES.map(f=>[f[0],[]]));
+  const unplaced = [];
+  roster.forEach(p=>{ const f = p && p.pos_family; if(groups[f]) groups[f].push(p); else unplaced.push(p||{}); });
   const byContrib = (a,b)=>((b.proj_wins||0)-(a.proj_wins||0));
   const emitGroup = (label, list, tip)=>{
     if(!list.length) return '';
     // a group is a unit: it owns its player count and its share of the projected wins
     const gw = list.reduce((a,p)=>a+((p && p.proj_wins!=null && !isNaN(p.proj_wins))?Number(p.proj_wins):0),0);
-    let h = '<div class="rgrp"><div class="rgrphead"><b'
-      + (tip?' class="help" style="border:none;width:auto;height:auto;border-radius:0" data-tip="'+esc(tip)+'"':'')
-      + '>'+esc(label)+'</b>'
+    // THE EXPLANATION GETS THE SAME CARRIER AS EVERY OTHER EXPLANATION ON THE PAGE: a circled ?
+    // beside the heading. It used to be the heading itself wearing .help with
+    // border:none;width:auto;height:auto — which keeps the cursor:help and the bubble but deletes
+    // the ring, i.e. deletes the only thing that tells a reader an explanation exists. Nothing on
+    // this page hovers what it cannot see is hoverable, so the one tip that most needed finding was
+    // the one with no affordance at all. As a flex child of .rgrphead the ? picks up the same
+    // var(--sp-2) gap the count and wins chips use.
+    let h = '<div class="rgrp"><div class="rgrphead"><b>'+esc(label)+'</b>'
+      + (tip?' <span class="help" data-tip="'+esc(tip)+'">?</span>':'')
       + '<span class="gs"><em>'+list.length+'</em> player'+(list.length===1?'':'s')+'</span>'
       // a group can be net-negative (Brooklyn's two point guards run −1.1); num() prints the −
       + '<span class="gs"><em>'+num(gw,1)+'</em> wins</span></div>';
     list.slice().sort(byContrib).forEach(p=>{ h += rosterRow(p, totalWins); });
     return h + '</div>';
   };
-  POS_SLOTS.forEach(c=>{ html += emitGroup(c, groups[c], null); });
-  html += emitGroup('UNLISTED', unlisted,
-    'No five-slot listing on the depth chart — listed only as G or F, or not listed at all.');
+  FAMILIES.forEach(f=>{ html += emitGroup(f[1], groups[f[0]], null); });
+  // THE HEADING NAMES WHAT IS ACTUALLY TRUE OF THESE ROWS AND OF NO OTHERS (fixed 2026-07-27).
+  // It used to read NO POSITION LISTED, which is true of them — and of 75 rows that are NOT under
+  // it: measured on the published feed, 94 of the 538 roster rows carry pos=null and 75 of those
+  // (32 guard / 17 wing / 26 big) sit happily inside the three family groups on 29 of the 30 teams,
+  // because the curated chart placed them without needing a listed position. Golden State puts both
+  // sets on one screen — two pos=null players under GUARDS, one under BIGS, five under the residual,
+  // all five rows looking identical — so the old heading named a property the reader could see was
+  // shared, which reads as a bug in the grouping.
+  // What the 19 residual rows uniquely share is the CONJUNCTION in the heading: the curated depth
+  // chart has no row for them at all (verified: 0 of the 19 appear in depthcharts_2026_27.json by
+  // franchise+key, by pid or by normalised name), AND no listed position exists to fall back on.
+  // Both clauses are load-bearing. Six further rows are also missing from the chart but do carry a
+  // listed position and are filed by it (PHI LeBron James SF, ATL Jacob Toppin F, CHA Mouhamadou
+  // Gueye PF, MIL Pete Nance PF, SAC Adam Flagler PG, UTA Mo Bamba C) — they fail the second clause,
+  // which is exactly why they are not here. Drop either clause and the heading over-claims again.
+  // 19 of 538 across the league, on 11 of the 30 teams. Nothing is guessed into a group to make the
+  // heading disappear.
+  html += emitGroup('NOT ON THE DEPTH CHART · NO POSITION LISTED', unplaced,
+    'Not on the depth chart these groups come from, and no listed position anywhere either — so '
+    + 'nothing in the data can call them a guard, a wing or a big. A gap, not a position. A player '
+    + 'the chart also misses but who does have a listed position is filed by that instead, so he is '
+    + 'not here.');
 
   html += '<div class="rrow rtot"><div class="rid">'
     + '<span class="rnm" data-tip="Team projected net against the league average, and the roster\'s'
@@ -1042,8 +1086,12 @@ function fitStackLabels(){
 // reason, and like it, assigned from measured geometry — which carrier sits near an edge depends on
 // how the header wraps. 131 = half the bubble's own max width (260 + its 1px borders); erring
 // towards anchoring is harmless, a bubble that would have fitted centred still fits hung off an end.
+// .rgrphead joins the list because the residual group's heading is long enough to push its ? to the
+// right edge of a narrow panel; it keeps the UPWARD bubble (the flip-down CSS above is keyed on
+// .phead/.fchead only, and a group heading sits mid-body with room above it), it only borrows the
+// horizontal anchoring.
 function fitHeadTips(){
-  document.querySelectorAll('.phead [data-tip], .fchead [data-tip]').forEach(el=>{
+  document.querySelectorAll('.phead [data-tip], .fchead [data-tip], .rgrphead [data-tip]').forEach(el=>{
     const panel = el.closest('.panel');
     if(!panel) return;
     const r = el.getBoundingClientRect(), p = panel.getBoundingClientRect();
@@ -1060,17 +1108,16 @@ window.addEventListener('resize', ()=>{
 });
 
 /* ---- roster rows -------------------------------------------------------- */
-// 5 listed slots; a bare "G"/"F" is not guessed into a slot and drops to UNLISTED — the depth
-// chart's one durable idea, kept as a grouping inside the roster instead of a second table that
-// listed the same 16 players with the same net all over again.
-const POS_SLOTS = ["PG","SG","SF","PF","C"];
+// The roster groups by the THREE families the curated depth chart actually uses, not by the five
+// listed positions (owner 2026-07-26). Grouping by five left 107 of the league's 538 rows in an
+// orphan bucket — 94 of them, mostly incoming rookies, carry no listed position at all — while the
+// chart the projection is built on had already filed 513 of the 538 as a guard, a wing or a big
+// (a further 6 are placed by their listed position; 19 by nothing, see the residual heading below).
+// The exporter does that join and ships `pos_family`; this page only renders it.
+const FAMILIES = [["guard","GUARDS"],["wing","WINGS"],["big","BIGS"]];
 // The feed's model_source is an internal id ("xgb"), and the tooltip was printing it raw as
 // "· source xgb". Reader words, or nothing — an id the reader cannot look up is worse than silence.
 const SRC_WORDS = { xgb:"from rated history", rookie:"from a rookie prior", replacement:"at replacement level" };
-function posBucket(pos){
-  const p = String(pos||"").toUpperCase();
-  return POS_SLOTS.indexOf(p) >= 0 ? p : null;
-}
 function rosterRow(p, teamW){
   p = p || {};
   const f = Array.isArray(p.f) ? p.f : [];
@@ -1102,9 +1149,15 @@ function rosterRow(p, teamW){
   // the column header's ? tip is hover-only. One visually-hidden word makes the pair self-naming.
   const rng = (p.gp_lo!=null && p.gp_hi!=null)
     ? '<span class="rng"><span class="vh">80% range </span>'+num(p.gp_lo,0)+'–'+num(p.gp_hi,0)+'</span>' : '';
+  // The listed position did not vanish with the grouping, it moved: it rides beside the role for
+  // the 444 of 538 rows that genuinely have one (431 of the five, 13 a bare G or F) and is simply
+  // absent for the other 94. Same ink as the role — they are peers, and neither is a number.
+  const pos = ["PG","SG","SF","PF","C","G","F"].indexOf(String(p.pos||"").toUpperCase()) >= 0
+    ? String(p.pos).toUpperCase() : "";
+  const sub = [(p.role||'').replace(/^\w/,c=>c.toUpperCase()), pos].filter(Boolean).join(' · ');
   return '<div class="rrow">'
     + '<div class="rid">'+nm
-      + '<div class="rsub">'+esc((p.role||'').replace(/^\w/,c=>c.toUpperCase()))+'</div></div>'
+      + '<div class="rsub">'+esc(sub)+'</div></div>'
     + '<div class="rnums">'
       + '<div class="rnum rn-mpg"><i>MPG</i><b>'+num(p.mpg,1)+'</b></div>'
       + '<div class="rnum rn-gp"><i>Exp GP</i><b>'+gp+'</b>'+rng+'</div>'

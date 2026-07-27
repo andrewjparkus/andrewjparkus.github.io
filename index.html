@@ -64,6 +64,56 @@
   .crosshair{stroke:#3a4862;stroke-width:1;stroke-dasharray:3 3;pointer-events:none}
   .hdot{pointer-events:none;stroke:var(--bg);stroke-width:1.2}
   .grid svg,.netcard svg{touch-action:none}
+  /* ── cursor tooltip on the crosshair ──────────────────────────────────────────────────────────
+     The crosshair and the hover dots already existed; what did not was a readout AT the pointer, so
+     reading a value meant looking away from the day you were pointing at, up to the panel header.
+     ONE node, position:fixed, reused by whichever chart the pointer is over: the bubble belongs to
+     the pointer, not to a panel, and a fixed node cannot be clipped by a panel's radius or overflow.
+     pointer-events:none so it can never swallow the pointermove that drives it. */
+  #ctip{position:fixed;left:0;top:0;z-index:70;display:none;pointer-events:none;white-space:nowrap;
+    border:1px solid var(--line);border-radius:var(--r-1);padding:6px 8px;
+    box-shadow:0 6px 18px rgba(0,0,0,.45)}
+  /* The SURFACE is theme-split on purpose and the reason is measurable. The swatches are MARKS
+     (3:1 floor) and the binding one is light --off #0e9e8c: 3.34:1 on --panel (#ffffff) but 2.99 on
+     --panel-2 and 2.78 on --panel-3 — so in LIGHT this bubble cannot reuse [data-tip]'s --panel-2
+     surface without putting a swatch under the floor. DARK has the opposite problem: it floats over
+     .cell/--panel, and --panel-2 sits 1.02:1 against that (no visible step at all), so it takes
+     --panel-3 at 1.10 and lifts.
+     RE-MEASURED after the swatches became live tokens (see tipShow), by sampling the RENDERED PNG
+     at 1280 — the swatch pixel and the modal bubble-interior pixel, both themes, single-row bubble
+     on ?p=c4896963's oTS cell: LIGHT surface (255,255,255), swatch --off (14,158,140) = 3.34:1;
+     DARK surface (20,30,43) = --panel-3, swatch --off (45,212,191) = 9.02:1. Text on the same
+     samples: value ink 17.80:1 light / 14.37:1 dark, and the weakest, the ± qualifier in --faint,
+     5.52:1 light / 4.60:1 dark. Over 3:1 for marks and 4.5:1 for text in both themes.
+     SCOPE, HONESTLY. Those numbers cover the LEAGUE and SIDE swatches, which are tokens. They do
+     NOT cover the COMPARE view, whose swatches are the Okabe-Ito slots — theme-independent
+     literals, baked identically into the polyline they label. Pixel-sampled on the same rig
+     (?p=203999,1630169,201939,1628369, light): #0072B2 (0,114,178) 5.19:1, #CC79A7 (204,121,167)
+     3.06:1, and #E69F00 (230,159,0) 2.25:1 — that last one is UNDER the 3:1 mark floor on the light
+     bubble. It is under it on every light surface on the site, not just here, because the palette
+     is chosen for dichromat SEPARATION rather than for luminance against white, and it paints the
+     compare LINES too; nothing this tooltip can do fixes it without moving the palette everywhere.
+     What keeps it honest meanwhile is that the compare bubble is the one place colour is never the
+     sole encoder — every row prints the player's NAME beside the swatch at 5.52:1. Recorded as a
+     palette decision for the owner, not papered over here with a border. */
+  #ctip{background:var(--panel-3)}
+  :root[data-theme=light] #ctip{background:var(--panel);box-shadow:0 6px 18px rgba(14,24,40,.16)}
+  #ctip .d{font-size:var(--fs-1);color:var(--muted);margin-bottom:4px}
+  /* LOCKUP, not space-between. The rows used to be independent flex lines with `margin-left:auto`
+     on the number, which pinned every value to the bubble's right edge — so in a 4-way compare the
+     numbers sat a variable distance from the name they belong to and did not line up with each
+     other. One grid for ALL rows fixes both at once: the four columns are sized once, so the label
+     column is as wide as the longest label and every number starts at the same x. The gap after
+     the label is the grid's own 7px (the same 7px the swatch gets), which is a lockup gap, and the
+     number still outranks its label by weight and colour. */
+  #ctip .rows{display:grid;grid-template-columns:9px minmax(0,max-content) max-content max-content;
+    align-items:center;gap:2px 7px;
+    font-family:var(--font-mono);font-size:var(--fs-2);font-variant-numeric:tabular-nums;line-height:1.5}
+  #ctip .sw{width:9px;height:9px;border-radius:2px}
+  /* the compare view puts full player names in here, so the label truncates and the number does not */
+  #ctip .k{color:var(--muted);overflow:hidden;text-overflow:ellipsis;max-width:150px}
+  #ctip .n{color:var(--text);font-weight:600;text-align:right}
+  #ctip .e{color:var(--faint)}
   /* add-to-compare affordance in the player header */
   .cmpadd{font-size:13.5px;font-weight:600;color:var(--muted);background:var(--panel);border:1px solid var(--line);
     padding:5px 11px;cursor:pointer;border-radius:var(--r-1)}
@@ -319,6 +369,9 @@
 
 </div>
 
+<!-- the one cursor tooltip every chart shares; filled by tipShow(), positioned by tipPlace() -->
+<div id="ctip" role="tooltip" aria-hidden="true"></div>
+
 <script>
 const FAC=[["oTS","oTS"],["oTOV","oTOV"],["oSC","oSC"],["dTS","dTS"],["dTOV","dTOV"],["dSC","dSC"]];
 const TIP={
@@ -546,13 +599,201 @@ function prep(d){
 const el=RC.el;
 // resolve a CSS var to a concrete color for raw SVG attributes (lines/fills the helpers don't take vars for)
 function cssvar(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim()||'#888';}
-function lgColor(lg){return cssvar(lg==='nba'?'--nba':lg==='gleague'?'--gleague':lg==='college'?'--college':'--accent');}
+function lgColor(lg){return cssvar(lgToken(lg));}
+// The SAME colour as lgColor, left as an UNRESOLVED token. Both forms are needed and they are not
+// interchangeable: RC.radar/RC.pctBar in charts.js take a concrete colour and do string work on it,
+// while every mark this file draws itself wants the token so the theme toggle re-colours it (see
+// the tipShow comment for the defect that came of mixing the two).
+function lgToken(lg){return lg==='nba'?'--nba':lg==='gleague'?'--gleague':lg==='college'?'--college':'--accent';}
+function lgVar(lg){return 'var('+lgToken(lg)+')';}
 // plan49 W1: the six factor charts colour the LINE by side (offence/defence). Returns null for every
-// other key ('net', and ChartMulti's compare series), which then falls back to lgColor as before.
+// other key ('net', and ChartMulti's compare series), which then falls back to lgVar as before.
 // ponytail: keyed off the first character of the factor name because FACK is frozen at
 // ["oTS","oTOV","oSC","dTS","dTOV","dSC"] — a seventh factor whose name starts with o/d would be
 // swept in silently. That order is load-bearing elsewhere (traj_f is positional), so it will not move.
-function sideColor(key){return key[0]==='o'?cssvar('--off'):key[0]==='d'?cssvar('--def'):null;}
+function sideColor(key){return key[0]==='o'?'var(--off)':key[0]==='d'?'var(--def)':null;}
+
+// ── cursor tooltip layer ──────────────────────────────────────────────────────────────────────
+// The half of the hover the charts did not have. Crosshair, dots and the ONE shared index are
+// untouched: setHoverAll/setHoverMulti still drive every panel together, and this only adds a
+// bubble at the pointer so the number can be read where you are pointing. Each chart exposes
+// tipData(i) -> {date, rows:[{c,k,v,e}]} and a `host` panel; there is exactly one tooltip NODE and
+// the chart under the pointer fills it, so seven panels never bloom seven bubbles.
+const CTIP=document.getElementById('ctip');
+const tipSgn=v=>(v>=0?'+':'')+v.toFixed(2);
+const tipLabel=k=>k==='net'?'Net':k==='BASE'?'Baseline':alab(k);   // alab passes non-atom keys through
+const tipEsc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function tipHide(){if(CTIP.style.display!=='none')CTIP.style.display='none';}
+// SWATCH/LINE AGREEMENT: both sides are now UNRESOLVED CSS TOKENS ('var(--nba)'), so both follow
+// the theme toggle and cannot drift apart. An earlier comment here claimed agreement was already
+// guaranteed "including the site-wide fact that a theme toggle does not re-render charts". That was
+// FALSE for every league-coloured mark, and the two chart families were broken in opposite
+// directions — MEASURED, by rendering, flipping data-theme with no re-render, and reading both
+// values in the same frame:
+//   * net chart / compare: lgColor() ran at HOVER time, so it resolved live, while the polyline
+//     stroke had been baked at render. On a college player rendered light then flipped to dark:
+//     line #c81e5a, swatch rgb(255,95,143) (=#ff5f8f). Two different colours for one line.
+//   * the six factor charts + the atom cells: SIDEC was baked at render, so BOTH were stale — they
+//     agreed with each other but not with the theme. Worse, a dark --off #2dd4bf swatch left on the
+//     flipped LIGHT bubble surface (--panel #ffffff) measures 1.86:1, under the 3:1 this file's own
+//     surface comment sets for swatches.
+// Tokens fix both at once, and the swatch is then correct by construction rather than by luck: it
+// carries the same token string that painted the line, so nothing can resolve them at two different
+// moments. Verified by driving the flip three times (render light -> read light -> flip dark ->
+// flip back) and comparing getComputedStyle(polyline).stroke with getComputedStyle(swatch)
+// .backgroundColor in the same frame: equal in all three states, on both the net chart
+// (rgb(200,30,90) <-> rgb(255,95,143)) and a factor chart (rgb(14,158,140) <-> rgb(45,212,191)).
+// The contrast numbers this restores are re-measured from pixels in the #ctip surface comment.
+// var() is legal in an SVG presentation attribute here (the file already relies on that for
+// --grid/--zero/--amber).
+// The ONE colour that stays a literal is the compare view's Okabe-Ito slot (OKABE[]): it is not a
+// token, is identical in both themes, and is baked into the polyline the same way.
+function tipShow(c,ev,i){
+  const d=c.tipData&&c.tipData(i);
+  if(!d||!d.rows.length){tipHide();return;}
+  // LOCKUP, not space-between (site-wide rule: a label and its number read as one unit, and the
+  // number outranks the label). The rows share ONE grid so the four columns line up down the
+  // bubble; every row emits all four cells, empty ones included, or a row with no ± would slide
+  // the next row's swatch into the wrong column.
+  CTIP.innerHTML=`<div class="d">${tipEsc(d.date)}</div><div class="rows">`+d.rows.map(r=>
+      `<span class="sw" style="background:${tipEsc(r.c)}"></span>`
+     +`<span class="k">${tipEsc(r.k)}</span><span class="n">${tipEsc(r.v)}</span>`
+     +`<span class="e">${r.e?tipEsc(r.e):''}</span>`).join('')+`</div>`;
+  CTIP.style.display='block';                       // display first: offsetWidth below needs layout
+  tipPlace(ev,c.host,c.hoverPt?c.hoverPt(i):null);
+}
+// Two rules. Never cover the point being pointed at, and never get clipped.
+//
+// RULE ONE is anchored on the SNAPPED POINT, not on the cursor. That is the whole fix: the
+// crosshair and the hover dot snap to the nearest game-day, so on any sparse series the cursor and
+// the thing it describes are up to half a step apart, and a bubble hung off ev.clientX lands on the
+// dot. The old comment here derived a "ceiling" arithmetically (clearance 10.2 - step/2, "reaches
+// zero at a 20.4px step") and concluded it never covered the point. MEASURED, it was wrong and not
+// by a little: on BJ Simmons (c4896963, 10 game-days, net chart at 1280 -> step 103.22px), sweeping
+// the cursor along the line at 2px intervals across the plot, 160 of 465 positions (34.4%) put the
+// bubble over the hover dot. Worst read: cursor x=1068 on the line, snapped dot at x=1017.8, bubble
+// spanning 885 -> 1054.2 — the dot buried mid-bubble, 50px from the cursor.
+// hoverPt(i) hands us the snapped point in CLIENT coordinates (charts already compute X(i)/Y(v) in
+// viewBox units; the scale factor is the svg's own rect / its viewBox). The bubble is then placed
+// TIP_GAP from that column, and the clearance is INDEPENDENT OF STEP — there is no step ceiling
+// left to state. MEASURED on the same 465-position sweep after the change: 0 cover the dot, and the
+// tightest horizontal clearance from the point's column over the whole sweep is 13.78px (nominal
+// TIP_GAP 14, less sub-pixel rect rounding), i.e. 9.98px clear of .hdot's outer edge (r 3.2 + half
+// its 1.2 stroke = 3.8) — at a 103.22px step, where the old code was 34.4% covered.
+//
+// RULE TWO: the flip is decided against the PANEL rather than the viewport, because a bubble hung
+// off a point near a cell's right edge would otherwise lie across the neighbouring cell's chart.
+// Same edge-flip .wseg and the .phead tips on team2027 already do, for the same reason.
+//
+// WHERE THE TWO RULES FIGHT, AND WHO WINS. A 236px atom cell (measured, 1280) against a bubble that
+// is 100-170px wide cannot always do both: a point in the middle of that cell has room for the
+// bubble on neither side without leaving the cell. Containment wins and the separation goes
+// VERTICAL — the bubble is clamped inside its panel and lifted clear above the dot (or dropped
+// below it if there is no room above). Vertical is the cheap direction: the bubble is already
+// unbounded vertically by the panel, so this trades no new overlap for the one thing rule one
+// forbids. If the bubble is wider than the panel entirely, the panel bound is dropped and only the
+// viewport binds: half over a neighbour beats numbers cut off.
+const TIP_GAP=14, TIP_EDGE=6, TIP_DOT=5;   // TIP_DOT: .hdot outer radius 3.8, rounded up with slack
+function tipPlace(ev,host,pt){
+  const w=CTIP.offsetWidth, h=CTIP.offsetHeight;
+  const r=host?host.getBoundingClientRect():null;
+  let lo=TIP_EDGE, hi=innerWidth-TIP_EDGE;
+  if(r&&r.width>=w+2*TIP_EDGE){lo=Math.max(lo,r.left+TIP_EDGE);hi=Math.min(hi,r.right-TIP_EDGE);}
+  const ax=pt?pt.x:ev.clientX;                      // anchor = the snapped point's column
+  let x, beside=true;
+  if(ax+TIP_GAP+w<=hi) x=ax+TIP_GAP;                // preferred side
+  else if(ax-TIP_GAP-w>=lo) x=ax-TIP_GAP-w;         // flip to the other side of the POINT
+  else {beside=false; x=Math.min(Math.max(ax-w/2,lo),Math.max(lo,hi-w));}   // neither side fits
+  // A finger covers what it points at, so on touch the bubble goes ABOVE the contact instead of
+  // beside it (22px ~= a fingertip's radius on the glass). Mouse: centred on the cursor.
+  let y=(ev.pointerType==='touch')?ev.clientY-h-22:ev.clientY-h/2;
+  // Keep it clear of the sticky header. The bubble is centred on the cursor, so a chart whose top
+  // has scrolled under the nav would otherwise have it painted across the site's own header (#ctip
+  // sits above the nav's z-index on purpose — being clipped by it would be worse). Measured off the
+  // nav rather than a hardcoded height, so a header that grows cannot silently break this.
+  const nav=document.getElementById('topnav');
+  const top=Math.max(TIP_EDGE,nav?nav.getBoundingClientRect().bottom+TIP_EDGE:TIP_EDGE);
+  const bot=Math.max(top,innerHeight-TIP_EDGE-h);
+  y=Math.min(Math.max(y,top),bot);
+  // The bubble is sitting in the point's own column (panel too narrow to go beside it) — so
+  // separate vertically instead. `ys` is every visible hover dot on this column: one on a single
+  // player, up to four in the compare view, which is why it is a list and not a scalar.
+  if(!beside&&pt&&pt.ys.length){
+    const dTop=Math.min(...pt.ys)-TIP_DOT, dBot=Math.max(...pt.ys)+TIP_DOT;
+    if(y<dBot&&y+h>dTop){                           // it really does overlap the dot band
+      const above=dTop-h;
+      y=(above>=top)?above:(dBot<=bot?dBot:y);      // prefer above, else below, else leave it
+    }
+  }
+  CTIP.style.left=x+'px';CTIP.style.top=y+'px';
+}
+// A fixed-position node does not travel with the chart it describes, so a scroll orphans it.
+addEventListener('scroll',tipHide,{passive:true});
+
+// ── y-axis: three domain ticks + an ALWAYS-DRAWN, ALWAYS-LABELLED zero line ──────────────────
+// Callers fold 0 into the y-domain pool (see `pool.push(0)` below), so Y(0) is always inside the
+// plot rect and the zero line is unconditional. It used to be drawn only when the series happened
+// to straddle 0, which left a player whose oSC never goes positive with no reference at all — the
+// reader had to decode "is this good" from the tick numbers.
+// The three ticks stay evenly spaced at the domain min/mid/max (they are what sets the scale), but
+// one of them is DROPPED for either of TWO reasons: it lands too close to the zero line to read as
+// a separate rule, or its own label rounds to the origin. The zero tick wins both collisions.
+//
+// (a) TOO CLOSE. An all-positive series puts 0 about 3% up from the floor (the 6% pad, halved by
+// centring), i.e. ~4px, and drawing a --grid rule + "-0.2" there as well as the --zero rule + "0"
+// reads as a rendering fault.
+// The threshold is 1.5x the tick font size, not 1x. MEASURED on the rendered face (IBM Plex Mono
+// 12px, via canvas measureText actualBoundingBox on "+0.0"): ink ascent 8.52px, ink descent 0.14px,
+// so a tick label's ink box is 8.66px tall and has no descender. At the old 1x=12px threshold a
+// surviving pair sits 12px apart baseline-to-baseline, i.e. 3.34px of white between ink — the two
+// labels clump and read as one four-line stack. At 1.5x=18px the white is 9.34px, slightly more
+// than the ink height itself, which is the same 1.5 leading the rest of the site's stacked small
+// type uses. MEASURED COST, replaying this exact arithmetic over all 250,558 published panels
+// (net + 6 factors x 4 modes for every player file, plus the 7 atom cells of every _atoms.json):
+// grid ticks drawn falls 573,440 -> 565,021, i.e. 2.289 -> 2.255 per panel, a net loss of 8,419
+// ticks (-1.5%). No panel drops below TWO grid ticks at 18px (distribution: 63,905 panels keep 3,
+// 186,653 keep 2, none keep fewer), so nothing is left with a zero rule and no scale.
+//
+// (b) LABEL IS THE ORIGIN. The pixel rule alone is not enough, and the gap it leaves is not rare.
+// A tick can sit 12-24px from the zero rule and still round to 0.0 — the panel then shows a --zero
+// line labelled "0" and, an inch away, a --grid line labelled "-0.0" or "+0.0". MEASURED on the
+// same 250,558 panels: 33,763 of them (13.5%) draw a surviving +-0.0 tick. LIVE EXAMPLE, read off
+// the DOM: ?p=1630169 (Haliburton) -> Pure -> dTS atoms -> the "Three rate" cell drew "+0.0" at
+// y=82 next to "0" at y=105.5, 23.5px apart. So the rule tests the FORMATTED LABEL — what the
+// reader actually sees — and not the value: "-0.0" is a nonsense axis label in any case.
+// AT MOST ONE TICK IS EVER LOST, to (a) and (b) combined. (a) alone can only take one: gridline
+// spacing is ph/2 — 69px on a factor cell, 89px on net — which is far more than 2x18. (b) alone can
+// only take one: two ticks both rounding to 0.0 would need the domain half-height under 0.05, and
+// the `half` floor two lines below Chart()'s pool.push(0) is 0.15. That they cannot BOTH fire on
+// one panel is not argued, it is measured — the 250,558-panel replay above returns exactly two
+// outcomes, 3 ticks or 2, and never 1 or 0.
+// --zero labels its own line — same ink for the mark and its name, and it is the one tick that
+// should out-read the others. MEASURED off the rendered PNG (a 1100px shot of ?p=1630169, the oSC
+// cell), sampling the line row and the darkest/brightest glyph pixel of the "0" against the cell
+// background: dark rgb(127,141,161) on rgb(14,20,29) = 5.48:1 line / 5.41:1 glyph; light
+// rgb(86,100,120) on white = 6.02:1 both. Over the 4.5:1 text floor in both themes, so it is
+// legible as a LABEL and not merely as a mark.
+// The zero line's y is SNAPPED to a half-pixel. svg{width:100%;height:auto} + a viewBox built from
+// the mount's own clientWidth makes one viewBox unit one CSS pixel, so a 1px stroke at an integer y
+// straddles two device rows at half alpha each. MEASURED on the rendered PNG before the snap: the
+// brightest row of the oSC zero line was rgb(82,92,109) on --panel = 2.74:1, i.e. the reference
+// line was UNDER the 3:1 mark floor while its token (#7f8da1, 5.48:1 on --panel) was comfortably
+// over it. Centring on x.5 makes it cover exactly one row at 1x and exactly two at 2x.
+const TICK_CLEAR=1.5;                        // drop threshold, in tick font sizes — see (a) above
+function gridZero(svg,padL,padR,W,ymin,ymax,Y,fs){
+  const yz=Math.round(Y(0))+0.5;
+  [0,.5,1].forEach(f=>{const yv=ymin+(ymax-ymin)*f, y=Y(yv);
+    const txt=(yv>=0?'+':'')+yv.toFixed(1);
+    if(Math.abs(y-yz)<fs*TICK_CLEAR) return;                  // (a) too close to the zero rule
+    if(txt==='+0.0'||txt==='-0.0') return;                    // (b) this tick IS the origin
+    svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'var(--grid)','stroke-width':1}));
+    const t=el('text',{x:padL-6,y:y+4,'font-size':fs,fill:'var(--faint)','text-anchor':'end'});
+    t.textContent=txt;svg.appendChild(t);});
+  svg.appendChild(el('line',{x1:padL,y1:yz,x2:W-padR,y2:yz,stroke:'var(--zero)','stroke-width':1}));
+  // "0", not "+0.0": the other ticks are signed magnitudes, this one is the origin.
+  const t0=el('text',{x:padL-6,y:yz+4,'font-size':fs,fill:'var(--zero)','text-anchor':'end'});
+  t0.textContent='0';svg.appendChild(t0);
+}
 
 // `extras`: optional [[rowKey, cssVar]...] drawn as additional lines on the SAME y-axis as `key`.
 // Used only by the net chart's plan49-W2 off/def toggle. No CI band and no hover dot is drawn for
@@ -574,6 +815,23 @@ function Chart(mount,ser,key,proj,extras){
     if(!PT.length) PT=null;
     else PT.forEach(t=>{pool.push(t.val+Z80*t.se); pool.push(t.val-Z80*t.se);});   // fold every ±80% CI in
   }
+  // 0 is a member of the pool, so every panel contains its own zero line and panels are readable
+  // against each other instead of each inventing its own frame. MEASURED cost, on 1,000 players
+  // (the top 400 of players.json, who are the ones actually opened, + 600 sampled at random from
+  // the tail) x the 7 charts = 7,000 panels, replaying this exact arithmetic with and without the
+  // extra pool member: 49.9% of panels already spanned 0; 69.2% pay nothing at all (the 0.15 half
+  // floor below absorbs the rest); the series keeps >=75% of its old height in 84.7% and >=50% in
+  // 98.0%. The 1.4% that lose more than two thirds are all one shape — a deep-bench or college
+  // player parked near the replacement floor (median nearest end 2.1 away from 0) with a span of
+  // 0.16 — and in 100% of them that whole span is INSIDE the series' own 95% CI. So the range
+  // being given up there is measurement noise the old auto-scale was blowing up to full panel
+  // height, which is the same defect in the other direction. Only 12 panels in 7,000 (0.17%) lose
+  // half their height while carrying a span >=1.0 pts/100, and every one is a player sitting at
+  // -3: exactly the fact the old framing hid. No cap, therefore — the expensive cases are the
+  // cases the change is for.
+  // It also makes an all-null series (pool would have been empty -> Math.min() === Infinity ->
+  // NaN coordinates) degrade to an empty +-0.15 panel instead of a broken one.
+  pool.push(0);
   let lo=Math.min(...pool), hi=Math.max(...pool), c=(lo+hi)/2, half=Math.max((hi-lo)/2*1.06,0.15);
   const ymin=c-half, ymax=c+half;
   const histW=PT?pw*0.60:pw;                           // history occupies the left; the future the right
@@ -582,10 +840,7 @@ function Chart(mount,ser,key,proj,extras){
   const futW=PT?(W-padR-(padL+histW)):0;               // px available to the right of history
   const XP=h=>padL+histW+futW*(h+1)/PT.length;         // horizon h (0-based) placed across the future slice
   const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,preserveAspectRatio:'none'});
-  [0,.5,1].forEach(f=>{const yv=ymin+(ymax-ymin)*f, y=Y(yv);
-    svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'var(--grid)','stroke-width':1}));
-    const t=el('text',{x:padL-6,y:y+4,'font-size':12,fill:'var(--faint)','text-anchor':'end'});t.textContent=(yv>=0?'+':'')+yv.toFixed(1);svg.appendChild(t);});
-  if(ymin<0&&ymax>0){const y=Y(0);svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'var(--zero)','stroke-width':1}));}
+  gridZero(svg,padL,padR,W,ymin,ymax,Y,12);
   let py=ser[0].date.slice(0,4);
   for(let i=1;i<n;i++){const yr=ser[i].date.slice(0,4);if(yr!==py){
     svg.appendChild(el('line',{x1:X(i),y1:padT,x2:X(i),y2:padT+ph,stroke:'var(--line-2)','stroke-width':1}));
@@ -624,7 +879,7 @@ function Chart(mount,ser,key,proj,extras){
       // is information arrival, not smooth continuity) so a >1 net debut step reads as a gap, not a bug.
       const bridge=((new Date(ser[i].date)-new Date(ser[i-1].date))/864e5>30)&&ser[i].lg!==ser[i-1].lg;
       const a={x1:X(i-1).toFixed(1),y1:Y(v[i-1]).toFixed(1),x2:X(i).toFixed(1),y2:Y(v[i]).toFixed(1),
-        stroke:SIDEC||lgColor(ser[i].lg),'stroke-width':1.8,'stroke-linecap':'round'};
+        stroke:SIDEC||lgVar(ser[i].lg),'stroke-width':1.8,'stroke-linecap':'round'};
       if(bridge){a['stroke-dasharray']='3,3';a['stroke-opacity']=0.5;}
       svg.appendChild(el('line',a));}
   }else{
@@ -639,7 +894,7 @@ function Chart(mount,ser,key,proj,extras){
     [...new Set(ser.map(s=>s.lg))].forEach(lg=>{
       let seg=[];
       const flush=()=>{if(seg.length>1)svg.appendChild(el('polyline',{points:seg.join(' '),
-        fill:'none',stroke:SIDEC||lgColor(lg),'stroke-width':1.6,'stroke-linejoin':'round','stroke-linecap':'round'}));seg=[];};
+        fill:'none',stroke:SIDEC||lgVar(lg),'stroke-width':1.6,'stroke-linejoin':'round','stroke-linecap':'round'}));seg=[];};
       for(let i=0;i<n;i++){if(ser[i].lg!==lg)continue;
         if(v[i]==null){flush();continue;}
         seg.push(`${X(i).toFixed(1)},${Y(v[i]).toFixed(1)}`);}
@@ -654,7 +909,7 @@ function Chart(mount,ser,key,proj,extras){
   // (priors/se_net_kappa.json, msolve.py:728) — but that kappa was calibrated on the SIX-factor sum,
   // so on a three-factor sum it is an unvalidated number. Suppressed rather than invented.
   // Segments break on a league change, matching the main line, so no phantom bridge is drawn.
-  (extras||[]).forEach(([k,cv])=>{const col=cssvar(cv);let seg=[],lastLg=null;
+  (extras||[]).forEach(([k,cv])=>{const col='var('+cv+')';let seg=[],lastLg=null;
     const flush=()=>{if(seg.length>1)svg.appendChild(el('polyline',{points:seg.join(' '),fill:'none',
       stroke:col,'stroke-width':1.4,'stroke-linejoin':'round','stroke-linecap':'round','stroke-opacity':.85}));seg=[];};
     for(let i=0;i<n;i++){const val=ser[i][k];
@@ -699,21 +954,66 @@ function Chart(mount,ser,key,proj,extras){
       // Same null trap as the polyline above: Y(null) parks the dot at Y(0), which reads as a
       // real measured point on a date this series has no value for. Hide it, keep the crosshair.
       if(v[i]==null){dot.setAttribute('visibility','hidden');return;}
-      dot.setAttribute('cx',X(i));dot.setAttribute('cy',Y(v[i]));dot.setAttribute('fill',SIDEC||lgColor(ser[i].lg));dot.setAttribute('visibility',line?'visible':'hidden');},
-    valAt(i){return (i>=n&&PTg)?{v:PTg[i-n].val,se:PTg[i-n].se}:{v:v[i],se:se[i]};}};
-  ov.addEventListener('pointermove',e=>{const r=svg.getBoundingClientRect();
+      dot.setAttribute('cx',X(i));dot.setAttribute('cy',Y(v[i]));dot.setAttribute('fill',SIDEC||lgVar(ser[i].lg));dot.setAttribute('visibility',line?'visible':'hidden');},
+    valAt(i){return (i>=n&&PTg)?{v:PTg[i-n].val,se:PTg[i-n].se}:{v:v[i],se:se[i]};},
+    // THE FLIP BOUND: the bordered panel this chart lives in. .atomcell is listed FIRST and is the
+    // whole point — it is nested inside a .cell, and without it closest() walked straight past it to
+    // the expanded cell, so all seven atom charts claimed a 996px host and the flip never fired.
+    // MEASURED before the fix (1280, atoms open on oTS): hovering "Rim make" (cell 150-386) at
+    // x=378 placed the 162.2px bubble at 392-554.2 — entirely on top of the neighbouring "Rim rate"
+    // chart (398-634) while still labelled "Rim make".
+    host:mount.closest('.atomcell,.cell,.netcard')||mount,
+    // Where the SNAPPED point is on screen, for the bubble to hang off (see tipPlace). Client
+    // coords, so the svg's own rect does the viewBox->CSS scaling; preserveAspectRatio is 'none',
+    // so x and y scale independently and each needs its own factor. ys is a list because the
+    // compare view puts several dots on one column.
+    hoverPt(i){const r=svg.getBoundingClientRect(); if(!r.width)return null;
+      const sx=r.width/W, sy=r.height/H;
+      if(i>=n&&PTg){const g=PTg[i-n];                    // the projection cone draws no dot: x only
+        return g?{x:r.left+g.x*sx, ys:[]}:null;}
+      if(i<0||i>=n)return null;
+      return {x:r.left+X(i)*sx, ys:v[i]==null?[]:[r.top+Y(v[i])*sy]};},
+    // What the cursor bubble says for index i. Same numbers, same rounding and the same ± the
+    // panel header prints — this is a second PLACE to read them, never a second answer.
+    tipData(i){
+      const lab=tipLabel(key);
+      if(i>=n&&PTg){const g=PTg[i-n];                     // hovering the future: orange, and say so
+        return g?{date:'Projected '+(g.season||''),
+          rows:[{c:'var(--amber)',k:lab,v:tipSgn(g.val),e:'±'+(Z80*g.se).toFixed(2)}]}:null;}
+      if(i<0||i>=n||v[i]==null)return null;               // no value on this date -> no bubble
+      const s=ser[i];
+      const rows=[{c:SIDEC||lgVar(s.lg),k:lab,v:tipSgn(v[i]),
+                   e:se[i]!=null?'±'+(1.96*se[i]).toFixed(2):''}];
+      // the off/def split draws two more lines on this axis, so it gets two more rows, each in its
+      // own line colour — without the swatches a three-number bubble is unreadable.
+      (extras||[]).forEach(([k,cv])=>{if(s[k]!=null)rows.push({c:'var('+cv+')',k,v:tipSgn(s[k]),e:''});});
+      return {date:`${s.date} · ${LNAME[s.lg]||s.lg}`,rows};}};
+  const move=e=>{const r=svg.getBoundingClientRect();
     const sx=(e.clientX-r.left)/r.width*W;
+    let i;
     if(PTg && sx>padL+histW+2){                          // future slice -> nearest projected horizon
       let h=Math.round((sx-(padL+histW))/futW*PTg.length-0.5);
-      h=Math.max(0,Math.min(PTg.length-1,h)); setHoverAll(n+h,true);
+      h=Math.max(0,Math.min(PTg.length-1,h)); i=n+h;
     } else {                                             // history -> nearest measured game-day
-      let i=Math.round((sx-padL)/histW*(n-1)); i=Math.max(0,Math.min(n-1,i)); setHoverAll(i,true);
-    }});
-  ov.addEventListener('pointerleave',()=>setHoverAll(n-1,false));  // default: last actual game
+      i=Math.round((sx-padL)/histW*(n-1)); i=Math.max(0,Math.min(n-1,i));
+    }
+    setHoverAll(i,true); tipShow(obj,e,i);};
+  // pointerdown as well as pointermove: a TAP moves no pointer, so on touch the move-only binding
+  // this had meant a tap put the crosshair nowhere. Same handler, so touch gets the same answer.
+  ['pointermove','pointerdown'].forEach(t=>ov.addEventListener(t,move));
+  // default: last actual game. tipHide is also in setHoverAll(_,false), which covers the re-render
+  // case — the SVG under the pointer is replaced, so no pointerleave ever fires on it.
+  ['pointerleave','pointercancel'].forEach(t=>ov.addEventListener(t,()=>setHoverAll(n-1,false)));
   return obj;
 }
 
 function setHoverAll(i,line){
+  // UNCONDITIONAL, and that is the invariant: the bubble is only ever visible for the index the
+  // POINTER last set. tipShow() is the one thing that shows it and the pointer handler calls it
+  // immediately after this, in the same synchronous task, so there is no paint in between and no
+  // flicker. Every other driver — the waterfall scrub, Play's sweep, a re-render settling on the
+  // latest day — therefore clears it instead of leaving a frozen number under a moving crosshair.
+  tipHide();
   CHARTS.forEach(c=>c.setHover(i,line));
   const ro=document.getElementById('readout');
   const p=projFor();
@@ -1070,15 +1370,15 @@ function ChartMulti(mount,key){
   const padL=41,padR=8,padT=9,padB=19, pw=W-padL-padR, ph=H-padT-padB;
   const n=MDATES.length;
   let pool=[];MULTI.forEach(m=>MDATES.forEach(d=>{const s=m.map[d];if(s&&s[key]!=null)pool.push(s[key]);}));
+  pool.push(0);          // same always-in-domain zero as Chart() — see the cost measurement there.
+                         // Cheaper here than there: a compare-set pools several careers, so its span
+                         // is wider and 0 is more often inside it already.
   let lo=Math.min(...pool), hi=Math.max(...pool), c=(lo+hi)/2, half=Math.max((hi-lo)/2*1.06,0.15);
   const ymin=c-half, ymax=c+half;
   const X=i=>padL+(n>1?i/(n-1):.5)*pw;
   const Y=val=>padT+ph-(Math.max(ymin,Math.min(ymax,val))-ymin)/(ymax-ymin)*ph;
   const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,preserveAspectRatio:'none'});
-  [0,.5,1].forEach(f=>{const yv=ymin+(ymax-ymin)*f, y=Y(yv);
-    svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'var(--grid)','stroke-width':1}));
-    const t=el('text',{x:padL-6,y:y+4,'font-size':12,fill:'var(--faint)','text-anchor':'end'});t.textContent=(yv>=0?'+':'')+yv.toFixed(1);svg.appendChild(t);});
-  if(ymin<0&&ymax>0){const y=Y(0);svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'var(--zero)','stroke-width':1}));}
+  gridZero(svg,padL,padR,W,ymin,ymax,Y,12);
   let py=MDATES[0].slice(0,4);
   for(let i=1;i<n;i++){const yr=MDATES[i].slice(0,4);if(yr!==py){
     svg.appendChild(el('line',{x1:X(i),y1:padT,x2:X(i),y2:padT+ph,stroke:'var(--line-2)','stroke-width':1}));
@@ -1109,12 +1409,35 @@ function ChartMulti(mount,key){
     }else{                                    // at rest: clean lines, no dots (owner 2026-07-24) — dots appear on hover
       cross.setAttribute('visibility','hidden');
       dots.forEach(d=>d.setAttribute('visibility','hidden'));
-    }}};
-  ov.addEventListener('pointermove',e=>{const r=svg.getBoundingClientRect();const sx=(e.clientX-r.left)/r.width*W;let i=Math.round((sx-padL)/pw*(n-1));i=Math.max(0,Math.min(n-1,i));setHoverMulti(i,true);});
-  ov.addEventListener('pointerleave',()=>setHoverMulti(n-1,false));
+    }},
+    host:mount.closest('.atomcell,.cell,.netcard')||mount,   // same nesting rule as Chart()'s
+    // Every compared player's dot for this index, so the bubble can be lifted clear of ALL of them
+    // when the panel is too narrow to put it beside the column (tipPlace). Same client-coordinate
+    // conversion as Chart().hoverPt.
+    hoverPt(i){const r=svg.getBoundingClientRect(); if(!r.width||i<0||i>=n)return null;
+      const sx=r.width/W, sy=r.height/H, ys=[];
+      MULTI.forEach(m=>{const s=m.map[MDATES[i]]; if(s&&s[key]!=null)ys.push(r.top+Y(s[key])*sy);});
+      return {x:r.left+X(i)*sx, ys};},
+    // One row per compared player, each in that player's own line colour — the compare view is the
+    // case where an unlabelled bubble would be pure ambiguity. Players who have no row on this
+    // union date are simply absent, which is what their missing hover dot already says.
+    // No ±: the compare header prints none either (setHoverMulti's put()), and four bands' worth of
+    // ± in one bubble is noise.
+    tipData(i){
+      if(i<0||i>=n)return null;
+      const date=MDATES[i], rows=[];
+      MULTI.forEach(m=>{const s=m.map[date];
+        if(s&&s[key]!=null)rows.push({c:m.color,k:m.name,v:tipSgn(s[key]),e:''});});
+      return rows.length?{date,rows}:null;}};
+  const move=e=>{const r=svg.getBoundingClientRect();const sx=(e.clientX-r.left)/r.width*W;
+    let i=Math.round((sx-padL)/pw*(n-1));i=Math.max(0,Math.min(n-1,i));
+    setHoverMulti(i,true);tipShow(obj,e,i);};
+  ['pointermove','pointerdown'].forEach(t=>ov.addEventListener(t,move));   // tap, not just drag (touch)
+  ['pointerleave','pointercancel'].forEach(t=>ov.addEventListener(t,()=>setHoverMulti(n-1,false)));
   return obj;
 }
 function setHoverMulti(i,line){
+  tipHide();                                   // same invariant as setHoverAll
   MCHARTS.forEach(c=>c.setHover(i,line));
   const lastVal=(m,key)=>{for(let j=m.ser.length-1;j>=0;j--){if(m.ser[j][key]!=null)return m.ser[j][key];}return null;};
   const swatch=m=>`<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${m.color};margin-right:3px;vertical-align:middle"></span>`;
@@ -1165,8 +1488,11 @@ function wfSvg(row,facs,title,dom){
   const total=steps.reduce((a,s)=>a+s.value,0), rng=dom.max-dom.min, Y=v=>m.t+(dom.max-v)/rng*ph;
   const count=steps.length+1, slot=pw/count, bw=Math.min(52,slot*0.5), cx=i=>m.l+slot*i+slot/2;
   let ticks='';
+  // -0 is not a number anyone means. This axis is its OWN five-tick scale (not gridZero's, and it
+  // has no separate zero rule), so unlike there the tick is kept — only the sign is dropped. Found
+  // while fixing gridZero's "-0.0": ?p=1630169 in Pure was printing a "-0.0" tick here.
   for(let k=0;k<5;k++){const tv=dom.min+rng*k/4,yy=Y(tv);
-    ticks+=`<line class="wfg" x1="${m.l}" x2="${W-m.r}" y1="${yy.toFixed(1)}" y2="${yy.toFixed(1)}"/><text class="wft" x="${m.l-6}" y="${(yy+3).toFixed(1)}" text-anchor="end">${tv.toFixed(1)}</text>`;}
+    ticks+=`<line class="wfg" x1="${m.l}" x2="${W-m.r}" y1="${yy.toFixed(1)}" y2="${yy.toFixed(1)}"/><text class="wft" x="${m.l-6}" y="${(yy+3).toFixed(1)}" text-anchor="end">${(Math.abs(tv)<0.05?0:tv).toFixed(1)}</text>`;}
   const drawBar=(x,v,cls,extra)=>{const y0=Y(0+(extra?extra.base:0)),y1=Y((extra?extra.base:0)+v);
     const h=Math.max(2.5,Math.abs(y1-y0)),ry=Math.abs(y1-y0)<2.5?y1-h/2:Math.min(y0,y1);
     const labY=v>=0?Math.max(13,ry-8):Math.min(H-m.b-2,ry+h+14);
