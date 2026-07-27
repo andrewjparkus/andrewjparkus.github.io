@@ -183,6 +183,10 @@ table.tbl th.l,table.tbl td.l{text-align:left}
 table.tbl td.rank{color:var(--muted);font-size:13px;width:32px}
 table.tbl tbody tr:hover>td{background:var(--panel-3)}
 table.tbl th.grp{color:#9fb0c4;border-left:1px solid var(--line)}
+/* .grp headers were the one table token with no light-theme override: #9fb0c4 on the light thead
+   is ~2:1, i.e. the grouped columns' headings ("Proj net", "Wins contributed") faded out on every
+   page that groups columns. Matches the .sectitle / .ctitle overrides above. */
+:root[data-theme=light] table.tbl th.grp{color:#33425a}
 table.tbl td.grp{border-left:1px solid var(--line-2)}
 table.tbl td.net{font-weight:700}
 table.tbl tr.total td{border-top:1px solid var(--line);border-bottom:none;font-weight:700;background:var(--panel-2)}

@@ -5,30 +5,226 @@
 <link rel="stylesheet" href="site.css">
 <link rel="icon" href="favicon.svg"><link rel="manifest" href="manifest.webmanifest">
 <style>
-  /* forward-team header + forward tag */
-  .thead{display:flex;align-items:center;gap:14px;margin:8px 0 2px;flex-wrap:wrap}
+  /* ===========================================================================
+     2026-27 TEAM DASHBOARD (rebuilt 2026-07-26).
+     The page it replaces was four sections on four different rhythms — a 6-box
+     KPI strip, a 320px radar beside a bar chart that started at an unrelated x,
+     a full-width roster table, and a 5-column depth chart repeating the same 16
+     players. Nothing shared a grid, so the page read as a pile.
+     ONE 12-column grid (.dash) now owns the page, ONE card style (.panel) with
+     ONE header treatment (.phead) sits on it, and every section is a panel. All
+     spacing comes from --sp-*, all type from --fs-*; the only derived size is
+     the hero headline, and it is derived FROM --fs-6 so it moves with the ramp.
+     =========================================================================== */
+
+  /* ---- page header: identity + team switcher ------------------------------ */
+  .thead{display:flex;align-items:center;gap:var(--sp-3);margin:var(--sp-2) 0 0;flex-wrap:wrap}
   .thead img{width:46px;height:46px;object-fit:contain;flex:0 0 auto}
-  .thead .tn h1{margin:0;display:flex;align-items:center;flex-wrap:wrap;gap:4px}
-  .thead .tn .conf{color:var(--muted);font-size:12.5px;margin-top:3px}
+  .thead .tn{flex:1 1 260px;min-width:0}
+  .thead .tn h1{margin:0;display:flex;align-items:center;flex-wrap:wrap;gap:var(--sp-1)}
+  /* the ONE place team colour touches type: the franchise name. teamInk() is contrast-checked
+     for text on the current theme, which body copy and the big numbers are not asked to be. */
+  .thead .tn h1 .nm{color:var(--team-ink,var(--accent))}
+  .thead .tn .conf{color:var(--muted);font-size:var(--fs-1);margin-top:2px}
   .thead .tn .conf b{color:var(--text);font-weight:600}
   .forwardtag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.5px;
     color:var(--accent-ink);background:var(--accent);padding:2px 8px;border-radius:999px;
-    vertical-align:middle;margin-left:8px;text-transform:uppercase}
-  /* factor profile: radar + RdBu strip (mirrors team.html) */
-  .profile{display:grid;grid-template-columns:320px 1fr;gap:18px;align-items:start;margin-top:10px}
-  @media(max-width:680px){.profile{grid-template-columns:1fr}}
-  #radar{max-width:320px;margin:0 auto}
-  .strip{display:flex;flex-direction:column;gap:6px;margin-top:2px}
-  .striprow{display:grid;grid-template-columns:46px 1fr 84px;align-items:center;gap:9px;font-size:12px}
-  .striprow .lab{font-weight:700;color:#aebccd;text-align:right;display:flex;align-items:center;justify-content:flex-end;gap:4px}
-  :root[data-theme=light] .striprow .lab{color:#33425a}
-  .striprow .cellbar{height:18px;border-radius:3px;position:relative;border:1px solid var(--line);background:var(--grid);overflow:hidden}
-  .striprow .cellbar .fill{position:absolute;top:0;bottom:0}
-  .striprow .cellbar .axis{position:absolute;top:0;bottom:0;left:50%;width:1px;background:var(--zero);opacity:.85}
-  .striprow .val{font-variant-numeric:tabular-nums;text-align:right}
-  .striprow .val .z{color:var(--faint);font-size:10px;margin-left:4px}
-  /* roster name link */
-  table.tbl td.pl{font-size:12.5px;font-weight:600}
+    vertical-align:middle;margin-left:var(--sp-2);text-transform:uppercase}
+
+  /* Prev / next / jump. A native <select> is the jump target on purpose: it is keyboard- and
+     screen-reader-complete for free, and it is the one control that must not swallow the
+     ArrowLeft/ArrowRight hotkeys — the global handler skips it by tagName. */
+  .switch{display:flex;align-items:center;gap:var(--sp-1);flex:0 0 auto;min-width:0}
+  .switch .nav{font:inherit;font-size:var(--fs-3);line-height:1;color:var(--muted);cursor:pointer;
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--r-1);padding:6px 10px}
+  .switch .nav:hover{color:var(--text);border-color:var(--team,var(--accent))}
+  .switch select{font:inherit;font-size:var(--fs-1);color:var(--text);background:var(--panel);
+    border:1px solid var(--line);border-radius:var(--r-1);padding:6px 8px;max-width:190px;cursor:pointer}
+  .switch select:hover{border-color:var(--team,var(--accent))}
+
+  /* ---- sticky mini-header -------------------------------------------------- */
+  /* Fixed at 52px = the topnav's own height, and z-index 40 < the topnav's 50, so it can never
+     cover the nav and never fights the nav's position:sticky (two stickies in one scroll parent
+     is where that goes wrong). visibility:hidden in the off state keeps its select unfocusable. */
+  .minibar{position:fixed;top:52px;left:0;right:0;z-index:40;background:var(--navbg);
+    border-bottom:1px solid var(--line);visibility:hidden;opacity:0;transform:translateY(-8px);
+    transition:opacity .16s ease,transform .16s ease,visibility 0s linear .16s}
+  .minibar.on{visibility:visible;opacity:1;transform:none;transition:opacity .16s ease,transform .16s ease}
+  .mininner{max-width:var(--maxw);margin:0 auto;padding:0 22px;height:46px;
+    display:flex;align-items:center;gap:var(--sp-3);min-width:0}
+  .mininner img{width:24px;height:24px;object-fit:contain;flex:0 0 auto}
+  .mininner .ab{font-weight:700;font-size:var(--fs-2);letter-spacing:.3px;flex:0 0 auto}
+  .mstat{display:flex;align-items:baseline;gap:var(--sp-1);flex:0 0 auto;white-space:nowrap}
+  .mstat i{font-style:normal;font-size:var(--fs-1);color:var(--muted)}
+  .mstat b{font-family:var(--font-mono);font-size:var(--fs-2);font-variant-numeric:tabular-nums}
+  .minispace{flex:1 1 auto;min-width:0}
+  /* On a phone the bar carries logo + abbr + two readouts + the switcher in 362px, so the one
+     elastic piece (the jump menu) is what gives — the arrows and the numbers stay full size. */
+  @media(max-width:560px){
+    .mininner{padding:0 14px;gap:var(--sp-2)}
+    .minibar .switch select{max-width:76px;padding:6px 4px}
+    .minibar .switch .nav{padding:5px 8px}
+  }
+
+  /* ---- the grid + the one card style -------------------------------------- */
+  .dash{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:var(--sp-4);margin-top:var(--sp-4)}
+  .panel{grid-column:1/-1;min-width:0;background:var(--panel);border:1px solid var(--line);
+    border-radius:var(--r-2);overflow:hidden}
+  /* the hero is the identity card, so it is the one panel that wears the team colour on its edge.
+     position:relative so the mini-header sentinel can hang off its bottom edge without being laid
+     out — see .herofoot. */
+  .panel.hero-panel{border-top:2px solid var(--team,var(--accent));position:relative}
+  /* The sticky mini-header's trigger. It used to be a direct child of .dash, which made it a GRID
+     ITEM: a zero-height row that still ate a full var(--sp-4) gap, so the hero sat 32px above the
+     factor panel where every other seam is 16px. Out of flow entirely now, pinned to the bottom of
+     the hero card, which is the line it was always meant to represent. */
+  .herofoot{position:absolute;left:0;right:0;bottom:0;height:1px;pointer-events:none}
+  .phead{display:flex;align-items:baseline;gap:var(--sp-2);flex-wrap:wrap;
+    padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--team-soft,var(--line))}
+  .phead h2{margin:0;font-size:var(--fs-3);font-weight:700;letter-spacing:.2px;color:#aebccd}
+  :root[data-theme=light] .phead h2{color:#33425a}
+  .phead .psub{font-size:var(--fs-1);color:var(--faint);font-weight:400}
+  .phead .badge{cursor:help}
+  .pbody{padding:var(--sp-4)}
+  /* a .scroll box flush inside a .panel would double the card's own edge — one card, one border */
+  .panel > .scroll{border:none;border-radius:0;background:transparent}
+
+  /* league rank — the same pill wherever a number claims a rank */
+  .lgrank{font-family:var(--font-mono);font-size:var(--fs-1);color:var(--muted);white-space:nowrap;
+    border:1px solid var(--line);border-radius:999px;padding:1px 7px;cursor:help}
+
+  /* ---- hero: headline wins + the win distribution ------------------------- */
+  .hero{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:var(--sp-4);align-items:start}
+  .heroid{grid-column:span 4;min-width:0}
+  .heroband{grid-column:span 8;min-width:0}
+  @media(max-width:880px){ .heroid,.heroband{grid-column:1/-1} }
+  /* Display size, derived from the scale rather than invented beside it: the type ramp still owns
+     the page, this is --fs-6 stepped up for the one number the page exists to publish. The decimal
+     is set smaller because a mono '.' carries a full character advance — at 50px "28.6" opened a
+     visible hole on both sides of the point. */
+  .heroid .bignum{font-family:var(--font-mono);font-weight:600;font-variant-numeric:tabular-nums;
+    letter-spacing:-.03em;line-height:1;color:var(--text);font-size:calc(var(--fs-6) * 1.8);
+    margin:0 0 var(--sp-2);display:flex;align-items:baseline}
+  .heroid .bignum .dec{font-size:.5em;color:var(--muted);letter-spacing:-.02em}
+  .heroid .x{font-size:var(--fs-1);color:var(--faint)}
+  .heroid .x b{color:var(--text);font-weight:600}
+
+  .band{position:relative;min-width:0}
+  .bandanno{position:relative;height:19px}
+  .cutlab{position:absolute;top:0;font-size:var(--fs-1);color:var(--muted);white-space:nowrap}
+  .cutlab b{color:var(--text);font-weight:600;font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+  .bandmarks{position:relative;height:9px}
+  .bmean{position:absolute;bottom:0;width:0;height:0;margin-left:-5px;
+    border-left:5px solid transparent;border-right:5px solid transparent;
+    border-top:7px solid var(--team,var(--accent));cursor:help}
+  .bandrail{position:relative;height:30px;border:1px solid var(--line);border-radius:var(--r-1);
+    background:var(--panel-2);overflow:hidden}
+  /* WHY THIS IS A BOX-AND-WHISKER AND NOT TWO WASHES OF ONE HUE.
+     Both regions used to be the accent at a low alpha (.18/.46 dark, .26/.55 light). Composited on
+     --panel-2 that is 1.12-1.38:1 for the 95% span and 1.81-3.44:1 for the middle 80% — 0 of 30
+     teams cleared 3:1 on either theme, so the headline of the page was a band you could not see
+     (CHI dark: the wash composites to #301423, 1.12:1 on a #0c121b rail).
+     Fixed twice over. (a) STRENGTH: the middle 80% is now the accent at FULL strength — team_colors
+     already certifies every accent at >=3:1 on the lightest surface of its theme, so on the darker
+     rail it lands 3.60-8.53:1 dark / 3.83-7.00:1 light, 30/30 — and the 95% alpha is SOLVED in JS
+     against the rail's real composite (solveAlpha), not guessed, landing .50-.88 dark / .56-.83
+     light for exactly 3:1. (b) SHAPE: colour alone still could not separate the two regions —
+     for the worst accent the two composites differ by only 1.19:1 — so HEIGHT carries the
+     distinction. The 95% span is a whisker, the middle 80% is the full-height box on top of it. */
+  /* the fallback is the SOLID site accent, not a guessed alpha: if the script never runs, the
+     whisker is still a certified >=3:1 mark rather than a wash nobody measured */
+  .b95{position:absolute;top:10px;bottom:10px;z-index:1;background:var(--team-wash,var(--accent))}
+  .b80{position:absolute;top:0;bottom:0;z-index:1;background:var(--team,var(--accent))}
+  /* .500 is a backdrop gridline, so it sits UNDER the distribution and is neutral --zero rather
+     than --text at .18 (which measured 1.63:1 dark / 1.45:1 on the bare rail — not a visible mark).
+     --zero: 3.46:1 dark, 3.15:1 light. Where the box covers it the axis tick below still says 41. */
+  .b500{position:absolute;top:0;bottom:0;z-index:0;width:1px;background:var(--zero)}
+  /* the median lands on the box by definition, so it is inked AGAINST the box: --team-tick is
+     RC.inkOn(accent), 3.94-8.77:1 over the fill it sits on, where --text at .85 fell to 1.72:1 */
+  .bmed{position:absolute;top:4px;bottom:4px;z-index:2;width:2px;margin-left:-1px;
+    background:var(--team-tick,var(--text));border-radius:1px;cursor:help}
+  /* The playoff cut-off crosses three different backings — bare rail, the box, and the panel above
+     the rail — and no single ink clears 3:1 on all of them (plain --text over the box is 1.42:1).
+     A TWO-TONE dash does: the --bg segments are >=3:1 on any certified accent, the --text segments
+     are >=14:1 on rail and panel, so one tone or the other is always the visible one. */
+  .bcut{position:absolute;top:-9px;bottom:0;z-index:3;width:1.5px;margin-left:-.75px;
+    pointer-events:none;
+    background:repeating-linear-gradient(to bottom,var(--text) 0 3px,var(--bg) 3px 6px)}
+  .bandaxis{position:relative;height:17px;margin-top:3px;font-size:11px;color:var(--faint);
+    font-family:var(--font-mono)}
+  .bandaxis span{position:absolute;top:0}
+  .bandcap{display:flex;flex-wrap:wrap;gap:var(--sp-2) var(--sp-4);margin-top:var(--sp-2)}
+  /* label + value adjacent = the house lockup; never space-between (owner, 2026-07-26) */
+  .caplock{display:flex;align-items:baseline;gap:var(--sp-1);font-size:var(--fs-1);color:var(--muted)}
+  .caplock b{color:var(--text);font-weight:600;font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+
+  /* ---- rating strip: net / off / def, subordinate to the hero ------------- */
+  /* One decomposition, not three peers — so it is a footer inside the hero card, at a smaller
+     size than the headline, not three more boxes in a row of equals. */
+  .rstrip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--line);
+    margin-top:var(--sp-4)}
+  .rstat{padding:var(--sp-3) var(--sp-4) 0;min-width:0}
+  /* the first label sits on the same left edge as the headline above it, not one padding in */
+  .rstat:first-child{padding-left:0}
+  .rstat + .rstat{border-left:1px solid var(--line)}
+  .rstat .k{font-size:var(--fs-1);color:var(--muted);font-weight:600}
+  .rstat .v{display:flex;align-items:baseline;gap:var(--sp-2);margin-top:2px;flex-wrap:wrap}
+  .rstat .v .n{font-family:var(--font-mono);font-size:var(--fs-4);font-weight:600;
+    font-variant-numeric:tabular-nums;letter-spacing:-.2px}
+  @media(max-width:560px){ .rstat{padding:var(--sp-3) var(--sp-2) 0} }
+
+  /* ---- factor rows: diverging bar over the league's middle 80% ----------- */
+  .frow{display:grid;grid-template-columns:58px minmax(0,1fr) 62px 46px;align-items:center;
+    gap:var(--sp-2);padding:var(--sp-2) 0;border-bottom:1px solid var(--line-2)}
+  .frow:last-child{border-bottom:none}
+  .flab{font-size:var(--fs-1);font-weight:700;color:#aebccd;display:flex;align-items:center;
+    justify-content:flex-end;gap:3px}
+  :root[data-theme=light] .flab{color:#33425a}
+  .ftrack{position:relative;height:20px;border:1px solid var(--line);border-radius:3px;min-width:0}
+  /* the answer to "is −1.06 unusual or ordinary" — the middle 80% of the 30 teams, behind the bar.
+     The FILL can only ever be a hint, not the mark: on the light theme any tint dark enough to be
+     seen drops a --pos bar sitting on it below 3:1 (the arithmetic caps a legible tint at 1.12:1
+     against the panel), so the tint stops at --panel-3 on dark (1.10:1) and --panel-2 on light
+     (1.12:1), where a --pos/--neg/--zero bar keeps >=3.01:1. The EDGES are the real mark. */
+  .fband{position:absolute;top:0;bottom:0;z-index:0;background:var(--panel-3)}
+  :root[data-theme=light] .fband{background:var(--panel-2)}
+  /* The edges have to survive ANY bar length — before this they were emitted before the bar with no
+     z-index, so on OKC the right edge was painted over on 4 of 6 rows and the oTS row showed only
+     the 26-50% remnant of a 26-77% band, i.e. it said the league's middle 80% is entirely below
+     average. Two independent guarantees now: they paint ABOVE the bar, and they overshoot the track
+     by 3px top and bottom into the row's own padding, where nothing can ever reach them.
+     --line (1.19:1 on --panel) could not carry a mark either; --muted measures 5.39 on panel and
+     4.90 on band in dark, 6.03 and 5.41 in light. */
+  .fedge{position:absolute;top:-3px;bottom:-3px;z-index:3;width:1px;background:var(--muted)}
+  .faxis{position:absolute;top:0;bottom:0;z-index:2;left:50%;width:1px;background:var(--zero)}
+  /* THE FILL RAMP IS GONE. drawFactors fed RC.rdbu — a diverging ramp built for a WHITE ground —
+     onto a #0e141d panel, so contrast ran backwards: the ramp's extremes (#053061 / #67001f, the
+     biggest deviations) measured 1.41 and 1.40:1 while its middle (#f7f7f7, no deviation at all)
+     measured 17.25:1. OKC's best factor was its faintest bar. Light inverted the failure — the
+     middle measured 1.07:1 on white. An inset hairline patched one side of it and its comment had
+     the cause backwards.
+     Sign is now --pos/--neg, magnitude is bar length alone, and the bar simply takes currentColor
+     from the same pos/neg/zero class the row's number already wears — so the bar and the figure
+     beside it are literally one colour, and both extremes are the LOUDEST marks in the panel
+     (>=5.98:1 dark, >=3.35:1 light). Green/red is not the sole encoder: direction from the centre
+     axis and an explicit +/- on the number both carry the sign independently.
+     min-width replaces the hairline: a team a tenth of a point off average rounds to a sub-pixel
+     bar, and a mark that rounds away is the same defect in a smaller size. */
+  .fbar{position:absolute;top:5px;bottom:5px;z-index:1;min-width:2px;border-radius:2px;
+    background:currentColor}
+  .fval{font-family:var(--font-mono);font-size:var(--fs-1);text-align:right;
+    font-variant-numeric:tabular-nums;font-weight:600}
+  .frank{text-align:right}
+  @media(max-width:560px){ .frow{grid-template-columns:44px minmax(0,1fr) 54px 42px} }
+
+  /* ---- roster (positional groups replace the old separate depth chart) ---- */
+  table.tbl td.pl{font-size:var(--fs-1);font-weight:600}
+  /* Player names stay the SITE link colour, not the team ink. They sit one cell away from
+     sign-coloured numbers, and on a red franchise the two land in the same family however far
+     apart the derivation pushes them: Chicago measures --team-ink #ff9ba0 against --neg #ff6b6b,
+     which clears the 0.1 dE floor and still reads as "all red" down a 16-row table. Team colour
+     belongs on chrome that carries no sign — the hero band, the panel rule, the wins bars. Links
+     are also blue on every other page, so this is the consistent choice as well as the safe one. */
   table.tbl td.pl a{color:var(--accent)}
   table.tbl td.pl a:hover{color:var(--text)}
   table.tbl td.mpg,table.tbl td.gp{color:#aebccd}
@@ -41,31 +237,23 @@
     vertical-align:baseline;border:1px solid rgba(0,0,0,.18)}
   :root[data-theme=light] table.tbl td.rg .sw{border-color:rgba(0,0,0,.22)}
   table.tbl td.rg .nv{font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
-  /* WINS CONTRIBUTED column */
   table.tbl td.wins{white-space:nowrap;min-width:118px}
-  .winwrap{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+  .winwrap{display:flex;align-items:center;gap:var(--sp-2);justify-content:flex-end}
   .winwrap .wn{font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;min-width:34px;text-align:right}
   .winbar{position:relative;flex:1 1 auto;height:9px;min-width:42px;border-radius:3px;
     background:var(--grid);border:1px solid var(--line);overflow:hidden}
-  .winbar .fill{position:absolute;top:0;bottom:0;left:0;background:var(--accent);opacity:.55}
-  table.tbl tr.total td.wins .winwrap .wn{color:var(--accent)}
-  /* depth chart (G/F/C columns) — mirrors team.html */
-  .depth{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:2px}
-  @media(max-width:1000px){.depth{grid-template-columns:repeat(3,1fr)}}
-  @media(max-width:680px){.depth{grid-template-columns:repeat(2,1fr)}}
-  .depthcol{border:1px solid var(--line);background:var(--panel);border-radius:var(--r-1);padding:5px 6px 7px;min-width:0}
-  .depthcol h4{margin:0 0 6px;font-size:11px;font-weight:700;color:#aebccd;letter-spacing:.4px;
-    text-align:center;border-bottom:1px solid var(--line-2);padding-bottom:5px}
-  :root[data-theme=light] .depthcol h4{color:#33425a}
-  .dpl{display:flex;align-items:center;gap:6px;padding:4px 2px;border-bottom:1px solid var(--line-2)}
-  .dpl:last-child{border-bottom:none}
-  .dpl .nm{flex:1 1 auto;min-width:0;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .dpl .nm a{color:var(--accent)}.dpl .nm a:hover{color:var(--text)}
-  .dpl .mp{flex:0 0 auto;font-size:10.5px;color:var(--faint);font-variant-numeric:tabular-nums}
-  .dpl .nchip{flex:0 0 auto;font-size:10.5px;font-weight:700;font-variant-numeric:tabular-nums;
-    padding:1px 5px;border-radius:3px;color:#0a0e16;min-width:30px;text-align:center}
-  .depthcol .none{font-size:11px;color:var(--faint);text-align:center;padding:6px 0}
-  .unlisted{margin-top:8px}
+  /* full strength, no alpha. At .6 over the --grid track this composited to 1.79:1 (CHI dark) and
+     2.10:1 (MEM light) — 2 of 30 teams cleared 3:1 per theme. The accent is already fitted to clear
+     3:1 against --grid at full strength, so the alpha was throwing away the only guarantee it had;
+     undimmed it is 3.18-7.53:1 dark and 3.62-6.62:1 light, 30/30 on both. */
+  .winbar .fill{position:absolute;top:0;bottom:0;left:0;background:var(--team,var(--accent))}
+  table.tbl tr.total td.wins .winwrap .wn{color:var(--text)}
+  /* the position group header — the depth chart's only surviving idea, folded into the roster */
+  table.tbl tr.posrow td{background:var(--panel-2);border-bottom:1px solid var(--line);
+    padding-top:7px;padding-bottom:7px}
+  table.tbl tr.posrow b{font-size:var(--fs-1);letter-spacing:.6px;font-weight:800;color:#aebccd}
+  :root[data-theme=light] table.tbl tr.posrow b{color:#33425a}
+  table.tbl tr.posrow .n{font-size:11px;color:var(--faint);font-weight:400;margin-left:7px}
   /* column definitions live in the header ? tips; those sit in a sticky thead at the top of the
      .scroll box, where an upward tooltip clips — flip them DOWN (same rule as projection.html) */
   .scroll thead th .help[data-tip]:hover::after{bottom:auto;top:calc(100% + 6px)}
@@ -76,6 +264,10 @@
 <nav id="topnav" data-active="proj"></nav>
 <script src="charts.js"></script>
 <script src="nav.js"></script>
+<!-- Team palette. Written by team_colors.js; the whole feature is guarded, and with the file
+     absent the page falls back to the site accent and looks completely normal. -->
+<script src="team_colors.js"></script>
+<div id="minimount"></div>
 <div class="wrap" id="wrap">
   <div class="msg" id="msg">Loading 2026-27 team…</div>
 </div>
@@ -94,10 +286,21 @@ const FAC_TIP = {
   dTOV:"Defensive turnover RAPM — forcing turnovers / ball pressure.",
   dSC:"Defensive second-chance RAPM — limiting opponent offensive rebounds."
 };
+// Every factor is already sign-aligned in the feed — dTS "suppressing opponent shot efficiency" is
+// POSITIVE when good, same as oTS — so higher is better on all six, and rank 1 = the highest value
+// everywhere on this page. Verified against the old strip, which colours +z blue (good) for defence
+// as well as offence, and against ORAPM/DRAPM, which are plain sums of the three.
+const WIN_MAX = 82;                  // the win axis is pinned 0..82 so teams are comparable
 
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,
   c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
-function num(v,dec){ return (v==null||isNaN(v))?"–":Number(v).toFixed(dec==null?1:dec); }
+// ONE minus glyph on the page. fmt() has always emitted U+2212; num() emitted whatever toFixed
+// gave it, so a roster row could show "−1.4" under Proj net and "-0.3" under Wins contributed —
+// two different symbols for one idea, in the same row, at 12.5px.
+function num(v,dec){
+  if(v==null||isNaN(v)) return "–";
+  return Number(v).toFixed(dec==null?1:dec).replace("-","−");
+}
 function fmt(v,dec){
   dec = (dec==null)?1:dec;
   if(v==null || isNaN(v)) return {txt:"–",cls:"zero"};
@@ -107,22 +310,38 @@ function fmt(v,dec){
   if(n >= 0.05) cls = "pos"; else if(n <= -0.05) cls = "neg";
   return {txt,cls};
 }
-function rgCell(v,extraCls){
-  const f = fmt(v,1);
-  if(v==null||isNaN(v)) return '<td class="rg '+(extraCls||"")+' zero">'+f.txt+'</td>';
-  const t = Math.max(0, Math.min(1, (Number(v)+5)/10));
-  return '<td class="rg '+(extraCls||"")+'"><span class="sw" style="background:'+RC.redGreen(t)
-    + '"></span><span class="nv">'+f.txt+'</span></td>';
-}
+function clamp(x,a,b){ return Math.max(a, Math.min(b, x)); }
 function qparam(k){ return new URLSearchParams(location.search).get(k); }
 function logoURL(abbr){
   const M={UTA:'utah',NOP:'no',GSW:'gs',SAS:'sa',NYK:'ny',WAS:'wsh'};
   const k=String(abbr||'').toUpperCase();
   return "https://a.espncdn.com/i/teamlogos/nba/500/"+(M[k]||k.toLowerCase())+".png";
 }
-function kpi(k,v,x,vcls){
-  return '<div class="kpi"><div class="k">'+esc(k)+'</div><div class="v '+(vcls||'')+'">'+esc(v)
-    +'</div><div class="x">'+esc(x||'')+'</div></div>';
+function ord(n){ if(n==null) return ""; const s=["th","st","nd","rd"], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
+function rgCell(v,extraCls){
+  const f = fmt(v,1);
+  if(v==null||isNaN(v)) return '<td class="rg '+(extraCls||"")+' zero">'+f.txt+'</td>';
+  const t = clamp((Number(v)+5)/10, 0, 1);
+  return '<td class="rg '+(extraCls||"")+'"><span class="sw" style="background:'+RC.redGreen(t)
+    + '"></span><span class="nv">'+f.txt+'</span></td>';
+}
+// rank among 30, higher = better (see the sign-alignment note above). Ties share the better rank.
+function rankHigh(v, arr){
+  if(v==null || isNaN(v)) return null;
+  let better = 0;
+  arr.forEach(x=>{ if(x!=null && !isNaN(x) && Number(x) > Number(v)) better++; });
+  return better + 1;
+}
+function rankPill(rank, n, label){
+  if(rank==null) return '';
+  return '<span class="lgrank" data-tip="'+esc(label)+': '+ord(rank)+' of '+n+' teams. 1 = best.">'
+    + ord(rank) + '</span>';
+}
+// linear-interpolated quantile of a SORTED array
+function quant(sorted, p){
+  const n = sorted.length; if(!n) return 0;
+  const i = p*(n-1), lo = Math.floor(i), hi = Math.ceil(i);
+  return sorted[lo] + (sorted[hi]-sorted[lo])*(i-lo);
 }
 
 // team six-factor profile = minute-weighted (mpg x exp_gp) mean of roster per-factor values,
@@ -141,7 +360,76 @@ function teamFactors(team){
   return out;
 }
 
-let DATA = null;
+/* ---- team colour ---------------------------------------------------------
+   Contract (team_colors.js, built alongside this page):
+     window.TEAM_COLORS[abbr] -> {name, primary, secondary}
+     window.teamAccent(abbr)  -> hex safe for marks/fills on the current theme
+     window.teamInk(abbr)     -> hex safe for TEXT on the current theme
+   The whole feature is optional: with the file missing every var below resolves to the site
+   accent and the page is indistinguishable from an untinted one. Sign colours (--pos/--neg) are
+   never touched — red/green encode meaning here and must not become decoration. */
+function toRGB(c){
+  c = String(c||"").trim();
+  let m = c.match(/^#([0-9a-f]{3})$/i);
+  if(m) return [0,1,2].map(i=>parseInt(m[1][i]+m[1][i],16));
+  m = c.match(/^#([0-9a-f]{6})$/i);
+  if(m) return [0,2,4].map(i=>parseInt(m[1].slice(i,i+2),16));
+  m = c.match(/rgba?\(([^)]+)\)/i);
+  if(m){ const p = m[1].split(","); return [+p[0]||0, +p[1]||0, +p[2]||0]; }
+  return null;
+}
+/* WCAG maths, so an alpha on this page is SOLVED rather than picked. Same shape as the bisection
+   team_colors.js runs on lightness, and for the same reason: measure the value you actually ship. */
+function srgbLin(c){ c/=255; return c<=0.04045 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4); }
+function relLum(p){ return 0.2126*srgbLin(p[0]) + 0.7152*srgbLin(p[1]) + 0.0722*srgbLin(p[2]); }
+function contrast(a,b){
+  const x = relLum(a), y = relLum(b);
+  return (Math.max(x,y)+0.05) / (Math.min(x,y)+0.05);
+}
+function over(fg, alpha, bg){ return [0,1,2].map(i=>Math.round(fg[i]*alpha + bg[i]*(1-alpha))); }
+// Smallest alpha whose COMPOSITED pixel clears `floor` against the backing it is painted on.
+// Searched over k/255 rather than bisected on a real number, because the compositor quantizes alpha
+// to 8 bits: a bisected 0.794 is stored as 202/255 = 0.7922 and lands at 2.97:1 instead of the 3.01
+// it was solved for — measured in the browser, not assumed. Contrast is monotone in alpha (the
+// composite luminance walks straight from the backing to the colour), so the first hit is the
+// minimum. Returns 1 when even the undiluted colour cannot reach the floor, so the caller always
+// gets the best available rather than a silent failure.
+function solveAlpha(fg, bg, floor){
+  for(let k=1;k<=255;k++){
+    const a = k/255;
+    if(contrast(over(fg,a,bg), bg) >= floor) return a;
+  }
+  return 1;
+}
+function cssRGB(name, fallback){
+  return toRGB((getComputedStyle(document.documentElement).getPropertyValue(name)||"").trim())
+    || fallback;
+}
+function applyTeamColor(abbr){
+  const root = document.documentElement;
+  const site = (getComputedStyle(root).getPropertyValue("--accent") || "#56b6ff").trim();
+  let accent = site, ink = site;
+  try{
+    if(typeof window.teamAccent === "function"){ const a = window.teamAccent(abbr); if(a) accent = a; }
+    if(typeof window.teamInk === "function"){ const k = window.teamInk(abbr); if(k) ink = k; }
+  }catch(e){ accent = site; ink = site; }
+  const rgb = toRGB(accent) || toRGB(site) || [86,182,255];
+  const A = a => "rgba("+rgb[0]+","+rgb[1]+","+rgb[2]+","+a+")";
+  const light = root.getAttribute("data-theme") === "light";
+  root.style.setProperty("--team", accent);
+  root.style.setProperty("--team-ink", ink);
+  // The 95% whisker is the only alpha left on the page, and it is solved against the rail it is
+  // actually painted on (--panel-2) for THIS team, every theme flip. The old fixed .18/.26 pair was
+  // a guess and it missed on all 30 teams; solved, it lands .50-.88 dark and .56-.83 light.
+  const rail = cssRGB("--panel-2", light ? [238,243,249] : [12,18,27]);
+  root.style.setProperty("--team-wash", A(solveAlpha(rgb, rail, 3)));
+  // ink for the median tick, which by construction always lands on the full-strength box
+  root.style.setProperty("--team-tick",
+    (window.RC && RC.inkOn) ? RC.inkOn(accent) : (light ? "#0a0e16" : "#f3f6fb"));
+  root.style.setProperty("--team-soft", A(0.34));                  // section rules
+}
+
+let DATA = null, ABBR = null, ORDER = [];
 
 fetch('projection_2026_27_teams.json')
   .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
@@ -162,90 +450,196 @@ function confRank(d, conf, abbr){
   const i = list.findIndex(r=>r && r.abbr===abbr);
   return { rank:(i<0?null:i+1), size:list.length };
 }
-function ord(n){ if(n==null) return ""; const s=["th","st","nd","rd"], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
+/* Walk order for the arrows = the standings order, not the alphabet. projection.html sorts each
+   conference by projected wins descending and prints East first, then West; d.conferences already
+   arrives in exactly that per-conference order, so East-then-West reproduces the standings page. */
+function standingsOrder(d){
+  const out = [];
+  ["East","West"].forEach(c=>{
+    const list = (d && d.conferences && Array.isArray(d.conferences[c])) ? d.conferences[c] : [];
+    list.forEach((r,i)=>{ if(r && r.abbr) out.push({abbr:r.abbr, name:r.name||r.abbr, conf:c, seed:i+1}); });
+  });
+  return out;
+}
+function switcherHTML(cls){
+  const i = ORDER.findIndex(t=>t.abbr===ABBR);
+  const prev = ORDER[(i-1+ORDER.length)%ORDER.length], next = ORDER[(i+1)%ORDER.length];
+  let opts = "";
+  ["East","West"].forEach(c=>{
+    opts += '<optgroup label="'+(c==="East"?"Eastern":"Western")+' Conference">';
+    ORDER.filter(t=>t.conf===c).forEach(t=>{
+      opts += '<option value="'+esc(t.abbr)+'"'+(t.abbr===ABBR?' selected':'')+'>'
+        + t.seed + '  ' + esc(t.name) + '</option>';
+    });
+    opts += '</optgroup>';
+  });
+  return '<div class="switch '+cls+'">'
+    + '<button type="button" class="nav" data-go="'+esc(prev.abbr)+'" title="'+esc(prev.name)
+      + '" aria-label="Previous team: '+esc(prev.name)+'">‹</button>'
+    + '<select aria-label="Jump to a team">'+opts+'</select>'
+    + '<button type="button" class="nav" data-go="'+esc(next.abbr)+'" title="'+esc(next.name)
+      + '" aria-label="Next team: '+esc(next.name)+'">›</button>'
+    + '</div>';
+}
+function goTeam(ab){ if(ab) location.href = "team2027.html?abbr=" + encodeURIComponent(ab); }
 
 function render(d){
   const abbrRaw = qparam('abbr');
   const abbr = String(abbrRaw || DEFAULT_ABBR).toUpperCase();
   const team = (d && d.teams && d.teams[abbr]) ? d.teams[abbr] : null;
   if(!team){ friendly("No 2026-27 projection found for <b>"+esc(abbrRaw||abbr)+"</b>."); return; }
-
+  ABBR = abbr;
+  ORDER = standingsOrder(d);
+  applyTeamColor(abbr);
   document.title = (team.name||abbr) + " · 2026-27 Projection · Daily RAPM";
 
-  // team six-factor (this team + all teams for league comparison)
+  const teams = Object.values(d.teams||{});
+
+  // ---- league context: every number on this page is ranked against these 30 ----
   const teamF = teamFactors(team);
-  const allF = Object.values(d.teams||{}).map(teamFactors);
-  const leagueAvg = {};
+  const allF = teams.map(teamFactors);
+  const leagueAvg = {}, facDev = {}, facBand = {};
   FACS.forEach(f=>{
     const v = allF.map(t=>t[f]).filter(x=>x!=null&&!isNaN(x));
     leagueAvg[f] = v.length ? v.reduce((a,b)=>a+b,0)/v.length : 0;
-    const mu = leagueAvg[f];
-    leagueAvg["sd_"+f] = v.length ? (Math.sqrt(v.reduce((a,b)=>a+(b-mu)*(b-mu),0)/v.length)||1e-9) : 1e-9;
+    facDev[f] = allF.map(t=>(t[f]||0)-leagueAvg[f]);           // all 30, as deviations
+    const s = facDev[f].slice().sort((a,b)=>a-b);
+    facBand[f] = [quant(s,0.10), quant(s,0.90)];               // the league's middle 80%
   });
   // plan 50 W3a: team.strength is on the board's RAW scale, whose 30-team mean is ~-3.73, NOT 0.
   // A net rating is by definition relative to league average, and this centring is verified, not
   // assumed: regressing published wins on published strength puts league-mean strength at exactly
   // 41.00 wins (slope 2.255). Uncentred, every team on this page read ~3.73 points too low.
-  const allS = Object.values(d.teams||{}).map(t=>Number(t && t.strength)).filter(x=>!isNaN(x));
+  const allS = teams.map(t=>Number(t && t.strength)).filter(x=>!isNaN(x));
   const leagueNet = allS.length ? allS.reduce((a,b)=>a+b,0)/allS.length : 0;
-  const oR = OFF.reduce((a,f)=>a+((teamF[f]||0)-(leagueAvg[f]||0)),0),
-        dR = DEF.reduce((a,f)=>a+((teamF[f]||0)-(leagueAvg[f]||0)),0);
+  const sideSum = (F, side) => side.reduce((a,f)=>a+((F[f]||0)-(leagueAvg[f]||0)),0);
+  const oR = sideSum(teamF, OFF), dR = sideSum(teamF, DEF);
+
+  const N = teams.length;
+  const rkWins = rankHigh(team.proj_wins, teams.map(t=>t.proj_wins));
+  const rkNet  = rankHigh(team.strength,  allS);
+  const rkOff  = rankHigh(oR, allF.map(F=>sideSum(F, OFF)));
+  const rkDef  = rankHigh(dR, allF.map(F=>sideSum(F, DEF)));
 
   const cr = confRank(d, team.conf, abbr);
   const confLabel = (team.conf||"") + (cr.rank ? " · "+ord(cr.rank) : "")
     + (cr.rank && cr.size ? " of "+cr.size : "");
 
-  // ---- header ----
+  // ---- page header ----
   const logoSrc = team.logo || logoURL(abbr);
-  const logo = '<img src="'+esc(logoSrc)+'" alt="" onerror="this.src=\''+esc(logoURL(abbr))
-    +'\';this.onerror=function(){this.style.visibility=\'hidden\'}">';
-  let html = '<div class="thead">'+logo
-    + '<div class="tn"><h1>'+esc(team.name||abbr)
+  const logoImg = (cls,size)=> '<img '+(cls?'class="'+cls+'" ':'')+'src="'+esc(logoSrc)+'" alt="" '
+    + 'width="'+size+'" height="'+size+'" onerror="this.src=\''+esc(logoURL(abbr))
+    + '\';this.onerror=function(){this.style.visibility=\'hidden\'}">';
+  let html = '<div class="thead">'+logoImg('',46)
+    + '<div class="tn"><h1><span class="nm">'+esc(team.name||abbr)+'</span>'
     + '<span class="forwardtag">2026-27 projected</span></h1>'
-    + '<div class="conf"><b>'+esc(abbr)+'</b>'+(confLabel?' · '+esc(confLabel):'')+'</div></div></div>';
+    + '<div class="conf"><b>'+esc(abbr)+'</b>'+(confLabel?' · '+esc(confLabel):'')+'</div></div>'
+    + switcherHTML('head') + '</div>';
   // The only caveat this page cannot drop: nothing here has happened yet. One sentence, above the
-  // fold, next to the "2026-27 projected" badge. (What used to sit here — how ratings are carried
-  // forward and aged, how wins are split across the roster — is mechanism, not meaning.)
+  // fold, next to the "2026-27 projected" badge.
   html += '<p class="sub">A forward projection, not a measured result. '
     + 'See all 30 teams in the <a href="projection.html">2026-27 standings</a>.</p>';
 
-  // ---- KPI strip ----
-  const projW = num(team.proj_wins,1);
-  const bLo = (team.p2_5!=null?team.p2_5:team.p10), bHi = (team.p97_5!=null?team.p97_5:team.p90);
-  const band = (bLo!=null && bHi!=null) ? num(bLo,0)+'–'+num(bHi,0) : '–';
+  html += '<div class="dash">';
+
+  // ---- PANEL 1 · hero: projected wins + the win distribution --------------
+  // The distribution used to be printed as the string "14-45" — the richest thing in the feed,
+  // rendered as text. It is now the shape it always was.
+  // FENCE: these five quantiles come from THIS feed. projection_2026_27_distribution.json carries
+  // an 83-bin win_hist per team, but it is a DIFFERENT Monte Carlo run (distribution minutes mode)
+  // that disagrees with the numbers published here — CHI 28.7 / 12–48 / 13.1% against 28.6 / 14–45
+  // / 8.7%. Drawing that shape under these captions would put a picture on screen that contradicts
+  // its own labels. Five quantiles, this feed, nothing else.
+  const p025 = (team.p2_5!=null?team.p2_5:team.p10), p975 = (team.p97_5!=null?team.p97_5:team.p90);
+  const X = v => clamp((Number(v)/WIN_MAX)*100, 0, 100);
+  // The playoff cut-off is a conference property, read straight off the same board: the 8th team's
+  // projected wins (the field is 16, the play-in decides 7-10 into 8 per conference).
+  const confList = (d.conferences && d.conferences[team.conf]) ? d.conferences[team.conf] : [];
+  const cutTeam = confList[7] || null;
+  const cut = cutTeam ? Number(cutTeam.proj_wins) : null;
   const po = (team.playoff_prob!=null) ? (team.playoff_prob*100).toFixed(1)+'%' : '–';
+
+  html += '<section class="panel hero-panel">'
+    + '<div class="phead"><h2>Projected wins</h2>'
+    + '<span class="psub">82 games · 10,000 simulated seasons</span></div>'
+    + '<div class="pbody"><div class="hero">';
+
+  // no repeated "Projected wins" label here — the panel header above already says it, and a label
+  // stacked on its own heading is exactly the kind of duplication this rebuild is removing.
+  const wTxt = num(team.proj_wins,1).split('.');
+  html += '<div class="heroid">'
+    + '<div class="bignum">'+wTxt[0]+(wTxt.length>1?'<span class="dec">.'+wTxt[1]+'</span>':'')+'</div>'
+    + '<div class="x">'+(rkWins?'<b>'+ord(rkWins)+'</b> of '+N+' in the league':'')
+    + (cr.rank?' · <b>'+ord(cr.rank)+'</b> in the '+esc(team.conf):'')+'</div>'
+    + '</div>';
+
+  // the band: 95% span, the 10-90 span darker inside it, median tick, mean caret, cut-off line
+  let bandHTML = '<div class="band" role="img" aria-label="Win distribution on a fixed 0 to 82 scale.'
+    + ' Mean ' + num(team.proj_wins,1) + ', median ' + num(team.p50,0)
+    + ', middle 80% ' + num(team.p10,0) + ' to ' + num(team.p90,0)
+    + ', 95% ' + num(p025,0) + ' to ' + num(p975,0)
+    + (cut!=null ? '. Playoff cut-off ' + num(cut,1) + ' wins, odds ' + po : '') + '.">';
+  bandHTML += '<div class="bandanno">';
+  if(cut!=null){
+    const cx = X(cut);
+    const pos = cx > 66 ? 'right:'+(100-cx).toFixed(2)+'%;text-align:right'
+              : (cx < 34 ? 'left:'+cx.toFixed(2)+'%' : 'left:'+cx.toFixed(2)+'%;transform:translateX(-50%)');
+    bandHTML += '<span class="cutlab" style="'+pos+'">Playoff cut-off <b>'+num(cut,1)+'</b> · '
+      + 'odds <b>'+po+'</b></span>';
+  }
+  bandHTML += '</div><div class="bandmarks">'
+    + '<span class="bmean" style="left:'+X(team.proj_wins).toFixed(2)+'%" data-tip="Mean of the '
+      + '10,000 simulated seasons: '+num(team.proj_wins,1)+' wins."></span></div>';
+  bandHTML += '<div class="bandrail">'
+    + '<span class="b95" style="left:'+X(p025).toFixed(2)+'%;width:'+(X(p975)-X(p025)).toFixed(2)+'%" '
+      + 'data-tip="95% of simulated seasons land between '+num(p025,0)+' and '+num(p975,0)+' wins."></span>'
+    + '<span class="b80" style="left:'+X(team.p10).toFixed(2)+'%;width:'+(X(team.p90)-X(team.p10)).toFixed(2)+'%" '
+      + 'data-tip="The middle 80%: '+num(team.p10,0)+' to '+num(team.p90,0)+' wins."></span>'
+    + '<span class="b500" style="left:50%"></span>'
+    + '<span class="bmed" style="left:'+X(team.p50).toFixed(2)+'%" data-tip="Median season: '
+      + num(team.p50,0)+' wins."></span>'
+    + (cut!=null ? '<span class="bcut" style="left:'+X(cut).toFixed(2)+'%"></span>' : '')
+    + '</div>';
+  bandHTML += '<div class="bandaxis"><span style="left:0">0</span>'
+    + '<span style="left:50%;transform:translateX(-50%)" data-tip="A .500 season — 41-41.">41</span>'
+    + '<span style="right:0">82</span></div>';
+  bandHTML += '<div class="bandcap">'
+    + '<span class="caplock">Middle 80% <b>'+num(team.p10,0)+'–'+num(team.p90,0)+'</b></span>'
+    + '<span class="caplock">95% range <b>'+num(p025,0)+'–'+num(p975,0)+'</b>'
+      + ' <span class="help" data-tip="Measured coverage of this band on 360 replayed team-seasons '
+      + 'is 89–98%, re-scored before every deploy.">?</span></span>'
+    + '<span class="caplock">Median <b>'+num(team.p50,0)+'</b></span>'
+    + '</div></div>';
+  html += '<div class="heroband">'+bandHTML+'</div>';
+  html += '</div>';   // /.hero
+
+  // ---- rating strip (inside the hero card = subordinate to it) ------------
   const strF = fmt(team.strength - leagueNet,1), oF = fmt(oR,1), dF = fmt(dR,1);
-  html += '<div class="kpis">';
-  html += kpi('Projected wins', projW, '82-game season');
-  // plan 50 W3e/W1/W2: this label was false — the old p2.5–p97.5 band covered 79.4% and the
-  // p10–p90 band 62.5% against nominal 80%. W1 fixed the cause (build_projection.SE_DESMOOTH)
-  // and daily_v5/harness/team_band.py now SCORES the band on 360 team-seasons before every
-  // deploy: p10–p90 covers 0.744–0.875 and p2.5–p97.5 covers 0.892–0.983, the range spanning a
-  // roster-pessimistic and a leak-optimistic basis. Nominal is now defensible; the caveat is not
-  // decoration. If you change the band, re-run that gate and re-read these numbers off it.
-  html += kpi('95% range', band, 'p2.5–p97.5 · measured 89–98%');
-  html += kpi('Playoff odds', po, 'from 10,000 simulated seasons');
-  html += '<div class="kpi"><div class="k">Projected net</div><div class="v '+strF.cls+'">'+strF.txt+'</div><div class="x">pts/100 vs league average</div></div>';
-  html += '<div class="kpi"><div class="k">ORAPM</div><div class="v '+oF.cls+'">'+oF.txt+'</div><div class="x">oTS + oTOV + oSC, vs league</div></div>';
-  html += '<div class="kpi"><div class="k">DRAPM</div><div class="v '+dF.cls+'">'+dF.txt+'</div><div class="x">dTS + dTOV + dSC, vs league</div></div>';
-  html += '</div>';
-  // The old "Uncertainty: win band 18.0 · GP 22.8 · minutes 31.6 · flags: …" line was diagnostics,
-  // not reader-facing: the band it quoted is already the 95% range KPI above, and GP / minutes
-  // spreads are unitless to anyone outside the model. team.uncertainty and team.fallback_flags are
-  // still exported and still worth watching — read them in the JSON, not on the dashboard. The one
-  // flag that changes how a NUMBER reads (a cold-start rookie) is marked per-row in the roster.
+  const rstat = (k,v,rank,label,tip)=>
+    '<div class="rstat"><div class="k">'+esc(k)+' <span class="help" data-tip="'+esc(tip)+'">?</span></div>'
+    + '<div class="v"><span class="n '+v.cls+'">'+v.txt+'</span>'+rankPill(rank,N,label)+'</div></div>';
+  html += '<div class="rstrip">'
+    + rstat('Projected net', strF, rkNet, 'Projected net',
+        'Points per 100 possessions above or below the league average of all 30 teams.')
+    + rstat('Offense', oF, rkOff, 'Offense',
+        'ORAPM: oTS + oTOV + oSC, each measured against the league average.')
+    + rstat('Defense', dF, rkDef, 'Defense',
+        'DRAPM: dTS + dTOV + dSC, each measured against the league average. Higher is better.')
+    + '</div>';
+  // the mini-header trigger rides the hero card's bottom edge, out of the grid's flow entirely
+  html += '</div><div class="herofoot" id="herofoot"></div></section>';    // /.pbody /.panel
 
-  // ---- factor profile: radar + RdBu strip (projected team six-factor) ----
-  // Both captions that used to sit under these two charts described how to READ them; that belongs
-  // in the section's "?" (one tip, both charts), not in two paragraphs of body copy.
-  html += '<div class="sectitle">Projected factor profile <span style="font-weight:400;color:var(--faint)">· vs league average</span>'
-    + ' <span class="help" data-tip="Radar: each factor as a share of the league\'s largest absolute value. Bars: blue above league average, red below, length by z-score; number is pts/100.">?</span></div>';
-  html += '<div class="profile">';
-  html += '<div class="card" style="padding:10px"><div id="radar"></div></div>';
-  html += '<div><div class="strip" id="strip"></div></div>';
-  html += '</div>';
+  // ---- PANEL 2 · factor profile ------------------------------------------
+  // The radar is DELETED. It restated the diverging bars 40px to their right, on a shape-only
+  // scale, worse; the bars now take the full width and carry the league's spread behind them.
+  html += '<section class="panel"><div class="phead"><h2>Factor profile</h2>'
+    + '<span class="psub">vs league average · rank of '+N+'</span>'
+    + ' <span class="help" data-tip="Bar length = distance from the league average, on one shared '
+    + 'scale across all six. The two upright rules mark the middle 80% of the 30 teams, so a bar '
+    + 'that stops inside them is ordinary and a bar past one is not.">?</span></div>'
+    + '<div class="pbody" id="facmount"></div></section>';
 
-  // ---- ROSTER table (wins contributed) ----
+  // ---- PANEL 3 · roster (positional groups; the depth chart is folded in) --
   const roster = Array.isArray(team.roster) ? team.roster : [];
   const teamW = (team.proj_wins!=null) ? Number(team.proj_wins) : 0;
   let maxW = 0; roster.forEach(p=>{ if(p && p.proj_wins!=null && p.proj_wins>maxW) maxW=p.proj_wins; });
@@ -256,11 +650,23 @@ function render(d){
   // this table should be read. many_rookies (18/30) is already visible per-row as the R badge, and
   // high_rating_uncertainty fires on 30/30, i.e. it discriminates nothing. Neither gets a chip.
   const thin = Array.isArray(team.fallback_flags) && team.fallback_flags.indexOf('many_replacement_rows') >= 0;
-  html += '<div class="sectitle">Roster <span style="font-weight:400;color:var(--faint)">· '
-    + roster.length + ' players · sorted by wins contributed</span>'
-    + (thin ? ' <span class="badge b-g" data-tip="Much of this roster has no rated history, so a'
-              + ' large share of these minutes is filled in at replacement level."'
-              + ' style="cursor:help">thin roster</span>' : '')
+  // The flag counts ROWS (it fires at 2), which says nothing about how much of the season those
+  // rows actually play. Minute-weighted, the 14 flagged teams run 1.7% (MEM, MIL) to 13.0% (DAL) —
+  // so "much of this roster" was told to Boston at 97.5% rated minutes. The chip now publishes the
+  // figure it is claiming, computed from the same roster the table below renders.
+  let repMin = 0, allMin = 0;
+  roster.forEach(p=>{
+    const w = (Number(p && p.mpg)||0) * (Number(p && p.exp_gp)||0);
+    if(!(w>0)) return;
+    allMin += w;
+    if(p.model_source === 'replacement') repMin += w;
+  });
+  const repShare = allMin>0 ? (repMin/allMin)*100 : 0;
+  html += '<section class="panel"><div class="phead"><h2>Roster</h2>'
+    + '<span class="psub">'+roster.length+' players · by listed position, then wins contributed</span>'
+    + (thin ? ' <span class="badge b-g" data-tip="'+num(repShare,1)+'% of this roster\'s projected'
+              + ' minutes go to players with no rated history, filled in at replacement level.">'
+              + num(repShare,1)+'% replacement minutes</span>' : '')
     + '</div>';
   html += '<div class="scroll"><table class="tbl" style="min-width:760px"><thead><tr>'
     + '<th class="l">Player</th><th class="l">Role</th>'
@@ -272,142 +678,170 @@ function render(d){
     + '<th class="grp">Proj net <span class="help" data-tip="Projected on-court net (pts/100) for 2026-27, colored red→green on a fixed −5…+5 scale. Cold-start rookies use a replacement-level prior.">?</span></th>'
     + '<th class="grp">Wins contributed <span class="help" data-tip="Each player\'s share of the team\'s projected wins; the column sums to the team total.">?</span></th>'
     + '</tr></thead><tbody>';
-  roster.forEach(p=>{
-    p = p || {};
-    const f = Array.isArray(p.f) ? p.f : [];
-    const ftip = f.length===6 ? (' · ' + FACS.map((nm,i)=>nm+' '+num(f[i],1)).join(' · ')) : '';
-    const ntip = 'Projected net '+num(p.net,1)+' pts/100'
-      + (p.age!=null ? ' · age '+num(p.age,0) : '')
-      + (p.n_seasons ? ' · '+p.n_seasons+' prior season'+(p.n_seasons===1?'':'s') : '')
-      + (p.model_source ? ' · source '+p.model_source : '') + ftip;
-    let nm;
-    if(!p.cold && p.pid!=null){
-      nm = '<a href="index.html?p='+encodeURIComponent(p.pid)+'" title="'+esc(ntip)+'">'+esc(p.name||'')+'</a>';
-    } else if(p.gid!=null){
-      nm = '<a href="index.html?p='+encodeURIComponent(p.gid)+'" title="'+esc(ntip)+'">'+esc(p.name||'')+'</a>'
-        + '<span class="rk" title="Cold-start rookie — net is a replacement-level prior, no rated history yet.">R</span>';
-    } else {
-      nm = '<span title="'+esc(ntip)+'">'+esc(p.name||'')+'</span>'
-        + '<span class="rk" title="Cold-start rookie — net is a replacement-level prior, no rated history yet.">R</span>';
-    }
-    const wins = (p.proj_wins!=null) ? Number(p.proj_wins) : null;
-    const sharePct = (wins!=null && maxW>0) ? Math.max(0, Math.min(100, (wins/maxW)*100)) : 0;
-    const shareTip = (wins!=null && teamW>0) ? num((wins/teamW)*100,0)+'% of the team\'s projected wins' : '';
-    const winCell = '<td class="wins grp"><div class="winwrap" title="'+esc(shareTip)+'">'
-      + '<span class="winbar"><span class="fill" style="width:'+sharePct.toFixed(1)+'%"></span></span>'
-      + '<span class="wn">'+num(wins,1)+'</span></div></td>';
-    html += '<tr>'
-      + '<td class="l pl">'+nm+'</td>'
-      + '<td class="l">'+esc((p.role||'').replace(/^\w/,c=>c.toUpperCase()))+'</td>'
-      + '<td class="mpg">'+num(p.mpg,1)+'</td>'
-      + '<td class="gp">'+(p.exp_gp==null?'–':num(p.exp_gp,0)
-          +(p.gp_lo!=null&&p.gp_hi!=null?'<span class="rng">'+num(p.gp_lo,0)+'–'+num(p.gp_hi,0)+'</span>':''))+'</td>'
-      + rgCell(p.net,'grp') + winCell + '</tr>';
-  });
+
+  const groups = Object.fromEntries(POS_SLOTS.map(c=>[c,[]]));
+  const unlisted = [];
+  roster.forEach(p=>{ const b = posBucket(p && p.pos); if(b) groups[b].push(p); else unlisted.push(p||{}); });
+  const byContrib = (a,b)=>((b.proj_wins||0)-(a.proj_wins||0));
+  const emitGroup = (label, list, tip)=>{
+    if(!list.length) return '';
+    let h = '<tr class="posrow"><td class="l" colspan="6"><b'
+      + (tip?' class="help" style="border:none;width:auto;height:auto;border-radius:0" data-tip="'+esc(tip)+'"':'')
+      + '>'+esc(label)+'</b><span class="n">'+list.length+'</span></td></tr>';
+    list.slice().sort(byContrib).forEach(p=>{ h += rosterRow(p, maxW, teamW); });
+    return h;
+  };
+  POS_SLOTS.forEach(c=>{ html += emitGroup(c, groups[c], null); });
+  html += emitGroup('UNLISTED', unlisted,
+    'No five-slot listing on the depth chart — listed only as G or F, or not listed at all.');
+
   const winsSum = roster.reduce((a,p)=>a+((p && p.proj_wins!=null && !isNaN(p.proj_wins))?Number(p.proj_wins):0),0);
   const totalWins = (team.proj_wins!=null) ? Number(team.proj_wins) : winsSum;
   html += '<tr class="total"><td class="l pl" title="Team projected net vs league average, and the roster\'s'
     + ' wins contributed summed to the projected total.">TOTAL</td><td class="l">–</td><td class="mpg">–</td><td class="gp">–</td>'
     + rgCell(team.strength - leagueNet,'grp')
     + '<td class="wins grp"><div class="winwrap"><span class="winbar"><span class="fill" style="width:100%"></span></span><span class="wn">'+num(totalWins,1)+'</span></div></td>'
-    + '</tr></tbody></table></div>';
-  // The legend that used to sit here was five column definitions in a paragraph. Each one now
-  // lives in its own column header tip; the R badge and the TOTAL row carry their own titles.
+    + '</tr></tbody></table></div></section>';
 
-  // ---- depth chart (by listed position, G/F/C) ----
-  // "not a lineup" plus the ordering clause is the load-bearing part; the Unlisted rule used to be
-  // a third sentence here, but the Unlisted column explains itself the moment a reader sees it.
-  html += '<div class="sectitle">Depth chart <span style="font-weight:400;color:var(--faint)">· by listed position</span>'
-    + ' <span class="help" data-tip="Listed positions, not a lineup. Ordered by wins contributed; the chip is projected net.">?</span></div>';
-  html += '<div class="depth" id="depth"></div>';
+  html += '</div>';   // /.dash
 
   // meta.note is an exporter-side provenance blob (minutes contract, GP model, artifact wording).
   // It is written for us, not for a reader, so it no longer renders; it stays in the JSON.
 
   document.getElementById('wrap').innerHTML = html;
-  drawRadar(teamF, allF);
-  drawStrip(teamF, leagueAvg);
-  drawDepth(roster);
+  drawFactors(teamF, leagueAvg, facDev, facBand, N);
+  mountMiniHeader(team, abbr, logoImg, strF);
+  wireSwitchers();
 }
 
-// ---- radar + strip (ported from team.html) ----
-function drawRadar(teamF, allF){
-  const mount = document.getElementById('radar');
-  if(!mount || !window.RC) return;
-  const maxAbs = {};
-  FACS.forEach(f=>{ let m=1e-9; allF.forEach(t=>{ const v=t[f]; if(v!=null&&!isNaN(v)) m=Math.max(m,Math.abs(v)); }); maxAbs[f]=m; });
-  const pcts = {};
-  FACS.forEach(f=>{ const v=teamF[f]||0; pcts[f]=Math.max(0,Math.min(1,0.5+0.5*(v/maxAbs[f]))); });
-  RC.radar(mount, FACS, pcts, "var(--accent)");
-}
-function drawStrip(teamF, leagueAvg){
-  const host = document.getElementById('strip');
+/* ---- factor rows -------------------------------------------------------- */
+function drawFactors(teamF, leagueAvg, facDev, facBand, N){
+  const host = document.getElementById('facmount');
   if(!host) return;
+  // ONE shared domain across all six rows — otherwise a bar's length means a different number of
+  // points on every row and the six stop being comparable, which is the whole point of the block.
+  let dom = 0;
+  FACS.forEach(f=>{
+    facDev[f].forEach(v=>{ dom = Math.max(dom, Math.abs(v)); });
+    dom = Math.max(dom, Math.abs(facBand[f][0]), Math.abs(facBand[f][1]));
+  });
+  dom = Math.max(0.5, Math.ceil(dom*2)/2);
+  const X = v => clamp(50 + (v/dom)*50, 0, 100);
+
   let h = '';
   FACS.forEach(f=>{
-    const val = teamF[f];
-    const mu = leagueAvg[f], sd = leagueAvg["sd_"+f]||1e-9;
-    const z = (val==null||isNaN(val)) ? 0 : (val-mu)/sd;
-    const zc = Math.max(-2.2, Math.min(2.2, z));
-    const half = Math.abs(zc)/2.2*50;
-    const tt = Math.max(0, Math.min(1, 0.5 + z/4.4));
-    const col = window.RC ? RC.rdbu(tt) : 'var(--grid)';
-    const fillStyle = zc>=0 ? 'left:50%;width:'+half.toFixed(1)+'%;background:'+col
-                            : 'right:50%;width:'+half.toFixed(1)+'%;background:'+col;
-    const f0 = fmt(val,2);
-    h += '<div class="striprow">'
-      + '<div class="lab">'+f+' <span class="help" data-tip="'+esc(FAC_TIP[f])+'">?</span></div>'
-      + '<div class="cellbar" title="'+esc(FAC_TIP[f])+': '+num(val,2)+' (z '+(z>=0?'+':'')+z.toFixed(1)+' vs league)">'
-        + '<div class="fill" style="'+fillStyle+'"></div><div class="axis"></div></div>'
-      + '<div class="val '+f0.cls+'">'+f0.txt+'<span class="z">z '+(z>=0?'+':'')+z.toFixed(1)+'</span></div>'
+    const raw = teamF[f], mu = leagueAvg[f];
+    const dev = (raw==null||isNaN(raw)) ? 0 : raw - mu;
+    const rank = rankHigh(raw, facDev[f].map(v=>v+mu));
+    const b = facBand[f], x0 = X(b[0]), x1 = X(b[1]), xv = X(dev), x50 = 50;
+    const v = fmt(dev,2);
+    const tip = FAC_TIP[f] + ' This team ' + num(raw,2) + ', league average ' + num(mu,2) + '.';
+    h += '<div class="frow">'
+      + '<div class="flab">'+f+' <span class="help" data-tip="'+esc(tip)+'">?</span></div>'
+      + '<div class="ftrack" data-tip="'+esc(tip)+'">'
+        + '<span class="fband" style="left:'+x0.toFixed(2)+'%;width:'+(x1-x0).toFixed(2)+'%"></span>'
+        + '<span class="fedge" style="left:'+x0.toFixed(2)+'%"></span>'
+        + '<span class="fedge" style="left:'+x1.toFixed(2)+'%"></span>'
+        + '<span class="faxis"></span>'
+        // the bar wears the SAME pos/neg/zero class as the number to its right and takes its fill
+        // from currentColor, so the two can never drift apart
+        + '<span class="fbar '+v.cls+'" style="left:'+Math.min(x50,xv).toFixed(2)+'%;width:'
+          + Math.abs(xv-x50).toFixed(2)+'%"></span>'
+      + '</div>'
+      + '<div class="fval '+v.cls+'">'+v.txt+'</div>'
+      + '<div class="frank">'+rankPill(rank, N, f)+'</div>'
       + '</div>';
   });
   host.innerHTML = h;
 }
 
-// ---- depth chart (ported from team.html; own net = p.net, contribution = p.proj_wins) ----
-// 5 listed slots; a bare "G"/"F" is not guessed into a slot and drops to Unlisted.
-const POS_COLS = ["PG","SG","SF","PF","C"];
-const POS_LABEL = {PG:"PG",SG:"SG",SF:"SF",PF:"PF",C:"C"};
+/* ---- roster rows -------------------------------------------------------- */
+// 5 listed slots; a bare "G"/"F" is not guessed into a slot and drops to UNLISTED — the depth
+// chart's one durable idea, kept as a grouping inside the roster instead of a second table that
+// listed the same 16 players with the same net all over again.
+const POS_SLOTS = ["PG","SG","SF","PF","C"];
+// The feed's model_source is an internal id ("xgb"), and the tooltip was printing it raw as
+// "· source xgb". Reader words, or nothing — an id the reader cannot look up is worse than silence.
+const SRC_WORDS = { xgb:"from rated history", rookie:"from a rookie prior", replacement:"at replacement level" };
 function posBucket(pos){
   const p = String(pos||"").toUpperCase();
-  return POS_LABEL[p] ? p : null;
+  return POS_SLOTS.indexOf(p) >= 0 ? p : null;
 }
-function netChip(net){
-  if(net==null||isNaN(net)) return '<span class="nchip" style="background:var(--grid);color:var(--muted)">–</span>';
-  const t = Math.max(0, Math.min(1, (Number(net)+5)/10));
-  const bg = RC.redGreen(t), f = fmt(net,1);
-  return '<span class="nchip" style="background:'+bg+';color:'+RC.inkOn(bg)+'" title="projected net '
-    + esc(num(net,1))+' pts/100">'+f.txt+'</span>';
-}
-function depthPlayerRow(p){
-  const link = (!p.cold && p.pid!=null) ? 'index.html?p='+encodeURIComponent(p.pid)
-             : (p.gid!=null ? 'index.html?p='+encodeURIComponent(p.gid) : null);
-  const nm = link ? '<a href="'+esc(link)+'">'+esc(p.name||'')+'</a>' : '<span>'+esc(p.name||'')+'</span>';
-  return '<div class="dpl"><span class="nm" title="'+esc(p.name||'')+'">'+nm+'</span>'
-    + '<span class="mp" title="projected minutes per game">'+num(p.mpg,1)+'</span>'+netChip(p.net)+'</div>';
-}
-function drawDepth(roster){
-  const host = document.getElementById('depth');
-  if(!host) return;
-  const cols = Object.fromEntries(POS_COLS.map(c=>[c,[]])), unlisted = [];
-  (roster||[]).forEach(p=>{ const b=posBucket(p.pos); if(b) cols[b].push(p); else unlisted.push(p); });
-  const byContrib = (a,b)=>((b.proj_wins||0)-(a.proj_wins||0));
-  let h = '';
-  POS_COLS.forEach(c=>{
-    const list = cols[c].sort(byContrib);
-    h += '<div class="depthcol"><h4>'+POS_LABEL[c]+'</h4>';
-    h += list.length ? list.map(depthPlayerRow).join('') : '<div class="none">—</div>';
-    h += '</div>';
-  });
-  host.innerHTML = h;
-  if(unlisted.length){
-    unlisted.sort(byContrib);
-    const u = '<div class="depthcol unlisted" style="grid-column:1/-1"><h4>UNLISTED</h4>'
-      + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:0 12px">'
-      + unlisted.map(depthPlayerRow).join('') + '</div></div>';
-    host.insertAdjacentHTML('beforeend', u);
+function rosterRow(p, maxW, teamW){
+  p = p || {};
+  const f = Array.isArray(p.f) ? p.f : [];
+  const ftip = f.length===6 ? (' · ' + FACS.map((nm,i)=>nm+' '+num(f[i],1)).join(' · ')) : '';
+  const ntip = 'Projected net '+num(p.net,1)+' pts/100'
+    + (p.age!=null ? ' · age '+num(p.age,0) : '')
+    + (p.n_seasons ? ' · '+p.n_seasons+' prior season'+(p.n_seasons===1?'':'s') : '')
+    + (SRC_WORDS[p.model_source] ? ' · '+SRC_WORDS[p.model_source] : '') + ftip;
+  const rookie = '<span class="rk" title="Cold-start rookie — net is a replacement-level prior,'
+    + ' no rated history yet.">R</span>';
+  let nm;
+  if(!p.cold && p.pid!=null){
+    nm = '<a href="index.html?p='+encodeURIComponent(p.pid)+'" title="'+esc(ntip)+'">'+esc(p.name||'')+'</a>';
+  } else if(p.gid!=null){
+    nm = '<a href="index.html?p='+encodeURIComponent(p.gid)+'" title="'+esc(ntip)+'">'+esc(p.name||'')+'</a>'+rookie;
+  } else {
+    nm = '<span title="'+esc(ntip)+'">'+esc(p.name||'')+'</span>'+rookie;
   }
+  const wins = (p.proj_wins!=null) ? Number(p.proj_wins) : null;
+  const sharePct = (wins!=null && maxW>0) ? clamp((wins/maxW)*100, 0, 100) : 0;
+  const shareTip = (wins!=null && teamW>0) ? num((wins/teamW)*100,0)+'% of the team\'s projected wins' : '';
+  return '<tr>'
+    + '<td class="l pl">'+nm+'</td>'
+    + '<td class="l">'+esc((p.role||'').replace(/^\w/,c=>c.toUpperCase()))+'</td>'
+    + '<td class="mpg">'+num(p.mpg,1)+'</td>'
+    + '<td class="gp">'+(p.exp_gp==null?'–':num(p.exp_gp,0)
+        +(p.gp_lo!=null&&p.gp_hi!=null?'<span class="rng">'+num(p.gp_lo,0)+'–'+num(p.gp_hi,0)+'</span>':''))+'</td>'
+    + rgCell(p.net,'grp')
+    + '<td class="wins grp"><div class="winwrap" title="'+esc(shareTip)+'">'
+      + '<span class="winbar"><span class="fill" style="width:'+sharePct.toFixed(1)+'%"></span></span>'
+      + '<span class="wn">'+num(wins,1)+'</span></div></td>'
+    + '</tr>';
 }
+
+/* ---- sticky mini-header + switcher wiring ------------------------------- */
+function mountMiniHeader(team, abbr, logoImg, strF){
+  const mount = document.getElementById('minimount');
+  if(!mount) return;
+  mount.innerHTML = '<div class="minibar" id="minibar">'
+    + '<div class="mininner">'+logoImg('',24)
+    + '<span class="ab">'+esc(abbr)+'</span>'
+    + '<span class="mstat"><i>Wins</i><b>'+num(team.proj_wins,1)+'</b></span>'
+    + '<span class="mstat"><i>Net</i><b class="'+strF.cls+'">'+strF.txt+'</b></span>'
+    + '<span class="minispace"></span>'+switcherHTML('mini')+'</div></div>';
+  const bar = document.getElementById('minibar'), foot = document.getElementById('herofoot');
+  if(!bar || !foot || !window.IntersectionObserver) return;
+  new IntersectionObserver(entries=>{
+    entries.forEach(e=>{ bar.classList.toggle('on', !e.isIntersecting && e.boundingClientRect.top < 0); });
+  }, {rootMargin:'-56px 0px 0px 0px', threshold:0}).observe(foot);
+}
+function wireSwitchers(){
+  document.querySelectorAll('.switch .nav').forEach(b=>{
+    b.addEventListener('click', ()=>goTeam(b.getAttribute('data-go')));
+  });
+  document.querySelectorAll('.switch select').forEach(s=>{
+    s.addEventListener('change', ()=>goTeam(s.value));
+  });
+}
+// Left / right step the standings the same way the arrows do. Skipped whenever the user is typing
+// or has a control focused (a focused <select> uses the same keys to change its own option), and
+// whenever a modifier is held, so browser and OS shortcuts still work.
+document.addEventListener('keydown', e=>{
+  if(e.key!=='ArrowLeft' && e.key!=='ArrowRight') return;
+  if(e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+  const t = e.target, tag = t && t.tagName;
+  if(tag==='INPUT' || tag==='TEXTAREA' || tag==='SELECT' || (t && t.isContentEditable)) return;
+  if(!ORDER.length || !ABBR) return;
+  const i = ORDER.findIndex(x=>x.abbr===ABBR);
+  if(i < 0) return;
+  e.preventDefault();
+  goTeam(ORDER[(i + (e.key==='ArrowRight'?1:-1) + ORDER.length) % ORDER.length].abbr);
+});
+// Team colour is theme-dependent (teamAccent/teamInk both account for it), so re-derive it when
+// the theme toggle flips the attribute rather than leaving a dark-theme hex on a white page.
+new MutationObserver(()=>{ if(ABBR) applyTeamColor(ABBR); })
+  .observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
 </script>
 </body></html>
