@@ -8,8 +8,8 @@
   /* page-unique: draft board */
   .wrap{max-width:1100px}
   #tbl{min-width:880px}
-  table.tbl tr.prow.sel>td{background:#142233}
-  td.pcell .pn{font-size:13px;font-weight:600;color:var(--accent);cursor:pointer}
+  td.pcell .pn{font-size:13px;font-weight:600;color:var(--accent);text-decoration:none}
+  td.pcell a.pn:hover{color:var(--text);text-decoration:underline}
   td.pcell .pn.nolink{color:var(--muted);cursor:default}
   td.pcell .sub2{color:var(--muted);font-size:11px;margin-left:7px}
   td.f{font-size:12px}
@@ -18,10 +18,6 @@
   .badge.thin{background:#3a2a16;color:#e8b86b}
   .badge.nodata{background:#2a1620;color:#e88}
   .whisk{display:inline-block;width:150px;height:12px;vertical-align:middle;margin-left:6px}
-  /* curve panel */
-  #panel{display:none;margin-top:22px;border:1px solid var(--line);background:var(--panel);padding:16px 18px;border-radius:var(--r-1)}
-  #panel h3{margin:0 0 2px;font-size:15px} #panel .pmeta{color:var(--muted);font-size:11.5px;margin:0 0 10px}
-  #chart{width:100%;height:240px} #panel .close{float:right;color:var(--muted);cursor:pointer;font-size:13px}
   /* header ? tooltips live in the sticky thead inside the .scroll box — flip tips DOWN */
   .scroll thead th .help[data-tip]:hover::after{bottom:auto;top:calc(100% + 6px)}
   .scroll thead th .help[data-tip]:hover::before{bottom:auto;top:calc(100% + 1px);
@@ -36,11 +32,9 @@
   <!-- The keeper from the old methodology block: the bands are so wide they overlap for nearly
        every prospect, so this board is calibrated uncertainty, not a ranking to bet on. -->
   <p class="sub" id="sub">2026 prospects' college / G-League production translated to the NBA scale, with 95% bands —
-    click a prospect for their curve. Measured production, not a forecast of NBA careers: the bands
+    click a prospect to open them in the Explorer. Measured production, not a forecast of NBA careers: the bands
     overlap for nearly every prospect.</p>
   <div class="scroll"><table class="tbl" id="tbl"></table></div>
-  <div id="panel"><span class="close" onclick="closePanel()">close ✕</span>
-    <h3 id="pname"></h3><p class="pmeta" id="pmeta"></p><svg id="chart"></svg></div>
   <div class="msg" id="msg">Loading draft board…</div>
   <!-- REMOVED: the "Methodology & frozen NCAA→NBA translation" <details> and the foot legend.
        The translation table (per-factor slope / offset / Var_translate) is internal calibration
@@ -121,7 +115,12 @@ function render(){
     const badges=(p.thin_sample?'<span class="badge thin" title="Thin sample — little college / G-League playing time behind this estimate.">thin</span>':'')+
                  (p.status!=="ok"?'<span class="badge nodata" title="No college or G-League possessions on file for this prospect.">no data</span>':'');
     const linkable=p.status==="ok"&&p.gid;
-    const pn='<span class="pn'+(linkable?'':' nolink')+'"'+(linkable?' onclick="openPanel(\''+esc(p.gid)+'\',\''+esc(p.name)+'\')"':'')+'>'+esc(p.name)+'</span>';
+    // Straight to the Explorer, which owns the real multi-series chart with a crosshair, the mode
+    // toggle and the factor grid. The old in-page mini-curve was a second, worse renderer of the
+    // same data/{gid}.json feed (owner 2026-07-26).
+    const pn=linkable
+      ? '<a class="pn" href="index.html?p='+encodeURIComponent(p.gid)+'">'+esc(p.name)+'</a>'
+      : '<span class="pn nolink">'+esc(p.name)+'</span>';
     const netcell=p.status==="ok"
       ? '<td class="net '+net.cls+'">'+net.txt+'<span style="color:var(--muted);font-size:10px"> ±'+(1.959964*p.se_net).toFixed(1)+'</span>'+whisker(p,dom)+'</td>'
       : '<td class="net zero">–</td>';
@@ -148,68 +147,5 @@ function cmp(a,b){
 }
 function setSort(k){ if(SORT.key===k) SORT.asc=!SORT.asc; else {SORT.key=k; SORT.asc=(k==="pick"||k==="name"||k==="our_rank");} render(); }
 
-// ---- per-prospect daily curve (reuses Explorer's data/{gid}.json contract) ----
-function openPanel(gid,name){
-  document.querySelectorAll('tr.prow.sel').forEach(r=>r.classList.remove('sel'));
-  const row=document.getElementById('row-'+gid); if(row) row.classList.add('sel');
-  const panel=document.getElementById('panel'); panel.style.display='block';
-  document.getElementById('pname').textContent=name;
-  document.getElementById('pmeta').textContent='Daily net, translated to the NBA scale.';
-  document.getElementById('chart').innerHTML='';
-  fetch('data/'+gid+'.json').then(r=>r.ok?r.json():null).then(j=>{
-    if(!j){ document.getElementById('pmeta').textContent='No daily curve for this prospect.'; return; }
-    drawNet(j);
-  }).catch(()=>{ document.getElementById('pmeta').textContent='Could not load daily curve.'; });
-  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
-}
-function closePanel(){ document.getElementById('panel').style.display='none';
-  document.querySelectorAll('tr.prow.sel').forEach(r=>r.classList.remove('sel')); }
-
-// Minimal net-curve renderer (the Explorer owns the full multi-series chart; this is a
-// single-series net curve over the same data/{gid}.json the Explorer fetches).
-function drawNet(j){
-  const svg=document.getElementById('chart'); svg.innerHTML='';
-  const W=svg.clientWidth||860, H=240, m={t:14,r:14,b:24,l:38};
-  svg.setAttribute('viewBox','0 0 '+W+' '+H);
-  // j.series[*] is a per-league polyline; each point has a date + net. Be tolerant of shape.
-  const series=(j.series||j.leagues||[]).filter(s=>s&&(s.net||s.points));
-  let pts=[];
-  const asX = raw => /^\d{4}-\d{2}-\d{2}$/.test(String(raw)) ? Date.parse(raw) : +raw;
-  function pull(s){
-    const xs=s.date||s.dates||(s.points?s.points.map(p=>p.date||p.x):null);
-    const ys=s.net||(s.points?s.points.map(p=>p.net!=null?p.net:p.y):null);
-    if(!xs||!ys) return; for(let i=0;i<xs.length;i++) pts.push({d:asX(xs[i]),v:+ys[i],lg:s.league||s.name});
-  }
-  if(series.length) series.forEach(pull);
-  else if((j.date||j.d)&&j.net){
-    const xs = j.date || j.d;
-    const lgs = j.league || j.lg || [];
-    for(let i=0;i<xs.length;i++){
-      pts.push({d:asX(xs[i]), v:+j.net[i], lg:lgs[i]||j.league||j.lg});
-    }
-  }
-  pts=pts.filter(p=>isFinite(p.d)&&isFinite(p.v));
-  // Shape mismatch is our problem, not the reader's — the Explorer renders the same feed.
-  if(!pts.length){ document.getElementById('pmeta').textContent='Couldn\'t draw this curve — see the Explorer.'; return; }
-  const d0=Math.min(...pts.map(p=>p.d)), d1=Math.max(...pts.map(p=>p.d));
-  let v0=Math.min(...pts.map(p=>p.v)), v1=Math.max(...pts.map(p=>p.v));
-  if(v0===v1){v0-=1;v1+=1;} const vp=(v1-v0)*0.1; v0-=vp; v1+=vp;
-  const X=d=>m.l+(d1===d0?0:(d-d0)/(d1-d0))*(W-m.l-m.r);
-  const Y=v=>m.t+(1-(v-v0)/(v1-v0))*(H-m.t-m.b);
-  let g='';
-  // zero line
-  if(v0<=0&&v1>=0){ g+='<line x1="'+m.l+'" y1="'+Y(0)+'" x2="'+(W-m.r)+'" y2="'+Y(0)+'" stroke="var(--grid)" stroke-dasharray="3 3"/>'; }
-  const COLOR={nba:'var(--nba)',gleague:'var(--gleague)',college:'var(--college)'};
-  const byLg={}; pts.forEach(p=>{(byLg[p.lg]=byLg[p.lg]||[]).push(p);});
-  for(const lg in byLg){
-    const seg=byLg[lg].sort((a,b)=>a.d-b.d);
-    const path=seg.map((p,i)=>(i?'L':'M')+X(p.d).toFixed(1)+' '+Y(p.v).toFixed(1)).join(' ');
-    g+='<path d="'+path+'" fill="none" stroke="'+(COLOR[lg]||'var(--accent)')+'" stroke-width="1.8"/>';
-  }
-  g+='<line x1="'+m.l+'" y1="'+m.t+'" x2="'+m.l+'" y2="'+(H-m.b)+'" stroke="var(--line)"/>';
-  g+='<text x="'+m.l+'" y="'+(m.t+9)+'" fill="var(--muted)" font-size="10">'+v1.toFixed(1)+'</text>';
-  g+='<text x="'+m.l+'" y="'+(H-m.b)+'" fill="var(--muted)" font-size="10">'+v0.toFixed(1)+'</text>';
-  svg.innerHTML=g;
-}
 </script>
 </body></html>

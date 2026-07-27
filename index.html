@@ -28,7 +28,10 @@
   .pc-face{object-fit:cover;object-position:top}
   .pc-mono{display:flex;align-items:center;justify-content:center;font-family:var(--font);
     font-weight:700;font-size:27px;color:var(--muted);letter-spacing:.5px}
-  .pc-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:var(--sp-2)}
+  /* gap:2px, not a spacing token: the name and the pos/league/age line are ONE identity block, and
+     at 8px they read as two separate things (owner 2026-07-26: "the card should be tight"). The
+     stat groups opposite them keep their own internal rhythm. */
+  .pc-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:2px}
   /* one text line on the left, its stat group on the right, baselines shared */
   .pc-row{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-5)}
   .pc-name{font-size:var(--fs-6);font-weight:700;letter-spacing:-.5px;line-height:1.12}
@@ -101,6 +104,21 @@
      Do NOT reorder FAC to get here: facProj(i) indexes traj_f[h][i] POSITIONALLY. */
   #grid{grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(3,auto);grid-auto-flow:column}
   @media(max-width:640px){#grid{grid-template-columns:1fr;grid-auto-flow:row}}
+  /* ── atoms expanded ────────────────────────────────────────────────────────────────────────
+     Drilling into oTS/dTS gives that one factor the whole grid and takes the other five off
+     screen. The point is width: seven component charts across a 493px half-cell are 150px each,
+     which is where the year labels had to be hidden. Across the full 996px they are ~240px.
+     grid-template-rows is overridden to `auto` because the 3-row template would otherwise hold
+     two empty rows open under the expanded cell. */
+  #grid.atoms-open>.cell{display:none}
+  #grid.atoms-open>.cell.atom-open{display:block;grid-column:1/-1}
+  #grid.atoms-open{grid-template-rows:auto}
+  /* The morph itself. 260ms is long enough to read as motion and short enough not to sit in the
+     way of a second click; the five leaving cells fade a touch faster than the survivor grows. */
+  ::view-transition-old(root),::view-transition-new(root){animation-duration:260ms}
+  @media(prefers-reduced-motion:reduce){
+    ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}
+  }
   /* plan49 W1: in the SIX FACTOR charts the LINE colour encodes SIDE, not league (owner's ask).
      Teal is the existing --amp token. Measured with a Vienot dichromat sim + dE76:
      teal/violet separate at dE 51.8 deuteranopia / 68.0 protanopia, and both sit >64 from
@@ -151,7 +169,7 @@
   .drill.on{color:var(--bg);background:var(--faint);border-color:var(--faint)}
   .atompanel{display:none;margin-top:8px;border-top:1px solid var(--line);padding-top:8px}
   .atomnote{font-size:13px;line-height:1.5;color:var(--faint);margin-bottom:8px}
-  .atomgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 12px}
+  .atomgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px 12px}
   @media(max-width:640px){.atomgrid{grid-template-columns:minmax(0,1fr)}}
   .atitle{display:flex;align-items:baseline;gap:7px;
     font-size:13px;color:var(--faint);margin-bottom:3px}
@@ -788,12 +806,18 @@ function show(){
   document.getElementById('cmptray').style.display='flex';
   // build the 6-factor grid cells once
   const grid=document.getElementById('grid');grid.innerHTML='';
-  FAC.forEach(([f,t])=>{const cell=document.createElement('div');cell.className='cell';
+  FAC.forEach(([f,t])=>{const cell=document.createElement('div');cell.className='cell';cell.id='cell_'+f;
+    // A distinct view-transition-name per cell is what lets the browser MORPH the expanding factor
+    // from its quarter-width rect to full width while the other five cross-fade out, instead of
+    // hard-cutting the whole grid. Set here rather than in CSS because the name must be unique per
+    // element and these are built in a loop.
+    cell.style.viewTransitionName='vt_'+f;
     // W3: the drill-down affordance exists ONLY on the two factors that actually decompose,
     // and only when this player HAS an atom sidecar (NBA rows; 2,500 of 27,234 published).
     const drill=(ATOMK[f]&&ATOMS)?`<button class="drill" id="dr_${f}" aria-expanded="false" aria-controls="ap_${f}">atoms</button>`:'';
     cell.innerHTML=`<div class="ctitle"><span>${t} <span class="help" data-tip="${TIP[f]}">?</span>${drill}</span><span class="v" id="v_${f}"></span></div><div id="c_${f}"></div><div class="atompanel" id="ap_${f}"></div>`;
     grid.appendChild(cell);});
+  applyAtomLayout();   // a fresh grid is always collapsed; clear any class left by the last player
   Object.keys(ATOMK).forEach(f=>{const b=document.getElementById('dr_'+f);
     if(b)b.addEventListener('click',()=>toggleAtoms(f));});
   document.getElementById('projseg').style.display='inline-flex';
@@ -847,12 +871,47 @@ function renderActive(){
 // So in any other mode the panel draws NOTHING and offers a one-click switch to Pure. Six atom
 // curves that silently fail to add up to the line directly above them is the exact "broken
 // feature" this design is avoiding.
+// Expanded layout: the drilled factor takes the whole grid row and the other five step out, so the
+// seven component charts underneath get real width instead of a 150px sliver. Pure class toggling —
+// the CSS at :104-108 does the work.
+function applyAtomLayout(){
+  const grid=document.getElementById('grid');
+  if(!grid)return;
+  grid.classList.toggle('atoms-open', !!ATOMOPEN);
+  FAC.forEach(([f])=>{const c=document.getElementById('cell_'+f);
+    if(c)c.classList.toggle('atom-open', ATOMOPEN===f);});
+}
 function toggleAtoms(f){
-  ATOMOPEN=(ATOMOPEN===f)?null:f;
-  Object.keys(ATOMK).forEach(k=>{const b=document.getElementById('dr_'+k);
-    if(b){b.classList.toggle('on',ATOMOPEN===k);b.setAttribute('aria-expanded',String(ATOMOPEN===k));}});
-  renderAtoms();
-  if(ATOMOPEN)setHoverAll(SER.length-1,false);       // paint the new charts' readouts immediately
+  const apply=()=>{
+    ATOMOPEN=(ATOMOPEN===f)?null:f;
+    Object.keys(ATOMK).forEach(k=>{const b=document.getElementById('dr_'+k);
+      if(b){b.classList.toggle('on',ATOMOPEN===k);b.setAttribute('aria-expanded',String(ATOMOPEN===k));}});
+    applyAtomLayout();
+    // Full renderActive, not just renderAtoms: every chart's viewBox is built from its mount's
+    // clientWidth, and five of the six just changed width or vanished. It sets SER synchronously
+    // and defers the drawing to a rAF.
+    renderActive();
+    // Then build the panel SYNCHRONOUSLY rather than leaving it to that rAF. rAF does not fire in a
+    // backgrounded or throttled tab, and this is the one interaction where a dropped frame leaves a
+    // visibly broken page: the grid is already collapsed to a single cell, so a panel that never
+    // arrives reads as "the drill-down is broken". The charts can afford to wait a frame (they are
+    // width:100% and just stretch); the panel cannot. renderActive's rAF calls renderAtoms again
+    // when it lands, which is idempotent -- it filters its own charts out of CHARTS first.
+    renderAtoms();
+    // Deliberately NOT returning a promise that waits for renderActive's rAF. A view transition
+    // suspends rendering until the update callback settles, so waiting on rAF inside it deadlocks:
+    // the frame cannot arrive until the promise resolves and the promise cannot resolve until the
+    // frame arrives. Chrome breaks the tie by timing the transition out ~4s later, which is how
+    // this first showed up -- the panel simply never opened. The charts therefore redraw one frame
+    // into the morph; invisible, because every chart SVG is width:100% and just stretches until it
+    // is repainted at the new width.
+  };
+  // The View Transitions API is the platform's own version of what a motion library would do here,
+  // and needs no bundler on a site that ships no JS build step. Unsupported (Firefox) or
+  // reduced-motion => the same instant swap this always did.
+  const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!reduce && document.startViewTransition) document.startViewTransition(apply);
+  else apply();
 }
 const ALLATOMS=new Set([].concat(ATOMK.oTS,ATOMK.dTS,['BASE']));   // 'BASE' = the baseline chart key (W3)
 function renderAtoms(){
