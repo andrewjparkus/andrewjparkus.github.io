@@ -66,6 +66,11 @@
     padding:1px 5px;border-radius:3px;color:#0a0e16;min-width:30px;text-align:center}
   .depthcol .none{font-size:11px;color:var(--faint);text-align:center;padding:6px 0}
   .unlisted{margin-top:8px}
+  /* column definitions live in the header ? tips; those sit in a sticky thead at the top of the
+     .scroll box, where an upward tooltip clips — flip them DOWN (same rule as projection.html) */
+  .scroll thead th .help[data-tip]:hover::after{bottom:auto;top:calc(100% + 6px)}
+  .scroll thead th .help[data-tip]:hover::before{bottom:auto;top:calc(100% + 1px);
+    border-top-color:transparent;border-bottom-color:var(--line)}
 </style></head>
 <body>
 <nav id="topnav" data-active="proj"></nav>
@@ -141,9 +146,9 @@ let DATA = null;
 fetch('projection_2026_27_teams.json')
   .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
   .then(d=>{ DATA=d; render(d); })
-  .catch(err=>{
+  .catch(()=>{
     document.getElementById('msg').innerHTML =
-      "Couldn't load the 2026-27 team projection (projection_2026_27_teams.json). "+esc(err.message)+
+      "Couldn't load the 2026-27 team projection."+
       '<br><a href="projection.html">← back to the 2026-27 standings</a>';
   });
 
@@ -158,11 +163,6 @@ function confRank(d, conf, abbr){
   return { rank:(i<0?null:i+1), size:list.length };
 }
 function ord(n){ if(n==null) return ""; const s=["th","st","nd","rd"], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }
-function flagLabel(s){
-  const M={many_rookies:"many rookies",many_replacement_rows:"replacement rows",
-    high_gp_uncertainty:"high GP uncertainty",high_rating_uncertainty:"high rating uncertainty"};
-  return M[s] || String(s||"").replace(/_/g," ");
-}
 
 function render(d){
   const abbrRaw = qparam('abbr');
@@ -170,7 +170,6 @@ function render(d){
   const team = (d && d.teams && d.teams[abbr]) ? d.teams[abbr] : null;
   if(!team){ friendly("No 2026-27 projection found for <b>"+esc(abbrRaw||abbr)+"</b>."); return; }
 
-  const meta = d.meta || {};
   document.title = (team.name||abbr) + " · 2026-27 Projection · Daily RAPM";
 
   // team six-factor (this team + all teams for league comparison)
@@ -204,9 +203,11 @@ function render(d){
     + '<div class="tn"><h1>'+esc(team.name||abbr)
     + '<span class="forwardtag">2026-27 projected</span></h1>'
     + '<div class="conf"><b>'+esc(abbr)+'</b>'+(confLabel?' · '+esc(confLabel):'')+'</div></div></div>';
-  html += '<p class="sub">Forward 2026-27 per-team projection — carried-forward, age-adjusted six-factor ratings. '
-    + 'Wins are split across the roster so each player\'s contribution sums to the team total. '
-    + 'See the full <a href="projection.html">2026-27 standings</a>.</p>';
+  // The only caveat this page cannot drop: nothing here has happened yet. One sentence, above the
+  // fold, next to the "2026-27 projected" badge. (What used to sit here — how ratings are carried
+  // forward and aged, how wins are split across the roster — is mechanism, not meaning.)
+  html += '<p class="sub">A forward projection, not a measured result. '
+    + 'See all 30 teams in the <a href="projection.html">2026-27 standings</a>.</p>';
 
   // ---- KPI strip ----
   const projW = num(team.proj_wins,1);
@@ -223,32 +224,25 @@ function render(d){
   // roster-pessimistic and a leak-optimistic basis. Nominal is now defensible; the caveat is not
   // decoration. If you change the band, re-run that gate and re-read these numbers off it.
   html += kpi('95% range', band, 'p2.5–p97.5 · measured 89–98%');
-  html += kpi('Playoff odds', po, 'from the projection');
+  html += kpi('Playoff odds', po, 'from 10,000 simulated seasons');
   html += '<div class="kpi"><div class="k">Projected net</div><div class="v '+strF.cls+'">'+strF.txt+'</div><div class="x">pts/100 vs league average</div></div>';
   html += '<div class="kpi"><div class="k">ORAPM</div><div class="v '+oF.cls+'">'+oF.txt+'</div><div class="x">oTS + oTOV + oSC, vs league</div></div>';
   html += '<div class="kpi"><div class="k">DRAPM</div><div class="v '+dF.cls+'">'+dF.txt+'</div><div class="x">dTS + dTOV + dSC, vs league</div></div>';
   html += '</div>';
-  html += '<div class="cap">A <b>forward projection</b>, not a measured result. Player ratings are carried '
-    + 'forward and aged to 2026-27 (per-factor aging); wins, band and playoff odds come from the same '
-    + 'Monte-Carlo as the standings.</div>';
-  const flags = Array.isArray(team.fallback_flags) ? team.fallback_flags : [];
-  if(flags.length || team.uncertainty){
-    const u = team.uncertainty || {};
-    html += '<div class="cap">Uncertainty: '
-      + (u.win_band_width!=null ? 'win band '+num(u.win_band_width,1)+' (p10–p90, measured 74–88% coverage)' : 'win band –')
-      + (u.gp_uncertainty_games_weighted!=null ? ' · GP '+num(u.gp_uncertainty_games_weighted,1) : '')
-      + (u.minutes_uncertainty_mpg_weighted!=null ? ' · minutes '+num(u.minutes_uncertainty_mpg_weighted,1) : '')
-      + (flags.length ? ' · flags: '+flags.map(flagLabel).map(esc).join(', ') : '')
-      + '</div>';
-  }
+  // The old "Uncertainty: win band 18.0 · GP 22.8 · minutes 31.6 · flags: …" line was diagnostics,
+  // not reader-facing: the band it quoted is already the 95% range KPI above, and GP / minutes
+  // spreads are unitless to anyone outside the model. team.uncertainty and team.fallback_flags are
+  // still exported and still worth watching — read them in the JSON, not on the dashboard. The one
+  // flag that changes how a NUMBER reads (a cold-start rookie) is marked per-row in the roster.
 
   // ---- factor profile: radar + RdBu strip (projected team six-factor) ----
-  html += '<div class="sectitle">Projected factor profile <span style="font-weight:400;color:var(--faint)">· vs league average</span></div>';
+  // Both captions that used to sit under these two charts described how to READ them; that belongs
+  // in the section's "?" (one tip, both charts), not in two paragraphs of body copy.
+  html += '<div class="sectitle">Projected factor profile <span style="font-weight:400;color:var(--faint)">· vs league average</span>'
+    + ' <span class="help" data-tip="Radar: each factor as a share of the league\'s largest absolute value. Bars: blue above league average, red below, length by z-score; number is pts/100.">?</span></div>';
   html += '<div class="profile">';
-  html += '<div class="card" style="padding:10px"><div id="radar"></div>'
-    + '<div class="cap" style="margin:6px 4px 2px">Each spoke is the projected team factor as a share of the league\'s largest absolute value — the polygon shows relative strengths.</div></div>';
-  html += '<div><div class="strip" id="strip"></div>'
-    + '<div class="cap">Bars diverge from the grey league-average line: right/blue above league, left/red below, length ∝ within-league z (RdBu, CVD-safe). Number is the projected factor total (pts/100); z in grey.</div></div>';
+  html += '<div class="card" style="padding:10px"><div id="radar"></div></div>';
+  html += '<div><div class="strip" id="strip"></div></div>';
   html += '</div>';
 
   // ---- ROSTER table (wins contributed) ----
@@ -256,14 +250,27 @@ function render(d){
   const teamW = (team.proj_wins!=null) ? Number(team.proj_wins) : 0;
   let maxW = 0; roster.forEach(p=>{ if(p && p.proj_wins!=null && p.proj_wins>maxW) maxW=p.proj_wins; });
   if(!(maxW>0)) maxW = 1;
+  // Owner 2026-07-26: ONE flag survives the cull as a chip, and only the discriminating one.
+  // many_replacement_rows fires on 14 of 30 teams, so it separates a projection built on rated
+  // veterans from one built largely on replacement-level fill — which changes how every number in
+  // this table should be read. many_rookies (18/30) is already visible per-row as the R badge, and
+  // high_rating_uncertainty fires on 30/30, i.e. it discriminates nothing. Neither gets a chip.
+  const thin = Array.isArray(team.fallback_flags) && team.fallback_flags.indexOf('many_replacement_rows') >= 0;
   html += '<div class="sectitle">Roster <span style="font-weight:400;color:var(--faint)">· '
-    + roster.length + ' players · sorted by wins contributed</span></div>';
+    + roster.length + ' players · sorted by wins contributed</span>'
+    + (thin ? ' <span class="badge b-g" data-tip="Much of this roster has no rated history, so a'
+              + ' large share of these minutes is filled in at replacement level."'
+              + ' style="cursor:help">thin roster</span>' : '')
+    + '</div>';
   html += '<div class="scroll"><table class="tbl" style="min-width:760px"><thead><tr>'
     + '<th class="l">Player</th><th class="l">Role</th>'
-    + '<th title="Projected minutes per game when active">MPG</th>'
-    + '<th title="Expected games played, role-conditioned by projected minutes; small numbers are the 80% range">Exp GP</th>'
-    + '<th class="grp">Proj net <span class="help" data-tip="Player\'s projected on-court net rating (pts/100), aged to 2026-27. Cold-start rookies use a replacement-level prior.">?</span></th>'
-    + '<th class="grp">Wins contributed <span class="help" data-tip="Each player\'s exact-additive share of the team\'s projected wins; the column sums to the team total.">?</span></th>'
+    // plan 50 W3c: MPG is MODELLED, never curated — ZERO of the 538 published rows carry a proj_min
+    // in depthcharts_2026_27.csv. The chart supplies the roster and the role; the minutes are ours.
+    // That distinction stays with the column, in its header tip, where a reader meets the number.
+    + '<th>MPG <span class="help" data-tip="Modeled minutes per game when active — the depth chart supplies the roster and role, not the minutes.">?</span></th>'
+    + '<th>Exp GP <span class="help" data-tip="Expected games played; the small numbers are the 80% range.">?</span></th>'
+    + '<th class="grp">Proj net <span class="help" data-tip="Projected on-court net (pts/100) for 2026-27, colored red→green on a fixed −5…+5 scale. Cold-start rookies use a replacement-level prior.">?</span></th>'
+    + '<th class="grp">Wins contributed <span class="help" data-tip="Each player\'s share of the team\'s projected wins; the column sums to the team total.">?</span></th>'
     + '</tr></thead><tbody>';
   roster.forEach(p=>{
     p = p || {};
@@ -299,29 +306,23 @@ function render(d){
   });
   const winsSum = roster.reduce((a,p)=>a+((p && p.proj_wins!=null && !isNaN(p.proj_wins))?Number(p.proj_wins):0),0);
   const totalWins = (team.proj_wins!=null) ? Number(team.proj_wins) : winsSum;
-  html += '<tr class="total"><td class="l pl">TOTAL</td><td class="l">–</td><td class="mpg">–</td><td class="gp">–</td>'
+  html += '<tr class="total"><td class="l pl" title="Team projected net vs league average, and the roster\'s'
+    + ' wins contributed summed to the projected total.">TOTAL</td><td class="l">–</td><td class="mpg">–</td><td class="gp">–</td>'
     + rgCell(team.strength - leagueNet,'grp')
     + '<td class="wins grp"><div class="winwrap"><span class="winbar"><span class="fill" style="width:100%"></span></span><span class="wn">'+num(totalWins,1)+'</span></div></td>'
     + '</tr></tbody></table></div>';
-  // plan 50 W3c: the old caption said "curated depth-chart minutes". It is not — ZERO of the 538
-  // published rows carry a proj_min in depthcharts_2026_27.csv. The chart supplies the roster and
-  // the role; every MPG on this page comes out of the minutes model.
-  html += '<div class="cap"><b>MPG</b> = <b>modeled</b> minutes (build_minutes_model); the curated depth chart '
-    + 'supplies the roster and each player\'s role, not his minutes. <b>Exp GP</b> = expected games played, '
-    + 'role-conditioned by projected minutes; the small low–high is the 80% range. <b>Wins contributed</b> sums to '
-    + num(totalWins,1) + ' (the projected total). Player net is colored red→green on a fixed −5…+5 NBA-net scale; '
-    + 'the TOTAL row is the team\'s projected net vs league average. '
-    + 'Named players link to the <a href="index.html">Explorer</a>; <span class="rk">R</span> marks a cold-start rookie.</div>';
+  // The legend that used to sit here was five column definitions in a paragraph. Each one now
+  // lives in its own column header tip; the R badge and the TOTAL row carry their own titles.
 
   // ---- depth chart (by listed position, G/F/C) ----
-  html += '<div class="sectitle">Depth chart <span style="font-weight:400;color:var(--faint)">· by listed position</span></div>';
+  // "not a lineup" plus the ordering clause is the load-bearing part; the Unlisted rule used to be
+  // a third sentence here, but the Unlisted column explains itself the moment a reader sees it.
+  html += '<div class="sectitle">Depth chart <span style="font-weight:400;color:var(--faint)">· by listed position</span>'
+    + ' <span class="help" data-tip="Listed positions, not a lineup. Ordered by wins contributed; the chip is projected net.">?</span></div>';
   html += '<div class="depth" id="depth"></div>';
-  html += '<div class="cap">Roster shape by <b>listed / primary</b> position (not a lineup). Players listed only '
-    + 'as G or F — no five-slot listing to split — drop to <b>Unlisted</b> rather than be guessed into one. '
-    + 'Within a column, ordered by projected wins contributed; the chip is projected net (pts/100), '
-    + 'red→green on the −5…+5 scale.</div>';
 
-  if(meta.note){ html += '<div class="cap" style="margin-top:6px;color:var(--faint)">'+esc(meta.note)+'</div>'; }
+  // meta.note is an exporter-side provenance blob (minutes contract, GP model, artifact wording).
+  // It is written for us, not for a reader, so it no longer renders; it stays in the JSON.
 
   document.getElementById('wrap').innerHTML = html;
   drawRadar(teamF, allF);

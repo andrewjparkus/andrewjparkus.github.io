@@ -8,11 +8,20 @@
  * never per-page, so the bar can never drift again. Styling lives in site.css
  * (.topnav/.tab/...), which every page links — nav.js no longer injects CSS.
  *
- * Top bar: Explorer · Tables · 2026-27 · Other ▾ · Model · Metrics. The "Other" dropdown
- * holds measured 2025-26 Teams plus Draft; Grades is reached from the Trade page (so it sets
- * data-active="trade" to light the right top item). The equal-information Margin-history page
- * was folded into Metrics (2026-07-24) and dropped from this menu; margin_history.html remains
- * as a redirect stub.
+ * Top bar (flattened 2026-07-26 — five tabs, no dropdown):
+ *     Explorer · Tables · 2026-27 · Draft · Model
+ *
+ * Pages that still EXIST and must stay reachable, but are deliberately not tabs. Every one of
+ * them is entered by an in-page link, so dropping the tab does not orphan it:
+ *   teams.html            measured 2025-26 team ratings; entered from projection.html
+ *                         ("See 2025-26 team ratings") and from team.html
+ *   metrics.html          folded into model.html#accuracy (2026-07-26); redirect stub
+ *   vegas.html            folded into model.html#vegas    (2026-07-26); redirect stub
+ *   margin_history.html   redirect stub into the same folded accuracy section
+ *   grades.html           entered from trade.html, which the owner pulled 2026-07-09 (neither is
+ *                         published by build_pages.py; both set data-active="trade", now inert)
+ * A page whose data-active key matches no tab simply lights nothing — that is the intended
+ * state for all of the above, not a bug.
  */
 (function () {
   "use strict";
@@ -21,20 +30,8 @@
     { key: "explorer", href: "index.html", label: "Explorer" },
     { key: "tables",   href: "table.html", label: "Tables" },
     { key: "proj",     href: "projection.html", label: "2026-27" },
-    { label: "Other", menu: [
-      { key: "teams",  href: "teams.html", label: "Teams" },
-      { key: "draft",  href: "draft.html", label: "Draft" },
-      // The closing-line baseline (2026-07-26). Kept a separate destination rather than folded
-      // into Metrics: it is the only page that scores us against a NON-public forecaster, and
-      // it is the only one whose headline we lose.
-      { key: "vegas",  href: "vegas.html", label: "Vs. Vegas" }
-      // "Margin history" was FOLDED INTO the Metrics page (2026-07-24): the equal-information
-      // 24-season margin comparison now lives inside metrics.html (Task A + its "Go deeper"
-      // deep-dive), so it is no longer a separate destination. margin_history.html still exists
-      // as a redirect stub -> metrics.html#game for any bookmarked link.
-    ] },
-    { key: "model",    href: "model.html", label: "Model" },
-    { key: "metrics",  href: "metrics.html", label: "Metrics" }
+    { key: "draft",    href: "draft.html", label: "Draft" },
+    { key: "model",    href: "model.html", label: "Model" }
   ];
 
   function esc(s) {
@@ -52,51 +49,14 @@
     var html = '<div class="navinner">';
     html += '<a class="brand" href="index.html">Daily <b>RAPM</b></a>';
     TABS.forEach(function (t) {
-      if (t.menu) {
-        var inMenu = t.menu.some(function (m) { return m.key === active; });
-        html += '<div class="navdrop' + (inMenu ? " active" : "") + '">';
-        html += '<button class="tab navdrop-btn" type="button" aria-haspopup="true" aria-expanded="false">'
-              + esc(t.label) + ' <span class="caret">▾</span></button>';
-        html += '<div class="navmenu">';
-        t.menu.forEach(function (m) {
-          html += '<a class="navmenu-item' + (m.key === active ? " active" : "") + '" href="'
-                + esc(m.href) + '">' + esc(m.label) + '</a>';
-        });
-        html += '</div></div>';
-      } else {
-        var cls = "tab" + (t.key === active ? " active" : "");
-        html += '<a class="' + cls + '" href="' + esc(t.href) + '">' + esc(t.label) + "</a>";
-      }
+      var cls = "tab" + (t.key === active ? " active" : "");
+      html += '<a class="' + cls + '" href="' + esc(t.href) + '">' + esc(t.label) + "</a>";
     });
     html += '<span class="navspace"></span>';
     html += '<button class="navsearch" id="nav-search" type="button" title="Search players & teams (⌘K)" aria-label="Search">Search<b>⌘K</b></button>';
     html += '<button class="themebtn" id="nav-theme" type="button" title="Toggle light / dark" aria-label="Toggle theme"></button>';
     html += "</div>";
     nav.innerHTML = html;
-
-    // "Other" dropdown: the menu is position:fixed (so the nav's overflow-x:auto can't clip it),
-    // positioned under its button on open. Click toggles; any outside click / Escape closes.
-    function closeDrops() {
-      nav.querySelectorAll(".navdrop.open").forEach(function (dd) {
-        dd.classList.remove("open");
-        var b = dd.querySelector(".navdrop-btn"); if (b) b.setAttribute("aria-expanded", "false");
-      });
-    }
-    nav.querySelectorAll(".navdrop-btn").forEach(function (btn) {
-      btn.addEventListener("click", function (e) {
-        e.stopPropagation();
-        var dd = btn.parentNode, menu = dd.querySelector(".navmenu"), willOpen = !dd.classList.contains("open");
-        closeDrops();
-        if (willOpen) {
-          var r = btn.getBoundingClientRect();
-          menu.style.left = Math.round(r.left) + "px";
-          menu.style.top = Math.round(r.bottom) + "px";
-          dd.classList.add("open"); btn.setAttribute("aria-expanded", "true");
-        }
-      });
-    });
-    document.addEventListener("click", closeDrops);
-    document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrops(); });
 
     var sb = document.getElementById("nav-search");
     if (sb) sb.addEventListener("click", openPalette);

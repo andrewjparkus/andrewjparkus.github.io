@@ -40,7 +40,7 @@
 <script src="nav.js"></script>
 <div class="wrap">
   <h1>RAPM <b>tables</b></h1>
-  <p class="sub" id="sub">Six-factor RAPM leaderboards on the NBA-equivalent scale — sortable; college &amp; G-League translated.</p>
+  <p class="sub" id="sub">Six-factor RAPM leaderboards on the NBA-equivalent scale — college &amp; G-League translated.</p>
 
   <div class="toolbar">
     <span class="asof" id="asof"></span>
@@ -72,7 +72,9 @@
 
   <div class="empty" id="empty">Loading tables…</div>
 
-  <p class="foot">Net = ORAPM + DRAPM. 2026-draft picks ranked by their 2025-26 college / G-League season, not draft slot. Descriptive — already-measured, never projected.</p>
+  <!-- "measured, never projected" is the keeper: these boards are the season that happened. The
+       draft clause stops the 2026 board being read as a draft forecast. -->
+  <p class="foot">Measured, never projected. Draft picks are ranked by their 2025-26 college / G-League season, not by draft slot.</p>
 </div>
 
 <script>
@@ -109,18 +111,25 @@ let sortDir=-1;           // -1 desc, +1 asc
    RATING MODE  (mirrors the Explorer's #modeseg; shares localStorage 'rapm_mode')
    ========================================================================= */
 const MODELAB={pure:'Pure RAPM', prior:'Prior-informed', box:'Box prior'};
+// One line per mode. The box line keeps its "reads cooler" clause: without it a reader compares a
+// box number against a board number and concludes the player got worse.
 const MODEHINT={
-  pure:'Pure RAPM — the prior-free six-factor decomp, calibrated to the public DataBallR ridge.',
-  prior:'Prior-informed RAPM — the same daily solve, with all six factors shrunk toward a daily box-score prior. Shrinkage is strongest where lineup data is thin (rookies, early season) and fades as exposure grows. The default.',
-  box:'Box prior — the daily-refit box+EPM basis the prior-informed solve shrinks toward, re-fit every game-day on that day’s prior-free cross-section. Shown at its honest scale, so it reads cooler than the board — especially on defense.'};
+  pure:'The prior-free six-factor solve.',
+  prior:'The daily solve, shrunk toward a box-score prior where lineup data is thin. The default.',
+  box:'The box-score basis the prior-informed solve shrinks toward, at its own scale — it reads cooler than the board, especially on defense.'};
 // Rendered only when the exporter STAMPED the equality (build_table_site.py derives it by
 // comparing every emitted cell), so this sentence cannot outlive the fact it describes.
-const SAMENOTE=m=>' On this table '+MODELAB[m]+' and Prior-informed are the same numbers — the prior is applied to NBA rows only, so the college / G-League boards are identical under both.';
-const SPLITNOTE=' ORAPM / DRAPM show — in this mode: the box basis publishes the six factors and net, not the offence/defence split. Nothing is invented to fill them.';
+const SAMENOTE=()=>' Same numbers as Prior-informed here — the prior only touches NBA rows.';
+// Says what is ON SCREEN: those cells render td.na's em-dash, deliberately heavier than fmt()'s
+// en-dash so it reads as "not carried", not as an ordinary missing value. "Blank" was wrong.
+const SPLITNOTE=' ORAPM / DRAPM show “—”: this basis publishes the six factors and net, not the split.';
 // The board is capped, and each mode ranks a DIFFERENT set into that cap, so table.json ships the
 // union of every mode's top-cap and the page slices per mode. Without this a player who is top-500
-// in box but 700th in prior would simply not exist on the page.
-const CAPNOTE=(n,cap)=>' Showing the top '+cap+' by this mode, drawn from a '+n+'-row union across modes.';
+// in box but 700th in prior would simply not exist on the page. The union size is bookkeeping —
+// the reader only needs to know the list is a top-N. Rendered with the table CAPTION, not the mode
+// hint: it is a fact about the LIST, not about the rating, and appending it pushed the box hint to
+// three sentences (the bar is two).
+const CAPNOTE=(cap)=>' Top '+cap+' by the selected rating.';
 
 // MODE is the user's stored preference and is NEVER overwritten by a fallback: a table that
 // cannot serve it (or a mode this page does not implement, e.g. 'latent' from the Explorer)
@@ -147,12 +156,11 @@ function syncMode(){
   let hint=MODEHINT[am]||'';
   if(tb&&(tb.same_as_prior||[]).indexOf(am)>=0) hint+=SAMENOTE(am);
   if(am==='box') hint+=SPLITNOTE;
-  if(tb&&tb.cap&&tb.rows.length>tb.cap) hint+=CAPNOTE(tb.rows.length,tb.cap);
-  document.getElementById('modehint').textContent=hint;
-  // the scale sentence is mode-dependent — never leave the prior string over box numbers
-  const sub=document.getElementById('sub');
-  if(TBL&&TBL.meta.scales&&TBL.meta.scales[am])
-    sub.textContent='Six-factor RAPM leaderboards — sortable. '+TBL.meta.scales[am];
+  document.getElementById('modehint').textContent=hint;   // one or two sentences, always
+  // The per-mode scale sentence (meta.scales) used to be pasted into the subhead. It is exporter
+  // copy written for us — "raw mu_box + calibration offset" — and it duplicated the mode hint
+  // directly below it. The hint is now the one place a mode explains itself, box caveat included,
+  // so the subhead stays static. meta.scales is still emitted; nothing on this page reads it.
 }
 document.querySelectorAll('#modeseg button').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
 
@@ -232,7 +240,7 @@ function renderOverall(){
   const cap=document.getElementById('tcap');
   if(!tb){ cap.textContent=''; document.getElementById('otable').innerHTML=''; return; }
   computeMiss();
-  cap.textContent=tb.sub||'';
+  cap.textContent=(tb.sub||'')+((tb.cap&&tb.rows.length>tb.cap)?CAPNOTE(tb.cap):'');
 
   const shown=sortedRows();   // full ranked list — static, no cap
 
@@ -325,7 +333,7 @@ fetch('table.json').then(r=>{ if(!r.ok) throw new Error('table.json '+r.status);
     refresh();
   })
   .catch(()=>{
-    document.getElementById('empty').textContent="Couldn't load tables (table.json).";
+    document.getElementById('empty').textContent="Couldn't load the tables.";
   });
 </script>
 </body></html>

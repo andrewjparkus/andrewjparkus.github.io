@@ -22,11 +22,10 @@
   #panel{display:none;margin-top:22px;border:1px solid var(--line);background:var(--panel);padding:16px 18px;border-radius:var(--r-1)}
   #panel h3{margin:0 0 2px;font-size:15px} #panel .pmeta{color:var(--muted);font-size:11.5px;margin:0 0 10px}
   #chart{width:100%;height:240px} #panel .close{float:right;color:var(--muted);cursor:pointer;font-size:13px}
-  .meth{margin-top:24px;font-size:11.5px;color:var(--muted);line-height:1.6;max-width:880px}
-  .meth summary{cursor:pointer;color:var(--accent)}
-  .meth table{border-collapse:collapse;margin-top:8px;font-size:11px}
-  .meth td,.meth th{border:1px solid var(--line);padding:3px 7px;text-align:right}
-  .meth th.l,.meth td.l{text-align:left}
+  /* header ? tooltips live in the sticky thead inside the .scroll box — flip tips DOWN */
+  .scroll thead th .help[data-tip]:hover::after{bottom:auto;top:calc(100% + 6px)}
+  .scroll thead th .help[data-tip]:hover::before{bottom:auto;top:calc(100% + 1px);
+    border-top-color:transparent;border-bottom-color:var(--line)}
 </style></head>
 <body>
 <nav id="topnav" data-active="draft"></nav>
@@ -34,24 +33,20 @@
 <script src="nav.js"></script>
 <div class="wrap">
   <h1 style="margin-top:6px">Draft <b>board</b> <span id="yr" style="color:var(--muted);font-weight:400"></span></h1>
-  <p class="sub" id="sub">2026 prospects' college / G-League production translated to the NBA scale, with
-    95% CIs. Sort any column; click a prospect for their curve.</p>
+  <!-- The keeper from the old methodology block: the bands are so wide they overlap for nearly
+       every prospect, so this board is calibrated uncertainty, not a ranking to bet on. -->
+  <p class="sub" id="sub">2026 prospects' college / G-League production translated to the NBA scale, with 95% bands —
+    click a prospect for their curve. Measured production, not a forecast of NBA careers: the bands
+    overlap for nearly every prospect.</p>
   <div class="scroll"><table class="tbl" id="tbl"></table></div>
   <div id="panel"><span class="close" onclick="closePanel()">close ✕</span>
     <h3 id="pname"></h3><p class="pmeta" id="pmeta"></p><svg id="chart"></svg></div>
   <div class="msg" id="msg">Loading draft board…</div>
-  <details class="meth" id="meth"><summary>Methodology &amp; frozen NCAA→NBA translation</summary>
-    <p>Each estimate translates college / G-League production onto the NBA scale, as of the end of the
-    prospect's final pre-draft season. Intervals are wide and overlap across nearly all prospects:
-    irreducible cross-league uncertainty (slopes &lt; 0.27), <b>not</b> a forecast of NBA careers. This
-    board surfaces calibrated uncertainty, not a confident ranking. Age-driven CI widening is not shipped
-    here (Var_age = 0).</p>
-    <div id="transtbl"></div>
-  </details>
-  <p class="foot">Net = oTS+oTOV+oSC+dTS+dTOV+dSC (NBA-eq). Pick # is the consensus slot; our rank sorts by
-    translated net (no claim of predictive superiority). Badges:
-    <span class="badge thin">thin</span> weff&lt;400 (thin fit support);
-    <span class="badge nodata">no data</span> no NCAA/G-League possessions.</p>
+  <!-- REMOVED: the "Methodology & frozen NCAA→NBA translation" <details> and the foot legend.
+       The translation table (per-factor slope / offset / Var_translate) is internal calibration
+       output, still shipped in draft_board_2026.json meta.translation for anyone reading the feed.
+       Its one reader-facing sentence — wide, overlapping bands, not a career forecast — is now the
+       subhead. The foot's column and badge definitions moved to the header tips and badge titles. -->
 </div>
 <script>
 "use strict";
@@ -65,18 +60,12 @@ function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;"
 
 fetch('draft_board_2026.json').then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
   .then(d=>{DATA=d; init();})
-  .catch(err=>{ document.getElementById('msg').textContent="Couldn't load draft board (draft_board_2026.json). "+err.message; });
+  // Reader-facing failure text: no filenames, no HTTP status — the network tab has both.
+  .catch(()=>{ document.getElementById('msg').textContent="Couldn't load the draft board."; });
 
 function init(){
   document.getElementById('msg').style.display='none';
   document.getElementById('yr').textContent="· "+DATA.meta.year+" · "+DATA.meta.draft_date;
-  // translation table in methodology
-  let tt='<table><thead><tr><th class="l">factor</th><th>slope</th><th>offset</th><th>Var_translate (floor)</th></tr></thead><tbody>';
-  for(const t of DATA.meta.translation){
-    tt+='<tr><td class="l">'+esc(t.component)+'</td><td>'+t.slope.toFixed(4)+'</td><td>'+t.offset.toFixed(4)+
-        '</td><td>'+t.Var_translate.toFixed(4)+'</td></tr>'; }
-  tt+='</tbody></table>';
-  document.getElementById('transtbl').innerHTML=tt;
   render();
 }
 
@@ -106,8 +95,8 @@ function facCell(p,f){
 }
 
 const COLDEF=[
-  {key:"pick",label:"Pick",l:true},{key:"name",label:"Prospect",l:true},
-  {key:"our_rank",label:"Our#"},
+  {key:"pick",label:"Pick",l:true,tip:"Consensus mock-draft slot."},{key:"name",label:"Prospect",l:true},
+  {key:"our_rank",label:"Our#",tip:"Rank by translated net — an ordering of measured production, not a draft forecast."},
   {key:"net",label:"Net ±95% (NBA-eq)",tip:"Net RAPM = ORAPM (oTS+oTOV+oSC) + DRAPM (dTS+dTOV+dSC), points/100 on the NBA-equivalent scale."},
   {key:"oTS",label:"oTS",grp:true,tip:"Offensive true-shooting RAPM — points/100 from shot-making efficiency (NBA scale)."},
   {key:"oTOV",label:"oTOV",tip:"Offensive turnover RAPM — ball-security value (fewer turnovers = positive)."},
@@ -128,8 +117,9 @@ function render(){
   let body='<tbody>';
   for(const p of rows){
     const net=fmt(p.net,2);
-    const badges=(p.thin_sample?'<span class="badge thin">thin</span>':'')+
-                 (p.status!=="ok"?'<span class="badge nodata">no data</span>':'');
+    // Badge definitions ride on the badges themselves, not in a legend under the table.
+    const badges=(p.thin_sample?'<span class="badge thin" title="Thin sample — little college / G-League playing time behind this estimate.">thin</span>':'')+
+                 (p.status!=="ok"?'<span class="badge nodata" title="No college or G-League possessions on file for this prospect.">no data</span>':'');
     const linkable=p.status==="ok"&&p.gid;
     const pn='<span class="pn'+(linkable?'':' nolink')+'"'+(linkable?' onclick="openPanel(\''+esc(p.gid)+'\',\''+esc(p.name)+'\')"':'')+'>'+esc(p.name)+'</span>';
     const netcell=p.status==="ok"
@@ -164,10 +154,10 @@ function openPanel(gid,name){
   const row=document.getElementById('row-'+gid); if(row) row.classList.add('sel');
   const panel=document.getElementById('panel'); panel.style.display='block';
   document.getElementById('pname').textContent=name;
-  document.getElementById('pmeta').textContent='Daily net (NBA-equivalent, translated) — same series as the Explorer.';
+  document.getElementById('pmeta').textContent='Daily net, translated to the NBA scale.';
   document.getElementById('chart').innerHTML='';
   fetch('data/'+gid+'.json').then(r=>r.ok?r.json():null).then(j=>{
-    if(!j){ document.getElementById('pmeta').textContent='No daily curve file on disk for this prospect.'; return; }
+    if(!j){ document.getElementById('pmeta').textContent='No daily curve for this prospect.'; return; }
     drawNet(j);
   }).catch(()=>{ document.getElementById('pmeta').textContent='Could not load daily curve.'; });
   panel.scrollIntoView({behavior:'smooth',block:'nearest'});
@@ -199,7 +189,8 @@ function drawNet(j){
     }
   }
   pts=pts.filter(p=>isFinite(p.d)&&isFinite(p.v));
-  if(!pts.length){ document.getElementById('pmeta').textContent='Daily curve file has an unexpected shape; open in Explorer.'; return; }
+  // Shape mismatch is our problem, not the reader's — the Explorer renders the same feed.
+  if(!pts.length){ document.getElementById('pmeta').textContent='Couldn\'t draw this curve — see the Explorer.'; return; }
   const d0=Math.min(...pts.map(p=>p.d)), d1=Math.max(...pts.map(p=>p.d));
   let v0=Math.min(...pts.map(p=>p.v)), v1=Math.max(...pts.map(p=>p.v));
   if(v0===v1){v0-=1;v1+=1;} const vp=(v1-v0)*0.1; v0-=vp; v1+=vp;

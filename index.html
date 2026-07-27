@@ -22,7 +22,11 @@
   .pc-sub{display:flex;gap:9px;align-items:center;flex-wrap:wrap;font-size:var(--fs-2);
     color:var(--muted);margin:3px 0 9px}
   .pc-sub .pos{font-weight:700;color:var(--text);letter-spacing:.02em}
-  .pc-strip{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end}
+  /* Owner 2026-07-26: the box line is TWO right-anchored rows — counting stats (PTS/REB/AST/STL/BLK)
+     on top, shooting (FG%/3P%/FT%) below — so the two ragged-length rows share one flush right edge
+     against the card. The existing `.pc-cell:last-child{padding-right:0}` is what makes that edge
+     land; do not give the last cell padding back. Headshot + name/pos/age are untouched on the left. */
+  .pc-strip{display:flex;flex-direction:column;align-items:flex-end;gap:var(--sp-2)}
   .pc-group{display:flex;font-family:var(--font-mono);font-variant-numeric:tabular-nums}
   .pc-cell{display:flex;flex-direction:column;gap:1px;padding:0 11px;border-right:1px solid var(--line)}
   .pc-cell:first-child{padding-left:0}.pc-cell:last-child{border-right:none;padding-right:0}
@@ -30,7 +34,15 @@
   .pc-lab{font-size:10.5px;letter-spacing:.08em;color:var(--faint);text-transform:uppercase}
   .pc-shoot .pc-val{color:var(--muted)}
   @media(max-width:520px){.pcard{align-items:flex-start}.pc-name{font-size:var(--fs-5)}
-    .pc-face,.pc-mono{width:60px;height:60px;flex-basis:60px}}
+    .pc-face,.pc-mono{width:60px;height:60px;flex-basis:60px}
+    /* Right-anchoring is a desktop affordance that does not survive the phone. Under the 60px
+       headshot the body is ~239px wide at a 375px viewport (~184px at 320px) against ~256px of
+       counting cells, so the top row would run off the card. Fall back to a LEFT edge, tighten
+       the gutters (fits 375px in one row), and let the cells wrap below that — a ragged right
+       edge beats a clipped row. */
+    .pc-strip{align-items:flex-start}
+    .pc-cell{padding:0 8px}
+    .pc-group{flex-wrap:wrap;row-gap:6px}}
   .pmeta{color:var(--muted);font-size:var(--fs-2)}
   .readout{font-family:var(--font-mono);font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:150px;text-align:left}
   .readout b{color:var(--text)}
@@ -61,9 +73,19 @@
   .barrow .val{width:66px;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}
   .barrow .pctlab{width:44px;font-size:12.5px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
   .barwrap{flex:1;min-width:120px}
-  /* two balanced columns: percentile bars (left) + radar (right), vertically centered to each other */
+  /* two balanced columns: percentile bars (left) + radar (right), both top-aligned (align-items:start) */
   .profcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px 30px;align-items:start}
-  .radarwrap{max-width:330px;margin:0 auto;width:100%}
+  /* Owner 2026-07-26: keep the radar INSIDE the vertical run of the six percentile bars.
+     RC.radar() draws a square viewBox and site.css sets svg{width:100%;height:auto}, so the
+     rendered height IS this max-width. Left column measures ~300px at 1040: two .sectitle blocks
+     (21px line + collapsed 22px/8px margins) + six .barrow rows (20.25px + 7px margins) + the
+     ~19px legend line. The "Profile shape" title above the radar eats 21+8 = 29px, leaving 271px
+     — capped at 270 (was 330). This is a LAYOUT cap only: the viewBox is untouched, and
+     RC.radar() is shared with the team pages, so nothing there moves. */
+  .radarwrap{max-width:270px;margin:0 auto;width:100%}
+  /* The radar's factor labels are sized in viewBox units, so the 270/320 = 0.84 scale would have
+     shrunk them from 11.9px to 9.7px rendered. 14 units x 0.84 = 11.8px — same as before the cap. */
+  #radar svg text{font-size:14px}
   /* plan49 W1: 3x2 grid — offence DOWN column 1 (oTS,oTOV,oSC), defence DOWN column 2.
      Column flow + the FIXED FAC insertion order at :471-473 does this with no JS change.
      Do NOT reorder FAC to get here: facProj(i) indexes traj_f[h][i] POSITIONALLY. */
@@ -82,11 +104,31 @@
   .swoff{color:var(--off);font-weight:700}.swdef{color:var(--def);font-weight:700}
   /* plan49 W2: the net card's title row now carries THREE controls (off/def, projection, readout).
      Measured at 375px: adding #odseg pushed documentElement.scrollWidth to 447 against a 375
-     clientWidth — a real horizontal page scroll. site.css:133 .ctitle is a nowrap flex row, so
-     let this ONE row (and the control group inside it) wrap instead. Scoped to .netcard so the
-     six factor cells keep their single-line titles. */
+     clientWidth — a real horizontal page scroll. The shared `.ctitle` rule in site.css is a nowrap
+     flex row (cited by SELECTOR, never by line number — that file is edited under us), so let this
+     ONE row (and the control group inside it) wrap instead. Scoped to .netcard so the six factor
+     cells keep their single-line titles. */
   .netcard .ctitle{flex-wrap:wrap;row-gap:6px}
   .netcard .ctitle>span{flex-wrap:wrap;max-width:100%}
+  /* Owner 2026-07-26: the six factor headers (oTS/oTOV/oSC/dTS/dTOV/dSC) read too small. Label
+     12.5px -> 15.5px (+24%, and now ON the --fs-* scale instead of off it). Raising the label to
+     15.5 crosses the old 15px number, so the number moves with it (15 -> 18) to keep the site.css
+     lockup rule intact: the NUMBER outranks its label. Settled ratio 18/15.5 = 1.16 (was 1.20).
+     The trailing ±SE / O-D split stays a qualifier at 13px = 0.72 of the number (was 0.77).
+     Scoped to #player so this can only ever touch the Explorer — .ctitle is a shared site.css
+     component and other pages' panels must keep the 12.5/15 default. Applies to the net card too,
+     which is the same lockup; measured at 1040 the net title row is 876px of 980px available and
+     still does not wrap. */
+  #player .ctitle{font-size:var(--fs-4)}
+  #player .ctitle .v{font-size:18px}
+  #player .ctitle .v b ~ span{font-size:var(--fs-2)}
+  /* A DELIBERATE LOOK, NOT AN OVERFLOW GUARD. The single-line decision above was settled on the
+     single-player readout, which holds one number; a 4-way compare puts four in the same .v.
+     Below the grid's 1-column breakpoint that reads as a cramped label+numbers run, so the numbers
+     are allowed to drop under their label. Nothing overflows without this rule — an earlier version
+     of this comment claimed a 375px page scroll and it does not reproduce. Do not re-justify it as
+     a scroll fix; delete it if the wrapped look is ever unwanted. */
+  @media(max-width:640px){#player .ctitle{flex-wrap:wrap;row-gap:2px}}
   /* plan49 W3: TS -> atom drill-down. The panel lives INSIDE the .cell so the 3x2 column-flow
      grid keeps working — the cell simply grows and its column reflows. minmax(0,1fr) is a cheap
      guard against a grid item refusing to shrink below its content, NOT a fix for an observed
@@ -165,7 +207,8 @@
         <button data-mode="pure" type="button">Pure RAPM</button>
         <button data-mode="prior" type="button">Prior-informed</button>
         <button data-mode="box" type="button">Box prior</button>
-        <button data-mode="latent" type="button" title="One continuous cross-league curve over the daily prior-informed board; colored by league. Display-only.">Latent</button>
+        <!-- kept in step with MODEHINT.latent below; the two are the same sentence twice -->
+        <button data-mode="latent" type="button" title="One continuous curve for players who change leagues. Display-only.">Latent</button>
       </div>
     </div>
     <div class="modehint" id="modehint"></div>
@@ -179,7 +222,11 @@
     </div>
 
     <div class="netcard">
-      <div class="ctitle"><span>Net RAPM <span style="color:var(--faint);font-weight:400">· ORAPM + DRAPM</span> <span class="help" data-tip="Net RAPM = ORAPM (oTS+oTOV+oSC) + DRAPM (dTS+dTOV+dSC), points/100 on the NBA-equivalent scale. The grey band is the 95% CI on the estimate itself — how tightly the lineup data pins down what has already happened. It is not a forecast of next season; read that way it is about 4× too wide.">?</span></span>
+      <!-- Owner 2026-07-26: tooltip trimmed to two sentences. The CI sentence is a REQUIRED honesty
+           statement (the band measures what already happened, and is ~4x too wide read as a
+           forecast) — shorten it if you must, never drop it. Full derivation: the CAL-2 band audit,
+           and the band comment in Chart() below. -->
+      <div class="ctitle"><span>Net RAPM <span style="color:var(--faint);font-weight:400">· ORAPM + DRAPM</span> <span class="help" data-tip="Offense plus defense, in points per 100 possessions on the NBA scale. The grey band is a 95% confidence interval on what already happened — not a next-season forecast, and about 4× too wide to read as one.">?</span></span>
         <!-- the readout sits NEXT TO its own label, same lockup as the six factor cells below.
              It used to live at the far end of the control group, ~700px from the words "Net RAPM". -->
         <span class="v" id="v_net"></span>
@@ -187,7 +234,11 @@
           <!-- plan49 W2: draw ORAPM (oTS+oTOV+oSC) and DRAPM (dTS+dTOV+dSC) on the SAME net axis.
                They sum vertically to the net line. Defensive factors are already sign-flipped so
                positive = good (msolve.py:712), so DRAPM is ADDED, never subtracted. -->
-          <span id="odseg" class="seg" style="display:none" title="Draw ORAPM and DRAPM on the net axis. They add to the net line (defensive factors are already signed so positive = good). Off by default. No confidence band is drawn for the two split lines — their standard errors are not stored, and the site rounds every factor to 2dp, so the split sums to net only to within display rounding (≤0.03).">
+          <!-- Owner 2026-07-26: the reader needs two facts — the lines add to net, and they carry no
+               band. WHY there is no band (SEs are not stored, and inventing one would misuse the
+               six-factor kappa) is in the `extras` comment in Chart(); the ≤0.03 rounding slack is
+               noted at odRead() in setHoverAll(). Neither belongs in a tooltip. -->
+          <span id="odseg" class="seg" style="display:none" title="Draw offense and defense on the net axis. The two lines add to net; no confidence band is drawn for them.">
             <button data-od="off" type="button" class="on">Net only</button>
             <!-- plain text, NOT the side colours: when this button is active its background is the
                  accent blue, on which --off measures 1.18:1 and --def 1.24:1 contrast (WCAG AA wants
@@ -318,14 +369,27 @@ function paint(){if(!curOpts.length){drop.style.display='none';return}
     el.onclick=()=>load(o.id,o.n);drop.appendChild(el);});
   drop.style.display='block';}
 
-// Global data mode, persisted across players. Three daily series per player, swapped into the
-// charts on toggle: 'pure' (prior-free), 'prior' (box-prior-informed, default), 'box' (the prior).
+// Global data mode, persisted across players. Four daily series per player, swapped into the charts
+// on toggle: 'pure' (prior-free), 'prior' (box-prior-informed, default), 'box' (the prior itself),
+// 'latent' (display-only cross-league curve).
+// Owner 2026-07-26: these render under the toggle on every page load, on a PUBLIC dashboard — one or
+// two short sentences each, no internal framing. The framing that used to sit in the strings lives
+// here instead, which is where a reader of the code wants it anyway:
+//   pure   — prior-free six-factor decomp, calibrated to the public DataBallR ridge; one line per league.
+//   prior  — same daily solve, all six factors shrunk toward a daily box-score prior; shrinkage is
+//            strongest where lineup data is thin (rookies, early season) and fades as exposure grows.
+//   box    — the prior itself, re-fit every game-day from NCAA/G-League/NBA box stats on that day's
+//            prior-free cross-section.
+//   latent — DARKO-style state-space pass over the prior-informed board, so a league-mover gets one
+//            line instead of disjoint per-league graphs; net chart coloured by league played (F4).
+// The box hint's "reads cooler than the board" clause is NOT filler — it is the honest-scale
+// disclosure for a curve drawn on the same axis as the board. Shorten it, never drop it.
 const MODEHINT={
-  pure:'Pure RAPM — the prior-free six-factor decomp, calibrated to the public DataBallR ridge. One line per league on the net chart.',
-  prior:'Prior-informed RAPM — the same daily solve, with all six factors shrunk toward a daily box-score prior. Shrinkage is strongest where lineup data is thin (rookies, early season) and fades as exposure grows. The default.',
-  box:'Box prior — what the prior-informed solve shrinks toward. Re-fit every game-day from box stats across NCAA, G-League & NBA, on that day\'s prior-free cross-section. Shown at its honest scale, so it reads cooler than the board, especially on defense.',
-  latent:'Latent — one continuous cross-league curve: a DARKO-style state-space pass over the daily prior-informed board, so a player who moves between leagues has a single line instead of disjoint per-league graphs. The net chart is colored by the league played each day. Display-only.'};
-const MODEHINT_LATENT_ALIAS='Latent — single-league player: the latent equals the prior-informed board (no cross-league bridge needed).';
+  pure:'Pure RAPM — what the lineup data says on its own, with no prior. Noisiest, and the cleanest read on the raw signal.',
+  prior:'Prior-informed RAPM — the same solve, pulled toward a daily box-score prior where lineup data is thin. The default.',
+  box:'Box prior — the box-score number the solve is pulled toward. Shown at its own honest scale, so it reads cooler than the board, especially on defense.',
+  latent:'Latent — one continuous curve for players who change leagues, instead of a separate line per league. Display-only.'};
+const MODEHINT_LATENT_ALIAS='Latent — this player never changed leagues, so the curve is just the prior-informed board.';
 // DISPLAY-ONLY SMOOTHING DISCLOSURE (fence F3, owner-reopened 2026-07-17). DORMANT since 2026-07-21:
 // the owner reverted the smoother, so deploy_site.sh no longer sets BOX_SMOOTH_W, build_site_box.py
 // never stamps `sm`, and this sentence never renders. Kept wired, not deleted, because the disclosure

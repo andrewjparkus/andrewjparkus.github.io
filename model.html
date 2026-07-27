@@ -4,53 +4,45 @@
 <link rel="stylesheet" href="site.css">
 <link rel="icon" href="favicon.svg"><link rel="manifest" href="manifest.webmanifest">
 <style>
-  /* ---- page-unique: doc layout w/ sticky left-rail TOC (all tokens, themes for free) ---- */
+  /* Page-unique: one prose column, no rail. The Metrics and Vs.-Vegas pages were folded in here
+     (2026-07-26) as script-free fragments injected into #metrics-panel / #vegas-panel, so these
+     .prose rules style their content too — anything a fragment needs beyond this belongs in
+     site.css, not here. */
   .doc{max-width:var(--maxw);margin:0 auto;padding:var(--sp-5) 22px 80px}
-  /* two columns on desktop: sticky TOC rail + prose. Single column on mobile. */
-  .doclayout{display:grid;grid-template-columns:212px minmax(0,1fr);gap:34px;align-items:start}
-  .prose{min-width:0;line-height:1.65;max-width:760px}
-  /* ---- vertical TOC ---- */
-  .toc{position:sticky;top:64px;align-self:start;font-size:var(--fs-2)}
-  .toc .toclab{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
-    color:var(--faint);margin:0 0 8px 11px}
-  .toc nav{display:flex;flex-direction:column;border-left:1px solid var(--line)}
-  .toc a{color:var(--muted);text-decoration:none;padding:6px 11px;margin-left:-1px;
-    border-left:2px solid transparent;line-height:1.35;transition:color .12s,border-color .12s}
-  .toc a:hover{color:var(--text);border-left-color:var(--line-2)}
-  .toc a.on{color:var(--text);font-weight:600;border-left-color:var(--accent)}
+  .doc .lede{color:var(--muted);font-size:var(--fs-4);margin:8px 0 0;line-height:1.6;max-width:840px}
+  .prose{min-width:0;line-height:1.65}
   /* anchored sections must clear the sticky topnav when jumped to */
   .prose h2,.prose h3{scroll-margin-top:62px}
-  /* ---- prose typography (tokens) ---- */
-  .prose .lede{color:var(--muted);font-size:var(--fs-4);font-style:italic;margin:6px 0 0;line-height:1.6}
   .prose h2{font-size:var(--fs-5);font-weight:700;margin:34px 0 8px;padding-top:16px;
     border-top:1px solid var(--line);letter-spacing:-.2px;color:var(--text)}
-  .prose h2:first-of-type{border-top:0;padding-top:6px;margin-top:14px}
+  .prose h2:first-of-type{border-top:0;padding-top:6px;margin-top:16px}
   .prose h3{font-size:var(--fs-4);font-weight:700;margin:22px 0 6px;color:var(--text)}
-  .prose p,.prose li{color:var(--text);font-size:var(--fs-4);line-height:1.65}
+  .prose p,.prose li{color:var(--text);font-size:var(--fs-4);line-height:1.65;max-width:840px}
   .prose p,.prose ul,.prose ol{margin:11px 0}
+  .prose ul,.prose ol{padding-left:22px}
+  .prose li{margin:5px 0}
+  .prose li::marker{color:var(--faint)}
   .prose strong{color:var(--text);font-weight:700}
   .prose em{color:var(--muted)}
   .prose a{color:var(--accent);text-decoration:none}
   .prose a:hover{color:var(--text);text-decoration:underline}
   .prose code{background:var(--panel-3);border:1px solid var(--line);border-radius:var(--r-1);
     padding:1px 5px;font-size:12px;color:var(--accent);font-family:var(--font-mono)}
-  .prose ul,.prose ol{padding-left:22px}
-  .prose li{margin:5px 0}
-  .prose li::marker{color:var(--faint)}
   .prose .scroll{margin:14px 0}
-  .prose table.tbl td.l,.prose table.tbl th.l{text-align:left}
   .prose table.tbl td.lead{font-weight:600}
-  /* prose tables wrap (override site.css .tbl nowrap); numerics keep tabular-nums from site.css */
-  .prose table.tbl td,.prose table.tbl th{white-space:normal}
-  /* site guide cards */
-  .guidegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:14px 0}
-  .guide{border:1px solid var(--line);background:var(--panel);border-radius:var(--r-1);padding:11px 13px}
-  .guide h3{margin:0 0 4px;font-size:var(--fs-3)}
-  .guide h3 a{color:var(--text)}
-  .guide h3 a:hover{color:var(--accent);text-decoration:none}
-  .guide p{margin:0;font-size:var(--fs-2);color:var(--muted);line-height:1.55}
-  .guide p strong{color:var(--text)}
-  /* worked-example 6-factor chart grid (mirrors Explorer small-multiples) */
+  /* The panels' quieter-than-body classes: .prose p/li at (0,1,1) out-specify site.css's
+     .cap/.foot/.sub/.callout at (0,1,0), so restate the size here. Two classes beat one class plus
+     one element, so `.prose .sub` alone covers the div, the p and the ul; the li needs its own
+     term because `.prose li` matches it directly and inheritance can't win. */
+  .prose p.cap,.prose p.foot{font-size:var(--fs-1);color:var(--faint)}
+  .prose .sub,.prose .sub li{font-size:var(--fs-2);color:var(--muted)}
+  /* .callout: size only. Its panel background and left border are untouched by .prose, and its
+     text reads at --text like the <strong> runs .prose already paints inside it. */
+  .prose .callout{font-size:var(--fs-2)}
+  /* Wrap only the two hand-written tables on this page. The child combinator deliberately stops at
+     the mount divs, so injected panels keep site.css's nowrap numerics. */
+  .prose>.scroll table.tbl td,.prose>.scroll table.tbl th{white-space:normal}
+  /* worked-example 6-factor chart grid (mirrors the Explorer's small multiples) */
   .exhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin:4px 0 2px}
   .exhead .exname{font-weight:700;font-size:var(--fs-4)}
   .exhead .exmeta{color:var(--faint);font-size:var(--fs-2)}
@@ -62,12 +54,6 @@
   .fcell .fval{font-variant-numeric:tabular-nums;font-weight:700;font-size:15px;color:var(--text);letter-spacing:-.2px}
   .fcell .fval .pm{color:var(--faint);font-weight:400;font-size:11.5px;letter-spacing:0}
   .fcell svg{display:block;width:100%}
-  @media(max-width:860px){
-    .doclayout{grid-template-columns:1fr;gap:6px}
-    /* on mobile the TOC becomes a plain vertical list above the prose */
-    .toc{position:static;top:auto;margin-bottom:8px}
-    .toc nav{max-height:none}
-  }
   @media(max-width:560px){
     .doc{padding:18px 14px 60px}
     .prose h2{font-size:18px}
@@ -80,79 +66,17 @@
 <script src="nav.js"></script>
 
 <div class="doc">
-  <h1>A daily, multi-league six-factor RAPM <small>a reader's guide</small></h1>
-  <p class="lede">The classic six-factor RAPM decomposition, re-solved every game-day across three
-  leagues on one scale. Ratings are <strong>descriptive</strong> unless a page is tagged as a forward
-  projection.</p>
+  <h1>The model <small>six-factor RAPM, re-solved every game-day</small></h1>
+  <p class="lede">A six-factor RAPM re-solved as of every game-day across the NBA, G-League and NCAA
+  on one NBA-equivalent scale, every value with a confidence interval. Ratings are
+  <strong>descriptive</strong> — what a player has already done — unless a page is labelled a
+  forward projection.</p>
 
-  <div class="doclayout">
-    <aside class="toc">
-      <p class="toclab">On this page</p>
-      <nav id="toc">
-        <a href="#oneliner">The one-liner</a>
-        <a href="#diff">What's different</a>
-        <a href="#factors">The six factors</a>
-        <a href="#example">Worked example</a>
-        <a href="#resolve">Daily re-solve</a>
-        <a href="#modes">Four modes</a>
-        <a href="#ref">DataBallR match</a>
-        <a href="#transfer">Cross-league transfer</a>
-        <a href="#ci">Confidence intervals</a>
-        <a href="#accuracy">Model accuracy</a>
-        <a href="#forward">Forward projection</a>
-        <a href="#limits">Limitations</a>
-        <a href="#guide">Using the site</a>
-      </nav>
-    </aside>
-
-    <div class="prose">
-
-  <h2 id="oneliner">The one-liner</h2>
-  <p>Classic six-factor RAPM gives <strong>one number per player per season</strong>: six components
-  (points per 100 possessions, summing to net), offense and defense. This model re-computes that
-  decomposition <strong>as of every game-day</strong>, for <strong>three leagues at once</strong>
-  (<span class="nb">NBA</span>, <span class="gl">G-League</span>, <span class="co">NCAA</span>) on
-  <strong>one NBA-equivalent scale</strong>, each value with a <strong>confidence interval</strong>.</p>
-  <p>So not "Jokic was +8 in 2025-26" but a <strong>daily curve</strong> across his career, playoffs
-  included, beside a college freshman's on the <em>same axis</em>. Reading the reference (pure)
-  <a href="table.html">DataBallR scale</a>: <strong>net +5</strong> is clear All-Star, the league centers
-  near 0, the best sit <strong>+7 to +9</strong> (one MVP-tier outlier above), the negative tail near −7.
-  The default <em>prior-informed</em> series runs hotter — see <a href="#ref">the reference
-  match</a>.</p>
-  <div class="callout">
-    <strong>The sixth factor, renamed.</strong> What older boards called "oREB/dREB" is here
-    <strong>second-chance value</strong> (<code>oSC</code>/<code>dSC</code>): points added after the
-    offense's own miss — putbacks and kickouts off the offensive glass; on defense, preventing them.
-    Not a rebound rate (Jokic grades <code>dSC ≈ +2.6</code>, Wembanyama ≈ +1.1).
-  </div>
-
-  <h2 id="diff">Four things that are different</h2>
-  <div class="scroll">
-    <table class="tbl">
-      <thead><tr><th class="l">What's new</th><th class="l">In one line</th></tr></thead>
-      <tbody>
-        <tr><td class="l lead">Daily, not seasonal</td>
-            <td class="l">The full ridge re-solved as of every game-day — one smooth curve, regular
-            season into playoffs.</td></tr>
-        <tr><td class="l lead">Multi-league, one scale</td>
-            <td class="l">College &amp; G-League translated onto the NBA scale, so a Duke sophomore and
-            an All-NBA center compare directly.</td></tr>
-        <tr><td class="l lead">Error bars on everything</td>
-            <td class="l">Every factor, every day, carries a CI — wide on thin samples, narrowing as
-            they grow.</td></tr>
-        <tr><td class="l lead">Smooth, no season jumps</td>
-            <td class="l">Median day-to-day change in net ≈ <strong>0.02</strong>; across an offseason
-            under <strong>0.8</strong> — by construction, not smoothing.</td></tr>
-      </tbody>
-    </table>
-  </div>
+  <div class="prose">
 
   <h2 id="factors">The six factors</h2>
-  <p>Three offensive, three defensive, each in points per 100 possessions on the NBA-equivalent scale,
-  sign-aligned so <strong>positive is always good</strong>. The decomposition is not ours: it follows
-  <strong>Russell Thomas's additive RAPM decomposition</strong>, and the ridge solver core is a vendored,
-  byte-identical copy of his reference implementation. This project is the daily, multi-league
-  <em>product layer</em> on top.</p>
+  <p>Three offensive, three defensive, each in points per 100 possessions, sign-aligned so
+  <strong>positive is always good</strong>.</p>
   <div class="scroll">
     <table class="tbl">
       <thead><tr>
@@ -160,43 +84,39 @@
       </tr></thead>
       <tbody>
         <tr><td class="l lead"><span class="pos">oTS</span></td>
-            <td class="l">Offensive true-shooting value (EFG + FT value)</td>
+            <td class="l">Scoring efficiency — true shooting, including free-throw value</td>
             <td class="l">scores efficiently</td></tr>
         <tr><td class="l lead"><span class="pos">oTOV</span></td>
-            <td class="l">Offensive turnover value — ball security</td>
+            <td class="l">Ball security</td>
             <td class="l">protects the ball</td></tr>
         <tr><td class="l lead"><span class="pos">oSC</span></td>
-            <td class="l">Offensive second-chance value</td>
+            <td class="l">Second chances created — putbacks and kickouts off the offensive glass,
+            not a rebound rate</td>
             <td class="l">creates extra possessions</td></tr>
         <tr><td class="l lead grp"><span class="pos">dTS</span></td>
-            <td class="l grp">Defensive true-shooting — making opponents shoot worse</td>
+            <td class="l grp">Shot defense — making opponents shoot worse</td>
             <td class="l">suppresses opponent efficiency</td></tr>
         <tr><td class="l lead"><span class="pos">dTOV</span></td>
-            <td class="l">Defensive turnover value — forcing turnovers</td>
+            <td class="l">Forcing turnovers</td>
             <td class="l">forces turnovers</td></tr>
         <tr><td class="l lead"><span class="pos">dSC</span></td>
-            <td class="l">Defensive second-chance — preventing opponent second chances</td>
+            <td class="l">Second chances denied</td>
             <td class="l">denies opponent extra shots</td></tr>
       </tbody>
     </table>
   </div>
-  <p><code>net = oTS + oTOV + oSC + dTS + dTOV + dSC</code> — offense the first three, defense the last
-  three. Net is <em>exactly</em> that sum (<code>net := sum6</code>), never a separate solve to
-  reconcile, so the closure residual <code>RESID ≡ 0</code> by construction. The six come from four
-  ridge leaf-metrics.</p>
+  <p>Net is <em>exactly</em> the sum of the six, never a separate solve. The decomposition follows
+  Russell Thomas's additive RAPM, and the ridge solver core is his reference implementation.</p>
 
-  <h2 id="example">What one player's decomposition looks like</h2>
-  <p>One player's prior-informed daily series, drawn as the <a href="index.html">Explorer</a> draws it:
-  net on top, the six factors as small multiples.</p>
+  <h2 id="example">What one player looks like</h2>
+  <p>One player's daily series, drawn the way the <a href="index.html">Explorer</a> draws it: net on
+  top, the six factors below. The panels add to the net exactly.</p>
   <div class="exhead">
     <span class="exname" id="ex_name">Loading example…</span>
     <span class="exmeta" id="ex_meta"></span>
   </div>
   <div class="fgrid" id="ex_grid"></div>
-  <p class="cap" id="ex_caption" style="color:var(--faint);font-size:var(--fs-2)"></p>
-  <p>Nearly all of Jokic's value is <strong>scoring efficiency</strong> (oTS) plus a large
-  <strong>defensive second-chance</strong> contribution (dSC). The six panels add to the net on top —
-  exactly:</p>
+  <p class="cap" id="ex_caption"></p>
   <div class="scroll" style="max-width:420px">
     <table class="tbl">
       <thead><tr><th class="l">Component</th><th>Latest</th></tr></thead>
@@ -204,564 +124,66 @@
     </table>
   </div>
 
-  <h2 id="resolve">How a "daily re-solve" works</h2>
-  <p>Each day's value is a full RAPM under a <strong>5-year rolling-window time-decay</strong> regime: a
-  ridge over every possession in the trailing five years, weighted <code>2^(−age/550)</code> — a
-  <strong>550-day half-life</strong>. "As of day D" means games dated in (D−5yr, D]. There is
-  <strong>no carried-over state</strong>: every day stands alone, and planting a future game moves the
-  as-of estimate by exactly 0.0. The window buys <strong>speed and cross-league consistency</strong>; the
-  half-life keeps the snapshot fresh (a game ~1.5 years old already weighs half; at the window's edge,
-  <code>2^(−1825/550) ≈ 0.10</code>).</p>
-  <p>The ridge solves each of the eight shot/decomposition components with its <strong>own tuned
-  penalty</strong> (a per-component α on offense and defense — the stabilized "LOCK" configuration), plus
-  a small <code>α = 10</code> group of garbage-time nuisance columns, over a decay-weighted, whitened
-  design.</p>
-  <div class="callout">
-    <strong>Scale, by the numbers.</strong> The NBA design alone is ~7.1M possession-rows × ~5,800
-    player-columns. At ~10,200 league-days × five ridge solves each, that's <strong>~51,000
-    solves</strong>, each over a million-plus possessions — embarrassingly parallel, since every day
-    stands alone.
-  </div>
-  <h2 id="modes">Four views of the same day</h2>
-  <p>The <a href="index.html">Explorer's</a> <strong>mode toggle</strong> switches every chart between
-  <strong>four</strong> daily series. The first three share dates, leagues and error bars, differing only
-  in what each factor shrinks <em>toward</em>.</p>
-  <div class="scroll">
-    <table class="tbl">
-      <thead><tr>
-        <th class="l">Mode</th><th class="l">What it is</th><th class="l">Shrinks toward</th>
-      </tr></thead>
-      <tbody>
-        <tr><td class="l lead">Pure</td>
-            <td class="l">The canonical prior-free solve — textbook regularized RAPM, calibrated to the
-            public DataBallR ridge.</td>
-            <td class="l"><strong>zero</strong>, all six factors</td></tr>
-        <tr><td class="l lead">Prior-informed <em>(default)</em></td>
-            <td class="l">Same solve, every factor shrunk toward an informative box+EPM prior
-            <em>inside</em> the ridge.</td>
-            <td class="l"><strong>box+EPM prior</strong>, all six factors</td></tr>
-        <tr><td class="l lead">Box prior</td>
-            <td class="l">The daily-refit basis the prior-informed ridge shrinks <em>toward</em>, shown
-            at its honest (attenuated) scale — so it reads cooler than the board, especially on defense.
-            No display de-compression.</td>
-            <td class="l">— (it <em>is</em> the target)</td></tr>
-        <tr><td class="l lead">Latent</td>
-            <td class="l">One continuous curve for league-movers: a DARKO-style state-space pass
-            (per-factor Kalman + smoother) over the daily prior-informed board, with college/G-League
-            observations affine-mapped to the NBA scale. Display-only — it never feeds the board or the
-            projection.</td>
-            <td class="l">— (a re-drawing of the prior-informed board, not a new solve)</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <p><strong>Latent</strong> exists only for the ~2,600 players with games in more than one league; for
-  everyone else the single-league board already <em>is</em> the continuous curve. On the NBA segment it
-  tracks the board at full scale; across a league jump it carries the translated level through the gap,
-  removing the seam.</p>
-  <p>Shrinkage happens <strong>inside the ridge</strong> — a maximum-a-posteriori estimate pulling each
-  coefficient toward a prior mean <code>μ</code> rather than zero (<code>β ~ N(μ, ·)</code>), at a
-  strength set by the ridge penalty: strong when decay-weighted exposure is thin, fading to near-zero as
-  possessions pile up. So prior-informed and pure track each other for established players; the prior
-  mainly rescues thin-data ones — a rookie or call-up starts somewhere sensible — without transforming
-  accuracy (see <a href="#accuracy">the scorecard</a>).</p>
-  <div class="callout">
-    <strong>What the prior is made of.</strong> Each factor's prior mean is a hyper-sparse linear map of
-    <em>predictive box rates</em> onto that component (three-point value from 3P% and 3PA rate, turnover
-    value from steal rate, and so on) — twelve recipes across the six factors. Since mid-2026 it is
-    <strong>re-fit fresh every game-day</strong> on that day's prior-free cross-section (~500 NBA
-    players), so it adapts as the league's box-to-impact relationship drifts. Leakage is guarded: the
-    features are Dunks &amp; Threes' <em>predictive box fields</em>, joined with source date ≤ as-of date,
-    and the map <strong>never</strong> ingests the EPM impact number itself — it correlates ~0.8 with our
-    own pure net and would make the prior near-circular. It cleared two held-out gates: it lowered
-    frozen-preseason win-total error (<a href="#accuracy">current figures above</a>) at a ~4× lower
-    median daily wiggle and unchanged game-level accuracy. Honest cost: it runs the default board
-    hotter than the pure reference.
-  </div>
+  <h2 id="accuracy">How accurate is it?</h2>
+  <!-- Deliberately no summary sentence here: the injected panel opens with "last of five", and
+       stating it twice in consecutive paragraphs read as padding. The fetch-fail case (no honesty
+       statement on the page at all) is covered upstream, not here: the build gate fails rather
+       than publish without the panel. -->
+  <p>Two out-of-sample tests: game margin, and next season's team margin.</p>
+  <!-- Injected fragment from build_metrics_site.py (metrics_panel.html). Script-free by contract:
+       injected markup never runs scripts, so every number in it is server-rendered and gated there. -->
+  <div id="metrics-panel"><div class="msg">Loading the accuracy tables…</div></div>
 
-  <h2 id="ref">Does it match a known reference?</h2>
-  <p>The pure NBA scale is tuned to reproduce <strong>DataBallR's six-factor RAPM</strong> (the public
-  time-decay, pure-lineup ridge), anchored at the regular-season end. Across shared players the
-  <strong>ordering</strong> and the <strong>full range</strong> align tightly — leaders near +7 to +9,
-  the negative tail near −7 — so the shape reproduces, not just the top names. DataBallR uses a fixed
-  ~6-year window, this model a <strong>5-year rolling window</strong>; the <strong>550-day
-  half-life</strong> discounts old games so steeply that window length barely changes a current rating,
-  while the daily solve still runs one clean curve across a 20-season career.</p>
-  <div class="callout">
-    <strong>Two honest caveats.</strong> First, the apples-to-apples comparison is the
-    <strong>Pure</strong> toggle — the series literally calibrated to the public board. The Explorer
-    <em>default</em> is <strong>prior-informed</strong>, which runs <strong>hot on the biggest
-    names</strong> (up to ~1.5 points at the very top, ~half a point to a point on the rest) and a touch
-    <em>cool</em> on some defense-first veterans, where the box prior sees less than the lineup data
-    does. Second, the daily solve refreshes, so exact per-player deltas drift game to game: the agreement
-    is <strong>ordinal-and-range preserving</strong>, not decimal-exact. Flip to Pure on any current star
-    to see the direct match.
-  </div>
+  <h2 id="vegas">Against the closing line</h2>
+  <!-- Keep this h2: vegas.html redirects to model.html#vegas and the fragment carries no heading.
+       No host paragraph under it — the fragment's opening line states both halves (the close leads
+       us at parity; our number still adds to it) with the figures attached. -->
+  <!-- Injected fragment from build_vegas_site.py (vegas_panel.html). Same contract as above. -->
+  <div id="vegas-panel"><div class="msg">Loading the closing-line tables…</div></div>
 
-  <h2 id="transfer">The interesting part: what transfers between leagues?</h2>
-  <p>We don't assume college production means what NBA production means — we <strong>measure it</strong>
-  on two-league players (795 G-League → NBA, 1,258 college → NBA). Each factor gets a possession-weighted
-  <strong>affine translation</strong> (<code>z_nba = slope·z_feeder + offset</code>): the slope is
-  <em>how much</em> of a skill transfers, a non-shrinkable variance floor (below) <em>how
-  reliably</em>.</p>
-  <div class="scroll">
-    <table class="tbl">
-      <thead><tr>
-        <th class="l">Factor</th>
-        <th>NCAA→NBA slope</th>
-        <th class="grp">G-League→NBA slope</th>
-      </tr></thead>
-      <tbody>
-        <tr><td class="l">oTS <span class="help" data-tip="True-shooting / scoring efficiency value.">?</span> (shooting)</td>
-            <td>0.16</td><td class="grp">0.11</td></tr>
-        <tr><td class="l">oTOV (ball security)</td>
-            <td>0.09</td><td class="grp">0.41</td></tr>
-        <tr><td class="l">oSC <span class="help" data-tip="Offensive second-chance value — putbacks &amp; kickouts off the offensive glass.">?</span> (off. 2nd-chance)</td>
-            <td>0.14</td><td class="grp">0.36</td></tr>
-        <tr><td class="l">dTS (shot defense)</td>
-            <td>0.24</td><td class="grp">0.40</td></tr>
-        <tr><td class="l">dTOV (forcing turnovers)</td>
-            <td>0.11</td><td class="grp">0.71</td></tr>
-        <tr><td class="l"><strong>dSC (def. 2nd-chance)</strong></td>
-            <td><strong>0.14</strong></td><td class="grp"><strong>0.24</strong></td></tr>
-      </tbody>
-    </table>
-  </div>
-  <p>The model's personality is in this table:</p>
+  <h2 id="limits">Limits</h2>
   <ul>
-    <li><strong>Every slope is well below 1.</strong> Dominating a lower league barely moves your NBA
-    number: a college player at +5 in true shooting projects to roughly <em>average</em> NBA
-    shooting.</li>
-    <li><strong>Out of the G-League, motor travels and shooting doesn't.</strong> Forcing turnovers
-    carries furthest (slope 0.71) and shooting least (0.11) — motor rather than dominance over weaker
-    competition. Out of college every slope is low enough that the ordering barely matters.</li>
-  </ul>
-  <div class="callout">
-    <strong>Worked translation.</strong> A G-League player grading <code>+1.5</code> on forcing turnovers
-    (dTOV, the most-transferable factor <em>out of that league</em>, slope 0.71) projects to ≈ <code>+1.1</code> on the NBA scale —
-    with a wide, <em>non-shrinkable</em> band. At <code>+1.5</code> in shooting (oTS, slope 0.11) he
-    projects to only ≈ <code>+0.17</code>: lower-league scoring almost doesn't carry.
-  </div>
-  <p>Each translation carries an <strong>irreducible uncertainty floor</strong>
-  (<code>Var_translate</code>): cross-league error bars stay <em>wide and never shrink to zero</em>,
-  however many college games a player has. That's why a future MVP's lone college season can sit near
-  replacement level and still be "consistent" with stardom — see the <a href="draft.html">Draft
-  board</a>.</p>
-  <div class="callout">
-    <strong>Where do these come from?</strong> They are re-fit whenever the solve regime changes. Under
-    the current per-component "LOCK" regularization the <em>shape</em> held, but magnitudes moved: the
-    NCAA→NBA shooting slope came down from ~0.24 to <strong>0.16</strong> when the shot-location
-    components were re-solved with their own penalties. The anchoring mover sets are large and stable
-    (1,258 college→NBA, 795 G-League→NBA), so the relationships are robust in direction even as
-    individual slopes are re-estimated. The same machinery fits the reverse and lateral directions
-    (NCAA→G-League, NBA→G-League) — about 2,500 two-league careers anchor the network. Before any
-    translation is fit, college and G-League possessions are re-scored with an <strong>expected-points
-    free-throw adjustment</strong> (FT% × value in place of raw makes), removing free-throw luck from the
-    feeder signal; the NBA series is untouched.
-  </div>
-
-  <h2 id="ci">Confidence intervals</h2>
-  <p>Every factor on every day carries a standard error, <code>se = 100·√σ̂² / √Weff</code>, where
-  <code>Weff</code> is that day's decay-weighted possession exposure. The band <strong>widens with few
-  effective possessions</strong> and <strong>narrows as minutes accumulate</strong>: at high exposure the
-  net band runs ±1.5 or so; on a thin sample it balloons past ±5. Translated (college / G-League) factors
-  add the non-shrinkable <code>Var_translate</code> floor in quadrature, so their bands stay permanently
-  wide.</p>
-  <div class="callout">
-    <strong>It measures today, not next year.</strong> The band says how tightly the lineup data pins
-    down what a player has <em>already done</em>; read as a next-season forecast it is the wrong object,
-    roughly <strong>4× too wide</strong> for a starter and wider still for a rotation player — the
-    measurement <code>se</code> (median ≈ 3.1) dwarfs the median year-over-year move (≈ 0.5) in a series
-    that is already a 550-day low-pass filter. <a href="#ciforward">We score that misuse below</a>. The
-    forward band is the amber projection cone on the <a href="index.html">Explorer</a>, separately
-    calibrated. Per-coefficient <code>se</code> is an OLS heuristic and understates uncertainty for
-    collinear teammates.
-  </div>
-
-  <h3>The system at a glance</h3>
-  <div class="scroll">
-    <table class="tbl">
-      <thead><tr>
-        <th class="l">League</th><th class="l">Coverage</th><th>Players</th><th>Game-days</th>
-      </tr></thead>
-      <tbody>
-        <tr><td class="l"><span class="nb">NBA</span> (incl. playoffs)</td>
-            <td class="l">1996-97 → 2025-26</td><td>2,620</td><td>6,078</td></tr>
-        <tr><td class="l"><span class="gl">G-League</span> (incl. playoffs)</td>
-            <td class="l">2016-17 → 2025-26</td><td>2,380</td><td>1,224</td></tr>
-        <tr><td class="l"><span class="co">College</span></td>
-            <td class="l">2005-06 → 2025-26</td><td>42,378</td><td>2,953</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <p>Roughly <strong>43 million player-day rows</strong>, each with six factors, a net and CIs. College
-  seasons 2005-06 → 2012-13 have thinner play-by-play (21–67% of scheduled games), flagged
-  <code>reduced_sample</code> and down-weighted; coverage is full (≥85%) from 2013-14 on. NBA pre-1996
-  and pre-2005 college have no public play-by-play, so possession-level RAPM can't extend there. And NBA
-  play-by-play from <strong>1997–2013 records no steals or blocks</strong> (a structural gap in the
-  legacy feeds, flagged <code>legacy_no_stl_blk</code>), weakening the turnover- and defense-derived
-  factors and box features in that era.</p>
-
-  <h2 id="accuracy">Model accuracy — the out-of-sample scorecard</h2>
-  <p>Two questions: do the day-of-game ratings predict <em>games</em>, and does a rating travel to
-  <em>next season</em>? Both come from <code>daily_v5/oos_harness.py</code>, a <strong>walk-forward,
-  leakage-aware</strong> evaluation.</p>
-
-  <div id="acc_msg" class="callout" style="display:none">Loading the accuracy scorecard…</div>
-
-  <h3>Projecting a season: RAPM decomp vs external EPM</h3>
-  <p>The sharpest test of the ratings as a <em>projection</em>: freeze each source at one preseason
-  snapshot, simulate the season, score the projected win totals against what happened. Internal
-  <strong>RAPM decomposition</strong> against <strong>Dunks &amp; Threes' EPM</strong>, pooled over
-  2024–26 (lower win MAE is better). The internal decomposition <em>trails</em> the external EPM here —
-  the table below carries the figures — and most of that gap is rating <em>shape</em>: the long 550-day
-  window lags young players on the rise, not raw noise.</p>
-  <div class="scroll" style="max-width:560px">
-    <table class="tbl" id="acc_proj">
-      <thead><tr>
-        <th class="l">Source</th><th>Win MAE</th><th>Brier</th>
-        <th class="grp">2024</th><th>2025</th><th>2026</th>
-      </tr></thead>
-      <tbody><tr><td class="l">…</td><td>…</td><td>…</td><td class="grp">…</td><td>…</td><td>…</td></tr></tbody>
-    </table>
-  </div>
-  <p class="cap" id="acc_proj_cap" style="color:var(--faint);font-size:var(--fs-2)"></p>
-
-  <h3>Internal vs EPM vs DARKO — four honest tasks</h3>
-  <p>Four out-of-sample tasks, one table. <strong>Internal</strong> is the RAPM decomposition on this
-  site; <strong>EPM</strong> is Dunks &amp; Threes'; <strong>DARKO</strong> is the public daily-updated
-  box model; the <strong>Blend</strong> column is an offline internal+EPM average shown <strong>only as a
-  benchmark — no EPM-RAPM blend ships</strong>. Lower is better in every row.</p>
-  <!-- DERIVED FROM accuracy.json `model_page` (daily_v5/model_accuracy_block.py, called by
-       build_accuracy.py). The table, the caption below it and the task-by-task paragraph are ALL
-       computed from named artifacts at build time -- frozen_preseason_all.json,
-       darko_daily_rescore.json, composite_report.json -- and cross-checked against
-       research/arp/RESULTS.json anchors. The exporter RAISES rather than publish a number or a
-       characterisation the anchors no longer support, so none of this can go stale by omission.
-       DO NOT hand-type a number back into this section: that is exactly what rotted twice
-       (a Jul-6 pivot cache, and a "DARKO re-score is pending" caption that outlived its own
-       re-score by 1.5h and overstated our lead over DARKO 2.13x in our favour). -->
-  <div class="scroll" style="max-width:660px">
-    <table class="tbl" id="acc_cmp">
-      <thead><tr><th class="l">Task</th><th>…</th></tr></thead>
-      <tbody><tr><td class="l">…</td><td>…</td></tr></tbody>
-    </table>
-  </div>
-  <p class="cap" id="acc_cmp_cap" style="color:var(--faint);font-size:var(--fs-2)"></p>
-  <p id="acc_cmp_verdict"></p>
-  <p class="cap" style="color:var(--faint);font-size:var(--fs-2)">Corrected 2026-07-16. Until then this
-  table published figures from a stale cache that never picked up the 2026-07-15 re-solve, understating
-  the internal model on two rows (game-margin RMSE by 0.16, retro win-MAE by 0.86). The numbers above are
-  the corrected ones; the error was ours and in our own disfavour.</p>
-
-  <h3>Predicting game margins</h3>
-  <p>Team RAPM into the game model, every game scored out-of-sample. <strong>Walk-forward</strong>
-  re-fits coefficients as of each game-day; <strong>frozen</strong> holds the published coefficients
-  fixed. They agree almost exactly, so the fit isn't overtuned.</p>
-  <div class="scroll" style="max-width:560px">
-    <table class="tbl" id="acc_game">
-      <thead><tr>
-        <th class="l">Metric</th><th>Walk-forward</th><th>Frozen</th>
-      </tr></thead>
-      <tbody><tr><td class="l">…</td><td>…</td><td>…</td></tr></tbody>
-    </table>
-  </div>
-  <p class="cap" id="acc_game_cap" style="color:var(--faint);font-size:var(--fs-2)"></p>
-
-  <h3>Are the game-prediction intervals honest?</h3>
-  <p>Each margin prediction carries an interval. Calibrated means a nominal 50% band contains the actual
-  result about 50% of the time. Realized coverage tracks nominal almost exactly — the bands are
-  <strong>honest</strong>.</p>
-  <div class="scroll" style="max-width:520px">
-    <table class="tbl" id="acc_cov">
-      <thead><tr>
-        <th class="l">Nominal band</th><th>Should contain</th><th>Actually contains</th>
-      </tr></thead>
-      <tbody><tr><td class="l">…</td><td>…</td><td>…</td></tr></tbody>
-    </table>
-  </div>
-
-  <h3>How far does today's rating travel to next season?</h3>
-  <p>Take a player's rating today, ask how well it predicts his RAPM <em>next season</em>. Pure
-  carry-forward — no aging, no minutes model, no projection — so it is the <strong>baseline a real
-  forward model must beat</strong>. Per factor: carry-forward RMSE (pts/100, NBA scale) and correlation
-  with next year's measured value.</p>
-  <div class="scroll" style="max-width:520px">
-    <table class="tbl" id="acc_next">
-      <thead><tr>
-        <th class="l">Factor</th><th>Carry-forward RMSE</th><th>Correlation</th>
-      </tr></thead>
-      <tbody><tr><td class="l">…</td><td>…</td><td>…</td></tr></tbody>
-    </table>
-  </div>
-  <!-- DERIVED FROM accuracy.json `model_page.overlap` (out/oos/retro_net_report.json).
-       The overlap gap MUST come from retro_net's own `inflation` field, whose two endpoints
-       (fiveyr_pooled_r 0.893, single_season_pooled_r 0.498) are BOTH scored on the row-matched
-       n=2,157 sample -- retro_net._print_report calls that "apples-to-apples". Their difference IS
-       the published gap: 0.893 − 0.498 = 0.394838. The old copy hard-coded the ALL-ROWS fiveyr
-       0.904 (n=3,464) as the top endpoint, which made it a cross-sample subtraction against the
-       n=2,157 honest leg; L10 (2026-07-17) re-cut both legs to the matched sample. Do NOT "fix"
-       this by subtracting the table's r ≈ 0.89 (the scorecard panel, n=17,204, a different and 8x
-       larger sample) from 0.498 — that is the same cross-sample error, proposed once already
-       (S2/D6). model_accuracy_block._gate_overlap_identity raises if retro_net ever stops
-       computing inflation on one sample. -->
-  <p id="acc_overlap">…</p>
-  <!-- DERIVED (spans) FROM accuracy.json `model_page.forward_skill` (= scoreboard.json
-       backfill[forward_skill_single_season]). This drift is narrated TWICE on this page and the
-       two tellings used to disagree — here "0.48", below "0.482". ledger.py:96 pins
-       published_progress = 0.48 and no artifact anywhere contains 0.482. Both are now rendered
-       from the same entry, so they cannot drift apart again. -->
-  <p>The frozen scoreboard below first published this figure at
-  <strong><span id="fs_pub_a">…</span></strong>; today's refresh nudged it to
-  <strong><span id="fs_now_a">…</span></strong> — see how that drift was handled.</p>
-  <h3 id="ciforward">Are today's player CIs a next-season forecast band?</h3>
-  <p>No. These are <em>within-season</em> standard errors, calibrated for "what is this rating today" —
-  which the game-margin coverage above confirms. Pressed against next season they
-  <strong>over-cover</strong>: a nominal 50% band catches the next-season value about
-  <strong>91%</strong> of the time, because a year of aging, role change and roster churn adds variance
-  the within-season SE never tried to model. A genuine forward model shrinks those bands and clears
-  this bar — that is the projection described next.</p>
-  <div class="scroll" style="max-width:520px">
-    <table class="tbl" id="acc_next_cov">
-      <thead><tr>
-        <th class="l">Nominal band</th><th>Should contain</th><th>Actually contains net</th>
-      </tr></thead>
-      <tbody><tr><td class="l">…</td><td>…</td><td>…</td></tr></tbody>
-    </table>
-  </div>
-  <h3 id="scoreboard">Frozen forecast scoreboard — tamper-evident accuracy</h3>
-  <!-- D8 (S2 audit, 2026-07-16) softened an "append-only / nothing quietly overwritten" claim by
-       rewording this prose to match ledger.py's docstring "exactly". 2026-07-17: THE DOCSTRING
-       ITSELF WAS FALSE, so the reworded prose inherited the error — it credited the chain with
-       "detection of in-place edits between commits" of a file that is gitignored
-       (.gitignore:14 → daily_v5/out/) and has never been committed to anything. The real and only
-       public trail is THIS repo's scoreboard.json history. Verified 2026-07-17: OKC 63.6 (frozen
-       07-07) → 66.0 (07-15) → 66.1 (07-16), each its own public commit; and the published
-       forecasts carry no chain fields at all, so chain_ok is not externally checkable.
-       LESSON (F15): "match the docstring" is a fixed-point check, not a truth check.
-       Do not re-strengthen this claim without first making build() append AND publishing the
-       chain fields. See ledger.py's header for the full measurement. -->
-  <p>Every accuracy number on this page is re-derived from a frozen on-disk artifact, and every
-  frozen forecast is re-checked against the source file it names. If a figure no longer reproduces
-  within <strong>±0.01</strong>, or a forecast no longer matches its source, this panel
-  <strong>refuses to render</strong> rather than show a stale number.</p>
-
-  <p><strong>What makes this falsifiable:</strong> season-ahead forecasts (2026-27 win totals and
-  playoff odds) live in <code>scoreboard.json</code>, and <strong>every vintage of that file is
-  committed to this site's public git repo, timestamped, before the season tips</strong>. That history
-  is the whole of the tamper-evidence — you can read what we predicted and when, and the re-freezes are
-  visible in it: OKC ran <strong>63.6 → 66.0 → 66.1 → 64.6</strong> across four public vintages as the
-  roster and depth chart were corrected. What is <em>not</em> evidence: the <code>chain_ok</code> flag.
-  It checks an internal build ledger that is never published and is rebuilt from scratch at each freeze,
-  so it verifies a file we just wrote and cannot tell you a forecast was never re-frozen. Only the git
-  history can.</p>
-
-  <p>The refusal has fired for real: when a refresh nudged the honest single-season forward-skill
-  correlation <strong><span id="fs_pub_b">…</span> → <span id="fs_now_b">…</span></strong>, the
-  panel refused to render. The metric has since been <strong>re-frozen at its current honest value
-  (<span id="fs_now_c">…</span>)</strong>, and the prior vintage is preserved in git.</p>
-  <div id="sb_msg" class="callout" style="display:none"></div>
-  <div class="scroll" style="max-width:660px">
-    <table class="tbl" id="sb_backfill">
-      <thead><tr><th class="l">Frozen metric</th><th>Value</th><th>Unit</th><th>Reproduces</th></tr></thead>
-      <tbody><tr><td class="l">…</td><td>…</td><td>…</td><td>…</td></tr></tbody>
-    </table>
-  </div>
-  <p class="cap" id="sb_cap" style="color:var(--faint);font-size:var(--fs-2)"></p>
-  <h4>2026-27 committed forecasts (top 8 by projected wins)</h4>
-  <div class="scroll" style="max-width:560px">
-    <table class="tbl" id="sb_fc">
-      <thead><tr><th class="l">Team</th><th>Proj wins</th><th>80% band</th><th>Playoff %</th><th>Realized</th></tr></thead>
-      <tbody><tr><td class="l">…</td><td>…</td><td>…</td><td>…</td><td>…</td></tr></tbody>
-    </table>
-  </div>
-  <!-- DERIVED FROM accuracy.json `model_page.forecast_freeze_note` (= scoreboard.json
-       forecasts[].frozen). This caption used to hard-type "Committed 2026-07-07" while every one
-       of the 30 forecasts carried frozen:"2026-07-16" — asserting a commitment NINE DAYS EARLIER
-       than the real one, i.e. the direction that flatters a falsifiability claim, on the very
-       panel whose entire point is falsifiability. NEVER type this date: it is the one number on
-       the page a reader is being asked to take on trust. model_accuracy_block raises if the 30
-       forecasts ever disagree on their freeze date. -->
-  <p class="cap" id="sb_fc_cap" style="color:var(--faint);font-size:var(--fs-2)"></p>
-
-  <h2 id="forward">The forward projection — 1 to 5 years out</h2>
-  <p>The <a href="projection.html">2026-27 page</a> and the Explorer's <strong>+ Projection</strong>
-  toggle add the other half: a genuine <strong>forward model</strong> for "where is this player
-  <em>headed</em>?"</p>
-  <p>Each of the six factors × each horizon (1yr … 5yr) gets its own <strong>gradient-boosted
-  model</strong> (XGBoost), trained on 30 seasons of history from a player's recent trajectory (current
-  value, lags, three-year slope), the box-prior's second opinion, the predictive box stats, age and
-  role/minutes. Four choices keep it honest:</p>
-  <ul>
-    <li><strong>Time-ordered validation</strong> — trains on the past, scored strictly on the future.</li>
-    <li><strong>A monotonic constraint</strong> — a higher current value can never <em>lower</em> the
-    projection, ruling out perverse "great now, so worse later" swings.</li>
-    <li><strong>Survivorship-honest decline</strong> — players who leave the league aren't dropped from
-    the target; their factor fades toward replacement level, so the model learns real decline instead of
-    assuming everyone ages like the veterans who stuck around.</li>
-    <li><strong>A calibrated veteran-decline overlay</strong> — against its own out-of-fold residuals the
-    boosted model under-declines aging stars (the per-factor aging drifts nearly cancel in the net). An
-    explicitly fitted per-age annual net correction (from age 32, re-fit whenever the projection
-    refreshes) is applied on top and re-spread across the six factors so <code>net := sum6</code> still
-    holds. Deliberately small — a few tenths per year at the oldest ages — and fully reversible.</li>
-  </ul>
-  <p>It beats plain carry-forward on <strong>the factors and horizons measured</strong> (dTOV one year
-  out, at a cross-validated MAE of <strong>0.141</strong>). The one-year gain is real if modest; the
-  2-to-5-year horizons are net-new. <strong>net</strong> is the sum of the six projected factors, never
-  modeled directly, and every projected point carries a band that <strong>widens with the
-  horizon</strong>.</p>
-  <div class="callout">
-    <strong>See it on the Explorer.</strong> Flip <strong>+ Projection</strong> on any player's Net
-    chart: the measured curve grows an
-    <span style="color:var(--amber);font-weight:700">orange dashed trajectory</span> out five seasons, a
-    confidence bar at each year. Jokic descends from ~+10 today to the mid-5s by 2031 as the age curve
-    bites — the honest arc of a great player past his peak.
-  </div>
-  <p>Rookies get a separate, deliberately humble model: a prospect's translated college / G-League rating
-  barely predicts rookie-year impact (correlation ≈ 0.08), so rookies regress hard toward a
-  below-replacement baseline. The fit is <strong>exposure-weighted</strong> — a garbage-time rookie's
-  minutes count as less evidence than a rotation rookie's — which keeps high-pedigree prospects from
-  being dragged flat by end-of-bench noise.</p>
-  <div class="callout">
-    <strong>Minutes feed it, but don't inflate it.</strong> A companion model projects each player's
-    <strong>minutes per game</strong> (carry-forward + mean-reversion + an age curve) and allocates each
-    team's 240 minutes across its roster. Those minutes drive <em>availability and team win totals</em> —
-    not the per-100 rating, so no one is credited twice for playing more.
-  </div>
-
-  <!-- EWA / Trade-grades section commented out (Trade page pulled from the site); content kept for later, not rendered.
-  <h2 id="ewa">Trade grades — Expected Wins Added (EWA)</h2>
-  <p>The <a href="grades.html">Grades</a> page scores every in-season trade by
-  <strong>Expected Wins Added</strong>: the win-probability a moved player added for his
-  <strong>new</strong> team above a replacement-level fill, <strong>over the games he actually played
-  there</strong>. It is a <strong>descriptive grade of how the move played out</strong> — not a
-  long-term verdict.</p>
-  <div class="scroll">
-    <table class="tbl">
-      <thead><tr><th class="l">Property</th><th class="l">EWA</th></tr></thead>
-      <tbody>
-        <tr><td class="l lead">Unit</td>
-            <td class="l">Wins. Small numbers — a moved bench player is worth fractions of a win over a
-            partial season.</td></tr>
-        <tr><td class="l lead">Baseline</td>
-            <td class="l">A replacement-level fill (<code>repl_net ≈ −1.4</code> pts/100), not zero — so
-            an exactly-replacement player grades ≈ 0.</td></tr>
-        <tr><td class="l lead">Sign</td>
-            <td class="l"><span class="pos">+</span> to the acquirer, <span class="neg">−</span> to the
-            sender. Zero-sum on a clean 1-for-1 swap (modulo schedule).</td></tr>
-        <tr><td class="l lead">Window</td>
-            <td class="l">Only the games the player logged for the new team — retrospective, not a
-            projection.</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <p>Each game's contribution is a win-probability shift. The player's net-above-replacement, scaled by
-  his share of that night's minutes, becomes a margin nudge <code>Δμ</code>; EWA sums the resulting
-  per-game <code>Δp</code> over the games he played:</p>
-  <p style="text-align:center;margin:14px 0">
-    <code>Δp = Φ((m + Δμ)/σ) − Φ(m/σ)</code>,&nbsp;&nbsp;
-    <code>Δμ = 5·(mᵢ/M)·(netᵢ − repl_net)</code>,&nbsp;&nbsp;
-    <code>EWA = Σ Δp</code>
-  </p>
-  <p>where <code>m</code> is the team's actual margin that game, <code>σ ≈ 14.4</code> is the game-model
-  margin SD (same as the <a href="#accuracy">accuracy</a> section), <code>mᵢ/M</code> the player's
-  minute share, and <code>netᵢ</code> his daily net RAPM.</p>
-  <div class="callout">
-    <strong>Worked example.</strong> CJ McCollum (WAS → ATL, 41 games) grades <code>+0.78</code> wins:
-    summed over those 41 games, his minutes-weighted edge over a replacement wing added about
-    three-quarters of a win to Atlanta's expected total — credited <span class="pos">+0.78</span> to
-    ATL, <span class="neg">−0.78</span> to Washington on that leg.
-  </div>
-  -->
-
-  <h2 id="limits">Limitations &amp; honest negatives</h2>
-  <ul>
-    <li><strong>Near its predictive ceiling.</strong> Margin RMSE ≈ <strong>14.4 pts</strong> against a
-    ~16.5-pt natural spread is close to an NBA game's irreducible noise, and almost no modeling change
-    moves it. Margins are scored with <code>realized_minutes</code> — rating quality <em>given</em>
-    usage, not a strict pre-game forecast (<code>strict_pregame</code> is <code>not_available</code>).
-    The unmined levers are tracking data for defense and age / availability modeling, not another
-    regularization tweak.</li>
-    <li><strong>Defense is the soft spot.</strong> Box inputs can't see contested-shot quality, rim
-    protection or deflections, so the defensive factors carry forward worst (honest single-season corr
-    <code>dTS ≈ 0.30</code>, <code>dSC ≈ 0.27</code>). A tracking-defense spine is built but
-    disabled.</li>
-    <li><strong>Forward skill trails EPM.</strong> On season win totals Dunks &amp; Threes' EPM still
-    beats the internal decomposition (<a href="#accuracy">figures above</a>).</li>
-    <li><strong>Cross-league jumps stay uncertain.</strong> Translations are attenuated (variance
-    explained ≈ 1–5% NCAA, ≈ 11% G-League) and fit only on players who <em>reached</em> the NBA, so
-    draft CIs are very wide by construction.</li>
-    <li><strong>Coverage gaps.</strong> NBA play-by-play carries no steals or blocks for 1997–2013
-    (structural zeros); early college seasons (2005–13) run on partial schedules
-    (<code>reduced_sample</code>); no public play-by-play exists before 1996-97 (NBA) or 2005-06
-    (college).</li>
+    <li><strong>The error bars measure today, not next year.</strong> A band says how tightly the
+    data pins down what already happened; it is not a forecast.</li>
+    <li><strong>Game margins sit near the noise floor.</strong> Almost no modelling change moves
+    them, and they are scored on the minutes players actually logged — rating quality given usage,
+    not a pre-game forecast.</li>
+    <li><strong>Defense is the soft spot.</strong> The inputs can't see contested shots or rim
+    protection, so the defensive factors travel worst.</li>
+    <li><strong>Cross-league jumps stay uncertain.</strong> College and G-League translations are
+    heavily attenuated, so draft bands are wide by construction.</li>
+    <li><strong>Coverage gaps.</strong> No public play-by-play before 1996-97 (NBA) or 2005-06
+    (college), and NBA feeds record no steals or blocks from 1997 to 2013.</li>
   </ul>
 
-  <h2 id="guide">Using the site</h2>
-  <p>One scale across measured and forward views. Measured pages report what was known as of a game-day;
-  2026-27 pages are tagged as forward projections. Player names link into the Explorer.</p>
-  <div class="guidegrid">
-    <div class="guide">
-      <h3><a href="index.html">Explorer →</a></h3>
-      <p>Any player's <strong>daily six-factor curve</strong> with error bands across NCAA, G-League
-      &amp; NBA. The <strong>mode toggle</strong> switches Pure / Prior-informed / Box prior /
-      Latent.</p>
-    </div>
-    <div class="guide">
-      <h3><a href="teams.html">Teams →</a></h3>
-      <p>Measured 2025-26 <strong>team RAPM</strong>, factor heat strips, roster contribution, WAR and
-      model-win context. Historical team strength, separate from the forward 2026-27 projection.</p>
-    </div>
-    <div class="guide">
-      <h3><a href="projection.html">2026-27 →</a></h3>
-      <p>The explicitly <strong>forward-looking</strong> standings page: a 0–82 <strong>win-distribution
-      heat strip</strong> with p2.5–p97.5 band ticks (replayed over 360 historical team-seasons
-      the band covers 89–98%; scored before every deploy by the team-win-band coverage gate),
-      playoff / play-in odds, <strong>title odds
-      (Champ%) from 10,000 full-bracket simulations</strong> (play-in, then best-of-7 rounds, standard
-      seeding), and team drilldowns with rating, GP, minutes, rookie and fallback uncertainty flags.</p>
-    </div>
-    <div class="guide">
-      <h3><a href="table.html">Tables →</a></h3>
-      <p>Ranked <strong>RAPM leaderboards</strong> — the full six-factor decomposition in
-      NBA-equivalent pts/100. Click a column to sort by any single factor, not just net. Includes
-      separate <strong>Rookies</strong> and a live <strong>2026 Draft Class</strong> board alongside the
-      NBA / G-League / College leaderboards.</p>
-    </div>
-    <div class="guide">
-      <h3><a href="draft.html">Draft →</a></h3>
-      <p>The <strong>at-draft translation</strong> of each prospect's college / G-League production onto
-      the NBA scale, with 95% CIs. Bands are wide by construction, so most prospects cluster near
-      replacement level — the wide band <em>is</em> the honest signal.</p>
-    </div>
-    <div class="guide">
-      <h3><a href="https://andrewjparkus.github.io/api/manifest.json">API export →</a></h3>
-      <p>Versioned static exports for leaderboards, snapshots and the public schema. The manifest carries
-      freshness, factor definitions and file locations.</p>
-    </div>
-  </div>
+  <p class="foot">All values in points per 100 possessions on the NBA-equivalent scale. Measured
+  ratings carry measurement error bars; cross-league values carry an extra, non-shrinkable
+  translation uncertainty.</p>
 
-  <p class="foot">All values on the DataBallR NBA-equivalent scale (pts/100). Descriptive ratings are
-  as-of-game-day measurements with confidence intervals; forward views are labeled separately.
-  Cross-league (college / G-League) factors carry an extra, non-shrinkable translation uncertainty.</p>
-
-    </div><!-- /.prose -->
-  </div><!-- /.doclayout -->
+  </div><!-- /.prose -->
 </div>
 
 <script>
 "use strict";
-/* ---- scroll-spy: highlight the TOC entry for the section in view ---- */
+/* ---- Metrics + Vs.-Vegas fold-in (2026-07-26).
+   Both exporters now emit fragments instead of pages; we fetch them together and let each fail on
+   its own so one bad panel can't blank the other or the rest of the page. ---- */
 (function(){
-  var links=[].slice.call(document.querySelectorAll('#toc a'));
-  var ids=links.map(function(a){return a.getAttribute('href').slice(1);});
-  var secs=ids.map(function(id){return document.getElementById(id);});
-  function spy(){
-    var y=window.scrollY+90, cur=0;
-    for(var i=0;i<secs.length;i++){ if(secs[i] && secs[i].offsetTop<=y) cur=i; }
-    links.forEach(function(a,i){ a.classList.toggle('on', i===cur); });
-  }
-  window.addEventListener('scroll',spy,{passive:true});
-  window.addEventListener('resize',spy); spy();
+  var done=[['metrics-panel','metrics_panel.html','accuracy tables'],
+            ['vegas-panel','vegas_panel.html','closing-line tables']].map(function(p){
+    var mount=document.getElementById(p[0]);
+    if(!mount) return Promise.resolve();
+    return fetch(p[1])
+      .then(function(r){ if(!r.ok) throw 0; return r.text(); })
+      .then(function(html){ mount.innerHTML=html; })
+      .catch(function(){ mount.innerHTML='<div class="msg">Couldn’t load the '+p[2]+'.</div>'; });
+  });
+  // A deep link (model.html#vegas) resolves before the panels have height, so re-settle once they do.
+  Promise.all(done).then(function(){
+    if(!location.hash) return;
+    var t=document.getElementById(location.hash.slice(1));
+    if(t) t.scrollIntoView();
+  });
 })();
 
 /* ---- worked example: fetch one player's prior-informed series, draw net + 6 factors ---- */
@@ -774,7 +196,7 @@
   function fail(msg){
     document.getElementById('ex_name').textContent=EX_FALLBACK;
     grid.innerHTML='<p style="grid-column:1/-1;color:var(--faint);font-size:var(--fs-2);margin:4px 0">'
-      +(msg||'The illustrative chart could not load; the factor table below still describes how a decomposition adds up.')+'</p>';
+      +(msg||'The illustrative chart could not load; the factor table above still describes how a decomposition adds up.')+'</p>';
   }
   if(!el){ fail(); return; }
 
@@ -832,18 +254,17 @@
   function render(){
     grid.innerHTML='';
     document.getElementById('ex_name').textContent=DATA.name;
-    var lg0=DATA.lg[0], lg1=DATA.lg[DATA.lg.length-1];
     document.getElementById('ex_meta').textContent=DATA.d[0]+' – '+DATA.d[DATA.d.length-1]
-      +' · '+DATA.d.length+' game-days · prior-informed';
+      +' · '+DATA.d.length+' game-days';
     document.getElementById('ex_caption').textContent=
-      'Latest values shown on each panel; the faint band is the 95% CI on the estimate itself, not a forecast. Drawn like the Explorer (static).';
+      'The faint band is the 95% CI on the estimate itself, not a forecast.';
     cell('net','Net RAPM · ORAPM + DRAPM',true);
     FAC.forEach(function(p){ cell(p[0],p[1],false); });
     // additivity table
     var rows='', sum=0;
     FAC.forEach(function(p){var k=p[0], val=DATA[k][DATA[k].length-1]; sum+=val;
       rows+='<tr><td class="l">'+p[1]+'</td><td class="'+(val>=0?'pos':'neg')+'">'+(val>=0?'+':'')+val.toFixed(2)+'</td></tr>';});
-    rows+='<tr class="total"><td class="l"><strong>sum of six (sum6)</strong></td>'
+    rows+='<tr class="total"><td class="l"><strong>sum of six</strong></td>'
       +'<td class="'+(sum>=0?'pos':'neg')+'"><strong>'+(sum>=0?'+':'')+sum.toFixed(2)+'</strong></td></tr>';
     var netv=DATA.net[DATA.net.length-1];
     rows+='<tr><td class="l">net RAPM</td><td class="'+(netv>=0?'pos':'neg')+'">'+(netv>=0?'+':'')+netv.toFixed(2)+'</td></tr>';
@@ -856,209 +277,5 @@
     .then(function(j){ DATA=j; render(); })
     .catch(function(){ fail(); });
 })();
-
-/* ---- model accuracy: fetch the OOS scorecard, fill the three tables ---- */
-(function(){
-  var msg=document.getElementById('acc_msg');
-  function show(t){ if(msg){ msg.style.display='block'; msg.textContent=t; } }
-  function pct(x){ return (x*100).toFixed(1)+'%'; }
-  function realized(x){ return x&&typeof x==='object'&&'realized' in x ? x.realized : x; }
-
-  function fillGame(g){
-    var wf=g.walkforward||{}, fr=g.frozen||{};
-    var rows=[
-      ['Margin RMSE (pts)', wf.margin_rmse, fr.margin_rmse, 4],
-      ['Margin MAE (pts)',  wf.margin_mae,  fr.margin_mae,  4],
-      ['Win/loss accuracy', wf.accuracy,    fr.accuracy,    'pct'],
-      ['Brier score',       wf.brier,       fr.brier,       3],
-      ['Log loss',          wf.logloss,     fr.logloss,     3]
-    ];
-    var h='';
-    rows.forEach(function(r){
-      var fmt=function(v){ if(v==null)return '—'; return r[3]==='pct'?pct(v):(+v).toFixed(r[3]); };
-      h+='<tr><td class="l lead">'+r[0]+'</td><td>'+fmt(r[1])+'</td><td>'+fmt(r[2])+'</td></tr>';
-    });
-    document.querySelector('#acc_game tbody').innerHTML=h;
-    var cap=document.getElementById('acc_game_cap');
-    if(cap) cap.textContent='Lower is better for RMSE / MAE / Brier / log loss; higher for accuracy. '
-      +'Margin RMSE ≈ '+(wf.margin_rmse!=null?(+wf.margin_rmse).toFixed(1):'—')
-      +' pts sits near the irreducible floor for NBA game margins. Current mode: realized_minutes, not strict_pregame.';
-  }
-
-  function fillCov(c){
-    var bands=['50','80','90'], h='';
-    bands.forEach(function(b){
-      var val=realized(c[b]);
-      h+='<tr><td class="l lead">'+b+'%</td><td>'+b+'%</td><td>'
-        +(val==null?'—':pct(val))+'</td></tr>';
-    });
-    document.querySelector('#acc_cov tbody').innerHTML=h;
-  }
-
-  function fillNext(ns){
-    if(ns&&ns.factors) ns=ns.factors;
-    var FAC=['net','oTS','oTOV','oSC','dTS','dTOV','dSC'], h='';
-    // correlation range for a per-column green ramp
-    var cs=FAC.map(function(k){return (ns[k]||{}).corr;}).filter(function(x){return x!=null;});
-    var clo=Math.min.apply(null,cs), chi=Math.max.apply(null,cs), span=(chi-clo)||1;
-    FAC.forEach(function(k){
-      var o=ns[k]||{}, rmse=o.rmse, corr=o.corr;
-      var lead=k==='net'?'<strong>net</strong>':k;
-      var ccell='—';
-      if(corr!=null){
-        var bg=(window.RC&&RC.redGreen)?RC.redGreen((corr-clo)/span):'transparent';
-        var ink=(window.RC&&RC.inkOn)?RC.inkOn(bg):'var(--text)';
-        ccell='<span style="background:'+bg+';color:'+ink
-          +';padding:1px 7px;border-radius:3px;font-variant-numeric:tabular-nums">'+corr.toFixed(3)+'</span>';
-      }
-      // group-border the first defensive row (dTS) so offense/defense split visually
-      var tdCls=k==='dTS'?'l lead grp':'l lead';
-      h+='<tr><td class="'+tdCls+'">'+lead+'</td>'
-        +'<td'+(k==='dTS'?' class="grp"':'')+'>'+(rmse==null?'—':rmse.toFixed(3))+'</td>'
-        +'<td>'+ccell+'</td></tr>';
-    });
-    document.querySelector('#acc_next tbody').innerHTML=h;
-  }
-
-  function fillNextCov(ci){
-    if(ci&&ci.factors) ci=ci.factors;
-    var net=(ci&&ci.net)||{}, bands=['50','80','90'], h='';
-    bands.forEach(function(b){
-      var val=realized(net[b]);
-      h+='<tr><td class="l lead">'+b+'%</td><td>'+b+'%</td><td>'
-        +(val==null?'—':pct(val))+'</td></tr>';
-    });
-    var el=document.querySelector('#acc_next_cov tbody');
-    if(el) el.innerHTML=h;
-  }
-
-  function fillProj(pa){
-    var el=document.querySelector('#acc_proj tbody'); if(!el) return;
-    var po=pa.pooled||{}, per=pa.per_season||{}, yrs=['2024','2025','2026'];
-    var rows=[['RAPM decomp','rapm_decomp'],['Pure EPM (D&amp;T)','pure_epm']];
-    var f1=function(v){return v==null?'—':(+v).toFixed(2);}, f3=function(v){return v==null?'—':(+v).toFixed(3);};
-    var h='';
-    rows.forEach(function(r){
-      var k=r[1], pooled=po[k]||{};
-      h+='<tr><td class="l lead">'+r[0]+'</td><td>'+f1(pooled.win_mae)+'</td><td>'+f3(pooled.brier)+'</td>';
-      yrs.forEach(function(y,i){ var v=(per[y]||{})[k]; h+='<td'+(i===0?' class="grp"':'')+'>'+f1(v)+'</td>'; });
-      h+='</tr>';
-    });
-    el.innerHTML=h;
-    var cap=document.getElementById('acc_proj_cap');
-    if(cap) cap.innerHTML='Frozen-preseason as-of-snapshot evaluation (10k Monte-Carlo per season, '
-      +'pooled 2024–26). EPM is a strong external forward model; the internal RAPM decomp is the shipped '
-      +'default.';
-  }
-  /* ---- model_page: the DERIVED comparison table + prose (plan 47 M3 / F13).
-     Every value and every characterisation here is computed by daily_v5/model_accuracy_block.py
-     from named artifacts and gated against research/arp/RESULTS.json. This renderer must stay a
-     dumb printer: do NOT compute a number, a verdict or a date here, and never fall back to a
-     literal — an absent block leaves the "…" placeholder, which is the fail-closed outcome. ---- */
-  function fillCmp(mp){
-    if(!mp || mp.status!=='available' || !mp.table) return;
-    var cols=mp.table.columns||[];
-    var th='<tr><th class="l">Task</th>';
-    cols.forEach(function(c,i){
-      var tag=c.tag?'&nbsp;<span class="tag">'+c.tag+'</span>':'';
-      var help=c.tip?' <span class="help" data-tip="'+c.tip.replace(/"/g,'&quot;')+'">?</span>':'';
-      th+='<th'+(i===0?'':'')+'>'+c.label+tag+help+'</th>';
-    });
-    th+='</tr>';
-    var thead=document.querySelector('#acc_cmp thead'); if(thead) thead.innerHTML=th;
-    var h='';
-    (mp.table.rows||[]).forEach(function(r){
-      h+='<tr><td class="l">'+r.label+'</td>';
-      cols.forEach(function(c){
-        var v=r.cells?r.cells[c.key]:null;
-        h+='<td>'+(v==null?'—':(+v).toFixed(r.dp))+'</td>';
-      });
-      h+='</tr>';
-    });
-    document.querySelector('#acc_cmp tbody').innerHTML=h;
-    var cap=document.getElementById('acc_cmp_cap');
-    if(cap&&mp.darko_note) cap.innerHTML=mp.darko_note;
-    var vd=document.getElementById('acc_cmp_verdict');
-    if(vd&&mp.headline_prose) vd.innerHTML=mp.headline_prose;
-    var ov=document.getElementById('acc_overlap');
-    if(ov&&mp.overlap&&mp.overlap.prose) ov.innerHTML=mp.overlap.prose;
-    var fc=document.getElementById('sb_fc_cap');
-    if(fc&&mp.forecast_freeze_note) fc.innerHTML=mp.forecast_freeze_note;
-    /* the forward-skill drift is narrated in two places; both fill from ONE artifact entry so
-       they can never disagree again (they did: 0.48 here vs 0.482 below, and 0.482 was in no
-       artifact at all). */
-    var fs=mp.forward_skill;
-    if(fs){
-      [['fs_pub_a',fs.published_str],['fs_now_a',fs.stored_str],
-       ['fs_pub_b',fs.published_str],['fs_now_b',fs.stored_str],
-       ['fs_now_c',fs.stored_str]].forEach(function(p){
-        var el=document.getElementById(p[0]); if(el) el.textContent=p[1];
-      });
-    }
-  }
-  fetch('accuracy.json').then(function(r){ if(!r.ok) throw 0; return r.json(); })
-    .then(function(j){
-      if(msg) msg.style.display='none';
-      if(j.model_page) fillCmp(j.model_page);
-      if(j.projection_accuracy_frozen_preseason) fillProj(j.projection_accuracy_frozen_preseason);
-      if(j.game_margin){
-        fillGame(j.game_margin);
-        if(j.game_calibration&&j.game_calibration.interval_coverage) fillCov(j.game_calibration.interval_coverage);
-        else if(j.game_margin.ci_coverage) fillCov(j.game_margin.ci_coverage);
-      }
-      if(j.next_season) fillNext(j.next_season);
-      if(j.next_season_ci) fillNextCov(j.next_season_ci);
-    })
-    .catch(function(){
-      show('The accuracy scorecard (accuracy.json) could not be loaded. The methodology above still '
-        +'describes the out-of-sample tests; rerun daily_v5/oos_harness.py to regenerate the numbers.');
-    });
-})();
-
-/* ---- P1.1 frozen forecast scoreboard: fetch the hash-chained ledger feed ---- */
-(function(){
-  var msg=document.getElementById('sb_msg');
-  function show(t){ if(msg){ msg.style.display='block'; msg.textContent=t; } }
-  fetch('scoreboard.json').then(function(r){ if(!r.ok) throw 0; return r.json(); })
-    .then(function(j){
-      if(j.status==='REFUSED'){
-        show('Scoreboard REFUSED to render: '+j.reason+'. A frozen number no longer reproduces from its '
-          +'artifact, so nothing is shown rather than a stale figure — which is the point.');
-        return;
-      }
-      var dec=function(u){ return u==='wins'?2:(u==='pts'?2:3); };
-      var h='';
-      (j.backfill||[]).forEach(function(b){
-        var ok=b.reproduces?'<span style="color:#2a8a4a">✓</span>':'<span style="color:#c0392b">✗</span>';
-        var v=(b.stored==null?'—':(+b.stored).toFixed(dec(b.unit)));
-        h+='<tr><td class="l lead" title="'+(b.note||'').replace(/"/g,'&quot;')+'">'
-          +b.name.replace(/_/g,' ')+'</td><td>'+v+'</td><td>'+b.unit+'</td><td>'+ok+'</td></tr>';
-      });
-      document.querySelector('#sb_backfill tbody').innerHTML=h;
-      var cap=document.getElementById('sb_cap');
-      if(cap){
-        var flags=(j.drift_flags||[]);
-        cap.textContent='Hash chain intact; all '+(j.backfill||[]).length+' metrics reproduce from their '
-          +'frozen artifacts within ±'+j.tol+'. '+(flags.length? flags.length+' figure(s) have since drifted '
-          +'from a previously published number (shown honestly): '+flags.join(', ').replace(/_/g,' ')+'.'
-          : 'None have drifted from previously published numbers.');
-      }
-      var fc=(j.forecasts||[]).slice().sort(function(a,b){
-        return b.forecast.mc_mean_wins-a.forecast.mc_mean_wins; }).slice(0,8);
-      var fh='';
-      fc.forEach(function(f){
-        var w=f.forecast;
-        fh+='<tr><td class="l lead">'+f.franchise+'</td><td>'+w.mc_mean_wins.toFixed(1)+'</td><td>'
-          +w.p10_wins.toFixed(0)+'–'+w.p90_wins.toFixed(0)+'</td><td>'
-          +(w.make_playoffs_prob*100).toFixed(0)+'%</td><td>'+(f.realized==null?'—':f.realized)+'</td></tr>';
-      });
-      document.querySelector('#sb_fc tbody').innerHTML=fh;
-    })
-    .catch(function(){
-      show('The frozen scoreboard (scoreboard.json) is not present yet. Build it with '
-        +'daily_v5/ledger.py build --freeze <date> then ledger.py render.');
-    });
-})();
-
 </script>
 </body></html>

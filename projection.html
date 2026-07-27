@@ -5,10 +5,6 @@
 <link rel="stylesheet" href="site.css">
 <link rel="icon" href="favicon.svg"><link rel="manifest" href="manifest.webmanifest">
 <style>
-  /* page-unique: the only forward-looking page */
-  .forwardtag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.5px;
-    color:var(--accent-ink);background:var(--accent);padding:2px 8px;border-radius:999px;
-    vertical-align:middle;margin-left:8px;text-transform:uppercase}
   /* two conference tables side-by-side on desktop, stacked on mobile (mirrors the trade sim) */
   .confs{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px;align-items:start}
   @media(max-width:820px){ .confs{grid-template-columns:1fr} }
@@ -38,7 +34,10 @@
 <script src="nav.js"></script>
 <div class="wrap">
   <h1 style="margin-top:6px">2026-27 <b>projection</b></h1>
-  <p class="sub" id="sub"><a href="teams.html" style="color:var(--accent)">See 2025-26 team ratings</a></p>
+  <!-- The forward-vs-measured distinction is the one caveat this page cannot drop: every number
+       below is simulated, none of it has happened. One sentence, above the fold. -->
+  <p class="sub" id="sub">A forward projection, not a measured result.
+    <a href="teams.html" style="color:var(--accent)">See 2025-26 team ratings →</a></p>
 
   <div class="confs" id="confs"></div>
   <div class="msg" id="msg">Loading projection…</div>
@@ -106,14 +105,16 @@ function buildConf(name, teams){
     '<th class="l">Team</th>'+
     // plan 50 W12: said "each on its own re-drawn synthetic schedule" — false on the published
     // kernel, which replays one fixed slate. Measured cost of the omission: 0.2 wins of per-team sd.
-    '<th>Proj W <span class="help" data-tip="Monte-Carlo mean wins over 10k simulated seasons on one fixed balanced synthetic slate. Schedule luck is not propagated — measured across 40 legal slates it is worth about 0.2 wins of per-team spread.">?</span></th>'+
+    '<th>Proj W <span class="help" data-tip="Mean wins over 10,000 simulated seasons. One fixed schedule, so schedule luck (~0.2 wins) is not included.">?</span></th>'+
     // plan 50 W3e/W1/W2: this said "95% CI" while the band actually covered 79.4%. The CAUSE is
     // now fixed (build_projection.SE_DESMOOTH) and daily_v5/harness/team_band.py scores the band
     // on 360 team-seasons as a fail-closed deploy gate. Re-read these numbers off that gate if
     // the band ever changes again — do not let this string drift back into an unmeasured claim.
-    '<th class="l">Win distribution <span class="help" data-tip="Monte-Carlo win-total distribution on a fixed 0–82 scale: each thin bar is a win count, shaded by how often the team finished with exactly that many wins across the 10k sims. Faint ticks = the p2.5–p97.5 band; replayed over 360 historical team-seasons it covers 89–98%, the range spanning a roster-pessimistic and a leak-optimistic replay. Dot = projected mean, vertical line = .500 (41).">?</span></th>'+
-    '<th>Playoffs % <span class="help" data-tip="Share of the 10k simulations in which the team reaches the 16-team playoff field, AFTER simulating each conference\'s 7–10 play-in tournament (so finishing 7–10 no longer guarantees a seed). Hover a row for its play-in odds (top-10).">?</span></th>'+
-    '<th>Champ % <span class="help" data-tip="Share of the 10k simulations in which the team wins the title — each sim plays out the full playoff bracket (best-of-7 rounds, standard 1v8/4v5/3v6/2v7 seeding, higher seed with home court) after the play-in.">?</span></th>'+
+    '<th class="l">Win distribution <span class="help" data-tip="How often the team hit each win total across 10,000 sims, on a fixed 0–82 scale. Faint ticks = the 95% band, which covers 89–98% of 360 replayed team-seasons; dot = mean, line = .500.">?</span></th>'+
+    '<th>Playoffs % <span class="help" data-tip="Share of 10,000 sims where the team makes the 16-team field, play-in included. Hover the cell for its top-10 odds.">?</span></th>'+
+    // best-of-7 rounds, 1v8/4v5/3v6/2v7 seeding, higher seed with home court — mechanics of the
+    // bracket, not something a reader needs to read the number.
+    '<th>Champ % <span class="help" data-tip="Share of 10,000 sims where the team wins the title, playing out the full bracket.">?</span></th>'+
     '</tr></thead>';
 
   let body = "";
@@ -157,14 +158,9 @@ function buildConf(name, teams){
   return sec;
 }
 
-function provNote(meta){
-  const p = meta.provenance;
-  if (p && typeof p === "object") return p.note || "";
-  return (typeof p === "string") ? p : "";
-}
-
+// The provenance blob (meta.provenance / meta.note) is exporter copy written for us, not for a
+// reader, so nothing on this page renders it; it stays in the JSON.
 function render(data){
-  const meta = data.meta || {};
   const teams = data.teams || [];
 
   // W_LO/W_HI now only scale the Proj-W colour ramp (the win strip is a fixed 0–82 scale).
@@ -193,7 +189,7 @@ fetch("projection_2026_27.json")
   .then(d=>{ render(d); })
   .catch(()=>{
     const m = document.getElementById("msg");
-    m.style.display = ""; m.textContent = "Couldn't load the 2026-27 projection (projection_2026_27.json).";
+    m.style.display = ""; m.textContent = "Couldn't load the 2026-27 projection.";
   });
 </script>
 </body></html>

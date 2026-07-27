@@ -53,6 +53,11 @@
     padding:1px 5px;border-radius:3px;color:#0a0e16;min-width:30px;text-align:center}
   .depthcol .none{font-size:11px;color:var(--faint);text-align:center;padding:6px 0}
   .unlisted{margin-top:8px}
+  /* column definitions live in the header ? tips; those sit in a sticky thead at the top of the
+     .scroll box, where an upward tooltip clips — flip them DOWN (same rule as teams.html) */
+  .scroll thead th .help[data-tip]:hover::after{bottom:auto;top:calc(100% + 6px)}
+  .scroll thead th .help[data-tip]:hover::before{bottom:auto;top:calc(100% + 1px);
+    border-top-color:transparent;border-bottom-color:var(--line)}
 </style></head>
 <body>
 <nav id="topnav" data-active="teams"></nav>
@@ -74,9 +79,11 @@ const FAC_TIP = {
   dTOV:"Defensive turnover RAPM — forcing turnovers / ball pressure.",
   dSC:"Defensive second-chance RAPM — limiting opponent offensive rebounds."
 };
-const OWN_TIP = "This player's own RAPM net while on court (pts/100).";
-const CONTRIB_TIP = "Minute-weighted contribution to team net = own net x minute share.";
+// Column definitions live here, in the header tips — not in a legend under the table.
+const OWN_TIP = "The player's own net while on court (pts/100), red→green on a fixed −5…+5 scale.";
+const CONTRIB_TIP = "Own net weighted by minute share; the column sums to the team's net.";
 const WAR_TIP = "Wins above replacement this season.";
+const MPG_TIP = "Minutes per game, this season to date.";
 
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function num(v,dec){ return (v==null||isNaN(v))?"–":Number(v).toFixed(dec==null?1:dec); }
@@ -105,9 +112,9 @@ let DATA = null;
 fetch('teams.json')
   .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
   .then(d=>{ DATA=d; render(d); })
-  .catch(err=>{
+  .catch(()=>{
     document.getElementById('msg').innerHTML =
-      "Couldn't load team data (teams.json). "+esc(err.message)+
+      "Couldn't load this team."+
       '<br><a href="teams.html">← back to standings</a>';
   });
 
@@ -156,8 +163,10 @@ function render(d){
   let html = '<div class="thead">'+logo
     + '<div class="tn"><h1>'+esc(team.name||abbr)+'</h1>'
     + '<div class="conf"><b>'+esc(abbr)+'</b>'+(confTxt?' · '+esc(confTxt):'')+'</div></div></div>';
+  // "Measured" is doing the work here — this page is the season that happened, not the forecast.
   html += '<p class="sub">Measured 2025-26 six-factor team RAPM (pts/100), minute-weighted. '
-    + 'Model wins come from the same Monte-Carlo context as the <a href="teams.html">team ratings</a>; the 2026-27 forecast lives separately.</p>';
+    + 'See <a href="teams.html">all team ratings</a> or the '
+    + '<a href="team2027.html?abbr='+encodeURIComponent(abbr)+'">2026-27 projection</a>.</p>';
 
   // ---- KPI block ----
   const projCI = (srow.p10!=null&&srow.p90!=null) ? num(srow.p10,0)+'–'+num(srow.p90,0)+' (p10–p90)' : '';
@@ -166,19 +175,19 @@ function render(d){
   html += '<div class="kpis">';
   html += kpi('Model wins', num(srow.proj_wins,1), projCI);
   html += kpi('Actual wins', srow.actual_wins==null?'–':num(srow.actual_wins,0), 'so far this season');
-  html += kpi('Playoff odds', po, 'from measured-strength Monte-Carlo');
-  html += '<div class="kpi"><div class="k">Team net</div><div class="v '+netF.cls+'">'+netF.txt+'</div><div class="x">pts/100, six factors + resid</div></div>';
+  html += kpi('Playoff odds', po, 'from 10,000 simulated seasons');
+  html += '<div class="kpi"><div class="k">Team net</div><div class="v '+netF.cls+'">'+netF.txt+'</div><div class="x">pts/100, six factors + residual</div></div>';
   html += '<div class="kpi"><div class="k">ORAPM</div><div class="v '+oF.cls+'">'+oF.txt+'</div><div class="x">oTS + oTOV + oSC</div></div>';
   html += '<div class="kpi"><div class="k">DRAPM</div><div class="v '+dF.cls+'">'+dF.txt+'</div><div class="x">dTS + dTOV + dSC (sign-flipped)</div></div>';
   html += '</div>';
 
   // ---- factor profile: radar (vs league as the 100% ring is bespoke; here pct = relative-to-max-abs) + RdBu strip ----
-  html += '<div class="sectitle">Factor profile <span style="font-weight:400;color:var(--faint)">· vs league average</span></div>';
+  // How to read the radar and the bars is one tip on the section, not two paragraphs of body copy.
+  html += '<div class="sectitle">Factor profile <span style="font-weight:400;color:var(--faint)">· vs league average</span>'
+    + ' <span class="help" data-tip="Radar: each factor as a share of the league\'s largest absolute value. Bars: blue above league average, red below, length by z-score; number is pts/100.">?</span></div>';
   html += '<div class="profile">';
-  html += '<div class="card" style="padding:10px"><div id="radar"></div>'
-    + '<div class="cap" style="margin:6px 4px 2px">Each spoke is the team\'s factor as a share of the league\'s largest absolute value — the polygon shows relative strengths.</div></div>';
-  html += '<div><div class="strip" id="strip"></div>'
-    + '<div class="cap">Bars diverge from the grey league-average line: right/blue above league, left/red below, length ∝ within-league z (RdBu, CVD-safe). Number is the raw factor total (pts/100); z in grey.</div></div>';
+  html += '<div class="card" style="padding:10px"><div id="radar"></div></div>';
+  html += '<div><div class="strip" id="strip"></div></div>';
   html += '</div>';
 
   // ---- roster table ----
@@ -187,7 +196,7 @@ function render(d){
   html += '<div class="sectitle">Roster <span style="font-weight:400;color:var(--faint)">· '+roster.length+' players · sorted by net contribution</span></div>';
   html += '<div class="scroll"><table class="tbl" style="min-width:820px"><thead><tr>'
     + '<th class="l">Player</th>'
-    + '<th title="Minutes per game">MPG</th>'
+    + '<th>MPG <span class="help" data-tip="'+esc(MPG_TIP)+'">?</span></th>'
     + '<th>GP</th>'
     + '<th class="grp">Own net <span class="help" data-tip="'+esc(OWN_TIP)+'">?</span></th>'
     + '<th>Contrib <span class="help" data-tip="'+esc(CONTRIB_TIP)+'">?</span></th>'
@@ -212,7 +221,11 @@ function render(d){
   // TOTAL row: contribution column sums to team net
   const cSum = roster.reduce((a,p)=>a+(((p.c&&p.c.net)!=null)?p.c.net:0),0);
   const warSum = roster.reduce((a,p)=>a+((p.war!=null&&!isNaN(p.war))?p.war:0),0);
-  html += '<tr class="total"><td class="l pl">TOTAL</td>'
+  // The residual — the slice of team net the six factors do not explain — rides on the TOTAL row
+  // instead of a caption. It is a footnote to one number, so it lives on that number.
+  const residTip = (totals.resid!=null)
+    ? ' Residual '+fmt(totals.resid,1).txt+' is the part of team net the six factors do not explain.' : '';
+  html += '<tr class="total"><td class="l pl" title="'+esc('Contribution sums to team net.'+residTip)+'">TOTAL</td>'
     + '<td class="mpg">–</td>'
     + '<td class="gp">'+(totals.gp==null?'–':num(totals.gp,0))+'</td>'
     + '<td class="grp zero">–</td>'
@@ -220,18 +233,15 @@ function render(d){
     + '<td class="grp">'+num(warSum,1)+'</td>'
     + '</tr>';
   html += '</tbody></table></div>';
-  html += '<div class="cap">Contrib = 5·(min·net)/total min; the column sums to team net'
-    + (totals.resid!=null ? ' (residual '+fmt(totals.resid,1).txt+')' : '') + '. '
-    + 'Ratings colored red→green on a fixed −5…+5 NBA-net scale. '
-    + 'Names link to the <a href="index.html">Explorer</a>.</div>';
+  // The caption that stood here defined Contrib, the colour ramp and the name links; all three
+  // now sit in the header tips and the TOTAL row title, where the reader meets the number.
 
   // ---- depth chart (roster shape by listed position) ----
-  html += '<div class="sectitle">Depth chart <span style="font-weight:400;color:var(--faint)">· by listed position</span></div>';
+  // "not a lineup" plus the ordering clause is the load-bearing part; the Unlisted rule used to be
+  // a third sentence here, but the Unlisted column explains itself the moment a reader sees it.
+  html += '<div class="sectitle">Depth chart <span style="font-weight:400;color:var(--faint)">· by listed position</span>'
+    + ' <span class="help" data-tip="Listed positions, not a lineup. Ordered by net contribution; the chip is the player\'s own net.">?</span></div>';
   html += '<div class="depth" id="depth"></div>';
-  html += '<div class="cap">Roster shape by <b>listed / primary</b> position, not a lineup. Players listed only '
-    + 'as G or F — no five-slot listing to split — drop to <b>Unlisted</b> rather than be guessed into one. '
-    + 'Within a column, ordered by minute-weighted net contribution; the chip is own net (pts/100), '
-    + 'red→green on the −5…+5 scale.</div>';
 
   document.getElementById('wrap').innerHTML = html;
 

@@ -35,8 +35,8 @@
 <script src="nav.js"></script>
 <div class="wrap">
   <h1 style="margin-top:6px">Measured team ratings, <b id="season">2025-26</b></h1>
-  <p class="sub">Season-to-date team RAPM (pts/100) with model-win context. Click a team for its roster.
-    <a href="projection.html" style="color:var(--accent)">See the forward 2026-27 projection →</a></p>
+  <p class="sub">Season-to-date team RAPM (pts/100) — click a team for its roster.
+    <a href="projection.html" style="color:var(--accent)">See the 2026-27 projection →</a></p>
 
   <div id="standings"></div>
   <div class="msg" id="msg">Loading standings…</div>
@@ -80,11 +80,12 @@ let DATA = null;
 fetch('teams.json')
   .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
   .then(d=>{ DATA = d; render(d); })
-  .catch(err=>{
+  .catch(()=>{
     const m = document.getElementById('msg');
     m.style.display='block';
-    m.innerHTML = "Couldn't load the standings (teams.json). "+esc(err.message)+
-      "<br><span style=\"font-size:12px;color:var(--faint)\">If you opened this file directly, serve the folder over http (e.g. <code>python3 -m http.server</code>).</span>";
+    // The old fallback told the reader to run python3 -m http.server. On the deployed site that
+    // advice is never right, and it is developer copy either way.
+    m.textContent = "Couldn't load the standings.";
   });
 
 function render(d){
@@ -122,7 +123,7 @@ function buildConf(name, rows, d){
   let thead = '<thead><tr>'
     + '<th class="l rank">#</th>'
     + '<th class="l">Team</th>'
-    + '<th title="Model wins — mean of 10,000-season Monte-Carlo from measured 2025-26 team strength (p10–p90 in parens)">Model W</th>'
+    + '<th>Model W <span class="help" data-tip="Mean wins over 10,000 seasons simulated from measured team strength; the small range is p10–p90.">?</span></th>'
     + '<th title="Actual wins so far">Act W</th>';
   FACS.forEach(f=>{ thead += '<th class="f">'+f+' <span class="help" data-tip="'+esc(FAC_TIP[f])+'">?</span></th>'; });
   thead += '<th class="net">Net <span class="help" data-tip="'+esc(NET_TIP)+'">?</span></th>'

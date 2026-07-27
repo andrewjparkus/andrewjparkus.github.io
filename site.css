@@ -84,19 +84,6 @@ h1 small{font-size:12.5px;color:var(--muted);font-weight:500;margin-left:6px}
   border-bottom:2px solid transparent;white-space:nowrap}
 .topnav .tab:hover{color:var(--text)}
 .topnav .tab.active{color:var(--text);border-bottom-color:var(--accent)}
-.topnav .navdrop{position:relative;display:inline-flex}
-.topnav .navdrop-btn{cursor:pointer;background:none;border:0;border-bottom:2px solid transparent;
-  font-family:inherit;font-size:var(--fs-3);color:var(--muted);display:inline-flex;align-items:center;gap:3px}
-.topnav .navdrop-btn:hover{color:var(--text)}
-.topnav .navdrop-btn .caret{font-size:9px;opacity:.65}
-.topnav .navdrop.active>.navdrop-btn{color:var(--text);border-bottom-color:var(--accent)}
-.topnav .navmenu{display:none;position:fixed;background:var(--navbg);border:1px solid var(--line);
-  border-radius:var(--r-1);padding:6px;min-width:148px;box-shadow:0 8px 24px rgba(0,0,0,.28);z-index:60}
-.topnav .navdrop.open .navmenu{display:block}
-.topnav .navmenu-item{display:block;padding:8px 12px;color:var(--muted);text-decoration:none;
-  border-radius:var(--r-1);font-size:var(--fs-3);white-space:nowrap;border-bottom:0}
-.topnav .navmenu-item:hover{color:var(--text);background:color-mix(in srgb,var(--accent) 12%,transparent)}
-.topnav .navmenu-item.active{color:var(--accent)}
 .topnav .navspace{flex:1 1 auto}
 .topnav .themebtn{cursor:pointer;background:none;border:1px solid var(--line);color:var(--muted);
   font:inherit;font-size:13.5px;line-height:1;padding:6px 9px;border-radius:var(--r-1);white-space:nowrap}
@@ -222,13 +209,18 @@ table.tbl tr.total td{border-top:1px solid var(--line);border-bottom:none;font-w
   vertical-align:middle;position:relative;top:-1px}
 .help:hover{color:var(--text);border-color:var(--accent)}
 /* CSS-only hover tooltip driven by data-tip (avoids the slow/unstyled native title= popup).
+   Keyed on the ATTRIBUTE, not on .help: the affordance is "this element has a definition", and the
+   circled ? is only its most common carrier. A chip or a column header can carry one too (the
+   2026-07-26 prose cull moved a lot of body copy into exactly those). Every data-tip carrier needs
+   its own positioning context or the bubble anchors to some distant ancestor.
    ponytail: edge-clips at the viewport right for v1; max-width keeps it small. */
-.help[data-tip]:hover::after{
+[data-tip]{position:relative}
+[data-tip]:hover::after{
   content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);
   background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:var(--r-1);
   padding:7px 10px;font-size:12px;font-weight:400;line-height:1.45;width:max-content;max-width:260px;
   white-space:normal;text-align:left;z-index:60;box-shadow:0 6px 18px rgba(0,0,0,.4);pointer-events:none}
-.help[data-tip]:hover::before{
+[data-tip]:hover::before{
   content:'';position:absolute;left:50%;bottom:calc(100% + 1px);transform:translateX(-50%);
   border:5px solid transparent;border-top-color:var(--line);z-index:60}
 
