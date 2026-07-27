@@ -10,68 +10,78 @@
   .phead{display:flex;align-items:baseline;gap:13px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:11px}
   .pname{font-size:var(--fs-6);font-weight:700;letter-spacing:-.5px}
   /* ── player card (headshot + name + age + per-game box line) — Explorer-only ── */
-  .pcard{display:none;gap:var(--sp-4);align-items:center;background:var(--panel);
+  /* align-items:stretch, not center: the headshot spans the full height of the two-row body, so its
+     top edge is flush with the name and its bottom with the shooting line. Centering left it
+     floating against a body it no longer matched (owner 2026-07-26: "should be flush"). */
+  .pcard{display:none;gap:var(--sp-4);align-items:stretch;background:var(--panel);
     border:1px solid var(--line);border-radius:var(--r-2);padding:var(--sp-3) var(--sp-4);margin-bottom:14px}
-  .pc-face,.pc-mono{width:76px;height:76px;flex:0 0 76px;border-radius:var(--r-2);
+  /* Height comes from `stretch` so the image is flush with both rows; the width is FIXED at the
+     height those two rows come to (100px, measured), which makes it square.
+     ponytail: the 100 is a hand-matched constant, not derived. CEILING, stated plainly: change the
+     type scale or the row gap and the headshot goes slightly off-square -- object-fit:cover keeps
+     it looking right, it just stops being a perfect square. aspect-ratio:1 was tried first and does
+     NOT work here: on a flex item with width:auto the flex algorithm sizes from content, so the
+     monogram collapsed to the width of the two letters. */
+  .pc-face,.pc-mono{width:100px;flex:0 0 100px;align-self:stretch;border-radius:var(--r-2);
     background:var(--panel-3);border:1px solid var(--line)}
+  .pc-body{min-height:76px}
   .pc-face{object-fit:cover;object-position:top}
   .pc-mono{display:flex;align-items:center;justify-content:center;font-family:var(--font);
-    font-weight:700;font-size:25px;color:var(--muted);letter-spacing:.5px}
-  .pc-body{flex:1;min-width:0}
+    font-weight:700;font-size:27px;color:var(--muted);letter-spacing:.5px}
+  .pc-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:var(--sp-2)}
+  /* one text line on the left, its stat group on the right, baselines shared */
+  .pc-row{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-5)}
   .pc-name{font-size:var(--fs-6);font-weight:700;letter-spacing:-.5px;line-height:1.12}
-  .pc-sub{display:flex;gap:9px;align-items:center;flex-wrap:wrap;font-size:var(--fs-2);
-    color:var(--muted);margin:3px 0 9px}
+  .pc-sub{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;font-size:var(--fs-2);
+    color:var(--muted)}
   .pc-sub .pos{font-weight:700;color:var(--text);letter-spacing:.02em}
-  /* Owner 2026-07-26: the box line is TWO right-anchored rows — counting stats (PTS/REB/AST/STL/BLK)
-     on top, shooting (FG%/3P%/FT%) below — so the two ragged-length rows share one flush right edge
-     against the card. The existing `.pc-cell:last-child{padding-right:0}` is what makes that edge
-     land; do not give the last cell padding back. Headshot + name/pos/age are untouched on the left. */
-  .pc-strip{display:flex;flex-direction:column;align-items:flex-end;gap:var(--sp-2)}
+  /* The two stat groups sit at the right end of their own row, so the ragged-length rows still share
+     one flush right edge. `.pc-cell:last-child{padding-right:0}` is what lands that edge — do not
+     give the last cell its padding back. */
   .pc-group{display:flex;font-family:var(--font-mono);font-variant-numeric:tabular-nums}
   .pc-cell{display:flex;flex-direction:column;gap:1px;padding:0 11px;border-right:1px solid var(--line)}
   .pc-cell:first-child{padding-left:0}.pc-cell:last-child{border-right:none;padding-right:0}
   .pc-val{font-size:var(--fs-3);font-weight:600;color:var(--text)}
-  .pc-lab{font-size:10.5px;letter-spacing:.08em;color:var(--faint);text-transform:uppercase}
+  .pc-lab{font-size:11.5px;letter-spacing:.08em;color:var(--faint);text-transform:uppercase}
   .pc-shoot .pc-val{color:var(--muted)}
+  /* The paired rows are a desktop affordance and do not survive the phone: under the 60px headshot
+     the body is ~239px wide at 375px (~184px at 320px) against ~256px of counting cells, so a row
+     holding the name AND five stats would clip. Below 520px each row breaks in two and everything
+     falls back to a LEFT edge — a ragged right beats a clipped one. */
   @media(max-width:520px){.pcard{align-items:flex-start}.pc-name{font-size:var(--fs-5)}
-    .pc-face,.pc-mono{width:60px;height:60px;flex-basis:60px}
-    /* Right-anchoring is a desktop affordance that does not survive the phone. Under the 60px
-       headshot the body is ~239px wide at a 375px viewport (~184px at 320px) against ~256px of
-       counting cells, so the top row would run off the card. Fall back to a LEFT edge, tighten
-       the gutters (fits 375px in one row), and let the cells wrap below that — a ragged right
-       edge beats a clipped row. */
-    .pc-strip{align-items:flex-start}
+    .pc-face,.pc-mono{width:60px;height:60px;flex:0 0 60px;align-self:flex-start}
+    .pc-row{flex-direction:column;align-items:flex-start;gap:var(--sp-1)}
     .pc-cell{padding:0 8px}
     .pc-group{flex-wrap:wrap;row-gap:6px}}
   .pmeta{color:var(--muted);font-size:var(--fs-2)}
-  .readout{font-family:var(--font-mono);font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:150px;text-align:left}
+  .readout{font-family:var(--font-mono);font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:150px;text-align:left}
   .readout b{color:var(--text)}
-  .modehint{font-size:12px;color:var(--faint);margin:7px 0 -4px;line-height:1.55;max-width:840px}
+  .modehint{font-size:13px;color:var(--faint);margin:7px 0 -4px;line-height:1.55;max-width:840px}
   /* bespoke interactive crosshair charts (owned locally) */
   .crosshair{stroke:#3a4862;stroke-width:1;stroke-dasharray:3 3;pointer-events:none}
   .hdot{pointer-events:none;stroke:var(--bg);stroke-width:1.2}
   .grid svg,.netcard svg{touch-action:none}
   /* add-to-compare affordance in the player header */
-  .cmpadd{font-size:12.5px;font-weight:600;color:var(--muted);background:var(--panel);border:1px solid var(--line);
+  .cmpadd{font-size:13.5px;font-weight:600;color:var(--muted);background:var(--panel);border:1px solid var(--line);
     padding:5px 11px;cursor:pointer;border-radius:var(--r-1)}
   .cmpadd:hover{color:var(--text);border-color:var(--accent)}
   .cmptray{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0 0}
   .cmptray .seglab{align-self:center}
   .cmpchip{display:inline-flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);
-    padding:4px 9px;font-size:12.5px;border-radius:var(--r-1)}
+    padding:4px 9px;font-size:13.5px;border-radius:var(--r-1)}
   .cmpchip .sw{width:10px;height:10px;border-radius:2px}
   .cmpchip .x{cursor:pointer;color:var(--muted);font-weight:700;margin-left:1px}
   .cmpchip .x:hover{color:var(--neg)}
-  .cmpgo{font-size:12.5px;font-weight:700;color:var(--accent-ink);background:var(--accent);border:none;
+  .cmpgo{font-size:13.5px;font-weight:700;color:var(--accent-ink);background:var(--accent);border:none;
     padding:5px 12px;cursor:pointer;border-radius:var(--r-1)}
   .cmpgo:disabled{opacity:.4;cursor:not-allowed}
   /* ── production profile section ── */
   #profile{display:none;margin-top:28px;border-top:1px solid var(--line);padding-top:6px}
   .barrow{display:flex;align-items:center;gap:10px;margin:7px 0}
-  .barrow .lab{width:54px;font-size:13.5px;font-weight:700;color:#cdd9e6;font-variant-numeric:tabular-nums}
+  .barrow .lab{width:58px;font-size:14.5px;font-weight:700;color:#cdd9e6;font-variant-numeric:tabular-nums}
   :root[data-theme=light] .barrow .lab{color:#33425a}
-  .barrow .val{width:66px;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}
-  .barrow .pctlab{width:44px;font-size:12.5px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+  .barrow .val{width:70px;font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}
+  .barrow .pctlab{width:48px;font-size:13.5px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
   .barwrap{flex:1;min-width:120px}
   /* two balanced columns: percentile bars (left) + radar (right), both top-aligned (align-items:start) */
   .profcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px 30px;align-items:start}
@@ -120,7 +130,7 @@
      which is the same lockup; measured at 1040 the net title row is 876px of 980px available and
      still does not wrap. */
   #player .ctitle{font-size:var(--fs-4)}
-  #player .ctitle .v{font-size:18px}
+  #player .ctitle .v{font-size:var(--fs-4)}
   #player .ctitle .v b ~ span{font-size:var(--fs-2)}
   /* A DELIBERATE LOOK, NOT AN OVERFLOW GUARD. The single-line decision above was settled on the
      single-player readout, which holds one number; a 4-way compare puts four in the same .v.
@@ -134,17 +144,17 @@
      guard against a grid item refusing to shrink below its content, NOT a fix for an observed
      bug: measured at 1280, plain `repeat(3,1fr)` yields the identical 151px tracks and the same
      scrollWidth 1280 == clientWidth. Kept because it costs one token; do not cite it as a fix. */
-  .drill{font:inherit;font-size:11px;font-weight:600;letter-spacing:.02em;margin-left:6px;
+  .drill{font:inherit;font-size:12px;font-weight:600;letter-spacing:.02em;margin-left:6px;
     padding:1px 6px;border:1px solid var(--line);border-radius:999px;background:none;
     color:var(--faint);cursor:pointer;vertical-align:middle}
   .drill:hover{color:var(--text);border-color:var(--faint)}
   .drill.on{color:var(--bg);background:var(--faint);border-color:var(--faint)}
   .atompanel{display:none;margin-top:8px;border-top:1px solid var(--line);padding-top:8px}
-  .atomnote{font-size:12px;line-height:1.5;color:var(--faint);margin-bottom:8px}
+  .atomnote{font-size:13px;line-height:1.5;color:var(--faint);margin-bottom:8px}
   .atomgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 12px}
   @media(max-width:640px){.atomgrid{grid-template-columns:minmax(0,1fr)}}
   .atitle{display:flex;align-items:baseline;gap:7px;
-    font-size:12px;color:var(--faint);margin-bottom:3px}
+    font-size:13px;color:var(--faint);margin-bottom:3px}
   .atitle .v{font-variant-numeric:tabular-nums;color:var(--text)}
   /* At 151px wide an 11-season career puts Chart()'s year ticks 6.7px apart with 15.3px labels —
      measured overlap, unreadable. Hide the LABELS only; the year GRIDLINES stay, and the parent
@@ -165,23 +175,23 @@
   #waterfall{display:none;margin-top:24px;border-top:1px solid var(--line);padding-top:6px}
   .wfbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 5px}
   .wfscrub{flex:1;min-width:130px;accent-color:var(--accent)}
-  .wfsum{font-family:var(--font-mono);font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;margin:0 0 4px}
+  .wfsum{font-family:var(--font-mono);font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums;margin:0 0 4px}
   .wfsum b{color:var(--text)}
   .wfstack{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   @media(max-width:720px){.wfstack{grid-template-columns:1fr}}
   .wfchart{border:1px solid var(--line);background:var(--panel);border-radius:var(--r-1);padding:6px 9px 3px}
-  .wfhd{display:flex;align-items:baseline;gap:9px;font-size:11.5px;font-weight:700;
+  .wfhd{display:flex;align-items:baseline;gap:9px;font-size:12.5px;font-weight:700;
     color:#aebccd;letter-spacing:.16em;padding:1px 2px 2px}
   :root[data-theme=light] .wfhd{color:#33425a}
   .wfsvg{width:100%;height:auto}
   .wfg{stroke:var(--grid);stroke-width:1}
-  .wft{fill:var(--faint);font-size:11px;font-variant-numeric:tabular-nums}
+  .wft{fill:var(--faint);font-size:12px;font-variant-numeric:tabular-nums}
   .wfax{stroke:var(--zero);stroke-width:1}
   .wftr{fill:none;stroke:var(--muted);stroke-width:1.2;stroke-dasharray:3 4;opacity:.5}
   .wfb.pos{fill:var(--pos);opacity:.9}.wfb.neg{fill:var(--neg);opacity:.9}.wfb.zero{fill:var(--zero);opacity:.6}
   .wfb.tot.pos{fill:var(--pos);opacity:1}.wfb.tot.neg{fill:var(--neg);opacity:1}
-  .wfl{fill:var(--muted);font-size:12px;font-weight:700}
-  .wfv{font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums}
+  .wfl{fill:var(--muted);font-size:13px;font-weight:700}
+  .wfv{font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums}
   .wfv.pos{fill:var(--pos)}.wfv.neg{fill:var(--neg)}.wfv.zero{fill:var(--muted)}
 </style></head>
 <body>
@@ -402,6 +412,17 @@ const boxSmoothNote=w=>` Display-smoothed: each of the six factors is filtered a
 // and latent stays selectable (clicking it persists, and the flag stops re-migration).
 let _sm=localStorage.getItem('rapm_mode');
 if(!localStorage.getItem('rapm_dflt_v3')){ if(!_sm||_sm==='latent'){_sm='prior';localStorage.setItem('rapm_mode','prior');} localStorage.setItem('rapm_dflt_v3','1'); }
+// PER-PLAYER default (owner 2026-07-26): a player who actually moved between leagues opens on
+// Latent, because that is the only mode that draws his career as ONE curve instead of disjoint
+// per-league graphs -- it is the whole reason the mode exists, and a single-league player can
+// never show it. Everyone else opens on the stored preference (prior by default).
+//
+// It only applies while the visitor has never PICKED a mode. `rapm_mode` alone cannot tell
+// "defaulted to prior" from "chose prior" -- the migration above writes it either way -- so the
+// choice is recorded separately by setMode. Once someone picks, their pick wins on every player,
+// including movers: silently overriding an explicit choice on navigation is worse than showing a
+// mover one mode too few.
+const modePinned = ()=>localStorage.getItem('rapm_mode_pinned')==='1';
 let SERIES={}, MODE=(_sm||'prior'), PNAME='', CURID=null;
 function load(id,name){drop.style.display='none';q.value=name;history.replaceState(null,'','?p='+id);
   if(typeof wfStop==='function')wfStop();           // cancel any waterfall sweep from the previous player
@@ -419,6 +440,9 @@ function load(id,name){drop.style.display='none';q.value=name;history.replaceSta
     // plan45 B1 (D3): single-league players have no _latent.json; alias Latent to the prior board
     // (latent === board when there is no cross-league bridge) so the tab is never a dead greyed button.
     LATENT_ALIAS=!latent;
+    // A real _latent.json exists only for cross-league movers, so this is the mover test.
+    if(!LATENT_ALIAS && !modePinned()) MODE='latent';
+    else if(LATENT_ALIAS && !modePinned()) MODE=(localStorage.getItem('rapm_mode')||'prior');
     // W3: index the atom sidecar BY DATE, not by position. Its axis is the NBA subset of the
     // pure axis AND build_pages._downsample subsets each sidecar independently (it pins each
     // file's own last-played index), so positional alignment between sidecars is not guaranteed
@@ -443,6 +467,7 @@ function activeMode(){return SERIES[MODE]?MODE:'prior';}  // honor preference; f
 function setMode(m){
   if(!SERIES[m])return;                              // ignore unavailable mode (button disabled anyway)
   MODE=m; localStorage.setItem('rapm_mode',m);
+  localStorage.setItem('rapm_mode_pinned','1');      // an explicit pick; stop auto-selecting per player
   syncSeg(); renderActive(); renderProfile();        // re-render on Pure / Prior-informed / Box toggle
 }
 function syncSeg(){
@@ -517,7 +542,7 @@ function sideColor(key){return key[0]==='o'?cssvar('--off'):key[0]==='d'?cssvar(
 function Chart(mount,ser,key,proj,extras){
   const SIDEC=sideColor(key);      // non-null only inside the 3x2 factor grid
   const W=mount.clientWidth||320, H=mount===document.getElementById('c_net')?206:166;
-  const padL=38,padR=8,padT=9,padB=18, pw=W-padL-padR, ph=H-padT-padB;
+  const padL=41,padR=8,padT=9,padB=19, pw=W-padL-padR, ph=H-padT-padB;
   const n=ser.length;
   const v   = ser.map(s=>s[key]);
   const se  = ser.map(s=>s[key+'_se']);
@@ -541,12 +566,12 @@ function Chart(mount,ser,key,proj,extras){
   const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,preserveAspectRatio:'none'});
   [0,.5,1].forEach(f=>{const yv=ymin+(ymax-ymin)*f, y=Y(yv);
     svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'var(--grid)','stroke-width':1}));
-    const t=el('text',{x:padL-6,y:y+4,'font-size':11,fill:'var(--faint)','text-anchor':'end'});t.textContent=(yv>=0?'+':'')+yv.toFixed(1);svg.appendChild(t);});
+    const t=el('text',{x:padL-6,y:y+4,'font-size':12,fill:'var(--faint)','text-anchor':'end'});t.textContent=(yv>=0?'+':'')+yv.toFixed(1);svg.appendChild(t);});
   if(ymin<0&&ymax>0){const y=Y(0);svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'var(--zero)','stroke-width':1}));}
   let py=ser[0].date.slice(0,4);
   for(let i=1;i<n;i++){const yr=ser[i].date.slice(0,4);if(yr!==py){
     svg.appendChild(el('line',{x1:X(i),y1:padT,x2:X(i),y2:padT+ph,stroke:'var(--line-2)','stroke-width':1}));
-    const t=el('text',{x:X(i),y:H-5,'font-size':10.5,fill:'var(--faint)','text-anchor':'middle'});t.textContent="’"+yr.slice(2);svg.appendChild(t);py=yr;}}
+    const t=el('text',{x:X(i),y:H-5,'font-size':11.5,fill:'var(--faint)','text-anchor':'middle'});t.textContent="’"+yr.slice(2);svg.appendChild(t);py=yr;}}
   // CI band (95%, faint): the de-shrunk daily SE. This is a MEASUREMENT CI on the current estimate,
   // NOT a forward band — see research/arp/cal2_band_audit.md (CAL-2). Read as a next-season forecast
   // it covers 99.9% at nominal 95% (n=17,204): median se~3.13 vs median annual move ~0.54, i.e. ~4x
@@ -739,11 +764,17 @@ function renderCard(){
     `<img class="pc-face" alt="" loading="lazy" decoding="async"
        src="${faces[0]||''}" data-srcs='${JSON.stringify(faces).replace(/'/g,'&#39;')}'
        data-i="0" data-mono="${initials}" onerror="faceErr(this)">`
-   +`<div class="pc-body"><div class="pc-name">${PNAME}</div>`
-   +`<div class="pc-sub">${sub}</div>`
-   +`<div class="pc-strip">`
-   +`<div class="pc-group">${cell(num(c.pts),'PTS')}${cell(num(c.reb),'REB')}${cell(num(c.ast),'AST')}${cell(num(c.stl),'STL')}${cell(num(c.blk),'BLK')}</div>`
-   +`<div class="pc-group pc-shoot">${cell(pct(c.fg),'FG%')}${cell(pct(c.tp),'3P%')}${cell(pct(c.ft),'FT%')}</div>`
+    // TWO rows, each one line of text on the left against its own stat group on the right:
+    //   name          PTS REB AST STL BLK
+    //   pos·league·age        FG% 3P% FT%
+    // Pairing them this way is what makes the block read as a grid rather than as three stacked
+    // things (owner 2026-07-26). The rows baseline-align, so the stat values sit on the name's
+    // baseline rather than floating between the two text lines.
+   +`<div class="pc-body">`
+   +`<div class="pc-row"><div class="pc-name">${PNAME}</div>`
+   +`<div class="pc-group">${cell(num(c.pts),'PTS')}${cell(num(c.reb),'REB')}${cell(num(c.ast),'AST')}${cell(num(c.stl),'STL')}${cell(num(c.blk),'BLK')}</div></div>`
+   +`<div class="pc-row"><div class="pc-sub">${sub}</div>`
+   +`<div class="pc-group pc-shoot">${cell(pct(c.fg),'FG%')}${cell(pct(c.tp),'3P%')}${cell(pct(c.ft),'FT%')}</div></div>`
    +`</div></div>`;
   if(!faces.length)faceErr(box.querySelector('.pc-face'));   // no candidates -> straight to monogram
   box.style.display='flex';
@@ -977,7 +1008,7 @@ function renderMulti(){
 }
 function ChartMulti(mount,key){
   const W=mount.clientWidth||320, H=mount===document.getElementById('c_net')?206:166;
-  const padL=38,padR=8,padT=9,padB=18, pw=W-padL-padR, ph=H-padT-padB;
+  const padL=41,padR=8,padT=9,padB=19, pw=W-padL-padR, ph=H-padT-padB;
   const n=MDATES.length;
   let pool=[];MULTI.forEach(m=>MDATES.forEach(d=>{const s=m.map[d];if(s&&s[key]!=null)pool.push(s[key]);}));
   let lo=Math.min(...pool), hi=Math.max(...pool), c=(lo+hi)/2, half=Math.max((hi-lo)/2*1.06,0.15);
@@ -987,12 +1018,12 @@ function ChartMulti(mount,key){
   const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,preserveAspectRatio:'none'});
   [0,.5,1].forEach(f=>{const yv=ymin+(ymax-ymin)*f, y=Y(yv);
     svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'var(--grid)','stroke-width':1}));
-    const t=el('text',{x:padL-6,y:y+4,'font-size':11,fill:'var(--faint)','text-anchor':'end'});t.textContent=(yv>=0?'+':'')+yv.toFixed(1);svg.appendChild(t);});
+    const t=el('text',{x:padL-6,y:y+4,'font-size':12,fill:'var(--faint)','text-anchor':'end'});t.textContent=(yv>=0?'+':'')+yv.toFixed(1);svg.appendChild(t);});
   if(ymin<0&&ymax>0){const y=Y(0);svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'var(--zero)','stroke-width':1}));}
   let py=MDATES[0].slice(0,4);
   for(let i=1;i<n;i++){const yr=MDATES[i].slice(0,4);if(yr!==py){
     svg.appendChild(el('line',{x1:X(i),y1:padT,x2:X(i),y2:padT+ph,stroke:'var(--line-2)','stroke-width':1}));
-    const t=el('text',{x:X(i),y:H-5,'font-size':10.5,fill:'var(--faint)','text-anchor':'middle'});t.textContent="’"+yr.slice(2);svg.appendChild(t);py=yr;}}
+    const t=el('text',{x:X(i),y:H-5,'font-size':11.5,fill:'var(--faint)','text-anchor':'middle'});t.textContent="’"+yr.slice(2);svg.appendChild(t);py=yr;}}
   // Draw each player's OWN consecutive points (break only on a league change). Players are
   // downsampled independently, so their absolute dates rarely align — iterating the union and
   // flushing on every interleaved date shattered each line into invisible 1-point segments.

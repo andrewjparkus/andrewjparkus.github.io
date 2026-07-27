@@ -125,7 +125,7 @@
     facs.forEach(function (f, k) {
       var a = -Math.PI / 2 + k * 2 * Math.PI / n;
       svg.appendChild(el("line", { x1: cx, y1: cy, x2: cx + Math.cos(a) * R, y2: cy + Math.sin(a) * R, stroke: "var(--line)", "stroke-width": 1 }));
-      var t = el("text", { x: cx + Math.cos(a) * (R + 17), y: cy + Math.sin(a) * (R + 17) + 4, "font-size": 11.5, fill: "#aebccd", "text-anchor": "middle" });
+      var t = el("text", { x: cx + Math.cos(a) * (R + 18), y: cy + Math.sin(a) * (R + 18) + 4, "font-size": 12.5, fill: "#aebccd", "text-anchor": "middle" });
       t.textContent = f; svg.appendChild(t);
     });
     var pp = facs.map(function (f, k) { var a = -Math.PI / 2 + k * 2 * Math.PI / n, r = R * (pcts[f] || 0);

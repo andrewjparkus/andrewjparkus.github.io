@@ -42,6 +42,13 @@
   /* Wrap only the two hand-written tables on this page. The child combinator deliberately stops at
      the mount divs, so injected panels keep site.css's nowrap numerics. */
   .prose>.scroll table.tbl td,.prose>.scroll table.tbl th{white-space:normal}
+  /* Factor names use the Explorer's SIDE colours (offence teal / defence violet), not .pos green:
+     green there means "positive", and every factor label was rendering green regardless of sign,
+     which read as a value judgement on the factor itself. Tokens duplicated from index.html —
+     they are the Explorer's local vocabulary, not a site-wide token. */
+  :root{--off:#2dd4bf;--def:#a78bfa}
+  :root[data-theme=light]{--off:#0e9e8c;--def:#7c3aed}
+  .swoff{color:var(--off);font-weight:700}.swdef{color:var(--def);font-weight:700}
   /* worked-example 6-factor chart grid (mirrors the Explorer's small multiples) */
   .exhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin:4px 0 2px}
   .exhead .exname{font-weight:700;font-size:var(--fs-4)}
@@ -51,7 +58,8 @@
   .fcell.net{grid-column:1 / -1}
   .fcell .ftitle{display:flex;gap:7px;align-items:baseline;
     font-size:var(--fs-2);font-weight:600;color:var(--muted);margin-bottom:3px}
-  .fcell .fval{font-variant-numeric:tabular-nums;font-weight:700;font-size:15px;color:var(--text);letter-spacing:-.2px}
+  /* same size as its label, matching the Explorer panels (owner 2026-07-26) */
+  .fcell .fval{font-variant-numeric:tabular-nums;font-weight:700;font-size:var(--fs-2);color:var(--text);letter-spacing:-.2px}
   .fcell .fval .pm{color:var(--faint);font-weight:400;font-size:11.5px;letter-spacing:0}
   .fcell svg{display:block;width:100%}
   @media(max-width:560px){
@@ -83,23 +91,23 @@
         <th class="l">Factor</th><th class="l">What it measures</th><th class="l">Positive means</th>
       </tr></thead>
       <tbody>
-        <tr><td class="l lead"><span class="pos">oTS</span></td>
+        <tr><td class="l lead"><span class="swoff">oTS</span></td>
             <td class="l">Scoring efficiency — true shooting, including free-throw value</td>
             <td class="l">scores efficiently</td></tr>
-        <tr><td class="l lead"><span class="pos">oTOV</span></td>
+        <tr><td class="l lead"><span class="swoff">oTOV</span></td>
             <td class="l">Ball security</td>
             <td class="l">protects the ball</td></tr>
-        <tr><td class="l lead"><span class="pos">oSC</span></td>
+        <tr><td class="l lead"><span class="swoff">oSC</span></td>
             <td class="l">Second chances created — putbacks and kickouts off the offensive glass,
             not a rebound rate</td>
             <td class="l">creates extra possessions</td></tr>
-        <tr><td class="l lead grp"><span class="pos">dTS</span></td>
+        <tr><td class="l lead grp"><span class="swdef">dTS</span></td>
             <td class="l grp">Shot defense — making opponents shoot worse</td>
             <td class="l">suppresses opponent efficiency</td></tr>
-        <tr><td class="l lead"><span class="pos">dTOV</span></td>
+        <tr><td class="l lead"><span class="swdef">dTOV</span></td>
             <td class="l">Forcing turnovers</td>
             <td class="l">forces turnovers</td></tr>
-        <tr><td class="l lead"><span class="pos">dSC</span></td>
+        <tr><td class="l lead"><span class="swdef">dSC</span></td>
             <td class="l">Second chances denied</td>
             <td class="l">denies opponent extra shots</td></tr>
       </tbody>
@@ -117,12 +125,6 @@
   </div>
   <div class="fgrid" id="ex_grid"></div>
   <p class="cap" id="ex_caption"></p>
-  <div class="scroll" style="max-width:420px">
-    <table class="tbl">
-      <thead><tr><th class="l">Component</th><th>Latest</th></tr></thead>
-      <tbody id="ex_tbl"><tr><td class="l">…</td><td>…</td></tr></tbody>
-    </table>
-  </div>
 
   <h2 id="accuracy">How accurate is it?</h2>
   <!-- Deliberately no summary sentence here: the injected panel opens with "last of five", and
@@ -193,6 +195,12 @@
   var el=(window.RC&&RC.el)?RC.el:null;
   var grid=document.getElementById('ex_grid');
   function lgColor(lg){ return (window.RC&&RC.leagueColor)?RC.leagueColor(lg):'#4aa8ff'; }
+  // Mirrors index.html's sideColor(): o* = offence, d* = defence, anything else (i.e. 'net') falls
+  // through to league colour. Keyed on the first character because the six factor names are frozen.
+  function sideColor(key){
+    var v = key[0]==='o' ? '--off' : key[0]==='d' ? '--def' : null;
+    return v ? (getComputedStyle(document.documentElement).getPropertyValue(v).trim()||null) : null;
+  }
   function fail(msg){
     document.getElementById('ex_name').textContent=EX_FALLBACK;
     grid.innerHTML='<p style="grid-column:1/-1;color:var(--faint);font-size:var(--fs-2);margin:4px 0">'
@@ -203,7 +211,7 @@
   // small-multiple chart: mirrors the Explorer's Chart() idiom (band + per-league polyline), static.
   function draw(mount,d,key,big){
     var W=mount.clientWidth||240, H=big?140:104;
-    var padL=34,padR=6,padT=7,padB=16, pw=W-padL-padR, ph=H-padT-padB;
+    var padL=37,padR=6,padT=7,padB=17, pw=W-padL-padR, ph=H-padT-padB;
     var n=d.d.length, v=d[key], se=d[key+'_se'];
     var pool=v.filter(function(x){return x!=null;});
     var lo=Math.min.apply(null,pool), hi=Math.max.apply(null,pool);
@@ -215,14 +223,14 @@
       'aria-label':key+' daily series for '+d.name});
     [0,.5,1].forEach(function(f){var yv=ymin+(ymax-ymin)*f, y=Y(yv);
       svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'var(--grid)','stroke-width':1}));
-      var t=el('text',{x:padL-5,y:y+4,'font-size':10.5,fill:'var(--faint)','text-anchor':'end'});
+      var t=el('text',{x:padL-5,y:y+4,'font-size':11.5,fill:'var(--faint)','text-anchor':'end'});
       t.textContent=(yv>=0?'+':'')+yv.toFixed(1); svg.appendChild(t);});
     if(ymin<0&&ymax>0){var yz=Y(0);svg.appendChild(el('line',{x1:padL,y1:yz,x2:W-padR,y2:yz,stroke:'var(--zero)','stroke-width':1}));}
     // season gridlines (light)
     var py=d.d[0].slice(0,4);
     for(var i=1;i<n;i++){var yr=d.d[i].slice(0,4); if(yr!==py){
       svg.appendChild(el('line',{x1:X(i),y1:padT,x2:X(i),y2:padT+ph,stroke:'var(--line-2)','stroke-width':1}));
-      if(big){var tt=el('text',{x:X(i),y:H-4,'font-size':10.5,fill:'var(--faint)','text-anchor':'middle'});
+      if(big){var tt=el('text',{x:X(i),y:H-4,'font-size':11.5,fill:'var(--faint)','text-anchor':'middle'});
         tt.textContent="’"+yr.slice(2); svg.appendChild(tt);} py=yr;}}
     // CI band: measurement uncertainty on the current estimate, not a forward band (CAL-2; see
     // research/arp/cal2_band_audit.md). Labeling only — do not narrow or rescale it (F1).
@@ -234,7 +242,7 @@
     var lgs={}; d.lg.forEach(function(l,i){(lgs[l]=lgs[l]||[]).push(i);});
     Object.keys(lgs).forEach(function(lg){var idx=lgs[lg]; if(idx.length<2)return;
       svg.appendChild(el('polyline',{points:idx.map(function(i){return X(i).toFixed(1)+','+Y(v[i]).toFixed(1);}).join(' '),
-        fill:'none',stroke:lgColor(lg),'stroke-width':1.5,'stroke-linejoin':'round','stroke-linecap':'round'}));});
+        fill:'none',stroke:sideColor(key)||lgColor(lg),'stroke-width':1.5,'stroke-linejoin':'round','stroke-linecap':'round'}));});
     mount.innerHTML=''; mount.appendChild(svg);
   }
 
@@ -260,15 +268,6 @@
       'The faint band is the 95% CI on the estimate itself, not a forecast.';
     cell('net','Net RAPM · ORAPM + DRAPM',true);
     FAC.forEach(function(p){ cell(p[0],p[1],false); });
-    // additivity table
-    var rows='', sum=0;
-    FAC.forEach(function(p){var k=p[0], val=DATA[k][DATA[k].length-1]; sum+=val;
-      rows+='<tr><td class="l">'+p[1]+'</td><td class="'+(val>=0?'pos':'neg')+'">'+(val>=0?'+':'')+val.toFixed(2)+'</td></tr>';});
-    rows+='<tr class="total"><td class="l"><strong>sum of six</strong></td>'
-      +'<td class="'+(sum>=0?'pos':'neg')+'"><strong>'+(sum>=0?'+':'')+sum.toFixed(2)+'</strong></td></tr>';
-    var netv=DATA.net[DATA.net.length-1];
-    rows+='<tr><td class="l">net RAPM</td><td class="'+(netv>=0?'pos':'neg')+'">'+(netv>=0?'+':'')+netv.toFixed(2)+'</td></tr>';
-    document.getElementById('ex_tbl').innerHTML=rows;
   }
   function rerender(){ if(DATA) render(); }
   var rt; window.addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(rerender,150);});
