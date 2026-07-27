@@ -5,34 +5,185 @@
 <link rel="stylesheet" href="site.css">
 <link rel="icon" href="favicon.svg"><link rel="manifest" href="manifest.webmanifest">
 <style>
-  /* page-unique: overall-table scroll body */
-  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:18px 0 4px}
-  .toolbar .asof{font-size:11.5px;color:var(--faint);margin-left:auto}
-  .selrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:14px 0 6px}
-  .findbox{flex:0 0 auto;margin-left:auto;position:relative}
-  .findbox input{font:inherit;font-size:12.5px;background:var(--panel);border:1px solid var(--line);
-    color:var(--text);outline:none;padding:6px 10px;border-radius:var(--r-1);width:180px}
+  /* ===== filter bar =======================================================
+     Table picker, rating picker and search used to be three controls on three
+     separate lines with nothing tying them together. They are one filter bar:
+     one bordered surface, one set of label+control lockups inside it. It still
+     wraps to two lines under ~1000px — but it wraps as ONE object. */
+  .filters{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-3) var(--sp-4);
+    border:1px solid var(--line);background:var(--panel);border-radius:var(--r-2);
+    padding:var(--sp-3) var(--sp-4);margin:var(--sp-5) 0 var(--sp-3)}
+  /* label sits ADJACENT to its control, never justified apart from it (house lockup rule) */
+  .fld{display:flex;align-items:center;gap:var(--sp-2);min-width:0}
+  .fld > .seglab{flex:0 0 auto;margin:0}
+  /* min-width:0 is load-bearing: a flex item's automatic minimum size is its
+     CONTENT width, so without this the five-way table picker refuses to shrink
+     and pushes the whole PAGE into horizontal scroll at 390px — the .seg's own
+     overflow-x:auto never gets a chance to fire. */
+  .fld .seg{min-width:0}
+  .findbox{margin-left:auto;display:flex;align-items:center;gap:var(--sp-2);min-width:0}
+  .findbox input{font:inherit;font-size:var(--fs-1);background:var(--panel-2);
+    border:1px solid var(--line);color:var(--text);outline:none;padding:6px 10px;
+    border-radius:var(--r-1);width:184px;min-width:110px}
   .findbox input:focus{border-color:var(--accent)}
-  .tcap{color:var(--faint);font-size:11px;margin:4px 2px 8px;line-height:1.5;max-width:840px}
-  /* mode hint — same rule as the Explorer's (index.html:15); the .seg control itself is the
-     shared site.css class, so the toggle looks identical on both pages */
-  .modehint{font-size:11.5px;color:var(--faint);margin:7px 0 -4px;line-height:1.55;max-width:840px}
-  .modehint b{color:var(--muted);font-weight:600}
-  /* a cell the active basis structurally does not carry (ORAPM/DRAPM in box mode) — an em-dash,
-     deliberately heavier than fmt()'s en-dash for an ordinary missing value */
-  td.na{color:var(--faint);cursor:help}
-  /* full static table — no inner scroll; the whole ranked list lays out inline */
-  /* header ? tooltips live in the sticky thead at the top of this scroll box;
-     the shared tooltip renders upward and gets clipped — flip header tips DOWN */
+  .findbox .hits{font-size:var(--fs-1);color:var(--muted);font-variant-numeric:tabular-nums;
+    white-space:nowrap}
+  /* the data stamp belongs with the controls, not stacked as a third grey line under them */
+  .filters .asof{font-size:var(--fs-1);color:var(--muted);white-space:nowrap;margin-left:auto}
+  /* These labels and captions step DOWN by size, not by fading out. --muted re-measured after the
+     2026-07-27 palette lift: 6.95:1 dark / 7.36:1 light on --panel. (--faint now clears the text
+     floor too — 5.06 / 5.52 — but the label is subordinate to its control, not to the caption
+     under it, so it stays on the same grey as the rest of the chrome.) */
+  .filters .seglab{color:var(--muted)}
+
+  /* ===== captions ========================================================= */
+  .notes{margin:0 2px var(--sp-3);max-width:840px}
+  .notes p{margin:0;font-size:var(--fs-1);color:var(--muted);line-height:1.55}
+  .notes p + p{margin-top:3px}
+
+  /* ===== table ============================================================
+     Frozen-column widths as tokens so the wide (draft) variant and the phone
+     variant are one-line overrides instead of duplicated rules. --pnw is a
+     PREFERRED width, not a clamp: a name longer than it widens the column
+     rather than being truncated. */
+  /* --rail is the magnitude chart's frame and zero tick. It CANNOT be --grid, which is a surface
+     token: measured 1.11:1 against the row and 1.01:1 against a hovered row, so the frame vanished
+     under the pointer — no separate hovered value would have saved it. --zero is the token for a
+     value sitting at zero, which is exactly what the tick marks, and after the 2026-07-27 palette
+     lift it clears the 3:1 mark floor on BOTH the resting and the hovered row in BOTH themes —
+     measured from rendered pixels: 5.48:1 dark / 6.02:1 light on the row, 4.98:1 / 5.01:1 on a
+     hovered row. One token covers all four cases, so there is no hovered-row rail. */
+  .tablebox{--rkw:46px;--pnw:198px;--bar:#6d7e94;--edge:rgba(0,0,0,.8);--rail:var(--zero)}
+  .tablebox.wide{--pnw:250px}
+  :root[data-theme=light] .tablebox{--bar:#67788f;--edge:rgba(16,32,56,.22)}
+
+  /* The header only LOOKED sticky: .scroll's overflow-x:auto makes .scroll the
+     sticky scrollport in BOTH axes, and it has no height limit, so the thead
+     scrolled away after 14 of 500 rows. Above 1024px the table fits the 1040px
+     column, so the scroll box is not needed and the page becomes the scrollport
+     — which is what makes the header actually stick. fitScroll() puts the scroll
+     box back if a table ever outgrows the column, so the page can never scroll
+     sideways. Below 1024px the numeric block still scrolls inside its box, and
+     the KNOWN CEILING is that the header stops sticking there: the alternative
+     is a nested vertical scroller on touch, which is worse. The frozen name
+     column still anchors the row, which is the bigger of the two wins. */
+  @media(min-width:1024px){
+    .scroll{overflow-x:visible}
+    /* the PAGE is now the scroll container, so park the header under the 53px nav */
+    .scroll:not(.overflowing) #otable thead tr.ghead th{top:53px}
+    .scroll:not(.overflowing) #otable thead tr.chead th{top:77px}
+  }
+  .scroll.overflowing{overflow-x:auto}
+
+  /* Everything below is scoped to #otable on purpose: site.css owns table.tbl at
+     (0,2,2), so a plain .tablebox td rule silently loses to it. The id wins once
+     and the overrides stay readable. */
+  /* The header's own rules are inset shadows, not borders. In a border-collapse:collapse
+     table a collapsed border is painted with the TABLE, not with the cell, so it stays
+     behind when the row sticks — leaving a 1px transparent seam that scrolling rows
+     bleed their glyph tops through. A shadow travels with the cell. */
+  #otable thead th{z-index:3;border-bottom:none;box-shadow:inset 0 -1px 0 var(--line)}
+  /* Two-level header. These offsets are for the case where .scroll IS the scroll container
+     (narrow, or the fallback below): the header sticks to the top of the BOX, and a
+     nav-height offset here would shove it DOWN over the first rows rather than hold it up.
+     The wide-screen rule above swaps in the page-nav offsets. */
+  #otable thead tr.ghead th{top:0;height:24px;padding:2px 8px;font-size:var(--fs-1);
+    font-weight:600;text-align:left;background:var(--panel-2);box-shadow:none}
+  #otable thead tr.chead th{top:24px}
+  /* a rule under the spanner is the group boundary made visible — the offense /
+     defense split existed only as a hairline before and did not register */
+  #otable thead tr.ghead th.g{color:var(--muted);box-shadow:inset 0 -1px 0 var(--line)}
+  /* header ? tooltips live in the sticky thead; the shared tooltip renders
+     upward and gets clipped — flip header tips DOWN */
   .tablebox th .help[data-tip]:hover::after{bottom:auto;top:calc(100% + 6px)}
   .tablebox th .help[data-tip]:hover::before{bottom:auto;top:calc(100% + 1px);
     border-top-color:transparent;border-bottom-color:var(--line)}
-  table.tbl thead th .arr{font-size:9px;color:var(--accent);margin-left:3px}
-  /* emphasize the header of the currently-sorted column to match its bold body cells */
-  table.tbl thead th.net{font-weight:700;color:var(--text)}
-  td.pn{font-weight:600}
-  td.pn .sub2{color:var(--muted);font-size:11px;font-weight:400;margin-left:7px}
-  .nohit{color:var(--muted);font-size:12.5px;padding:18px 10px;text-align:center}
+
+  /* frozen identity columns: nine numbers wide, a reader loses the row without them */
+  #otable th.rk,#otable td.rank{position:sticky;left:0;width:var(--rkw);min-width:var(--rkw);
+    text-align:right;background:var(--panel)}
+  #otable th.pnh,#otable td.pn{position:sticky;left:var(--rkw);width:var(--pnw);
+    background:var(--panel);box-shadow:inset -1px 0 0 var(--line)}
+  /* Only when the box can actually scroll does anything pass under the frozen column — and
+     then the edge has to be unmistakable, because a half-covered "−0.72" reads as "0.72".
+     A whisper-weight rule is not enough for that, so the edge steps up to --zero (measured from
+     rendered pixels after the 2026-07-27 palette lift: 5.48:1 dark / 6.02:1 light on the row,
+     4.98:1 / 5.01:1 hovered) and gains a short shadow. No scroll, no edge, never decoration. */
+  .scroll.overflowing #otable th.pnh,.scroll.overflowing #otable td.pn{
+    box-shadow:inset -1px 0 0 var(--zero), 8px 0 8px -6px var(--edge)}
+  #otable thead th.rk,#otable thead th.pnh{background:var(--panel-2);z-index:4}
+  #otable tbody td.rank,#otable tbody td.pn{z-index:1}
+  #otable tbody tr:hover>td.rank,#otable tbody tr:hover>td.pn{background:var(--panel-3)}
+
+  /* rank: the head of the board reads as the head of the board. Both steps clear the 4.5:1 text
+     floor (re-measured 2026-07-27: 6.95:1 and 15.81:1 dark) — the top ten are separated by weight
+     and ink, not by pushing everything below them under the contrast floor. */
+  #otable td.rank{color:var(--muted);font-family:var(--font-mono);font-size:var(--fs-1)}
+  #otable td.rank.top{color:var(--text);font-weight:600}
+  /* every tenth row gets the full-strength rule — a scanning grid, not decoration */
+  #otable tbody tr.dec>td{border-bottom-color:var(--line)}
+  #otable td.pn{font-weight:600}
+  #otable td.pn .sub2{color:var(--muted);font-size:var(--fs-1);font-weight:400;margin-left:7px}
+  /* The 95% band rides with the Net it qualifies: one step down the type scale, --muted, normal
+     weight. It is a qualifier on that number, not a second number, and it is the whole reason the
+     retired Draft page existed — see the band note under the filter bar. */
+  #otable td .se{font-size:var(--fs-1);font-weight:400;color:var(--muted);margin-left:5px}
+
+  /* subtotals (ORAPM / DRAPM) outrank their three factors by weight, not colour */
+  #otable td.tot{font-weight:600}
+  /* The sorted column's header is the only one at full ink — every other label is --muted, so
+     it reads as the sorted one at a glance. Accent was the first try: on the thead it now
+     measures 4.97:1 in light (it was under the text floor before the 2026-07-27 lift), but full
+     ink at 15.95:1 is still the stronger signal. The accent is spent on the direction arrow
+     instead, where it is a mark and not a word (8.53:1 dark / 4.97:1 light). */
+  #otable thead th.sorted{color:var(--text);font-weight:700}
+  #otable thead th .arr{font-size:9px;margin-left:3px;color:var(--accent)}
+  /* A column this basis does not carry is not a control: it never takes .sortable, so it gets
+     no pointer, no hover-to-full-ink and no click. cursor:help matches the em-dash cells below
+     it, which carry the same explanation. */
+  #otable thead th.dead{cursor:help}
+  /* in-cell magnitude. The bar's LENGTH is the value and its SIDE of the zero
+     tick is the sign, so the mark is one neutral colour — sign is already
+     carried by the number's colour, and greying the bar keeps --pos/--neg
+     meaning sign and nothing else. Track sits left of the number, never behind
+     it, so the bar can be full-strength (measured 4.45:1 dark, 4.51:1 light, and
+     4.05:1 / 3.75:1 on a hovered row) instead of a wash the number has to fight. */
+  #otable td.sortcol{position:relative;padding-left:62px}
+  /* rail / zero tick / bar, same three-part form as the team page's factor profile.
+     The rail is what makes it read as a chart: without it the bar and the tick
+     together looked like a little flag glyph floating next to the number.
+     The rail is a HAIRLINE FRAME, not a filled track. A fill dark enough to sit under
+     the bar is invisible (that was the bug); a fill light enough to clear 3:1 would be a
+     slab the bar could not read against. A frame lets rail, tick and bar each composite
+     onto the row itself, so all three are measurable against one background. */
+  .mb{position:absolute;left:9px;top:50%;margin-top:-5px;width:44px;height:10px;
+    box-shadow:inset 0 0 0 1px var(--rail)}
+  /* The tick overhangs the frame by 2px top and bottom — an axis tick, not an inlay. That
+     overhang is what makes zero survive a POSITIVE bar: the bar starts at the tick and used to
+     paint straight over it (both at left:50%), so a positive row had no tick pixel anywhere.
+     Now the tick is above the bar in paint order AND its ends are outside the bar entirely. */
+  .mb::before{content:'';position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;
+    background:var(--rail);z-index:2}
+  /* inset 1px vertically so the fill sits INSIDE the frame instead of overpainting its top and
+     bottom edges — a frame you raised to 3:1 and then covered is no frame */
+  .mb i{position:absolute;top:1px;bottom:1px;min-width:1px;background:var(--bar);z-index:1}
+  /* a cell the active basis structurally does not carry (ORAPM/DRAPM in box mode)
+     — an em-dash, deliberately heavier than fmt()'s en-dash for an ordinary
+     missing value */
+  #otable td.na{color:var(--muted);cursor:help}
+  .nohit{color:var(--muted);font-size:var(--fs-2);padding:26px 10px;text-align:center}
+
+  @media(max-width:560px){
+    .filters{padding:var(--sp-3);gap:var(--sp-3)}
+    .filters .asof{margin-left:0}
+    .findbox{margin-left:0;width:100%}
+    .findbox input{flex:1 1 auto;width:auto}
+    .tablebox{--rkw:36px;--pnw:140px}
+    .tablebox.wide{--pnw:160px}
+    #otable th,#otable td{padding:6px 7px}
+    #otable td.sortcol{padding-left:56px}
+    .mb{left:7px;width:40px}
+  }
 </style></head>
 <body>
 <nav id="topnav" data-active="tables"></nav>
@@ -40,33 +191,39 @@
 <script src="nav.js"></script>
 <div class="wrap">
   <h1>RAPM <b>tables</b></h1>
-  <p class="sub" id="sub">Six-factor RAPM leaderboards on the NBA-equivalent scale — college &amp; G-League translated.</p>
-
-  <div class="toolbar">
-    <span class="asof" id="asof"></span>
-  </div>
+  <p class="sub">Six-factor RAPM leaderboards on the NBA-equivalent scale — college &amp; G-League translated.</p>
 
   <!-- ===================== OVERALL ===================== -->
   <section id="view-overall">
-    <div class="selrow">
-      <span class="seglab">Table</span>
-      <div class="seg" id="tableseg"></div>
-      <div class="findbox"><input id="find" type="text" placeholder="Search this table…" autocomplete="off"></div>
-    </div>
-    <div class="selrow">
-      <span class="seglab">Rating</span>
+    <div class="filters">
+      <!-- Order is a wrapping decision, not a reading one: the bar is too wide for one line at
+           1040px, and this order makes it break into two BALANCED rows (picker + search, then
+           rating + stamp) instead of one full row and one nearly empty one. -->
+      <div class="fld"><span class="seglab">Table</span><div class="seg" id="tableseg"></div></div>
+      <div class="findbox">
+        <input id="find" type="text" placeholder="Search this table…" autocomplete="off">
+        <span class="hits" id="hits"></span>
+      </div>
       <!-- Same .seg classes and the same localStorage key ('rapm_mode') as the Explorer's
            #modeseg, so a mode chosen on one page is already selected on the other. Latent is
            deliberately absent here: there is no season-aggregate latent artifact and latent is
            movers-only, so it would be an empty column, not a mode. -->
-      <div class="seg" id="modeseg">
-        <button data-mode="pure" type="button">Pure RAPM</button>
-        <button data-mode="prior" type="button">Prior-informed</button>
-        <button data-mode="box" type="button">Box prior</button>
+      <div class="fld"><span class="seglab">Rating</span>
+        <div class="seg" id="modeseg">
+          <button data-mode="pure" type="button">Pure RAPM</button>
+          <button data-mode="prior" type="button">Prior-informed</button>
+          <button data-mode="box" type="button">Box prior</button>
+        </div>
       </div>
+      <span class="asof" id="asof"></span>
     </div>
-    <div class="modehint" id="modehint"></div>
-    <p class="tcap" id="tcap"></p>
+
+    <div class="notes">
+      <p id="tcap"></p>
+      <p id="modehint"></p>
+      <p id="bandnote"></p>
+    </div>
+
     <div class="scroll"><div class="tablebox"><table class="tbl" id="otable"></table></div></div>
   </section>
 
@@ -80,7 +237,7 @@
 <script>
 "use strict";
 const TIP={
-  net:"Net RAPM = ORAPM (oTS+oTOV+oSC) + DRAPM (dTS+dTOV+dSC), points/100 on the NBA-equivalent scale.",
+  net:"Net RAPM = ORAPM (oTS+oTOV+oSC) + DRAPM (dTS+dTOV+dSC), points/100 on the NBA-equivalent scale. The ± is the 95% band (1.96 standard errors).",
   ORAPM:"Offensive RAPM = oTS + oTOV + oSC, points/100 on the NBA-equivalent scale.",
   DRAPM:"Defensive RAPM = dTS + dTOV + dSC, points/100 on the NBA-equivalent scale.",
   oTS:"Offensive true-shooting RAPM — points/100 from shot-making efficiency (NBA scale).",
@@ -106,6 +263,9 @@ let tableKey=null;        // current overall table key
 let query='';             // overall search
 let sortKey=null;         // overall sort column (null = file order by rank)
 let sortDir=-1;           // -1 desc, +1 asc
+let POOL=0;               // rows this mode ranks into the cap = the search hit count's denominator
+let POOLROWS=[];          // …those same rows, BEFORE the search filter (bar domain + band note)
+const Z95=1.959964;       // 95% band = Z95 x se_net, same constant the retired Draft page used
 
 /* =========================================================================
    RATING MODE  (mirrors the Explorer's #modeseg; shares localStorage 'rapm_mode')
@@ -181,13 +341,15 @@ function buildSeg(id, items, getLabel, cur, onpick){
 /* =========================================================================
    OVERALL view
    ========================================================================= */
+// grp marks the first column of a group — it carries the group's boundary rule and, in the
+// header, its spanner label. tot marks the group SUBTOTAL, which outranks its three factors.
 const OCOLS=[
   {key:'net',   label:'Net',   grp:false, net:true},
-  {key:'ORAPM', label:'ORAPM', grp:true},
+  {key:'ORAPM', label:'ORAPM', grp:true, tot:true, span:'Offense'},
   {key:'oTS',   label:'oTS',   grp:false},
   {key:'oTOV',  label:'oTOV',  grp:false},
   {key:'oSC',   label:'oSC',   grp:false},
-  {key:'DRAPM', label:'DRAPM', grp:true},
+  {key:'DRAPM', label:'DRAPM', grp:true, tot:true, span:'Defense'},
   {key:'dTS',   label:'dTS',   grp:false},
   {key:'dTOV',  label:'dTOV',  grp:false},
   {key:'dSC',   label:'dSC',   grp:false}
@@ -207,14 +369,17 @@ function sortedRows(){
   // row is shown iff this mode ranks it — that is what makes switching mode an honest re-rank
   // instead of a re-sort inside a set some other metric chose.
   let rows=tb.rows.filter(r=>{ const k=vals(r,m).rank; return k!=null && (cap==null||k<=cap); });
+  POOL=rows.length;                       // denominator for the search hit count
+  POOLROWS=rows;                          // the mode's whole board: what the chart is scaled to
   if(query){
     const q=query.toLowerCase();
     rows=rows.filter(r=>String(r.name||'').toLowerCase().includes(q)
                      || String(r.sub||'').toLowerCase().includes(q));
   }
-  if(sortKey){
+  const sk=activeSort();
+  if(sk){
     rows.sort((a,b)=>{
-      const av=vals(a,m)[sortKey], bv=vals(b,m)[sortKey];
+      const av=vals(a,m)[sk], bv=vals(b,m)[sk];
       const an=(av==null||isNaN(av)), bn=(bv==null||isNaN(bv));
       if(an&&bn) return 0; if(an) return 1; if(bn) return -1;   // nulls last
       return (av-bv)*sortDir;
@@ -234,6 +399,52 @@ function computeMiss(){
   if(!tb) return;
   OCOLS.forEach(c=>{ MISS[c.key]=tb.rows.every(r=>vals(r,m)[c.key]==null); });
 }
+// A column the basis does not carry cannot sort anything: its comparator returned 0 for every
+// pair, so the rows fell back to DOM order and the # column read 1, 2, 5, 4, 6, 48 under a header
+// wearing the full sorted treatment. sortKey itself is KEPT — same rule as MODE — so switching
+// back to a basis that carries the column restores the sort the reader actually chose.
+function activeSort(){ return (sortKey && !MISS[sortKey]) ? sortKey : null; }
+
+// Magnitude cue for the sorted column only. Scale is SYMMETRIC about zero and set by the largest
+// absolute value in the MODE'S WHOLE BOARD — never by the search result. Scaling to the filtered
+// set meant one hit painted a full-length bar: searching "Christian Braun" (Net −0.86, 186th of
+// 500) drew exactly the half-rail Jokic's +10.53 gets unfiltered, i.e. the same length meaning two
+// different values with nothing on screen naming the domain. Search now filters the list without
+// touching the chart. Mode and table switches still rescale, because each is a different board.
+function bar(v,M){
+  if(v==null||isNaN(v)||!M) return '';
+  const w=Math.min(Math.abs(v)/M,1)*50;
+  return '<span class="mb"><i style="left:'+((v>=0?50:50-w).toFixed(1))+'%;width:'+w.toFixed(1)+'%"></i></span>';
+}
+
+// What the ordering is worth, derived from the board on screen so it can never outlive the
+// numbers. The retired Draft page sold itself on "with 95% bands" and said the bands overlap for
+// nearly every prospect; se_net has been in this feed the whole time, and printing a hard 1-54
+// with no band was the one honesty claim this page dropped when it absorbed that one.
+function bandNote(rows,m){
+  const iv=[];
+  for(const r of rows){ const V=vals(r,m);
+    if(V.net!=null&&!isNaN(V.net)&&V.se_net!=null&&!isNaN(V.se_net)) iv.push([V.net,Z95*V.se_net]); }
+  if(iv.length<2) return '';
+  const med=a=>{ a=a.slice().sort((x,y)=>x-y); const i=a.length>>1;
+    return a.length%2?a[i]:(a[i-1]+a[i])/2; };
+  // Every band overlaps every other exactly when the highest lower bound is still under the lowest
+  // upper bound (1-D Helly) — one pass, no pairwise loop over a 500-row board.
+  const lo=iv.reduce((x,p)=>Math.max(x,p[0]-p[1]),-Infinity);
+  const hi=iv.reduce((x,p)=>Math.min(x,p[0]+p[1]), Infinity);
+  let tail;
+  if(lo<=hi){
+    tail='On this list every band overlaps every other, so the ordering is a display order, not a ranking.';
+  }else{
+    const d=iv.slice().sort((a,b)=>b[0]-a[0]);
+    let adj=0; for(let i=0;i<d.length-1;i++) if(d[i][0]-d[i][1] <= d[i+1][0]+d[i+1][1]) adj++;
+    tail=(adj===d.length-1)
+      ? 'Neighbouring bands overlap all the way down this list, so only rows far apart are separated.'
+      : 'Neighbouring bands overlap for '+adj+' of '+(d.length-1)+' pairs, so most adjacent rows are not separated.';
+  }
+  return 'The ± after each Net is its 95% band — median ±'+med(iv.map(p=>p[1])).toFixed(2)+
+         ' here against a median |Net| of '+med(iv.map(p=>Math.abs(p[0]))).toFixed(2)+'. '+tail;
+}
 
 function renderOverall(){
   const tb=curTable();
@@ -243,54 +454,81 @@ function renderOverall(){
   cap.textContent=(tb.sub||'')+((tb.cap&&tb.rows.length>tb.cap)?CAPNOTE(tb.cap):'');
 
   const shown=sortedRows();   // full ranked list — static, no cap
+  const m=activeMode();
+  const skey=activeSort()||'net';
+  // symmetric domain for the sorted column's bars — POOLROWS, not `shown`: the chart is scaled to
+  // the board, so searching cannot rescale it (see bar()).
+  let M=0;
+  for(const r of POOLROWS){ const v=vals(r,m)[skey];
+    if(v!=null&&!isNaN(v)) M=Math.max(M,Math.abs(v)); }
+  document.getElementById('bandnote').textContent=bandNote(POOLROWS,m);
 
-  // header
-  let head='<thead><tr>'+
-    '<th class="l">#</th>'+
-    '<th class="l">Player</th>';
+  document.getElementById('hits').textContent =
+    query ? (shown.length+' of '+POOL) : '';
+  // the draft board carries "#pick · school" beside the name and needs the wider frozen column
+  const box=document.querySelector('.tablebox');
+  box.classList.toggle('wide', tb.rows.some(r=>r.sub));
+
+  // header: group spanners over the columns they own, then the columns
+  let ghead='<tr class="ghead"><th class="rk"></th><th class="pnh"></th>';
+  let chead='<tr class="chead"><th class="rk">#</th><th class="l pnh">Player</th>';
+  let gskip=0;                 // columns already covered by the spanner that opened this group
   OCOLS.forEach(c=>{
-    const active=(sortKey===c.key);
-    const emph=(sortKey?active:c.net);   // bold the active sort header; default = net (file order)
+    const active=(skey===c.key);
     const arr=active?'<span class="arr">'+(sortDir<0?'▼':'▲')+'</span>':'';
     const tip=TIP[c.key]?' <span class="help" data-tip="'+esc(TIP[c.key])+'">?</span>':'';
-    head+='<th class="sortable'+(c.grp?' grp':'')+(emph?' net':'')+'" data-k="'+c.key+'">'+c.label+tip+arr+'</th>';
+    if(gskip>0) gskip--;                                        // inside a spanner
+    else if(c.span){ ghead+='<th class="g grp" colspan="4">'+c.span+'</th>'; gskip=3; }
+    else ghead+='<th></th>';                                    // Net stands alone
+    // A dead column takes neither .sortable nor a data-k, so it is never wired for click and
+    // never wears the sorted treatment — the em-dashes under it are the whole column.
+    const dead=MISS[c.key];
+    chead+='<th class="'+(dead?'dead':'sortable')+(c.grp?' grp':'')+(active?' sorted':'')+'"'
+          +(dead?' title="Not carried on the '+esc(MODELAB[m])+' basis"':' data-k="'+c.key+'"')
+          +'>'+c.label+tip+arr+'</th>';
   });
-  head+='</tr></thead>';
+  const head='<thead>'+ghead+'</tr>'+chead+'</tr></thead>';
 
   // body
   let body='';
   if(!shown.length){
     body='<tr><td colspan="11"><div class="nohit">No players match “'+esc(query)+'”.</div></td></tr>';
   }else{
-    const m=activeMode();
-    for(const r of shown){
-      const V=vals(r,m);
+    for(let i=0;i<shown.length;i++){
+      const r=shown[i], V=vals(r,m);
       // Name links to the player's Explorer profile. The exporter only emits r.pid for ids that
       // exist in the deployed players.json, so a missing pid = no profile -> plain text, never a
       // dead link (a bogus ?p= silently lands on the Explorer's Jokic default). Styling comes from
       // the global site.css `a` rule, same as the team pages.
       const nm=esc(r.name);
       const pcell=r.pid?'<a href="index.html?p='+encodeURIComponent(r.pid)+'">'+nm+'</a>':nm;
-      body+='<tr>'+
-        '<td class="rank">'+(V.rank!=null?V.rank:'')+'</td>'+
+      // Emphasis follows POSITION in the list on screen, not the stored rank: re-sort by dTS and
+      // the ten names at the top are the ten best at dTS, which is what "the top of the board"
+      // means. The # column keeps showing the rating's own rank, which is the honest number.
+      body+='<tr'+(((i+1)%10===0)?' class="dec"':'')+'>'+
+        '<td class="rank'+(i<10?' top':'')+'">'+(V.rank!=null?V.rank:'')+'</td>'+
         '<td class="l pn">'+pcell+
           (r.sub?'<span class="sub2">'+esc(r.sub)+'</span>':'')+'</td>';
       OCOLS.forEach(c=>{
-        const v=V[c.key];
-        const act=(sortKey?(sortKey===c.key):c.net);   // emphasize the active sort col; default = net (file order)
+        const v=V[c.key], act=(skey===c.key);
+        let cls=(act?'net sortcol ':(c.tot?'tot ':''))+(c.grp?'grp ':'');
         // A column the active basis does not carry (ORAPM/DRAPM under box) renders an em-dash,
         // not a number: the split is absent from that basis, so there is nothing honest to print.
         if(v==null && MISS[c.key]){
-          body+='<td class="'+(act?'net ':'')+(c.grp?'grp ':'')+'na" title="Not carried on the '
-               +MODELAB[m]+' basis">—</td>';
+          body+='<td class="'+cls+'na" title="Not carried on the '+MODELAB[m]+' basis">—</td>';
         }else{
-          body+='<td class="'+(act?'net ':'')+(c.grp?'grp ':'')+signCls(v)+'">'+fmt(v)+'</td>';
+          // The band the feed already carries, on the number it belongs to, in the page's own
+          // register (two decimals). Only where the row actually has one — never a filled-in zero.
+          const se=(c.net && V.se_net!=null && !isNaN(V.se_net))
+            ? '<span class="se">±'+(Z95*V.se_net).toFixed(2)+'</span>' : '';
+          body+='<td class="'+cls+signCls(v)+'">'+(act?bar(v,M):'')+fmt(v)+se+'</td>';
         }
       });
       body+='</tr>';
     }
   }
   document.getElementById('otable').innerHTML=head+'<tbody>'+body+'</tbody>';
+  fitScroll();
 
   // wire sortable headers
   document.querySelectorAll('#otable th.sortable').forEach(th=>{
@@ -302,6 +540,22 @@ function renderOverall(){
     };
   });
 }
+
+// The wide-screen rule drops .scroll's overflow so the page becomes the sticky scrollport and the
+// header actually sticks. That is only safe while the table fits the column — if one ever does
+// not, put the scroll box back rather than letting the whole PAGE scroll sideways.
+function fitScroll(){
+  const sc=document.querySelector('.scroll'), t=document.getElementById('otable');
+  if(!sc||!t) return;
+  sc.classList.remove('overflowing');
+  if(t.offsetWidth > sc.clientWidth+1) sc.classList.add('overflowing');
+}
+// fitScroll reads GEOMETRY, so it has to run after layout. On a 'resize' listener it ran before
+// reflow and left .overflowing one resize behind in both directions: after 1280->800 the box
+// genuinely scrolled (measured client 754 vs scroll 891) while the frozen name column still wore its
+// no-scroll edge — exactly when numbers start sliding under it — and after 800->1280 the edge
+// stayed on with nothing to scroll. A ResizeObserver delivers the post-layout box instead.
+new ResizeObserver(fitScroll).observe(document.querySelector('.scroll'));
 
 /* =========================================================================
    refresh

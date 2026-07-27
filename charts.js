@@ -1,10 +1,12 @@
 "use strict";
 /* charts.js — shared SVG drawing idioms for every Daily RAPM page (Plan 15).
- * Replaces ~5 near-duplicate chart impls: profile bars/radar, leaders spark,
- * draft whisker + mini net-curve, density gaussian, heatmap RdBu. The Explorer's
- * bespoke interactive multi-series chart stays local to index.html (it owns the
+ * Replaces the near-duplicate chart impls: percentile bar + profile radar,
+ * sparkline, density gaussian, heat-strip color ramps. The Explorer's bespoke
+ * interactive multi-series chart stays local to index.html (it owns the
  * crosshair/hover sync); everything STATELESS lives here. Exposed as `window.RC`.
  * Pure-math helpers are also CommonJS-exported for `node --check`/parity tests.
+ * Deliberately describes CAPABILITIES, not the pages that call them — the last
+ * header named a page (Draft) that has since been retired, and outlived it.
  *
  * League colors come from CSS vars at draw time via getComputedStyle so charts
  * follow the light/dark theme; LC{} is the JS fallback for non-DOM contexts.
@@ -85,7 +87,7 @@
   function inkOn(color) { return lum(color) > 0.58 ? "#0a0e16" : "#f3f6fb"; }
 
   /* ---- stateless SVG drawers --------------------------------------------- */
-  // sparkline (leaders / table by-factor). vals[], returns an <svg>.
+  // sparkline (by-factor trend cell). vals[], returns an <svg>.
   function spark(vals, color) {
     var W = 72, H = 18, pad = 2;
     if (!vals || vals.length < 2) return el("svg", { viewBox: "0 0 " + W + " " + H, width: W, height: H, class: "spark" });
@@ -101,6 +103,9 @@
   }
 
   // horizontal within-league percentile bar (profile). pct in [0,1]; returns <svg>.
+  // The median tick is var(--zero) because that is exactly what it marks — the league midpoint —
+  // and because the hard-coded #2b3a51 it replaces measured 1.44:1 on the dark --grid track it is
+  // painted on, i.e. the reference line was invisible in the default theme.
   function pctBar(val, pct, accent, label) {
     var W = 300, H = 20, px = Math.max(2, Math.round(pct * W));
     accent = accent || "var(--accent)";
@@ -108,7 +113,7 @@
       "aria-label": (label || "") + " " + val.toFixed(2) + ", " + Math.round(pct * 100) + "th percentile" });
     svg.appendChild(el("rect", { x: 0, y: 2, width: W, height: H - 4, fill: "var(--grid)", rx: 2 }));
     svg.appendChild(el("rect", { x: 0, y: 2, width: px, height: H - 4, fill: accent, rx: 2 }));
-    svg.appendChild(el("line", { x1: W / 2, y1: 0, x2: W / 2, y2: H, stroke: "#2b3a51", "stroke-width": 1 }));
+    svg.appendChild(el("line", { x1: W / 2, y1: 0, x2: W / 2, y2: H, stroke: "var(--zero)", "stroke-width": 1 }));
     return svg;
   }
 
@@ -125,7 +130,9 @@
     facs.forEach(function (f, k) {
       var a = -Math.PI / 2 + k * 2 * Math.PI / n;
       svg.appendChild(el("line", { x1: cx, y1: cy, x2: cx + Math.cos(a) * R, y2: cy + Math.sin(a) * R, stroke: "var(--line)", "stroke-width": 1 }));
-      var t = el("text", { x: cx + Math.cos(a) * (R + 18), y: cy + Math.sin(a) * (R + 18) + 4, "font-size": 12.5, fill: "#aebccd", "text-anchor": "middle" });
+      // var(--muted), not a hex: the six factor names are 12.5px TEXT, and the #aebccd they used
+      // to be hard-coded to measured 1.93:1 on the light --panel — unreadable in the light theme.
+      var t = el("text", { x: cx + Math.cos(a) * (R + 18), y: cy + Math.sin(a) * (R + 18) + 4, "font-size": 12.5, fill: "var(--muted)", "text-anchor": "middle" });
       t.textContent = f; svg.appendChild(t);
     });
     var pp = facs.map(function (f, k) { var a = -Math.PI / 2 + k * 2 * Math.PI / n, r = R * (pcts[f] || 0);
@@ -134,51 +141,11 @@
     mount.innerHTML = ""; mount.appendChild(svg);
   }
 
-  // CI whisker over a shared [d0,d1] domain (draft board). Returns an <svg>.
-  function whisker(net, lo, hi, dom) {
-    var W = 150, H = 12, d0 = dom[0], d1 = dom[1];
-    var x = function (v) { return (v - d0) / (d1 - d0) * W; };
-    var xl = x(lo), xh = x(hi), xn = x(net), xz = x(0);
-    var svg = el("svg", { class: "whisk", viewBox: "0 0 " + W + " " + H, preserveAspectRatio: "none",
-      width: W, height: H, role: "img", "aria-label": "net " + net.toFixed(2) + " CI " + lo.toFixed(1) + " to " + hi.toFixed(1) });
-    if (xz >= 0 && xz <= W) svg.appendChild(el("line", { x1: xz, y1: 0, x2: xz, y2: H, stroke: "var(--zero)", "stroke-width": 1, "stroke-dasharray": "2 2" }));
-    svg.appendChild(el("line", { x1: xl, y1: H / 2, x2: xh, y2: H / 2, stroke: "var(--whisk)", "stroke-width": 1.5 }));
-    svg.appendChild(el("line", { x1: xl, y1: 2, x2: xl, y2: H - 2, stroke: "var(--whisk)", "stroke-width": 1.5 }));
-    svg.appendChild(el("line", { x1: xh, y1: 2, x2: xh, y2: H - 2, stroke: "var(--whisk)", "stroke-width": 1.5 }));
-    svg.appendChild(el("circle", { cx: xn, cy: H / 2, r: 2.6, fill: "var(--accent)" }));
-    return svg;
-  }
-
-  // minimal static multi-league net curve (draft panel / team trajectory).
-  // pts: [{d:ordinal|isoIndex, v:net, lg}]. Draws one polyline per league into mount svg.
-  function miniCurve(mount, pts, opts) {
-    opts = opts || {};
-    var W = mount.clientWidth || 860, H = opts.h || 240, m = { t: 14, r: 14, b: 24, l: 38 };
-    mount.setAttribute("viewBox", "0 0 " + W + " " + H);
-    pts = pts.filter(function (p) { return isFinite(p.d) && isFinite(p.v); });
-    if (!pts.length) { mount.innerHTML = ""; return false; }
-    var d0 = Math.min.apply(null, pts.map(function (p) { return p.d; }));
-    var d1 = Math.max.apply(null, pts.map(function (p) { return p.d; }));
-    var v0 = Math.min.apply(null, pts.map(function (p) { return p.v; }));
-    var v1 = Math.max.apply(null, pts.map(function (p) { return p.v; }));
-    if (v0 === v1) { v0 -= 1; v1 += 1; }
-    var vp = (v1 - v0) * 0.1; v0 -= vp; v1 += vp;
-    var X = function (d) { return m.l + (d1 === d0 ? 0 : (d - d0) / (d1 - d0)) * (W - m.l - m.r); };
-    var Y = function (v) { return m.t + (1 - (v - v0) / (v1 - v0)) * (H - m.t - m.b); };
-    var g = "";
-    if (v0 <= 0 && v1 >= 0) g += '<line x1="' + m.l + '" y1="' + Y(0) + '" x2="' + (W - m.r) + '" y2="' + Y(0) + '" stroke="var(--grid)" stroke-dasharray="3 3"/>';
-    var byLg = {}; pts.forEach(function (p) { (byLg[p.lg] = byLg[p.lg] || []).push(p); });
-    for (var lg in byLg) {
-      var seg = byLg[lg].sort(function (a, b) { return a.d - b.d; });
-      var path = seg.map(function (p, i) { return (i ? "L" : "M") + X(p.d).toFixed(1) + " " + Y(p.v).toFixed(1); }).join(" ");
-      g += '<path d="' + path + '" fill="none" stroke="' + leagueColor(lg) + '" stroke-width="1.8"/>';
-    }
-    g += '<line x1="' + m.l + '" y1="' + m.t + '" x2="' + m.l + '" y2="' + (H - m.b) + '" stroke="var(--line)"/>';
-    g += '<text x="' + m.l + '" y="' + (m.t + 9) + '" fill="var(--muted)" font-size="11">' + v1.toFixed(1) + '</text>';
-    g += '<text x="' + m.l + '" y="' + (H - m.b) + '" fill="var(--muted)" font-size="11">' + v0.toFixed(1) + '</text>';
-    mount.innerHTML = g;
-    return true;
-  }
+  // REMOVED 2026-07-27: whisker() and miniCurve(). Both were built for the Draft page, which is
+  // retired; that page drew its own inline whisker and never called RC.* at all, so neither helper
+  // ever had a second caller and both had zero site-wide consumers when the page went. Deleting
+  // whisker() is also what retires the --whisk token and the .whisk class, which nothing else read.
+  // leagueColor() stays — miniCurve was its last internal caller, but model.html exercises it.
 
   // true-talent gaussian overlay (density compare). sel: [{net,se,color,name}]; draws into mount.
   function densityPlot(mount, sel) {
@@ -194,11 +161,11 @@
     var Y = function (v) { return mt + ph - (v / ymax) * ph; };
     var svg = el("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img",
       "aria-label": "true-talent density overlay; each player a Gaussian N(net, se^2)" });
-    svg.appendChild(el("line", { x1: X(0), y1: mt, x2: X(0), y2: mt + ph, stroke: "#2b3a51", "stroke-width": 1.5 }));
+    svg.appendChild(el("line", { x1: X(0), y1: mt, x2: X(0), y2: mt + ph, stroke: "var(--zero)", "stroke-width": 1.5 }));
     var z = el("text", { x: X(0), y: H - 9, "font-size": 11, fill: "var(--muted)", "text-anchor": "middle" });
     z.textContent = "0 (league avg)"; svg.appendChild(z);
     for (var v = Math.ceil(lo); v <= Math.floor(hi); v += 2) {
-      svg.appendChild(el("line", { x1: X(v), y1: mt + ph, x2: X(v), y2: mt + ph + 4, stroke: "#2b3a51" }));
+      svg.appendChild(el("line", { x1: X(v), y1: mt + ph, x2: X(v), y2: mt + ph + 4, stroke: "var(--zero)" }));
       var t = el("text", { x: X(v), y: H - 9, "font-size": 10.5, fill: "var(--faint)", "text-anchor": "middle" });
       t.textContent = (v > 0 ? "+" : "") + v; svg.appendChild(t);
     }
@@ -226,7 +193,7 @@
 
   var API = { NS: NS, LC: LC, el: el, leagueColor: leagueColor, pctile: pctile, gauss: gauss, Phi: Phi,
     rdbu: rdbu, redGreen: redGreen, lum: lum, inkOn: inkOn, spark: spark, pctBar: pctBar, radar: radar,
-    whisker: whisker, miniCurve: miniCurve, densityPlot: densityPlot, initTheme: initTheme, toggleTheme: toggleTheme };
+    densityPlot: densityPlot, initTheme: initTheme, toggleTheme: toggleTheme };
   if (typeof window !== "undefined") { window.RC = API; initTheme(); }
   if (typeof module !== "undefined" && module.exports) module.exports = API;
 

@@ -8,8 +8,11 @@
  * never per-page, so the bar can never drift again. Styling lives in site.css
  * (.topnav/.tab/...), which every page links — nav.js no longer injects CSS.
  *
- * Top bar (flattened 2026-07-26 — five tabs, no dropdown):
- *     Explorer · Tables · 2026-27 · Draft · Model
+ * Top bar (flattened 2026-07-26; Draft retired 2026-07-27 — four tabs, no dropdown):
+ *     Explorer · Tables · 2026-27 · Model
+ *
+ * The standalone Draft page is GONE, not hidden: its board was superseded by the "2026 Draft
+ * Class" table on table.html, so there is no page left to keep reachable (owner 2026-07-27).
  *
  * Pages that still EXIST and must stay reachable, but are deliberately not tabs. Every one of
  * them is entered by an in-page link, so dropping the tab does not orphan it:
@@ -30,7 +33,6 @@
     { key: "explorer", href: "index.html", label: "Explorer" },
     { key: "tables",   href: "table.html", label: "Tables" },
     { key: "proj",     href: "projection.html", label: "2026-27" },
-    { key: "draft",    href: "draft.html", label: "Draft" },
     { key: "model",    href: "model.html", label: "Model" }
   ];
 

@@ -11,20 +11,33 @@
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
 
 /* ---- Tokens ---------------------------------------------------------------- */
+/* CONTRAST FLOOR (2026-07-27). Every token that carries TEXT clears 4.5:1 against the WORST
+   surface it can land on, and that surface is --panel-3 in BOTH themes: it is the table
+   row-hover / .opt hover plate, so any cell ink meets it the moment a cursor crosses the row.
+   Measuring against --panel alone is what hid the misses before — light --pos read 3.35 on
+   --panel but only 2.79 on --panel-3, and every number on every board was below the floor.
+   Marks (chart strokes, borders, band fills) are held to 3:1 against what they composite onto.
+   Light --panel-3 #e3ebf5 is the DARKEST light surface; dark --panel-3 #141e2b is the LIGHTEST
+   dark one — so both are the binding case for their theme. Re-measure on both if you touch these. */
 :root{
   /* dark palette (default) */
   --bg:#080b11; --panel:#0e141d; --panel-2:#0c121b; --panel-3:#141e2b;
   --line:#1b2532; --line-2:#121a25; --navbg:#0a0e16;
-  --text:#e7eef7; --muted:#7c8ca2; --faint:#566377;
+  /* --muted/--faint lifted 2026-07-27: --faint measured 2.76 on --panel-3, i.e. every .note,
+     .cap, .foot and axis tick was under the text floor in dark exactly as --pos was in light.
+     --muted came with it (4.90 -> 6.31) because a --faint at the floor lands within dL* 2 of the
+     old --muted and the two rungs collapse into one grey; the ramp is now L* 94 / 65 / 56. */
+  --text:#e7eef7; --muted:#92a0b2; --faint:#78879d;
   --accent:#56b6ff; --accent-ink:#06121f; --grid:#161f2c;
   /* league colors — NBA blue / G-League orange / NCAA rose. Three different HUE
      FAMILIES on purpose: the old teal+purple pair sat 39 deg from NBA blue in Lab
      hue and collapsed to dE 1.1 under deuteranopia (i.e. identical). */
   --nba:#4aa8ff; --gleague:#ff9138; --college:#ff5f8f;
-  /* status / sign colors */
-  --pos:#3ddc97; --neg:#ff6b6b; --zero:#5d6b7e;
+  /* status / sign colors. --zero lifted 2026-07-27 (3.09 -> 4.98 on --panel-3): it prints as a
+     number in the same columns as --pos/--neg, so it is text and takes the text floor. */
+  --pos:#3ddc97; --neg:#ff6b6b; --zero:#7f8da1;
   /* page-specific accents kept as tokens so they theme too */
-  --pure:#56b6ff; --box:#f2a154; --amp:#2dd4bf; --amber:#f0b429; --whisk:#56b6ff;
+  --pure:#56b6ff; --box:#f2a154; --amp:#2dd4bf; --amber:#f0b429;
   /* type scale — bumped TWICE on 2026-07-26. First notch: "the text and numbers are small" (the old
      scale bottomed out at 9-11px on readouts and axis ticks). Second: "slightly bigger text overall
      on the page instead of condensing everything" — so the answer to a crowded panel is a bigger
@@ -42,11 +55,21 @@
 :root[data-theme=light]{
   --bg:#f5f8fc; --panel:#ffffff; --panel-2:#eef3f9; --panel-3:#e3ebf5;
   --line:#d7e0ec; --line-2:#e6edf5; --navbg:#ffffff;
-  --text:#0e1828; --muted:#566476; --faint:#8a98ab;
-  --accent:#1f7ae0; --accent-ink:#ffffff; --grid:#e6edf5;
+  /* --faint was 2.44 on --panel-3 — the worst miss on the site, and it carries .note/.cap/.foot
+     and every axis tick. --muted moved with it for the same ramp reason as dark: L* 8 / 37 / 44. */
+  --text:#0e1828; --muted:#4b5766; --faint:#5b6a7e;
+  --accent:#1b68c0; --accent-ink:#ffffff; --grid:#e6edf5;
+  /* league colors stay put: with .gl/.nb/.co unused they are MARKS only (chart strokes, badge
+     tints), and the worst of them clears the 3:1 mark floor on --panel-3. --accent no longer
+     equals --nba on purpose — one is the interactive-affordance ink, the other is league identity. */
   --nba:#1f7ae0; --gleague:#c05600; --college:#c81e5a;
-  --pos:#11a06a; --neg:#d4393a; --zero:#7a8aa0;
-  --pure:#1f7ae0; --box:#d9802f; --amp:#0e9e8c;
+  /* --pos was the reported bug: 3.35 on --panel, 2.79 on --panel-3. Both sign colors now sit at
+     4.58 on --panel-3 and within 0.1 L* of each other, so neither outweighs the other — a green
+     that reads heavier than its red is the same defect wearing the other sign. */
+  --pos:#0d784f; --neg:#c72b2c; --zero:#566478;
+  /* --amber had NO light override at all: #f0b429 measured 1.86 on --panel, so the projection
+     readout and the trade page's cold-minutes note were failing even the 3:1 MARK floor. */
+  --pure:#1f7ae0; --box:#9a581c; --amp:#0e9e8c; --amber:#88620a;
 }
 
 /* ---- Base ------------------------------------------------------------------ */
@@ -167,7 +190,7 @@ h1 small{font-size:13.5px;color:var(--muted);font-weight:500;margin-left:6px}
 .btn:hover{color:var(--text);border-color:var(--accent)}
 .btn.active{color:var(--text);border-color:var(--accent);background:var(--panel-3)}
 
-/* ---- The ONE table (Tables / Teams / Trade / Draft) ----------------------- */
+/* ---- The ONE table (Tables / Teams / Trade) ------------------------------- */
 .scroll{overflow-x:auto;border:1px solid var(--line);background:var(--panel);border-radius:var(--r-1)}
 table.tbl{border-collapse:collapse;width:100%;font-size:13.5px;
   font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
@@ -199,6 +222,14 @@ table.tbl tr.total td{border-top:1px solid var(--line);border-bottom:none;font-w
 .banner{margin-top:16px;padding:10px 13px;border-radius:var(--r-1);font-size:var(--fs-2);line-height:1.5}
 .banner.ok{background:#0d2018;border:1px solid #1f4d38;color:var(--pos)}
 .banner.warn{background:#241c08;border:1px solid #5c4912;color:var(--amber)}
+/* The two plates were hard-coded dark and had no light override, so the light theme was painting
+   a dark green/brown block into a white page and, once --pos and --amber came down to the text
+   floor, the ink on those plates fell to 3.09 and 3.05. Light gets its own tinted plates: the ink
+   measures 4.71 (ok) and 4.75 (warn) on them. The 1px edge is a plate boundary, not a state
+   indicator — the fill and the ink carry the state — so it is held at the same ~1.8 presence the
+   dark plates have always shipped rather than at the 3:1 mark floor. */
+:root[data-theme=light] .banner.ok{background:#dff2e7;border-color:#7ec4a8}
+:root[data-theme=light] .banner.warn{background:#faedcd;border-color:#d9b757}
 .callout{font-size:var(--fs-2);color:#cfdae7;background:var(--panel);border-left:3px solid var(--accent);
   padding:9px 13px;margin:14px 0;line-height:1.55;max-width:840px;border-radius:0 var(--r-1) var(--r-1) 0}
 :root[data-theme=light] .callout{color:#2a3a52}
@@ -210,7 +241,11 @@ table.tbl tr.total td{border-top:1px solid var(--line);border-bottom:none;font-w
    how visible the same envelope is. */
 .ciband{fill:#8aa0bb;fill-opacity:.07}
 :root[data-theme=light] .ciband{fill:#61728a;fill-opacity:.15}
-.crosshair{stroke:#3a4862;stroke-width:1;stroke-dasharray:3 3;pointer-events:none}
+/* var(--faint), not #3a4862: the hard-coded hairline measured 9.20 on the light --panel but 2.01
+   on the dark one, so the hover crosshair — the affordance that tells you which date you are
+   reading — was under the 3:1 mark floor in the DEFAULT theme and far over-inked in the other.
+   Themed, it lands at 5.5 light / 5.1 dark: the same weight in both. */
+.crosshair{stroke:var(--faint);stroke-width:1;stroke-dasharray:3 3;pointer-events:none}
 .hdot{pointer-events:none;stroke:var(--bg);stroke-width:1.2}
 .spark{display:inline-block;vertical-align:middle}
 
