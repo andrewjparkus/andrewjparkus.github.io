@@ -23,6 +23,6 @@
   "replay_generated": "2026-07-18T17:59:48+00:00",
   "basis_verified": false,
   "replay_recorded_basis": null,
-  "current_board_basis": "46c19c71317f26e2dbea3eadadba715f9d76d6fff93179112a81d81e1f6edfeb",
+  "current_board_basis": "15b414372b139204b65ea464b30ba9bb9c0d193f3626ec603a84502a61d7d1b8",
   "basis_note": "NOT VERIFIED: RESUMED from checkpoint -- these margins were not computed from the board hashed here; delete the checkpoints and re-run to earn a verified basis. Treat these margins as as-of `replay_generated`, not today."
 }

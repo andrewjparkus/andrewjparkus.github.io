@@ -31,9 +31,9 @@
       "gp_artifact": "daily_v5/out/gp_projection.parquet",
       "gp_artifact_sha256": "a0fc4beb00cc80086f1ab512ff694cb2b1907bc08859c93fd274b7b01b7b51f8",
       "forward_model_artifact": "daily_v5/out/forward_xgb.parquet",
-      "forward_model_artifact_sha256": "7e8a0bd6af268d2496e636a37b1d7fdb742a0f330c56c71a9d564034945bc38b",
-      "forward_model_input_stamp": "380976b5b1d32069c0c0216d1b3d3a669c83729a15743149343f50b24cfb294c",
-      "forward_model_input_stamp_written": "2026-07-26T22:17:23.916886+00:00",
+      "forward_model_artifact_sha256": "2e117e527891c6f1b305925a5fe817745d8c7d4b190b1b53059c9651516a6e11",
+      "forward_model_input_stamp": "e0272bed481deb26992050bb1830516091c5cae44305948c3031a1ef41fa7205",
+      "forward_model_input_stamp_written": "2026-07-28T23:47:51.122365+00:00",
       "minutes_distribution_artifact": "daily_v5/out/minutes_distribution.parquet",
       "minutes_distribution_artifact_sha256": "cadf3f48fa1d450bf1f87f5151aa84f1ead7db756b4c7c1e56f1c4d0fb1ddb45",
       "depth_csv_artifact": "daily_v5/out/depthcharts_2026_27.csv",
@@ -137,8 +137,8 @@
     },
     "factors": {
       "net": {
-        "rmse": 1.0028,
-        "corr": 0.8875,
+        "rmse": 1.0023,
+        "corr": 0.8953,
         "n": 17204,
         "units": {
           "rmse": "points per 100 possessions",
@@ -146,8 +146,8 @@
         }
       },
       "oTS": {
-        "rmse": 0.7214,
-        "corr": 0.8746,
+        "rmse": 0.7173,
+        "corr": 0.8845,
         "n": 17204,
         "units": {
           "rmse": "points per 100 possessions",
@@ -155,8 +155,8 @@
         }
       },
       "oTOV": {
-        "rmse": 0.2654,
-        "corr": 0.8838,
+        "rmse": 0.2659,
+        "corr": 0.8966,
         "n": 17204,
         "units": {
           "rmse": "points per 100 possessions",
@@ -164,8 +164,8 @@
         }
       },
       "oSC": {
-        "rmse": 0.3759,
-        "corr": 0.8577,
+        "rmse": 0.3765,
+        "corr": 0.8714,
         "n": 17204,
         "units": {
           "rmse": "points per 100 possessions",
@@ -173,8 +173,8 @@
         }
       },
       "dTS": {
-        "rmse": 0.5371,
-        "corr": 0.8826,
+        "rmse": 0.5321,
+        "corr": 0.8923,
         "n": 17204,
         "units": {
           "rmse": "points per 100 possessions",
@@ -182,8 +182,8 @@
         }
       },
       "dTOV": {
-        "rmse": 0.2283,
-        "corr": 0.8732,
+        "rmse": 0.2252,
+        "corr": 0.8914,
         "n": 17204,
         "units": {
           "rmse": "points per 100 possessions",
@@ -191,8 +191,8 @@
         }
       },
       "dSC": {
-        "rmse": 0.2781,
-        "corr": 0.7984,
+        "rmse": 0.2787,
+        "corr": 0.8089,
         "n": 17204,
         "units": {
           "rmse": "points per 100 possessions",
@@ -201,32 +201,32 @@
       }
     },
     "net": {
-      "rmse": 1.0028,
-      "corr": 0.8875
+      "rmse": 1.0023,
+      "corr": 0.8953
     },
     "oTS": {
-      "rmse": 0.7214,
-      "corr": 0.8746
+      "rmse": 0.7173,
+      "corr": 0.8845
     },
     "oTOV": {
-      "rmse": 0.2654,
-      "corr": 0.8838
+      "rmse": 0.2659,
+      "corr": 0.8966
     },
     "oSC": {
-      "rmse": 0.3759,
-      "corr": 0.8577
+      "rmse": 0.3765,
+      "corr": 0.8714
     },
     "dTS": {
-      "rmse": 0.5371,
-      "corr": 0.8826
+      "rmse": 0.5321,
+      "corr": 0.8923
     },
     "dTOV": {
-      "rmse": 0.2283,
-      "corr": 0.8732
+      "rmse": 0.2252,
+      "corr": 0.8914
     },
     "dSC": {
-      "rmse": 0.2781,
-      "corr": 0.7984
+      "rmse": 0.2787,
+      "corr": 0.8089
     }
   },
   "next_season_ci": {
@@ -235,19 +235,19 @@
       "net": {
         "50": {
           "nominal": 0.5,
-          "realized": 0.9111,
+          "realized": 0.9116,
           "n": 17204,
           "units": "fraction"
         },
         "80": {
           "nominal": 0.8,
-          "realized": 0.991,
+          "realized": 0.9922,
           "n": 17204,
           "units": "fraction"
         },
         "90": {
           "nominal": 0.9,
-          "realized": 0.998,
+          "realized": 0.9981,
           "n": 17204,
           "units": "fraction"
         }
@@ -255,19 +255,19 @@
       "oTS": {
         "50": {
           "nominal": 0.5,
-          "realized": 0.8638,
+          "realized": 0.8668,
           "n": 17204,
           "units": "fraction"
         },
         "80": {
           "nominal": 0.8,
-          "realized": 0.9769,
+          "realized": 0.9772,
           "n": 17204,
           "units": "fraction"
         },
         "90": {
           "nominal": 0.9,
-          "realized": 0.9927,
+          "realized": 0.9926,
           "n": 17204,
           "units": "fraction"
         }
@@ -275,19 +275,19 @@
       "oTOV": {
         "50": {
           "nominal": 0.5,
-          "realized": 0.8604,
+          "realized": 0.863,
           "n": 17204,
           "units": "fraction"
         },
         "80": {
           "nominal": 0.8,
-          "realized": 0.9751,
+          "realized": 0.9776,
           "n": 17204,
           "units": "fraction"
         },
         "90": {
           "nominal": 0.9,
-          "realized": 0.9922,
+          "realized": 0.9937,
           "n": 17204,
           "units": "fraction"
         }
@@ -295,19 +295,19 @@
       "oSC": {
         "50": {
           "nominal": 0.5,
-          "realized": 0.8722,
+          "realized": 0.8726,
           "n": 17204,
           "units": "fraction"
         },
         "80": {
           "nominal": 0.8,
-          "realized": 0.9797,
+          "realized": 0.9809,
           "n": 17204,
           "units": "fraction"
         },
         "90": {
           "nominal": 0.9,
-          "realized": 0.9949,
+          "realized": 0.9956,
           "n": 17204,
           "units": "fraction"
         }
@@ -315,13 +315,13 @@
       "dTS": {
         "50": {
           "nominal": 0.5,
-          "realized": 0.9346,
+          "realized": 0.9352,
           "n": 17204,
           "units": "fraction"
         },
         "80": {
           "nominal": 0.8,
-          "realized": 0.9956,
+          "realized": 0.9952,
           "n": 17204,
           "units": "fraction"
         },
@@ -335,19 +335,19 @@
       "dTOV": {
         "50": {
           "nominal": 0.5,
-          "realized": 0.8905,
+          "realized": 0.8943,
           "n": 17204,
           "units": "fraction"
         },
         "80": {
           "nominal": 0.8,
-          "realized": 0.9874,
+          "realized": 0.988,
           "n": 17204,
           "units": "fraction"
         },
         "90": {
           "nominal": 0.9,
-          "realized": 0.9964,
+          "realized": 0.9962,
           "n": 17204,
           "units": "fraction"
         }
@@ -361,7 +361,7 @@
         },
         "80": {
           "nominal": 0.8,
-          "realized": 0.9949,
+          "realized": 0.9947,
           "n": 17204,
           "units": "fraction"
         },
@@ -374,38 +374,38 @@
       }
     },
     "net": {
-      "50": 0.9111,
-      "80": 0.991,
-      "90": 0.998
+      "50": 0.9116,
+      "80": 0.9922,
+      "90": 0.9981
     },
     "oTS": {
-      "50": 0.8638,
-      "80": 0.9769,
-      "90": 0.9927
+      "50": 0.8668,
+      "80": 0.9772,
+      "90": 0.9926
     },
     "oTOV": {
-      "50": 0.8604,
-      "80": 0.9751,
-      "90": 0.9922
+      "50": 0.863,
+      "80": 0.9776,
+      "90": 0.9937
     },
     "oSC": {
-      "50": 0.8722,
-      "80": 0.9797,
-      "90": 0.9949
+      "50": 0.8726,
+      "80": 0.9809,
+      "90": 0.9956
     },
     "dTS": {
-      "50": 0.9346,
-      "80": 0.9956,
+      "50": 0.9352,
+      "80": 0.9952,
       "90": 0.9994
     },
     "dTOV": {
-      "50": 0.8905,
-      "80": 0.9874,
-      "90": 0.9964
+      "50": 0.8943,
+      "80": 0.988,
+      "90": 0.9962
     },
     "dSC": {
       "50": 0.9266,
-      "80": 0.9949,
+      "80": 0.9947,
       "90": 0.9992
     }
   },
@@ -569,7 +569,7 @@
     "darko_note": "<strong>DARKO daily</strong> is a per-game-date re-score at 96.1% player coverage &mdash; it is the like-for-like comparison for game margins, since our own board also updates daily. <strong>DARKO frozen</strong> is pre-season-frozen with no in-season update, so its frozen-preseason, retro and Brier cells are all measured pre-season-frozen and it is disadvantaged on the walk-forward game-margin row. The <strong>Blend</strong> column is benchmark-only &mdash; not a product.",
     "darko_daily_coverage": 0.961,
     "overlap": {
-      "table_net_corr": 0.8875,
+      "table_net_corr": 0.8953,
       "table_n": 17204,
       "matched_years": [
         2021,
@@ -580,25 +580,25 @@
       ],
       "single_season_n": 2157,
       "n_fiveyr": 2157,
-      "fiveyr_r_allrows": 0.904289,
+      "fiveyr_r_allrows": 0.907951,
       "n_fiveyr_allrows": 3464,
-      "matched_fiveyr_r": 0.892502,
-      "matched_single_season_r": 0.497664,
-      "inflation": 0.394838,
+      "matched_fiveyr_r": 0.894344,
+      "matched_single_season_r": 0.501419,
+      "inflation": 0.392925,
       "per_factor_single_season": {
-        "oTS": 0.4939,
-        "oTOV": 0.4561,
-        "oSC": 0.3994,
-        "dTS": 0.302,
-        "dTOV": 0.4852,
-        "dSC": 0.2658
+        "oTS": 0.4938,
+        "oTOV": 0.4563,
+        "oSC": 0.4063,
+        "dTS": 0.2991,
+        "dTOV": 0.489,
+        "dSC": 0.2702
       },
       "best_factors": [
         "oTS",
         "dTOV"
       ],
       "noisiest_factor": "dSC",
-      "prose": "Net carries forward at <strong>r &asymp; 0.89</strong> against a five-year-trailing target (the table above, n&nbsp;=&nbsp;17,204) &mdash; but that is inflated by <em>window overlap</em>: the target board shares most of today's data. Scored over the same 2021\u20132025 transition blocks &mdash; the very same <strong>2,157</strong> player-seasons on both sides &mdash; the same board reaches <strong>r = 0.893</strong> against that overlapping target but only <strong>0.498</strong> against a genuinely <strong>non-overlapping single-season</strong> target &mdash; an overlap inflation of <strong>0.395</strong>, not skill. Shooting efficiency (oTS &asymp; 0.49) and forcing turnovers (dTOV &asymp; 0.49) carry forward best; defensive second-chance (dSC &asymp; 0.27) is the noisiest.",
+      "prose": "Net carries forward at <strong>r &asymp; 0.90</strong> against a five-year-trailing target (the table above, n&nbsp;=&nbsp;17,204) &mdash; but that is inflated by <em>window overlap</em>: the target board shares most of today's data. Scored over the same 2021\u20132025 transition blocks &mdash; the very same <strong>2,157</strong> player-seasons on both sides &mdash; the same board reaches <strong>r = 0.894</strong> against that overlapping target but only <strong>0.501</strong> against a genuinely <strong>non-overlapping single-season</strong> target &mdash; an overlap inflation of <strong>0.393</strong>, not skill. Shooting efficiency (oTS &asymp; 0.49) and forcing turnovers (dTOV &asymp; 0.49) carry forward best; defensive second-chance (dSC &asymp; 0.27) is the noisiest.",
       "_note": "gap = retro_net_report.json `inflation`: row-matched, so both legs are the SAME 2157 rows (n_fiveyr == n_single_season, enforced by _gate_overlap_identity). NOT next_season.net.corr - single_season_pooled_r: those are different panels (n=17204 vs n=2157) and subtracting them is a cross-sample error."
     },
     "forward_skill": {
@@ -609,8 +609,8 @@
       "stored_str": "0.498",
       "artifact": "daily_v5/out/oos/retro_net_report.json"
     },
-    "forecast_frozen": "2026-07-26",
-    "forecast_freeze_note": "Committed <strong>2026-07-26</strong>, before the 2026-27 season. \u201cRealized\u201d fills as games are played and the forecast is scored against actual wins \u2014 win or lose, the number was frozen in advance.",
+    "forecast_frozen": "2026-07-28",
+    "forecast_freeze_note": "Committed <strong>2026-07-28</strong>, before the 2026-27 season. \u201cRealized\u201d fills as games are played and the forecast is scored against actual wins \u2014 win or lose, the number was frozen in advance.",
     "provenance": {
       "frozen_preseason": "daily_v5/out/p2_0/verify_composite/frozen_preseason_all.json",
       "game_margin": "daily_v5/out/p2_0/darko_daily_rescore.json (+ composite_report.json for the blend)",
@@ -637,19 +637,19 @@
     "scorecard": {
       "path": "daily_v5/out/oos/scorecard_current.parquet",
       "exists": true,
-      "size": 3811,
-      "mtime": 1785104527.477584
+      "size": 3819,
+      "mtime": 1785282751.2209032
     },
     "manifest": {
       "path": "daily_v5/out/oos/manifest_current.json",
       "exists": true,
       "size": 7246,
-      "mtime": 1785104528.7381697
+      "mtime": 1785282752.517927
     },
     "git": {
-      "sha": "39c6252cacefc278f54e6c2e5cd531b84b52b3ce",
+      "sha": "fa6068ef02fa628cf5e82d7b90f78c201c93ff64",
       "dirty": true,
-      "dirty_entries": 35
+      "dirty_entries": 12
     },
     "game_model_params": {
       "hca": 1.5370466094308175,
