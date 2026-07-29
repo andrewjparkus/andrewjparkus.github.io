@@ -116,6 +116,62 @@
   <p>Net is <em>exactly</em> the sum of the six, never a separate solve. The decomposition follows
   Russell Thomas's additive RAPM, and the ridge solver core is his reference implementation.</p>
 
+  <h2 id="shrinkage">How hard each factor is shrunk</h2>
+  <p>A ridge solve needs a shrinkage strength — an <em>alpha</em> — for every factor, on offense and
+  defense separately. Shrink too little and a player who happened to be on the floor for a hot
+  stretch looks great; shrink too much and everyone collapses toward average. The sixteen alphas we
+  use were tuned by Russell Thomas against out-of-time scoring margin on 2021-26 NBA possessions.</p>
+
+  <p>Those alphas were fitted on the NBA, so applying them elsewhere is an assumption rather than a
+  neutral default. We measured it league by league: hold out a 90-day window after a cut date,
+  re-solve on everything before it, and score the summed factors against what actually happened.
+  <strong>College came back wanting materially less shrinkage, and now runs its own setting.</strong></p>
+
+  <div class="scroll">
+    <table class="tbl">
+      <thead><tr>
+        <th class="l">League</th><th class="l">Shrinkage now used</th>
+        <th class="l">Why</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="l lead">NBA</td>
+            <td class="l">the tuned alphas, unchanged</td>
+            <td class="l">they were fitted here; a different solver, not re-tested</td></tr>
+        <tr><td class="l lead">G-League</td>
+            <td class="l">the tuned alphas, unchanged</td>
+            <td class="l">its own best setting is 1.25&times;, worth +0.006 — inside noise</td></tr>
+        <tr><td class="l lead">College</td>
+            <td class="l"><strong>0.375&times;</strong> — about 2.7&times; less</td>
+            <td class="l"><strong>+0.10</strong> points of game-margin error, on every test split</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>The college result is the strong one: across all seventy ways of splitting the eight test
+  seasons in half, choosing the scale on one half beat the NBA-tuned alphas on the other half
+  <strong>seventy times out of seventy</strong>, and the same answer reappears unchanged when the
+  test dates move from mid-January to mid-February.</p>
+
+  <p><strong>Why college is the exception.</strong> The direction is the opposite of the obvious
+  guess — college players have <em>fewer</em> possessions each, which argues for shrinking harder.
+  What decides it is talent spread. College runs from future lottery picks down to walk-ons, and
+  shrinking that hard erases differences that are real: the amount of player spread a setting
+  preserves and how well it predicts game margins rank in exactly the same order. The G-League
+  inverts this — widening its spread makes margins <em>worse</em>, because everyone there is a
+  fringe-NBA player and the extra spread is measurement noise, not talent. So this is not a knob
+  that wants one value; it depends on how far apart the players in a league actually are.</p>
+
+  <p>One thing we deliberately did not do: let all sixteen alphas move independently per league.
+  That buys a little more on paper, but lands on a different answer depending on which seasons you
+  tune with — two equally good tuning runs disagreed by up to three times on individual factors
+  while scoring the same. A single scale per league is the part of the finding that reproduces.</p>
+
+  <p class="cap">The +0.10 is measured on predicting college games, which is where the solve is
+  fitted. College ratings reach the NBA-equivalent scale through a separate translation step, which
+  was re-fitted alongside this change and absorbs most of the widening — the published college
+  spread rose about 17%, not the 59% seen in the raw solve. We have not separately measured what
+  that does to NBA projections built on college inputs.</p>
+
   <h2 id="example">What one player looks like</h2>
   <p>One player's daily series, drawn the way the <a href="index.html">Explorer</a> draws it: net on
   top, the six factors below. The panels add to the net exactly.</p>
@@ -154,8 +210,21 @@
     protection, so the defensive factors travel worst.</li>
     <li><strong>Cross-league jumps stay uncertain.</strong> College and G-League translations are
     heavily attenuated, so draft bands are wide by construction.</li>
-    <li><strong>Coverage gaps.</strong> No public play-by-play before 1996-97 (NBA) or 2005-06
-    (college), and NBA feeds record no steals or blocks from 1997 to 2013.</li>
+    <li><strong>Rookie projections barely beat a flat guess.</strong> Turning a prospect's college
+    rating into a first NBA season is the weakest thing here: measured out of sample it improves on
+    simply predicting the average rookie by 0.008 points of error, which is close to nothing. It
+    used to clear a slightly higher bar, on a training set that included the pre-2014 college
+    seasons described above — dropping those left fewer players to learn from, and what remains is
+    an honest read of how little a college rating tells you about year one.</li>
+    <li><strong>Coverage gaps.</strong> No public play-by-play before 1996-97 (NBA) or 2016-17
+    (G-League), and NBA feeds record no steals or blocks from 1997 to 2013.</li>
+    <li><strong>College starts at 2013-14.</strong> Earlier seasons exist upstream but are not
+    usable: the pre-2014 college feed files fouls and turnovers under one label, so every foul was
+    counted as a possession ending in a turnover — about 175 possessions a game against a true 135.
+    Fixing the labelling recovers 2009-13, but 2006-08 record no turnovers at all and no season
+    before 2014 records which free throw in a trip a shot was, so we cut the era rather than publish
+    numbers built on invented possessions. The earliest college days are also thin by construction,
+    since a five-year window has little history to draw on before about 2016.</li>
   </ul>
 
   <p class="foot">All values in points per 100 possessions on the NBA-equivalent scale. Measured
