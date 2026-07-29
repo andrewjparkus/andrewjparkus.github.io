@@ -28,24 +28,31 @@
   .pc-face{object-fit:cover;object-position:top}
   .pc-mono{display:flex;align-items:center;justify-content:center;font-family:var(--font);
     font-weight:700;font-size:27px;color:var(--muted);letter-spacing:.5px}
-  /* gap:2px, not a spacing token: the name and the pos/league/age line are ONE identity block, and
-     at 8px they read as two separate things (owner 2026-07-26: "the card should be tight"). The
-     stat groups opposite them keep their own internal rhythm. */
-  .pc-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:2px}
+  /* WHERE THE NAME->SUB GAP ACTUALLY COMES FROM (owner 2026-07-28: "reduce it"). It measured
+     21.89px at desktop, and only 2px of that was this rule's gap. 18.39px was the PTS/REB/AST
+     stat group's SECOND line -- the uppercase .pc-lab -- hanging below the baseline the name is
+     aligned to inside row 1, and 1.50px was row 2's own baseline alignment. So the levers are
+     down there, not here: .pc-lab's line-height (it inherited 1.5 from site.css, i.e. 17.25px of
+     box for an 11.5px glyph) and .pc-cell's internal gap. Those three together take it to ~13px
+     without moving the two stat groups, which the comments below say were deliberately placed. */
+  .pc-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:0}
   /* one text line on the left, its stat group on the right, baselines shared */
   .pc-row{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-5)}
-  .pc-name{font-size:var(--fs-6);font-weight:700;letter-spacing:-.5px;line-height:1.12}
+  .pc-name{font-size:var(--fs-6);font-weight:700;letter-spacing:-.5px;line-height:1.08}
   .pc-sub{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;font-size:var(--fs-2);
     color:var(--muted)}
   .pc-sub .pos{font-weight:700;color:var(--text);letter-spacing:.02em}
+  .pc-sub .tm{color:var(--text)}   /* team reads as identity, like the position, not as metadata */
   /* The two stat groups sit at the right end of their own row, so the ragged-length rows still share
      one flush right edge. `.pc-cell:last-child{padding-right:0}` is what lands that edge — do not
      give the last cell its padding back. */
   .pc-group{display:flex;font-family:var(--font-mono);font-variant-numeric:tabular-nums}
-  .pc-cell{display:flex;flex-direction:column;gap:1px;padding:0 11px;border-right:1px solid var(--line)}
+  .pc-cell{display:flex;flex-direction:column;gap:0;padding:0 11px;border-right:1px solid var(--line)}
   .pc-cell:first-child{padding-left:0}.pc-cell:last-child{border-right:none;padding-right:0}
   .pc-val{font-size:var(--fs-3);font-weight:600;color:var(--text)}
-  .pc-lab{font-size:11.5px;letter-spacing:.08em;color:var(--faint);text-transform:uppercase}
+  /* line-height:1 is load-bearing, not cosmetic: this is the box that sets how far row 1 hangs
+     below the name's baseline, and therefore most of the name->sub gap. See .pc-body above. */
+  .pc-lab{font-size:11.5px;line-height:1;letter-spacing:.08em;color:var(--faint);text-transform:uppercase}
   .pc-shoot .pc-val{color:var(--muted)}
   /* The paired rows are a desktop affordance and do not survive the phone: under the 60px headshot
      the body is ~239px wide at 375px (~184px at 320px) against ~256px of counting cells, so a row
@@ -60,8 +67,13 @@
   .readout{font-family:var(--font-mono);font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:150px;text-align:left}
   .readout b{color:var(--text)}
   .modehint{font-size:13px;color:var(--faint);margin:7px 0 -4px;line-height:1.55;max-width:840px}
-  /* bespoke interactive crosshair charts (owned locally) */
-  .crosshair{stroke:#3a4862;stroke-width:1;stroke-dasharray:3 3;pointer-events:none}
+  /* bespoke interactive crosshair charts (owned locally).
+     .crosshair is NOT redeclared here. It used to be, as `stroke:#3a4862`, and because this
+     <style> follows the site.css <link> the local copy WON — which quietly killed the themed fix
+     site.css:244-248 documents. That hairline measures 9.20 against the light --panel but 2.01
+     against the dark one, so on the DEFAULT theme the affordance that tells you which date you are
+     reading sat under the 3:1 mark floor. site.css's var(--faint) lands at 5.5 light / 5.1 dark.
+     .hdot is kept local because the charts here own the hover dot's geometry. */
   .hdot{pointer-events:none;stroke:var(--bg);stroke-width:1.2}
   .grid svg,.netcard svg{touch-action:none}
   /* ── cursor tooltip on the crosshair ──────────────────────────────────────────────────────────
@@ -394,7 +406,29 @@ const ATOMK={oTS:["oDECOMP_RIM_FG","oDECOMP_RIM_FREQ","oDECOMP_MID_FG","oDECOMP_
 const ALAB={DECOMP_RIM_FG:"Rim make",DECOMP_RIM_FREQ:"Rim rate",DECOMP_MID_FG:"Mid make",
             DECOMP_THREE_FG:"Three make",DECOMP_THREE_FREQ:"Three rate",ALT_FT:"Free throws"};
 const alab=k=>ALAB[k.slice(1)]||k;
-let ATOMS=null, ATOMOPEN=null;   // raw _atoms.json (date-keyed below), and which TS cell is expanded
+// ATOMSRC holds BOTH decompositions, date-keyed; ATOMS is whichever one is currently on screen
+// (set by renderAtoms from the active mode). ATOMOPEN is which TS cell is expanded.
+let ATOMSRC={pure:null,prior:null}, ATOMS=null, ATOMOPEN=null;
+// NOT named byDate: prep() below declares its own local `const byDate` object, and a helper that
+// a function silently shadows is a trap waiting for the first person who calls it from in there.
+const indexAtoms=a=>{                              // {d:[iso], <atom>:[...], off:{}} -> {byDate, off}
+  if(!a||!Array.isArray(a.d))return null;
+  const by={}; a.d.forEach((iso,i)=>{const o={};
+    for(const k in a) if(k!=='d'&&k!=='off') o[k]=a[k][i];   // 'off' is a scalar map, not a per-date list
+    by[iso]=o;});
+  return {byDate:by, off:a.off||{}};               // off = the fixed calibration offset per TS factor
+};
+// WHICH BOARD'S ATOMS BACK THE MODE ON SCREEN, or null if that mode has no atom layer at all.
+// pure   -> the pure board's atoms.
+// prior  -> the prior-informed board's atoms.
+// latent -> only when it ALIASES to prior (SERIES.latent === priorPrep, i.e. this player never
+//           changed leagues, which is 84% of them). Then the curve being drawn IS the prior board
+//           and the prior atoms close against it exactly. For a real cross-league mover, latent is
+//           a state-space re-score of that board, not a solve over the atoms -- nothing adds up.
+// box    -> never. It is a different estimator whose LEAVES are the six factors; there is no atom
+//           layer under it (out/box_prior_daily_*.parquet is 6 factors + net, full stop).
+const atomsFor=m=>(m==='pure')?ATOMSRC.pure
+                 :(m==='prior'||(m==='latent'&&LATENT_ALIAS))?ATOMSRC.prior:null;
 const LC={nba:'var(--nba)',gleague:'var(--gleague)',college:'var(--college)'};
 const LNAME={nba:'NBA',gleague:'G-League',college:'NCAA'};
 const q=document.getElementById('q'), drop=document.getElementById('drop');
@@ -467,9 +501,9 @@ function paint(){if(!curOpts.length){drop.style.display='none';return}
 // disclosure for a curve drawn on the same axis as the board. Shorten it, never drop it.
 const MODEHINT={
   pure:'Pure RAPM — what the lineup data says on its own, with no prior. Noisiest, and the cleanest read on the raw signal.',
-  prior:'Prior-informed RAPM — the same solve, pulled toward a daily box-score prior where lineup data is thin. The default.',
+  prior:'Prior-informed RAPM — the same solve, pulled toward a daily box-score prior where lineup data is thin.',
   box:'Box prior — the box-score number the solve is pulled toward. Shown at its own honest scale, so it reads cooler than the board, especially on defense.',
-  latent:'Latent — one continuous curve for players who change leagues, instead of a separate line per league. Display-only.'};
+  latent:'Latent — one continuous curve for players who change leagues, instead of a separate line per league. Display-only, and the default.'};
 const MODEHINT_LATENT_ALIAS='Latent — this player never changed leagues, so the curve is just the prior-informed board.';
 // DISPLAY-ONLY SMOOTHING DISCLOSURE (fence F3, owner-reopened 2026-07-17). DORMANT since 2026-07-21:
 // the owner reverted the smoother, so deploy_site.sh no longer sets BOX_SMOOTH_W, build_site_box.py
@@ -477,24 +511,27 @@ const MODEHINT_LATENT_ALIAS='Latent — this player never changed leagues, so th
 // must ship in the same motion as the filter if the filter ever comes back — a smoothed number that
 // does not say it is smoothed is a lie. It is DERIVED: the window quoted is whatever was applied.
 const boxSmoothNote=w=>` Display-smoothed: each of the six factors is filtered along time with a trailing ${w}-point median, reset at every season break (NBA days only). This changes only what is drawn. The rating, the prior and the projection all use the unsmoothed values, and the confidence band is not smoothed.`;
-// Default mode is 'prior' (owner 2026-07-24; supersedes the 2026-07-21 latent default). Latent stays
-// DISPLAY-ONLY (fence F4) and selectable; it just no longer opens by default. One-time
-// migration flips the old latent default (or unset) to prior; explicit pure/box choices survive,
-// and latent stays selectable (clicking it persists, and the flag stops re-migration).
-let _sm=localStorage.getItem('rapm_mode');
-if(!localStorage.getItem('rapm_dflt_v3')){ if(!_sm||_sm==='latent'){_sm='prior';localStorage.setItem('rapm_mode','prior');} localStorage.setItem('rapm_dflt_v3','1'); }
-// PER-PLAYER default (owner 2026-07-26): a player who actually moved between leagues opens on
-// Latent, because that is the only mode that draws his career as ONE curve instead of disjoint
-// per-league graphs -- it is the whole reason the mode exists, and a single-league player can
-// never show it. Everyone else opens on the stored preference (prior by default).
+// Default mode is 'latent', for EVERY player (owner 2026-07-28; supersedes the 2026-07-24 prior
+// default, which had itself superseded a 2026-07-21 latent default). Latent stays DISPLAY-ONLY
+// (fence F4) -- default does not mean "the rating"; nothing downstream reads it.
 //
-// It only applies while the visitor has never PICKED a mode. `rapm_mode` alone cannot tell
-// "defaulted to prior" from "chose prior" -- the migration above writes it either way -- so the
-// choice is recorded separately by setMode. Once someone picks, their pick wins on every player,
-// including movers: silently overriding an explicit choice on navigation is worse than showing a
-// mover one mode too few.
+// WHY THIS IS SAFE FOR THE 8,896 PLAYERS WITH NO _latent.json: latent ALIASES to the prior board
+// for them (SERIES.latent === priorPrep below), so the default lands on a real curve for everyone,
+// and syncSeg swaps in MODEHINT_LATENT_ALIAS so the tab never claims a fusion that did not happen.
+//
+// The one-time v4 migration that moves returning visitors onto it lives in nav.js, NOT here: the
+// Tables page shares these two localStorage keys, and a migration that only ran on the Explorer
+// left a Tables-first visitor on their old mode until they happened to open this page. nav.js
+// loads before this script on every page, so `rapm_mode` is already migrated by the time it is
+// read below.
+let _sm=localStorage.getItem('rapm_mode');
+// PER-PLAYER default: latent for everyone, not just movers. It only applies while the visitor has
+// never PICKED a mode -- `rapm_mode` alone cannot tell "defaulted" from "chose", since the
+// migration above writes it either way, so the choice is recorded separately by setMode. Once
+// someone picks, their pick wins on every player: silently overriding an explicit choice on
+// navigation is worse than showing one mode too few.
 const modePinned = ()=>localStorage.getItem('rapm_mode_pinned')==='1';
-let SERIES={}, MODE=(_sm||'prior'), PNAME='', CURID=null;
+let SERIES={}, MODE=(_sm||'latent'), PNAME='', CURID=null;
 function load(id,name){drop.style.display='none';q.value=name;history.replaceState(null,'','?p='+id);
   if(typeof wfStop==='function')wfStop();           // cancel any waterfall sweep from the previous player
   CURID=id; MULTI=null;
@@ -504,27 +541,20 @@ function load(id,name){drop.style.display='none';q.value=name;history.replaceSta
     opt('data/'+id+'_pure.json'),                    // pure
     opt('data/'+id+'_box.json'),                     // box prior (daily, multi-league curve + CI band)
     opt('data/'+id+'_latent.json'),                  // latent (continuous cross-league fusion; piecewise-colored)
-    opt('data/'+id+'_atoms.json')                    // plan49 W3: TS atoms (NBA rows of the PURE axis)
-  ]).then(([prior,pure,box,latent,atoms])=>{
+    opt('data/'+id+'_atoms.json'),                   // plan49 W3: TS atoms (NBA rows of the PURE axis)
+    opt('data/'+id+'_atoms_prior.json')              // the same, decomposing the PRIOR-INFORMED board
+  ]).then(([prior,pure,box,latent,atoms,atomsp])=>{
     PNAME=prior.name||name;
     const priorPrep=prep(prior);
     // plan45 B1 (D3): single-league players have no _latent.json; alias Latent to the prior board
     // (latent === board when there is no cross-league bridge) so the tab is never a dead greyed button.
     LATENT_ALIAS=!latent;
-    // A real _latent.json exists only for cross-league movers, so this is the mover test.
-    if(!LATENT_ALIAS && !modePinned()) MODE='latent';
-    else if(LATENT_ALIAS && !modePinned()) MODE=(localStorage.getItem('rapm_mode')||'prior');
-    // W3: index the atom sidecar BY DATE, not by position. Its axis is the NBA subset of the
-    // pure axis AND build_pages._downsample subsets each sidecar independently (it pins each
-    // file's own last-played index), so positional alignment between sidecars is not guaranteed
-    // even when the lengths happen to match. Date is the only safe join.
-    ATOMS=null; ATOMOPEN=null;
-    if(atoms&&Array.isArray(atoms.d)){
-      const by={}; atoms.d.forEach((iso,i)=>{const o={};
-        for(const k in atoms) if(k!=='d'&&k!=='off') o[k]=atoms[k][i];   // 'off' is a scalar map, not a per-date list
-        by[iso]=o;});
-      ATOMS={byDate:by, off:atoms.off||{}};   // W3: the fixed calibration offset per TS factor (baseline term)
-    }
+    if(!modePinned()) MODE='latent';                 // the default, for movers and non-movers alike
+    // W3: index the atom sidecars BY DATE, not by position. Each one's axis is the NBA subset of
+    // the series it decomposes AND build_pages._downsample subsets each sidecar independently (it
+    // pins each file's own last-played index), so positional alignment between sidecars is not
+    // guaranteed even when the lengths happen to match. Date is the only safe join.
+    ATOMSRC={pure:indexAtoms(atoms), prior:indexAtoms(atomsp)}; ATOMS=null; ATOMOPEN=null;
     BOX_SM=(box&&box.sm)||0;                        // per-player: what was actually applied (F3)
     SERIES={prior:priorPrep, pure:pure?prep(pure):null, box:box?prep(box):null,
             latent:latent?prep(latent):priorPrep};
@@ -1075,8 +1105,15 @@ function renderCard(){
   const pct=v=>v==null?'—':(v*100).toFixed(1)+'%';
   const cell=(v,l)=>`<div class="pc-cell"><span class="pc-val">${v}</span><span class="pc-lab">${l}</span></div>`;
   const lg=SERIES.prior[SERIES.prior.length-1].lg;
+  // TEAM, next to the league (owner 2026-07-28). Guarded on c.team_league===lg on purpose: the
+  // label `lg` is the last day of the prior SERIES, while card_data derives the team from the
+  // latest BOX-PANEL game, and those two rules can pick different leagues for the same player.
+  // Rendering a team the label disagrees with would print "NCAA · Denver Nuggets". Silence is
+  // the correct failure here, and it is also what G-League players get: no id->name table for
+  // those 33 franchises exists anywhere on disk, so they are league-only by data, not by choice.
+  const team=(c.team&&c.team_league===lg)?`<span class="tm">${c.team}</span>`:'';
   const sub=[c.pos?`<span class="pos">${c.pos}</span>`:'',
-             `<span style="color:${LC[lg]};font-weight:700">${LNAME[lg]}</span>`,
+             `<span style="color:${LC[lg]};font-weight:700">${LNAME[lg]}</span>`, team,
              c.age!=null?`Age ${c.age}`:''].filter(Boolean).join('<span style="color:var(--faint)">·</span>');
   box.innerHTML=
     `<img class="pc-face" alt="" loading="lazy" decoding="async"
@@ -1113,8 +1150,10 @@ function show(){
     // element and these are built in a loop.
     cell.style.viewTransitionName='vt_'+f;
     // W3: the drill-down affordance exists ONLY on the two factors that actually decompose,
-    // and only when this player HAS an atom sidecar (NBA rows; 2,500 of 27,234 published).
-    const drill=(ATOMK[f]&&ATOMS)?`<button class="drill" id="dr_${f}" aria-expanded="false" aria-controls="ap_${f}">atoms</button>`:'';
+    // and only when this player HAS an atom sidecar on SOME board (NBA rows only). The button is
+    // deliberately not mode-gated -- the panel itself explains which boards decompose, which is
+    // more useful than an affordance that blinks out of existence when you switch to Box.
+    const drill=(ATOMK[f]&&(ATOMSRC.pure||ATOMSRC.prior))?`<button class="drill" id="dr_${f}" aria-expanded="false" aria-controls="ap_${f}">atoms</button>`:'';
     cell.innerHTML=`<div class="ctitle"><span>${t} <span class="help" data-tip="${TIP[f]}">?</span>${drill}</span><span class="v" id="v_${f}"></span></div><div id="c_${f}"></div><div class="atompanel" id="ap_${f}"></div>`;
     grid.appendChild(cell);});
   applyAtomLayout();   // a fresh grid is always collapsed; clear any class left by the last player
@@ -1157,20 +1196,26 @@ function renderActive(){
   });
 }
 // ── plan49 W3: factor -> atom drill-down ─────────────────────────────────────────────────────
-// WHY THIS IS PURE-MODE ONLY, AND WHY IT REFUSES TO DRAW RATHER THAN APPROXIMATE.
-// The identity the panel exists to show is  Σ(6 atoms) + factor_offset == factor.  It closes to
-// EXACTLY 0.0 against out/nba + priors/v5_nba_calibration.json — the pure board. It does NOT
-// close against anything else on disk:
-//   * prior-informed / latent: out/nba_hybrid's factors sit a CONSTANT off its own atoms
-//     (oTS +0.0593, per-player spread exactly 0.0) because its calibration file was rewritten
-//     3h27m after that board was solved. Recovering the constant would mean fitting it from the
-//     board and checking it against the same board — self-consistency, which F15 forbids.
-//   * box: a different estimator entirely; it has no atom decomposition at all.
-//   * college / G-League rows: aggregate.py publishes them through a per-FACTOR affine
-//     translation (ncaa->nba oTS slope 0.1588) that was never fitted at atom level.
-// So in any other mode the panel draws NOTHING and offers a one-click switch to Pure. Six atom
-// curves that silently fail to add up to the line directly above them is the exact "broken
-// feature" this design is avoiding.
+// WHICH MODES DECOMPOSE, AND WHY THE REST REFUSE TO DRAW RATHER THAN APPROXIMATE.
+// The identity the panel exists to show is  Σ(6 atoms) + factor_offset == factor.
+//   * pure    — closes EXACTLY (0.0) against out/nba + priors/v5_nba_calibration.json.
+//   * prior   — closes against out/nba_hybrid + priors/v5_nba_prior_calibration.json: per-player
+//               spread 8.9e-16, plus a global constant of 3.6e-6 (float residue from the
+//               2026-07-27 constant-patch repair), which is ~10,000x below the 2dp the sidecar
+//               ships at. Shipped 2026-07-28. It was withheld for two weeks before that because
+//               the same constant was 0.0593 — the calibration file had been rewritten 3h27m
+//               after the board was solved, and recovering the constant by fitting it from the
+//               board is self-consistency, which F15 forbids. The re-solve fixed the source.
+//   * latent  — only when it ALIASES to prior (a player who never changed leagues): then the
+//               curve on screen IS the prior board. For a real mover, latent is a state-space
+//               re-score of that board and the atoms do not reconstruct it.
+//   * box     — never. A different estimator whose LEAVES are the six factors; there is no atom
+//               layer under it, and box_panel_nba.parquet has no shot-location columns to build one.
+//   * college / G-League rows — aggregate.py publishes them through a per-FACTOR affine
+//               translation (ncaa->nba oTS slope 0.1588) that was never fitted at atom level.
+// So in a mode that does not decompose the panel draws NOTHING and offers a one-click switch.
+// Six atom curves that silently fail to add up to the line directly above them is the exact
+// "broken feature" this design is avoiding.
 // Expanded layout: the drilled factor takes the whole grid row and the other five step out, so the
 // seven component charts underneath get real width instead of a 150px sliver. Pure class toggling —
 // the CSS at :104-108 does the work.
@@ -1221,21 +1266,34 @@ function renderAtoms(){
   CHARTS=CHARTS.filter(c=>!ALLATOMS.has(c.key));
   Object.keys(ATOMK).forEach(k=>{const p=document.getElementById('ap_'+k);
     if(p&&k!==ATOMOPEN){p.innerHTML='';p.style.display='none';}});
-  if(!ATOMOPEN||!ATOMS||!SER)return;
+  // ATOMS = whichever board's decomposition backs the mode on screen. Set here, from the mode, so
+  // there is exactly one place that answers "which atoms am I looking at" and the rest of this
+  // function never has to ask again.
+  ATOMS=atomsFor(activeMode());
+  if(!ATOMOPEN||!SER)return;
   const f=ATOMOPEN, panel=document.getElementById('ap_'+f);
   if(!panel)return;
   panel.style.display='block';
-  if(activeMode()!=='pure'){
-    panel.innerHTML=`<div class="atomnote">The atom decomposition is defined on the <b>pure</b> (prior-free) board — that is the only basis where the six pieces provably add back up to ${f}. `
-      +`<button class="drill" id="ap_go">Show on the pure board</button></div>`;
-    document.getElementById('ap_go').addEventListener('click',()=>setMode('pure'));
+  if(!ATOMS){
+    // Two reasons to land here, and they are NOT the same, so do not collapse the copy: the mode
+    // has no atom layer at all (box, or latent on a real cross-league mover), or it has one and
+    // this player has no NBA rows on that board.
+    const why=(activeMode()==='box')
+      ? 'The <b>box prior</b> is a different estimator — the six factors are its leaves, so there is nothing underneath them to break out.'
+      : (activeMode()==='latent')
+      ? 'This player changed leagues, so <b>latent</b> is a state-space re-score of the board rather than a solve over the pieces — they would not add back up to the line above.'
+      : `No atom rows published for this player on the ${activeMode()==='pure'?'pure':'prior-informed'} board.`;
+    panel.innerHTML=`<div class="atomnote">${why} It breaks out on the <b>pure</b> and <b>prior-informed</b> boards, where the six pieces provably add back to ${f}. `
+      +`<button class="drill" id="ap_go">Show on the prior-informed board</button></div>`;
+    document.getElementById('ap_go').addEventListener('click',()=>setMode('prior'));
     return;
   }
   const keys=ATOMK[f];
-  // W3 defect 2: the identity is Σ(6 atoms) + off[f] == factor, and off[oTS] = -0.46 is NOT within
-  // display rounding — so the panel MUST show the offset as an explicit "baseline" term. Rendering
-  // it as a 7th cell makes the six pieces + baseline visibly sum to the factor line above (the
-  // honest, checkable presentation). off comes from the sidecar (SOURCE: v5_nba_calibration.json).
+  // W3 defect 2: the identity is Σ(6 atoms) + off[f] == factor, and off[oTS] (-0.47 pure, -0.99
+  // prior-informed) is NOT within display rounding — so the panel MUST show the offset as an
+  // explicit "baseline" term. Rendering it as a 7th cell makes the six pieces + baseline visibly
+  // sum to the factor line above (the honest, checkable presentation). off comes from the sidecar,
+  // whose SOURCE is that board's own calibration file — which is why the two boards differ here.
   const off=(ATOMS.off&&ATOMS.off[f]!=null)?ATOMS.off[f]:0;
   panel.innerHTML=`<div class="atomnote">${f==='oTS'?'Shot-making':'Shot suppression'} broken into its six solved pieces plus a fixed calibration <b>baseline</b> (${off>=0?'+':''}${off.toFixed(2)}) — points/100, same scale as the chart above. `
     +`The six pieces and the baseline add back to ${f} to within display rounding (each is printed to 2dp). `
@@ -1317,16 +1375,28 @@ document.getElementById('cmpgo').addEventListener('click',()=>{
 });
 
 // ===== Multi-player comparison overlay ==============================================
-// ?p=id1,id2,...  overlays 2-4 players' prior-informed series on net + each factor. Distinct
-// CVD-safe (Okabe-Ito) colors AND a legend label per player — color is never the sole encoder.
-let MULTI=null;   // [{id,name,ser,net,se}]
+// ?p=id1,id2,...  overlays 2-4 players' LATENT series on net + each factor (owner 2026-07-28;
+// was prior-informed). Distinct CVD-safe (Okabe-Ito) colors AND a legend label per player — color
+// is never the sole encoder.
+//
+// TWO FETCHES PER PLAYER, not one. The latent sidecar carries the six factors + net + SEs but no
+// name (sidecars carry no id/name by design), and it does not exist at all for a player who never
+// changed leagues. So the base file is still fetched for the name and as the alias fallback —
+// which is the same rule the single-player view uses, and it means a comparison can legitimately
+// mix a fused curve with a board curve. That is disclosed in the subtitle rather than hidden.
+let MULTI=null;   // [{id,name,ser,net,se,alias}]
 function loadMulti(ids){
-  Promise.all(ids.map(id=>fetch('data/'+id+'.json').then(r=>r.ok?r.json():null).catch(()=>null)))
+  const opt=u=>fetch(u).then(r=>r.ok?r.json():null).catch(()=>null);
+  Promise.all(ids.map(id=>Promise.all([opt('data/'+id+'.json'), opt('data/'+id+'_latent.json')])))
     .then(arr=>{
-      MULTI=arr.map((d,k)=>d?{id:ids[k],name:d.name||ids[k],ser:prep(d),color:OKABE[k%OKABE.length],
-                              net:d.net[d.net.length-1],se:d.net_se[d.net_se.length-1]||0.3}:null)
+      MULTI=arr.map(([d,lat],k)=>{ if(!d)return null; const s=lat||d;
+        return {id:ids[k],name:d.name||ids[k],ser:prep(s),color:OKABE[k%OKABE.length],alias:!lat,
+                net:s.net[s.net.length-1],se:s.net_se[s.net_se.length-1]||0.3}; })
                .filter(Boolean);
-      if(MULTI.length<2){if(MULTI.length===1){const m=MULTI[0];MULTI=null;load(m.id,m.name);}return;}
+      // MULTI=[] is TRUTHY, so a zero-survivor compare used to leave an empty array behind and the
+      // next window resize hit `if(SER||MULTI)` -> renderMulti -> MDATES[0].slice on undefined.
+      // Null it before returning; the single-survivor path already redirects to that player.
+      if(MULTI.length<2){const one=MULTI[0];MULTI=null;if(one)load(one.id,one.name);return;}
       history.replaceState(null,'','?p='+MULTI.map(m=>m.id).join(','));
       CMP=MULTI.map(m=>({id:m.id,name:m.name}));
       showMulti();
@@ -1343,7 +1413,12 @@ function showMulti(){
   document.getElementById('pname').style.display='';        // restore the text header for the compare title
   document.getElementById('profile').style.display='none';
   wfStop();document.getElementById('waterfall').style.display='none';   // waterfall is single-player only
-  document.getElementById('modehint').textContent='Comparison overlay — prior-informed net + 6 factors for '+MULTI.length+' players. Each player has a distinct color and legend label.';
+  // The alias clause is DERIVED, not boilerplate: it renders only when a player in this particular
+  // comparison has no latent sidecar, and it names them. Without it the subtitle would claim a
+  // fused curve for someone who is being drawn on the prior-informed board.
+  const aliased=MULTI.filter(m=>m.alias).map(m=>m.name);
+  document.getElementById('modehint').textContent='Comparison overlay — latent net + 6 factors for '+MULTI.length+' players. Each player has a distinct color and legend label.'
+    +(aliased.length?' '+aliased.join(' and ')+' never changed leagues, so '+(aliased.length>1?'those curves are':'that curve is')+' the prior-informed board — which is what latent means for them.':'');
   document.getElementById('pname').textContent='Comparison';
   document.getElementById('pmeta').innerHTML=MULTI.map(m=>`<a href="index.html?p=${m.id}" style="color:${m.color};font-weight:700">${m.name}</a>`).join(' · ');
   document.getElementById('readout').innerHTML='';

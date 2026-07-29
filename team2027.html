@@ -810,8 +810,13 @@ function render(d){
   bandHTML += '<div class="bandcap">'
     + '<span class="caplock">Middle 80% <b>'+num(team.p10,0)+'–'+num(team.p90,0)+'</b></span>'
     + '<span class="caplock">95% range <b>'+num(p025,0)+'–'+num(p975,0)+'</b>'
+      // 88–97%, not 89–98%: re-read from out/oos/team_band_gate.json 2026-07-28 -> cov95 0.8833
+      // (carry_forward) and 0.9722 (realized), both n_team_seasons=360. The old pair had drifted a
+      // point in each direction. projection.html carries the SAME sentence and was corrected in the
+      // same commit -- two pages disagreeing about a gate-scored number is worse than either being
+      // stale, so they move together or not at all.
       + ' <span class="help" data-tip="Measured coverage of this band on 360 replayed team-seasons '
-      + 'is 89–98%, re-scored before every deploy.">?</span></span>'
+      + 'is 88–97%, re-scored before every deploy.">?</span></span>'
     + '<span class="caplock">Median <b>'+num(team.p50,0)+'</b></span>'
     + '</div></div>';
   html += '<div class="heroband">'+bandHTML+'</div>';

@@ -82,6 +82,12 @@ svg,svg text{font-family:var(--font-mono)}
 svg{display:block;width:100%;height:auto}
 a{color:var(--accent);text-decoration:none}
 a:hover{color:var(--text)}
+/* THE SITE'S OWN FOCUS RING. It did not exist until 2026-07-28, which meant every .seg button,
+   .btn, .chip, .help and nav tab fell back to the UA default — and team2027.html:47-50 had already
+   scoped its franchise-coloured ring "so the shared top nav keeps the site's own ring", assuming
+   this rule was here. It was not. :focus-visible, not :focus, so a mouse click never draws it.
+   2px/offset 2px/radius 2px matches team2027's ring exactly, so the two read as one system. */
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
 .wrap{max-width:var(--maxw);margin:0 auto;padding:var(--sp-5) 22px 70px}
 
 /* page headings */

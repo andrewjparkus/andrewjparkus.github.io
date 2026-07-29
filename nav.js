@@ -26,6 +26,32 @@
  * A page whose data-active key matches no tab simply lights nothing — that is the intended
  * state for all of the above, not a bug.
  */
+/* ── the rating-mode default migration, for EVERY page ───────────────────────────────────────
+ * `rapm_mode` + `rapm_mode_pinned` are shared by the Explorer and the Tables page, so the
+ * one-time flip that moves a returning visitor onto a new default has to be shared too. It lived
+ * inside index.html until 2026-07-28, which meant a visitor who landed on Tables FIRST kept their
+ * old pinned mode until they happened to open the Explorer, and the two pages disagreed about
+ * which mode was selected until then. nav.js is the only script every page already loads, and it
+ * runs before every page's own inline script (both tags are above it), so this is the one place
+ * that can be the single spelling. Duplicating it per page is exactly the drift this file exists
+ * to prevent.
+ *
+ * v4 (owner 2026-07-28): default latent, everywhere, for every player. It also CLEARS the pin --
+ * deliberately, and it is the only reason the new default is visible to anyone who has used the
+ * site, because any click on either page's toggle sets the pin. It costs one prior pick, once.
+ */
+(function () {
+  "use strict";
+  try {
+    if (!localStorage.getItem("rapm_dflt_v4")) {
+      localStorage.setItem("rapm_mode", "latent");
+      localStorage.removeItem("rapm_mode_pinned");
+      localStorage.setItem("rapm_dflt_v4", "1");
+    }
+  } catch (e) { /* storage disabled (private mode / blocked cookies) -> pages fall back to their
+                   own default, which is already latent. Never let this break the nav. */ }
+})();
+
 (function () {
   "use strict";
 
