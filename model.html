@@ -117,60 +117,104 @@
   Russell Thomas's additive RAPM, and the ridge solver core is his reference implementation.</p>
 
   <h2 id="shrinkage">How hard each factor is shrunk</h2>
-  <p>A ridge solve needs a shrinkage strength — an <em>alpha</em> — for every factor, on offense and
+  <p>A ridge solve needs a shrinkage strength, an <em>alpha</em>, for every factor, on offense and
   defense separately. Shrink too little and a player who happened to be on the floor for a hot
-  stretch looks great; shrink too much and everyone collapses toward average. The sixteen alphas we
+  stretch looks great. Shrink too much and everyone collapses toward average. The sixteen alphas we
   use were tuned by Russell Thomas against out-of-time scoring margin on 2021-26 NBA possessions.</p>
 
-  <p>Those alphas were fitted on the NBA, so applying them elsewhere is an assumption rather than a
-  neutral default. We measured it league by league: hold out a 90-day window after a cut date,
-  re-solve on everything before it, and score the summed factors against what actually happened.
-  <strong>College came back wanting materially less shrinkage, and now runs its own setting.</strong></p>
+  <p>They were fitted on NBA possessions, so carrying them into another league is an assumption
+  rather than a neutral default. We checked it league by league, each against its own held-out
+  games: hold out a 90-day window after a cut date, re-solve on everything before it, then score the
+  summed factors against what actually happened. <strong>College came back wanting materially less
+  shrinkage, and now runs its own setting.</strong></p>
 
   <div class="scroll">
     <table class="tbl">
       <thead><tr>
-        <th class="l">League</th><th class="l">Shrinkage now used</th>
-        <th class="l">Why</th>
+        <th class="l">League</th><th class="l">Shrinkage now used</th><th class="l">Why</th>
       </tr></thead>
       <tbody>
         <tr><td class="l lead">NBA</td>
             <td class="l">the tuned alphas, unchanged</td>
-            <td class="l">they were fitted here; a different solver, not re-tested</td></tr>
+            <td class="l">they were fitted here; a different solver, and not re-tested</td></tr>
         <tr><td class="l lead">G-League</td>
             <td class="l">the tuned alphas, unchanged</td>
-            <td class="l">its own best setting is 1.25&times;, worth +0.006 — inside noise</td></tr>
+            <td class="l">its own best setting is 1.25&times;, worth +0.006, which is inside noise</td></tr>
         <tr><td class="l lead">College</td>
-            <td class="l"><strong>0.375&times;</strong> — about 2.7&times; less</td>
+            <td class="l"><strong>0.375&times;</strong>, about 2.7&times; less</td>
             <td class="l"><strong>+0.10</strong> points of game-margin error, on every test split</td></tr>
       </tbody>
     </table>
   </div>
 
-  <p>The college result is the strong one: across all seventy ways of splitting the eight test
-  seasons in half, choosing the scale on one half beat the NBA-tuned alphas on the other half
-  <strong>seventy times out of seventy</strong>, and the same answer reappears unchanged when the
-  test dates move from mid-January to mid-February.</p>
+  <p>The G-League's +0.006 is a number to ignore. Its confidence interval crosses zero and it wins
+  four of the eight test splits, which is what a coin flip looks like. College is the opposite: the
+  interval excludes zero and it wins eight of eight. Across all seventy ways of splitting the eight
+  test seasons in half, choosing the scale on one half beat the NBA-tuned alphas on the other half
+  <strong>seventy times out of seventy</strong>, and the same answer comes back when the test dates
+  move from mid-January to mid-February.</p>
 
-  <p><strong>Why college is the exception.</strong> The direction is the opposite of the obvious
-  guess — college players have <em>fewer</em> possessions each, which argues for shrinking harder.
-  What decides it is talent spread. College runs from future lottery picks down to walk-ons, and
-  shrinking that hard erases differences that are real: the amount of player spread a setting
-  preserves and how well it predicts game margins rank in exactly the same order. The G-League
-  inverts this — widening its spread makes margins <em>worse</em>, because everyone there is a
-  fringe-NBA player and the extra spread is measurement noise, not talent. So this is not a knob
-  that wants one value; it depends on how far apart the players in a league actually are.</p>
+  <p><strong>Why college is the exception.</strong> Talent spread. College runs from future lottery
+  picks down to walk-ons, and shrinking that hard erases differences that are real: how much player
+  spread a setting preserves and how well it predicts game margins rank in exactly the same order.
+  The G-League inverts this. Widening its spread makes margins <em>worse</em>, because everyone
+  there is a fringe-NBA player and the extra spread is measurement noise, not talent. So this is not
+  a knob with one right value. It depends on how far apart the players in a league actually are.</p>
 
   <p>One thing we deliberately did not do: let all sixteen alphas move independently per league.
-  That buys a little more on paper, but lands on a different answer depending on which seasons you
-  tune with — two equally good tuning runs disagreed by up to three times on individual factors
-  while scoring the same. A single scale per league is the part of the finding that reproduces.</p>
+  That buys a little more on paper, but it lands on a different answer depending on which seasons
+  you tune with. Two equally good tuning runs disagreed by as much as 48&times; on individual
+  factors while scoring the same. A single scale per league is the part that reproduces.</p>
 
-  <p class="cap">The +0.10 is measured on predicting college games, which is where the solve is
-  fitted. College ratings reach the NBA-equivalent scale through a separate translation step, which
-  was re-fitted alongside this change and absorbs most of the widening — the published college
-  spread rose about 17%, not the 59% seen in the raw solve. We have not separately measured what
-  that does to NBA projections built on college inputs.</p>
+  <p class="cap">The NBA is the league we did not re-test: it runs a different solver, and the tuned
+  alphas were fitted on its possessions to begin with. Every figure above is scored on a league's
+  own held-out games, so it says the ratings fit that league better, not that they travel better
+  across leagues.</p>
+
+  <h2 id="crossleague">Putting three leagues on one scale</h2>
+  <p>A college or G-League player is first rated inside his own league, against the players he
+  actually shared a floor with. That rating then has to be moved onto the NBA scale, or the three
+  leagues could not share a chart. The move is a straight-line conversion, a slope and an offset,
+  fitted separately for each of the six factors.</p>
+
+  <p><strong>That conversion was fitted on one quantity and applied to another.</strong> The slope
+  and offset were estimated from players' career-long averages. They were then applied to the daily
+  rating, which looks back over a rolling five-year window and weights recent games more heavily.
+  Those are two different numbers about the same player, so the conversion came out at the wrong
+  level.</p>
+
+  <p>How wrong is measurable directly, without any modelling. Some players appear in a lower league
+  and in the NBA in the same season: a G-League call-up, a rookie whose college season ended in
+  March. For those players the two ratings can be put side by side. Their pre-NBA rating sat about
+  two and a half points <em>above</em> what the same players produced in the NBA that same season.
+  Development and selection cannot explain a gap inside one season; the conversion can.</p>
+
+  <div class="scroll">
+    <table class="tbl">
+      <thead><tr>
+        <th class="l">League</th><th class="l">Same-season gap, before</th>
+        <th class="l">Same-season gap, after</th>
+      </tr></thead>
+      <tbody>
+        <tr><td class="l lead">College</td><td class="l">+2.63</td>
+            <td class="l"><strong>+0.02</strong></td></tr>
+        <tr><td class="l lead">G-League</td><td class="l">+2.28</td>
+            <td class="l"><strong>+0.40</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="cap">6,967 player-seasons in which a player appeared in both a lower league and the NBA.
+  Points per 100 possessions; positive means the pre-NBA rating read too high.</p>
+
+  <p>The fix was to re-fit the conversion on the daily rating itself, matching each pre-NBA reading
+  to the closest NBA evidence in time rather than to a career average. Two other things moved with
+  it. The jump in a player's line when he crosses leagues fell from 2.08 points to 1.18, a 43%
+  reduction, and that is before any smoothing is applied. And the conversion's own error bar shrank
+  on every one of the six factors, so this is a better fit to the data, not the same fit slid down
+  the page.</p>
+
+  <p><strong>What this changes on the site.</strong> Every college and G-League rating is now roughly
+  2.5 points lower than it was before. NBA ratings are unchanged.</p>
 
   <h2 id="example">What one player looks like</h2>
   <p>One player's daily series, drawn the way the <a href="index.html">Explorer</a> draws it: net on
@@ -202,29 +246,26 @@
   <h2 id="limits">Limits</h2>
   <ul>
     <li><strong>The error bars measure today, not next year.</strong> A band says how tightly the
-    data pins down what already happened; it is not a forecast.</li>
+    data pins down what a player has already done; it is not a forecast.</li>
     <li><strong>Game margins sit near the noise floor.</strong> Almost no modelling change moves
-    them, and they are scored on the minutes players actually logged — rating quality given usage,
-    not a pre-game forecast.</li>
+    them, and they are scored on the minutes players actually logged, so it is rating quality given
+    usage, not a pre-game forecast.</li>
     <li><strong>Defense is the soft spot.</strong> The inputs can't see contested shots or rim
     protection, so the defensive factors travel worst.</li>
-    <li><strong>Cross-league jumps stay uncertain.</strong> College and G-League translations are
+    <li><strong>Cross-league jumps stay uncertain.</strong> The college and G-League conversions are
     heavily attenuated, so draft bands are wide by construction.</li>
-    <li><strong>Rookie projections barely beat a flat guess.</strong> Turning a prospect's college
-    rating into a first NBA season is the weakest thing here: measured out of sample it improves on
-    simply predicting the average rookie by 0.008 points of error, which is close to nothing. It
-    used to clear a slightly higher bar, on a training set that included the pre-2014 college
-    seasons described above — dropping those left fewer players to learn from, and what remains is
-    an honest read of how little a college rating tells you about year one.</li>
+    <li><strong>Rookie projections are the weakest thing here.</strong> Turning a prospect's college
+    rating into a first NBA season improves on simply predicting the average rookie by 0.022 points
+    of error: a real edge, but a small one. Treat a rookie band as a rough range, not a call.</li>
     <li><strong>Coverage gaps.</strong> No public play-by-play before 1996-97 (NBA) or 2016-17
     (G-League), and NBA feeds record no steals or blocks from 1997 to 2013.</li>
     <li><strong>College starts at 2013-14.</strong> Earlier seasons exist upstream but are not
     usable: the pre-2014 college feed files fouls and turnovers under one label, so every foul was
-    counted as a possession ending in a turnover — about 175 possessions a game against a true 135.
-    Fixing the labelling recovers 2009-13, but 2006-08 record no turnovers at all and no season
-    before 2014 records which free throw in a trip a shot was, so we cut the era rather than publish
-    numbers built on invented possessions. The earliest college days are also thin by construction,
-    since a five-year window has little history to draw on before about 2016.</li>
+    counted as a possession that ended in a turnover, about 175 possessions a game against a true
+    135. Fixing the labelling recovers 2009-13, but 2006-08 record no turnovers at all, and no
+    season before 2014 records which free throw in a trip a shot was, so we cut the era rather than
+    publish numbers built on invented possessions. The earliest college days are also thin, because
+    a five-year window has little history to draw on before about 2016.</li>
   </ul>
 
   <p class="foot">All values in points per 100 possessions on the NBA-equivalent scale. Measured

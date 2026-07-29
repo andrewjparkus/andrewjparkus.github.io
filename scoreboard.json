@@ -155,7 +155,7 @@
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -167,13 +167,13 @@
         "p10_wins": 44.0,
         "p50_wins": 55.0,
         "p90_wins": 64.0,
-        "make_playoffs_prob": 0.954,
+        "make_playoffs_prob": 0.953,
         "make_playin_prob": 0.989
       },
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -184,14 +184,14 @@
         "mc_mean_wins": 51.4,
         "p10_wins": 40.0,
         "p50_wins": 52.0,
-        "p90_wins": 63.0,
-        "make_playoffs_prob": 0.897,
-        "make_playin_prob": 0.968
+        "p90_wins": 62.0,
+        "make_playoffs_prob": 0.898,
+        "make_playin_prob": 0.967
       },
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -202,14 +202,14 @@
         "mc_mean_wins": 47.0,
         "p10_wins": 36.0,
         "p50_wins": 47.0,
-        "p90_wins": 58.0,
+        "p90_wins": 57.0,
         "make_playoffs_prob": 0.798,
         "make_playin_prob": 0.927
       },
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -217,17 +217,17 @@
       "franchise": "DET",
       "conf": "East",
       "forecast": {
-        "mc_mean_wins": 46.8,
+        "mc_mean_wins": 46.9,
         "p10_wins": 36.0,
         "p50_wins": 47.0,
         "p90_wins": 57.0,
-        "make_playoffs_prob": 0.793,
-        "make_playin_prob": 0.934
+        "make_playoffs_prob": 0.797,
+        "make_playin_prob": 0.936
       },
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -240,12 +240,12 @@
         "p50_wins": 46.0,
         "p90_wins": 57.0,
         "make_playoffs_prob": 0.754,
-        "make_playin_prob": 0.907
+        "make_playin_prob": 0.908
       },
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -253,17 +253,17 @@
       "franchise": "MIA",
       "conf": "East",
       "forecast": {
-        "mc_mean_wins": 45.3,
-        "p10_wins": 35.0,
+        "mc_mean_wins": 45.1,
+        "p10_wins": 34.0,
         "p50_wins": 45.0,
         "p90_wins": 56.0,
-        "make_playoffs_prob": 0.738,
-        "make_playin_prob": 0.905
+        "make_playoffs_prob": 0.731,
+        "make_playin_prob": 0.902
       },
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -271,17 +271,17 @@
       "franchise": "CHA",
       "conf": "East",
       "forecast": {
-        "mc_mean_wins": 42.7,
+        "mc_mean_wins": 42.8,
         "p10_wins": 32.0,
         "p50_wins": 43.0,
         "p90_wins": 54.0,
-        "make_playoffs_prob": 0.627,
-        "make_playin_prob": 0.833
+        "make_playoffs_prob": 0.632,
+        "make_playin_prob": 0.836
       },
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -293,13 +293,13 @@
         "p10_wins": 30.0,
         "p50_wins": 41.0,
         "p90_wins": 52.0,
-        "make_playoffs_prob": 0.537,
-        "make_playin_prob": 0.774
+        "make_playoffs_prob": 0.535,
+        "make_playin_prob": 0.775
       },
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -307,17 +307,17 @@
       "franchise": "PHI",
       "conf": "East",
       "forecast": {
-        "mc_mean_wins": 38.1,
+        "mc_mean_wins": 38.0,
         "p10_wins": 27.0,
         "p50_wins": 38.0,
         "p90_wins": 49.0,
-        "make_playoffs_prob": 0.418,
-        "make_playin_prob": 0.661
+        "make_playoffs_prob": 0.417,
+        "make_playin_prob": 0.659
       },
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -330,12 +330,12 @@
         "p50_wins": 34.0,
         "p90_wins": 45.0,
         "make_playoffs_prob": 0.259,
-        "make_playin_prob": 0.492
+        "make_playin_prob": 0.49
       },
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -353,7 +353,7 @@
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -361,17 +361,17 @@
       "franchise": "MIL",
       "conf": "East",
       "forecast": {
-        "mc_mean_wins": 27.1,
+        "mc_mean_wins": 27.0,
         "p10_wins": 17.0,
         "p50_wins": 27.0,
         "p90_wins": 37.0,
-        "make_playoffs_prob": 0.068,
-        "make_playin_prob": 0.171
+        "make_playoffs_prob": 0.065,
+        "make_playin_prob": 0.167
       },
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -379,17 +379,17 @@
       "franchise": "WAS",
       "conf": "East",
       "forecast": {
-        "mc_mean_wins": 25.6,
+        "mc_mean_wins": 25.9,
         "p10_wins": 16.0,
-        "p50_wins": 25.0,
-        "p90_wins": 35.0,
-        "make_playoffs_prob": 0.043,
-        "make_playin_prob": 0.119
+        "p50_wins": 26.0,
+        "p90_wins": 36.0,
+        "make_playoffs_prob": 0.045,
+        "make_playin_prob": 0.126
       },
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -397,17 +397,17 @@
       "franchise": "BKN",
       "conf": "East",
       "forecast": {
-        "mc_mean_wins": 24.5,
+        "mc_mean_wins": 24.3,
         "p10_wins": 15.0,
         "p50_wins": 24.0,
         "p90_wins": 34.0,
-        "make_playoffs_prob": 0.034,
-        "make_playin_prob": 0.097
+        "make_playoffs_prob": 0.033,
+        "make_playin_prob": 0.095
       },
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -415,7 +415,7 @@
       "franchise": "OKC",
       "conf": "West",
       "forecast": {
-        "mc_mean_wins": 64.0,
+        "mc_mean_wins": 63.9,
         "p10_wins": 55.0,
         "p50_wins": 65.0,
         "p90_wins": 72.0,
@@ -425,7 +425,7 @@
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -443,7 +443,7 @@
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -461,7 +461,7 @@
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -473,13 +473,13 @@
         "p10_wins": 36.0,
         "p50_wins": 47.0,
         "p90_wins": 57.0,
-        "make_playoffs_prob": 0.807,
+        "make_playoffs_prob": 0.806,
         "make_playin_prob": 0.922
       },
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -491,13 +491,13 @@
         "p10_wins": 34.0,
         "p50_wins": 45.0,
         "p90_wins": 56.0,
-        "make_playoffs_prob": 0.744,
-        "make_playin_prob": 0.889
+        "make_playoffs_prob": 0.738,
+        "make_playin_prob": 0.887
       },
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -505,17 +505,17 @@
       "franchise": "GSW",
       "conf": "West",
       "forecast": {
-        "mc_mean_wins": 43.7,
+        "mc_mean_wins": 43.8,
         "p10_wins": 34.0,
         "p50_wins": 44.0,
-        "p90_wins": 53.0,
-        "make_playoffs_prob": 0.733,
-        "make_playin_prob": 0.892
+        "p90_wins": 54.0,
+        "make_playoffs_prob": 0.738,
+        "make_playin_prob": 0.895
       },
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -523,17 +523,17 @@
       "franchise": "LAL",
       "conf": "West",
       "forecast": {
-        "mc_mean_wins": 41.7,
+        "mc_mean_wins": 41.8,
         "p10_wins": 31.0,
         "p50_wins": 42.0,
         "p90_wins": 52.0,
-        "make_playoffs_prob": 0.628,
-        "make_playin_prob": 0.817
+        "make_playoffs_prob": 0.625,
+        "make_playin_prob": 0.816
       },
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -541,17 +541,17 @@
       "franchise": "POR",
       "conf": "West",
       "forecast": {
-        "mc_mean_wins": 41.5,
-        "p10_wins": 31.0,
-        "p50_wins": 42.0,
+        "mc_mean_wins": 41.4,
+        "p10_wins": 30.0,
+        "p50_wins": 41.0,
         "p90_wins": 52.0,
-        "make_playoffs_prob": 0.609,
-        "make_playin_prob": 0.806
+        "make_playoffs_prob": 0.605,
+        "make_playin_prob": 0.803
       },
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -559,17 +559,17 @@
       "franchise": "PHX",
       "conf": "West",
       "forecast": {
-        "mc_mean_wins": 40.0,
+        "mc_mean_wins": 39.9,
         "p10_wins": 29.0,
         "p50_wins": 40.0,
         "p90_wins": 51.0,
-        "make_playoffs_prob": 0.543,
-        "make_playin_prob": 0.751
+        "make_playoffs_prob": 0.536,
+        "make_playin_prob": 0.748
       },
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -577,17 +577,17 @@
       "franchise": "LAC",
       "conf": "West",
       "forecast": {
-        "mc_mean_wins": 34.3,
+        "mc_mean_wins": 34.6,
         "p10_wins": 24.0,
         "p50_wins": 34.0,
-        "p90_wins": 45.0,
-        "make_playoffs_prob": 0.286,
-        "make_playin_prob": 0.487
+        "p90_wins": 46.0,
+        "make_playoffs_prob": 0.302,
+        "make_playin_prob": 0.504
       },
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -595,17 +595,17 @@
       "franchise": "DAL",
       "conf": "West",
       "forecast": {
-        "mc_mean_wins": 32.0,
+        "mc_mean_wins": 32.1,
         "p10_wins": 22.0,
         "p50_wins": 32.0,
         "p90_wins": 42.0,
-        "make_playoffs_prob": 0.196,
-        "make_playin_prob": 0.378
+        "make_playoffs_prob": 0.2,
+        "make_playin_prob": 0.38
       },
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -613,17 +613,17 @@
       "franchise": "MEM",
       "conf": "West",
       "forecast": {
-        "mc_mean_wins": 31.5,
+        "mc_mean_wins": 31.6,
         "p10_wins": 22.0,
         "p50_wins": 31.0,
         "p90_wins": 41.0,
-        "make_playoffs_prob": 0.168,
-        "make_playin_prob": 0.346
+        "make_playoffs_prob": 0.17,
+        "make_playin_prob": 0.347
       },
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -631,17 +631,17 @@
       "franchise": "SAC",
       "conf": "West",
       "forecast": {
-        "mc_mean_wins": 30.1,
+        "mc_mean_wins": 30.0,
         "p10_wins": 20.0,
         "p50_wins": 30.0,
         "p90_wins": 41.0,
-        "make_playoffs_prob": 0.148,
-        "make_playin_prob": 0.292
+        "make_playoffs_prob": 0.147,
+        "make_playin_prob": 0.287
       },
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -653,13 +653,13 @@
         "p10_wins": 18.0,
         "p50_wins": 28.0,
         "p90_wins": 39.0,
-        "make_playoffs_prob": 0.108,
-        "make_playin_prob": 0.224
+        "make_playoffs_prob": 0.106,
+        "make_playin_prob": 0.222
       },
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     },
     {
@@ -667,17 +667,17 @@
       "franchise": "UTA",
       "conf": "West",
       "forecast": {
-        "mc_mean_wins": 28.3,
-        "p10_wins": 19.0,
+        "mc_mean_wins": 28.2,
+        "p10_wins": 18.0,
         "p50_wins": 28.0,
-        "p90_wins": 38.1,
-        "make_playoffs_prob": 0.1,
-        "make_playin_prob": 0.214
+        "p90_wins": 38.0,
+        "make_playoffs_prob": 0.097,
+        "make_playin_prob": 0.208
       },
       "realized": null,
       "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
-      "standings_sha256": "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243",
+      "standings_sha256": "4b56586cceda324290e457353f397366019bc0170f26886eeaa061317c180f97",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
     }
   ],
@@ -982,6 +982,82 @@
         "DAL": 0.198,
         "MEM": 0.168,
         "SAC": 0.144,
+        "NOP": 0.108,
+        "UTA": 0.1
+      }
+    },
+    {
+      "superseded_by_freeze": "2026-07-29",
+      "reason": "scheduled deploy re-freeze (deploy_site.sh)",
+      "freeze": "2026-07-29",
+      "n_forecasts": 30,
+      "standings_sha256": [
+        "840045822266e904cb649d79be7da873bd6bee80a8330f84a1810b7a60304243"
+      ],
+      "source": [
+        "daily_v5/out/standings/standings_2026_27.parquet"
+      ],
+      "wins": {
+        "BOS": 59.9,
+        "NYK": 54.2,
+        "TOR": 51.4,
+        "CLE": 47.0,
+        "DET": 46.8,
+        "ORL": 45.9,
+        "MIA": 45.3,
+        "CHA": 42.7,
+        "ATL": 40.7,
+        "PHI": 38.1,
+        "IND": 34.5,
+        "CHI": 28.6,
+        "MIL": 27.1,
+        "WAS": 25.6,
+        "BKN": 24.5,
+        "OKC": 64.0,
+        "HOU": 57.0,
+        "SAS": 54.2,
+        "DEN": 46.4,
+        "MIN": 44.7,
+        "GSW": 43.7,
+        "LAL": 41.7,
+        "POR": 41.5,
+        "PHX": 40.0,
+        "LAC": 34.3,
+        "DAL": 32.0,
+        "MEM": 31.5,
+        "SAC": 30.1,
+        "NOP": 28.3,
+        "UTA": 28.3
+      },
+      "playoff_prob": {
+        "BOS": 0.991,
+        "NYK": 0.954,
+        "TOR": 0.897,
+        "CLE": 0.798,
+        "DET": 0.793,
+        "ORL": 0.754,
+        "MIA": 0.738,
+        "CHA": 0.627,
+        "ATL": 0.537,
+        "PHI": 0.418,
+        "IND": 0.259,
+        "CHI": 0.092,
+        "MIL": 0.068,
+        "WAS": 0.043,
+        "BKN": 0.034,
+        "OKC": 0.998,
+        "HOU": 0.977,
+        "SAS": 0.956,
+        "DEN": 0.807,
+        "MIN": 0.744,
+        "GSW": 0.733,
+        "LAL": 0.628,
+        "POR": 0.609,
+        "PHX": 0.543,
+        "LAC": 0.286,
+        "DAL": 0.196,
+        "MEM": 0.168,
+        "SAC": 0.148,
         "NOP": 0.108,
         "UTA": 0.1
       }
