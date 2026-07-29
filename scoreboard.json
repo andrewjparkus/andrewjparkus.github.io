@@ -153,7 +153,7 @@
         "make_playin_prob": 0.999
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -171,7 +171,7 @@
         "make_playin_prob": 0.989
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -189,7 +189,7 @@
         "make_playin_prob": 0.967
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -207,7 +207,7 @@
         "make_playin_prob": 0.926
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -225,7 +225,7 @@
         "make_playin_prob": 0.932
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -243,7 +243,7 @@
         "make_playin_prob": 0.906
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -261,7 +261,7 @@
         "make_playin_prob": 0.907
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -279,7 +279,7 @@
         "make_playin_prob": 0.836
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -297,7 +297,7 @@
         "make_playin_prob": 0.771
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -315,7 +315,7 @@
         "make_playin_prob": 0.663
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -333,7 +333,7 @@
         "make_playin_prob": 0.487
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -351,7 +351,7 @@
         "make_playin_prob": 0.231
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -369,7 +369,7 @@
         "make_playin_prob": 0.171
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -387,7 +387,7 @@
         "make_playin_prob": 0.118
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -405,7 +405,7 @@
         "make_playin_prob": 0.098
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -423,7 +423,7 @@
         "make_playin_prob": 0.999
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -441,7 +441,7 @@
         "make_playin_prob": 0.994
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -459,7 +459,7 @@
         "make_playin_prob": 0.988
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -477,7 +477,7 @@
         "make_playin_prob": 0.923
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -495,7 +495,7 @@
         "make_playin_prob": 0.889
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -513,7 +513,7 @@
         "make_playin_prob": 0.888
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -531,7 +531,7 @@
         "make_playin_prob": 0.82
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -549,7 +549,7 @@
         "make_playin_prob": 0.805
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -567,7 +567,7 @@
         "make_playin_prob": 0.751
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -585,7 +585,7 @@
         "make_playin_prob": 0.49
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -603,7 +603,7 @@
         "make_playin_prob": 0.38
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -621,7 +621,7 @@
         "make_playin_prob": 0.348
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -639,7 +639,7 @@
         "make_playin_prob": 0.284
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -657,7 +657,7 @@
         "make_playin_prob": 0.226
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"
@@ -675,7 +675,7 @@
         "make_playin_prob": 0.214
       },
       "realized": null,
-      "frozen": "2026-07-28",
+      "frozen": "2026-07-29",
       "source": "daily_v5/out/standings/standings_2026_27.parquet",
       "standings_sha256": "5380bc73d1064251b3d8f65d7cdadad0f0238417a668300ad9d7a65f16a9cb66",
       "note": "pre-tip commitment; scored against realized 2026-27 wins when the season ends"

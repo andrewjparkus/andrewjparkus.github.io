@@ -475,6 +475,37 @@
     return cache[key];
   }
 
+  // Same derivation, for a brand hex that has no entry in TEAM_COLORS -- the ~350 college
+  // schools whose colours ride in on the ESPN box export (card_data.py emits card.team_color /
+  // team_color_alt straight off it). Those hexes are NOT safe to paint: measured over the 564
+  // (school, colour) pairs the card actually emits, ZERO clear 4.5:1 against BOTH themes' panel
+  // (dark median 1.98, and three schools ship #ffffff as their primary). Through this walk all
+  // 564 clear 4.5:1 on both, worst 4.56:1, with their hue intact.
+  //
+  // It exists so the page never needs a SECOND spelling of the derivation. Porting the walk into
+  // Python, or hand-bounding a hex on the page, would be a copy of the one piece of this file
+  // that is actually hard, and it would drift the first time a floor moves.
+  //
+  // `alt` is the secondary brand hex, used exactly the way baseFor() uses TEAM_COLORS.secondary:
+  // when the primary is greyscale it has no hue to preserve, so try the alternate before giving
+  // up. 57 of the 564 pairs have a greyscale primary; the alternate rescues 29 of them, and the
+  // remaining 28 fall through to the site accent with brand=false, the same answer the Nets and
+  // the Spurs already get.
+  function deriveHex(hex, alt, theme, role) {
+    theme = resolveTheme(theme);
+    role = role === "accent" ? "accent" : "ink";
+    var base = null;
+    if (hex && toOklch(hex).C >= GREY_C) base = hex;
+    else if (alt && toOklch(alt).C >= GREY_C) base = alt;
+    var brand = base !== null;
+    var out = walk(brand ? base : SITE_ACCENT[theme], theme, role);
+    if (signGap(out.hex, theme) < SIGN_DE[role]) {
+      var acc = walk(SITE_ACCENT[theme], theme, role);
+      if (signGap(acc.hex, theme) >= SIGN_DE[role]) { out = acc; brand = false; }
+    }
+    return { hex: out.hex, brand: brand, push: out.push };
+  }
+
   // 'dark' unless the document says otherwise (no attribute = dark, per site.css).
   function resolveTheme(theme) {
     if (theme === "dark" || theme === "light") return theme;
@@ -497,13 +528,14 @@
 
   var API = { TEAM_COLORS: TEAM_COLORS, teamAccent: teamAccent, teamInk: teamInk,
     teamInkIsBrand: teamInkIsBrand, teamAccentIsBrand: teamAccentIsBrand,
-    toOklch: toOklch, contrast: contrast, baseFor: baseFor };
+    deriveHex: deriveHex, toOklch: toOklch, contrast: contrast, baseFor: baseFor };
   if (typeof window !== "undefined") {
     window.TEAM_COLORS = TEAM_COLORS;
     window.teamAccent = teamAccent;
     window.teamInk = teamInk;
     window.teamInkIsBrand = teamInkIsBrand;
     window.teamAccentIsBrand = teamAccentIsBrand;
+    window.deriveHex = deriveHex;
   }
   if (typeof module !== "undefined" && module.exports) module.exports = API;
 

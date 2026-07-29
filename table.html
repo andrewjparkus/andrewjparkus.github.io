@@ -260,14 +260,15 @@ const Z95=1.959964;       // 95% band = Z95 x se_net, same constant the retired 
    ========================================================================= */
 const MODELAB={pure:'Pure RAPM', prior:'Prior-informed', box:'Box prior', latent:'Latent'};
 // One line per mode. The box line keeps its "reads cooler" clause: without it a reader compares a
-// box number against a board number and concludes the player got worse. Prior-informed has no line
-// at all (owner 2026-07-28): it is the basis every other line is described against, and it is no
-// longer the default, so the sentence it used to carry was two-thirds stale.
+// box number against a board number and concludes the player got worse. Prior-informed's line stays
+// EMPTY even though it is the default again (owner 2026-07-28 evening): the owner deleted that
+// sentence by name this morning, and being the default is not a reason to reinstate copy they cut.
+// It is also the basis every other line is described against, so it needs no line of its own here.
 const MODEHINT={
   pure:'The prior-free six-factor solve.',
   prior:'',
   box:'The box-score basis the prior-informed solve shrinks toward, at its own scale — it reads cooler than the board, especially on defense.',
-  latent:'One continuous number for players who change leagues, instead of a separate line per league. Display-only, and the default.'};
+  latent:'One continuous number for players who change leagues, instead of a separate line per league. Display-only.'};
 // Rendered only when the exporter STAMPED the equality (build_table_site.py derives it by
 // comparing every emitted cell), so this sentence cannot outlive the fact it describes.
 const SAMENOTE='Same numbers as Prior-informed here — the prior only touches NBA rows.';
@@ -298,13 +299,15 @@ const LATENTNOTE=(real,n)=>
 
 // MODE is the user's stored preference and is NEVER overwritten by a fallback: a table that
 // cannot serve it falls back for display only, so returning to the Explorer still finds the
-// original choice. DEFAULT: latent, matching the Explorer's modePinned() / MODE pair — and read
-// the same way it reads it. 'rapm_mode' is the last mode SHOWN on either page, so it cannot tell
-// "the visitor chose this" from "we defaulted to this"; only 'rapm_mode_pinned' can, and it is
-// written by a click and by nothing else. So: pinned -> their pick, unpinned -> today's default.
-// The one-shot migration that clears stale pins is NOT duplicated here — it lives in the
-// rapm_dflt_v4 block at the top of nav.js, which every page loads before its own script.
-let MODE=(localStorage.getItem('rapm_mode_pinned')==='1' && localStorage.getItem('rapm_mode'))||'latent';
+// original choice. DEFAULT: prior, matching the Explorer's modePinned() / MODE pair — and read
+// the same way it reads it. The two pages MUST spell the same default: they share one key, so a
+// disagreement here shows up as the toggle changing under the visitor when they navigate.
+// 'rapm_mode' is the last mode SHOWN on either page, so it cannot tell "the visitor chose this"
+// from "we defaulted to this"; only 'rapm_mode_pinned' can, and it is written by a click and by
+// nothing else. So: pinned -> their pick, unpinned -> today's default. The one-shot migration that
+// clears stale pins is NOT duplicated here — it lives in the rapm_dflt_v5 block at the top of
+// nav.js, which every page loads before its own script.
+let MODE=(localStorage.getItem('rapm_mode_pinned')==='1' && localStorage.getItem('rapm_mode'))||'prior';
 // A table.json predating the toggle has no `modes`/`cap`/`m` — treat it as prior-only rather
 // than greying out every button, so this page still renders if it is deployed ahead of a
 // build_table_site.py run (deploy_site.sh:356 ships them together, but order is not enforced).

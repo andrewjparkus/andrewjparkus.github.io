@@ -18,6 +18,11 @@
      2026-07-27: the roster stopped being a table (a stacked wins bar leads it,
      and the rows are a list), the factor block split into an offence column and
      a defence column, and the team accent went back onto the player names.
+     2026-07-28: the roster list stopped being a list. Guards / Wings / Bigs are
+     three side-by-side COLUMNS of player chips, and each chip trades the four
+     numeric columns for two length-encoded tracks that multiply to its wins —
+     see the .rot block for the encoding, the arithmetic behind it, and the two
+     alternatives priced and rejected.
      =========================================================================== */
 
   /* ---- page header: identity + team switcher ------------------------------ */
@@ -314,78 +319,155 @@
   .wsaxis .t b{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
   .wscap{margin:var(--sp-2) 0 0;font-size:var(--fs-1);color:var(--muted);line-height:1.5;max-width:840px}
 
-  /* ---- roster · the list -------------------------------------------------- */
-  /* It was a table and it read like one: six ruled columns, the numbers spread across the full
-     width, the name no louder than the role beside it. Now the name is the line and everything
-     else is subordinate — no vertical rules anywhere, the four numerics clustered hard right at
-     fixed widths so they still form scannable columns without being drawn as a grid. */
-  .rhead{display:flex;align-items:flex-end;gap:var(--sp-3);padding:0 var(--sp-2) var(--sp-2);
-    border-bottom:1px solid var(--line);font-size:var(--fs-1);color:var(--muted);font-weight:600}
-  .rhead .rnum{white-space:nowrap}          /* "Exp GP ?" must not wrap its own tip onto line two */
-  .rrow{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-2);
-    border-radius:var(--r-1)}
+  /* ---- roster · rotation columns ------------------------------------------ */
+  /* IT WAS A TABLE, THEN IT WAS A LIST OF ROWS, AND A LIST OF ROWS IS STILL A TABLE (owner,
+     2026-07-28). Guards/Wings/Bigs had already shipped, but as three headings stacked down ONE
+     column of ruled rows with four right-aligned numeric columns — so the reader still had to scan
+     16-24 rows of figures, and multiply two of them, to answer the only questions a roster asks:
+     who is here, how good, how much do they play, and how does that become the win total above.
+     The three families are now three COLUMNS standing beside each other, and each player is a chip
+     carrying two LENGTHS instead of four figures:
+       MINUTES — bar = his projected minutes per team game across the whole season (season_mpg),
+         with a tick at his rate in the games he plays (mpg). The gap between the two is the playing
+         time he does not get; the old table printed the two ends of it in separate columns and left
+         the reader to close it. It is NOT bar = tick x ExpGP / 82 — see the .rotcap tip.
+       NET     — bar from the league-average axis: the .fbar idiom exactly, sign carried by
+         --pos/--neg AND by direction, magnitude by length alone, no ramp.
+     Both scales are shared by all three columns and fixed league-wide, so a guard's bar and a big's
+     bar — and Memphis's and New York's — mean the same thing.
+     THE TWO LENGTHS MULTIPLY TO THE WINS ON THE CHIP'S OWN NAME LINE, and that is arithmetic, not a
+     metaphor: fitted over all 538 published rows, proj_wins = 0.0429 x season_mpg x (net + 4.20) at
+     r = 0.9974, median residual 0.056 wins. That is why the net track carries a replacement rule
+     (see .plrepl) — it is the line where the product, and so the chip's wins, changes sign.
+     WHY NOT ONE 240-MINUTE ALLOCATION BAR PER GROUP. Because these minutes do not sum to 240:
+     measured on the published feed, sum(season_mpg) per team runs 250.8 (DAL) to 308.8 (MEM), so a
+     bar captioned "240 minutes" would be a fabricated axis — the trap the wins stack refuses one
+     comment above for the same reason. Shares of the team's OWN minute total are honest, and that
+     is what each column head prints instead.
+     WHY NOT A RATING-VS-MINUTES SCATTER PER GROUP. The groups run n = 1 to 10 (New York's BIGS is
+     one player, Houston's GUARDS ten); a five-point scatter is noise, and in a 311px column every
+     point label collides with its neighbour — which would push all four numbers into hover, the one
+     thing this page will not do to a reader who came for the numbers. */
+  .rot{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-5) var(--sp-4);
+    margin-top:var(--sp-3)}
+  /* two breakpoints, not one: at ~900 a 311px column has become ~200 and the tracks stop carrying
+     length, so the grid drops to two columns and then to one. */
+  @media(max-width:900px){ .rot{grid-template-columns:repeat(2,minmax(0,1fr))} }
+  @media(max-width:620px){ .rot{grid-template-columns:minmax(0,1fr)} }
+  .rotcol{min-width:0}
+  /* the residual group is not a fourth family — it spans, and flows its chips across the full width */
+  .rotcol.wide{grid-column:1/-1}
+  .rotcol.wide .rotbody{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
+    gap:0 var(--sp-4)}
+  /* same head treatment as .fchead in the factor panel — the franchise ink, a rule under it, and
+     the group's own subtotals beside it. A group is a unit with a share, not a divider. */
+  .rothead{padding:0 var(--sp-2) var(--sp-2);border-bottom:1px solid var(--line);
+    margin-bottom:var(--sp-2)}
+  .rothead b{font-size:var(--fs-1);letter-spacing:.7px;font-weight:800;
+    color:var(--team-ink,var(--accent))}
+  /* value before label, value louder than label — the house lockup, same as .rgrphead .gs was. */
+  .rotstats{display:flex;flex-wrap:wrap;gap:var(--sp-1) var(--sp-3);margin-top:3px;
+    font-size:var(--fs-1);color:var(--muted)}
+  .rotstat{display:flex;align-items:baseline;gap:4px;white-space:nowrap}
+  .rotstat em{font-style:normal;font-family:var(--font-mono);font-weight:600;color:var(--text);
+    font-variant-numeric:tabular-nums}
+
+  /* ---- one player -------------------------------------------------------- */
+  /* NO BORDER AND NO INNER CARD. The chip sits directly on the panel; the two tracks are the only
+     ruled things in it, so they are what the eye lands on. A bordered card inside a bordered panel
+     would be the second frame around the same content. */
+  .pl{padding:var(--sp-2);border-radius:var(--r-1)}
   /* the hover ground is solved (boundedWash) to sit between --panel and --panel-3 in luminance, so
-     it is never a worse ground than the site's own table row-hover, and every ink the row puts on it
-     is re-measured against it rather than against --panel. CHI dark #2a1523: --text 14.61:1, --muted
-     6.42:1, name 10.80:1. CHI light #f7e7ec: 14.91:1, 6.16:1, 4.65:1. Those three are the only inks
-     a roster row uses. */
-  .rrow:hover{background:var(--team-hover,var(--panel-2))}
-  .rid{flex:1 1 auto;min-width:0}
-  .rnums{display:flex;align-items:baseline;gap:var(--sp-3);flex:0 0 auto}
-  .rnum{position:relative;text-align:right;font-family:var(--font-mono);
-    font-variant-numeric:tabular-nums;line-height:1.25}
-  /* THESE PER-CELL LABELS ARE HIDDEN VISUALLY, NOT REMOVED (fixed 2026-07-27). They were
-     display:none above 560px, which also takes them out of the accessibility tree — and when the
-     roster stopped being a table it lost the thead, the row and the columnheader semantics that had
-     been naming these numbers. A screen reader was left reading "Jalen Smith Deep 24.1 62 48–74
-     +1.5 4.5". The .rhead line cannot stand in: it is a sibling div with no programmatic
-     association to any cell. So every cell names itself, at every width, and the visual goal — no
-     ruled 20-row table — is untouched.
-     --muted, not --faint: below 560px the same labels become the ONLY thing naming the columns
-     (the header line is gone there), so 3.03:1 was not good enough for them. */
-  .rnum i{font-style:normal;font-family:var(--font);font-size:10px;color:var(--muted);font-weight:600}
-  .rnum i,.vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;
-    overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
-  /* EVERY FIGURE IN THIS CLUSTER IS --text, HOVERED OR NOT, ON BOTH THEMES (fixed 2026-07-27).
-     These numerals briefly took the sign colour onto the glyph itself, and on the light theme that
-     put them under the 4.5:1 text floor on most rows of every team: the light --pos of the day
-     (#11a06a) measured 3.35:1 on a plain row and 2.79:1 on the tinted hover row, and even --neg
-     (#d4393a), which cleared 4.72:1 plain, fell to 3.93:1 hovered. Measured on the rendered pixel,
-     not on the token.
-     THE SIGN IS NOT LOST, because in this cluster it was never colour alone: fmt() prints an
-     explicit + or − on the net value and num() an explicit − on the wins value. That non-chromatic
-     carrier is also what lets the cluster share a row with a name in the franchise ink — a red
-     numeral one space from a red name is the collision .lgrank already refuses to make.
-     WHY --text AND NOT A DARKER GREEN. The sign tokens were re-solved site-wide the same day (light
-     --pos is now #0d784f, 4.58:1 on the worst surface), so a sign-coloured figure would pass today.
-     It would pass because of a token this page does not own, and it would go back under the floor
-     the moment that token moved. --text is 17.80:1 plain / 14.91:1 hovered on light and 15.81:1 /
-     14.61:1 on dark, before and after that change and whatever it becomes next. */
-  .rnum b{font-size:var(--fs-2);font-weight:600;color:var(--text)}
-  /* the 80% range is secondary, but secondary text is still text, and as --faint it was 2.93:1 light
-     / 3.03:1 on the panel and 2.44:1 on the hover row. --muted is the ink the role line was promoted
-     to one comment below, for the same reason, and it cleared the floor on the old palette (6.03 /
-     5.02 light) as well as this one (7.36 / 6.16) — so the row does not depend on --faint's rescue. */
-  .rnum .rng{display:block;font-size:10px;line-height:1.1;color:var(--muted)}
-  .rn-mpg{width:52px}.rn-gp{width:74px}.rn-net{width:58px}.rn-w{width:56px}
-  /* THE PLAYER NAMES WEAR THE FRANCHISE INK AGAIN (owner, 2026-07-27), reversing yesterday's call.
-     The hazard is real: on a red franchise the name ink and --neg are the same FAMILY of red, and
-     no amount of derivation makes them different colours. So every mitigation here is NON-COLOUR.
-     The name is 14px in the body face at 600 weight; every number is mono, tabular and right-
-     aligned in a fixed-width cluster at the opposite end of the row; the net value carries an
-     explicit sign glyph no name contains; and the line under the name is a word, not a number.
-     Since the fix at .rnum b there is also no sign-coloured numeral left in the row to collide with.
+     it is never a worse ground than the site's own table row-hover, and every ink the chip puts on
+     it is re-measured against it rather than against --panel. CHI dark #2a1523: --text 14.61:1,
+     --muted 6.42:1, name 10.80:1. CHI light #f7e7ec: 14.91:1, 6.16:1, 4.65:1.
+     THE CHIP ADDS FIVE MARKS THIS SURFACE HAD NEVER CARRIED, so they were measured too — worst case
+     over all 30 franchises x both themes x {panel, hovered}, computed on the rendered variables:
+       .plfill (--team)   3.06:1  (ATL light, hovered; 3.27 TOR dark, hovered)
+       .plbar  (--neg)    4.59:1  (OKC light, hovered)
+       .plbar  (--pos)    4.58:1  (CLE light, hovered)
+       .plbar  (--zero)   4.92:1  (ORL dark, hovered)
+       .pltick (--muted)  6.12:1  (CLE light, hovered)
+       .plrepl (--text)  14.19:1  (ORL dark, hovered)
+     30/30 clear the 3:1 mark floor on both grounds. The team fill is the tight one and it is tight
+     BY DESIGN — team_colors.js certifies each accent at exactly >=3:1 and this surface is 0.06 off
+     it, so anything that lightens the hover cap has to be re-measured here. */
+  .pl:hover{background:var(--team-hover,var(--panel-2))}
+  .plid{display:flex;align-items:baseline;gap:var(--sp-2)}
+  .plwho{flex:1 1 auto;min-width:0}
+  /* THE PLAYER NAMES WEAR THE FRANCHISE INK (owner, 2026-07-27). The hazard is real: on a red
+     franchise the name ink and --neg are the same FAMILY of red, and no amount of derivation makes
+     them different colours. So every mitigation here is NON-COLOUR. The name is 14px in the body
+     face at 600 weight; every number is mono, tabular and right-aligned; the net value carries an
+     explicit sign glyph no name contains; and the line under the name is words, not figures. No
+     figure in this chip is sign-coloured — only the two bars are, and neither is text.
      THE INK IS team_colors.js's TO CHOOSE and this page reads whatever it certifies — including its
-     refusal: on light it now declines to brand a red or green franchise at all and hands back the
-     site accent, so CHI light is #1b68c0 (5.54:1 on the row, 4.65:1 hovered) while CHI dark keeps
-     #ffbdbf (11.69:1 / 10.80:1). Both are read as "the name", not as a sign, because nothing else in
-     the row is coloured. Do not re-derive that floor here; it lives in team_colors.js. */
-  .rnm{font-size:var(--fs-2);font-weight:600;color:var(--team-ink,var(--accent));text-decoration:none}
-  .rnm:hover{color:var(--text);text-decoration:underline}
-  /* the role is a datum, not a whisper: --muted (6.95:1 dark / 7.36:1 light on the panel), where the
-     --faint it first got demoted to measured 3.03:1 — below the text floor, and worse than the table
-     cell it replaced. */
-  .rsub{font-size:var(--fs-1);color:var(--muted);margin-top:1px}
+     refusal: on light it declines to brand a red or green franchise at all and hands back the site
+     accent, so CHI light is #1b68c0 (5.54:1 on the panel, 4.65:1 hovered) while CHI dark keeps
+     #ffbdbf (11.69:1 / 10.80:1). Do not re-derive that floor here; it lives in team_colors.js.
+     The name WRAPS rather than ellipsing: a truncated name is a name the reader cannot look up, and
+     the chips are an independent stack per column — nothing needs them to be the same height. */
+  .plnm{font-size:var(--fs-2);font-weight:600;color:var(--team-ink,var(--accent));
+    text-decoration:none;overflow-wrap:anywhere}
+  .plnm:hover{color:var(--text);text-decoration:underline}
+  /* wins rides the NAME line because it is the chip's headline — the one figure that is exactly
+     additive up to the stacked bar at the top of this panel and to the hero's projected total. */
+  .plw{flex:0 0 auto;font-family:var(--font-mono);font-size:var(--fs-2);font-weight:600;
+    font-variant-numeric:tabular-nums;color:var(--text);cursor:help;white-space:nowrap}
+  /* the gap before "wins" is a REAL SPACE in the markup, not a margin: with a margin the DOM text
+     is "3.6wins" and that is what a screen reader gets handed. nowrap above keeps the lockup whole. */
+  .plw i{font-style:normal;font-family:var(--font);font-size:10px;font-weight:600;color:var(--muted)}
+  /* role, listed position and expected games: data, not a whisper. --muted is 6.95:1 dark /
+     7.36:1 light on the panel and 6.42 / 6.16 on the hover row; --faint measured 3.03:1, under the
+     text floor. Exp GP lives here because it is what the minutes tick below is explained BY. */
+  .plsub{font-size:var(--fs-1);color:var(--muted);margin-top:1px}
+
+  /* ---- the two tracks ---------------------------------------------------- */
+  .plrow{display:flex;align-items:center;gap:var(--sp-2);margin-top:6px}
+  /* border only, no fill — the ground is the panel (or the hovered tint), exactly as .ftrack does
+     it, so every mark inside is measured against a surface the site already certifies. */
+  .pltrack{position:relative;flex:1 1 auto;min-width:0;height:14px;
+    border:1px solid var(--line);border-radius:3px}
+  .plval{flex:0 0 46px;text-align:right;font-family:var(--font-mono);font-size:var(--fs-1);
+    font-weight:600;font-variant-numeric:tabular-nums;color:var(--text);line-height:1.2}
+  /* MINUTES. The fill is the franchise — playing time is the team's own resource to hand out, the
+     same thing .wseg says with the same colour. Measured, not assumed: see the .pl:hover table. */
+  .plfill{position:absolute;top:2px;bottom:2px;left:0;z-index:1;min-width:2px;border-radius:2px;
+    background:var(--team,var(--accent))}
+  /* the un-played remainder, in the .fband treatment: a HINT (1.10:1 dark / 1.12:1 light), never
+     the mark. On light any tint dark enough to be seen drops the fill sitting beside it below 3:1. */
+  .plghost{position:absolute;top:0;bottom:0;left:0;z-index:0;background:var(--panel-3)}
+  :root[data-theme=light] .plghost{background:var(--panel-2)}
+  /* ...so the MARK is the edge, the .fedge idiom exactly: --muted (5.39:1 on panel, 4.90 on the
+     band) and overshooting the track 3px top and bottom into the row's own gap, where no fill can
+     ever paint over it. This tick is his MPG when active; the fill stops at his season-long rate. */
+  .pltick{position:absolute;top:-3px;bottom:-3px;z-index:3;width:1px;background:var(--muted)}
+  /* NET. Same three parts as .frow, same reasons: a --zero axis at the league average, and a bar
+     that takes currentColor from the pos/neg/zero class its own printed figure wears, so the two
+     can never drift apart. */
+  .plaxis{position:absolute;top:0;bottom:0;z-index:2;left:50%;width:1px;background:var(--zero)}
+  .plbar{position:absolute;top:2px;bottom:2px;z-index:1;min-width:2px;border-radius:2px;
+    background:currentColor}
+  /* REPLACEMENT LEVEL — the line where a chip's wins change sign, DERIVED from the feed (see the
+     REPL block in render()), not typed in. It crosses three backings: the bare track, a --neg bar
+     running left past it, and a --pos bar starting right of it — and no single ink clears 3:1 on
+     all three, which is the same problem .bcut and .wsmark solve with a two-tone dash. Same device. */
+  .plrepl{position:absolute;top:-3px;bottom:-3px;z-index:4;width:1.5px;margin-left:-.75px;
+    pointer-events:none;
+    background:repeating-linear-gradient(to bottom,var(--text) 0 3px,var(--bg) 3px 6px)}
+  /* THE ENCODING IS EXPLAINED ONCE, IN WORDS, ABOVE THE COLUMNS. Two novel tracks with no legend is
+     a puzzle; a legend per chip is noise. This sentence replaces the .rhead strip whose four column
+     headers used to carry the same four methodology tips. */
+  .rotcap{margin:var(--sp-4) 0 0;font-size:var(--fs-1);color:var(--muted);line-height:1.6;
+    max-width:840px}
+  .rotcap b{color:var(--text);font-weight:600}
+  /* THE PER-TRACK LABELS ARE HIDDEN VISUALLY, NOT REMOVED. When the roster stopped being a table it
+     lost the thead, row and columnheader semantics that named its numbers, and a bar has no text of
+     its own at all — without these a screen reader reads "Jalen Smith 4.5 wins Deep · PF · 62 games
+     24.1 +1.5". .rotcap cannot stand in: it is a sibling with no programmatic association to any
+     track. So every value names itself, at every width. */
+  .vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;
+    overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
   /* THE ROOKIE CHIP IS NO LONGER AMBER (fixed 2026-07-27). --amber had no light value at all, so
      #f0b429 measured 1.86:1 on --panel #ffffff and 1.55:1 on the tinted hover row — and the 1px
      border was the same ink, so at 9.5px/800 the entire chip was under the 3:1 MARK floor on light,
@@ -398,33 +480,16 @@
   .rk{display:inline-block;margin-left:6px;font-size:9.5px;font-weight:800;letter-spacing:.3px;
     color:var(--muted);border:1px solid var(--muted);border-radius:3px;padding:0 4px;
     vertical-align:middle;cursor:help}
-  /* a position group is a unit with its own subtotal, not a divider between rows */
-  .rgrp{margin-top:var(--sp-4)}
-  .rgrp:first-of-type{margin-top:var(--sp-3)}
-  .rgrphead{display:flex;align-items:baseline;gap:var(--sp-2);flex-wrap:wrap;padding:0 var(--sp-2) var(--sp-1)}
-  .rgrphead b{font-size:var(--fs-1);letter-spacing:.7px;font-weight:800;
-    color:var(--team-ink,var(--accent))}
-  /* value before label, value louder than label — the house lockup. A group can be net-negative
-     (Brooklyn's two point guards run −1.1) and it reads the way a negative ROW reads — which, since
-     the fix above, is an explicit − glyph on a --text figure, not a red one. One rule for the sign
-     inside this panel, not one for rows and another for their subtotals. */
-  .rgrphead .gs{font-size:var(--fs-1);color:var(--muted)}
-  .rgrphead .gs em{font-style:normal;font-family:var(--font-mono);font-weight:600;color:var(--text);
-    font-variant-numeric:tabular-nums}
-  .rrow.rtot{margin-top:var(--sp-4);border-top:1px solid var(--line);border-radius:0;
-    background:var(--team-tint,var(--panel-2))}
-  .rrow.rtot .rnm{color:var(--text);font-weight:800;letter-spacing:.5px}
-  .rrow.rtot .rnum b{font-weight:800}
-  @media(max-width:560px){
-    /* the numerics drop to their own line and the labels a screen reader has been hearing all along
-       become visible too; the header line that carried them (and their ? tips) has nothing left to
-       align to, so it goes */
-    .rhead{display:none}
-    .rrow{flex-wrap:wrap;gap:var(--sp-2);padding:var(--sp-3) var(--sp-1)}
-    .rid{flex:1 1 100%}
-    .rnums{flex:1 1 100%;justify-content:flex-end}
-    .rnum i{position:static;display:block;width:auto;height:auto;margin:0;
-      overflow:visible;clip:auto;clip-path:none}
+  /* THE "TOTAL" FOOTER ROW IS GONE with the table it was the footer of. It printed the team's net
+     and the roster's summed wins — both of which are already on this page twice over: the hero's
+     .netlock and .bignum, the sticky mini-header, and the wins stack's own axis label at the top of
+     this very panel. Three columns of chips have no bottom edge to hang a footer from, and the
+     column heads now carry the subtotals that actually add up to it. */
+  @media(max-width:620px){
+    /* one column, so a chip is full-width and the tracks get longer, not shorter — the encoding
+       survives the phone. Nothing needs to be revealed here: unlike the old table's per-cell
+       labels, every value in a chip is already named on screen or by its own hidden label. */
+    .pl{padding:var(--sp-2) var(--sp-1)}
   }
 </style></head>
 <body>
@@ -881,15 +946,61 @@ function render(d){
 
   html += winsStackHTML(roster, totalWins);
 
-  html += '<div class="rhead"><div class="rid"></div><div class="rnums">'
-    // plan 50 W3c: MPG is MODELLED, never curated — ZERO of the 538 published rows carry a proj_min
-    // in depthcharts_2026_27.csv. The chart supplies the roster and the role; the minutes are ours.
-    // That distinction stays with the column, in its header tip, where a reader meets the number.
-    + '<div class="rnum rn-mpg">MPG <span class="help" data-tip="Modeled minutes per game when active — the depth chart supplies the roster and role, not the minutes.">?</span></div>'
-    + '<div class="rnum rn-gp">Exp GP <span class="help" data-tip="Expected games played; the small numbers are the 80% range.">?</span></div>'
-    + '<div class="rnum rn-net">Net <span class="help" data-tip="Projected on-court net, points per 100 possessions, for 2026-27. Cold-start rookies use a replacement-level prior.">?</span></div>'
-    + '<div class="rnum rn-w">Wins <span class="help" data-tip="Each player\'s share of the team\'s projected wins; the column sums to the team total.">?</span></div>'
-    + '</div></div>';
+  // ---- the two chip scales, derived and LEAGUE-WIDE -----------------------
+  // Both are solved over every published row on all 30 teams, exactly as drawFactors solves its own
+  // domain, for the same two reasons: the page never invents a number it can read, and a fixed
+  // league scale is what lets Memphis's chips and New York's mean the same thing. Measured
+  // 2026-07-28 on the shipped feed: max mpg 38.5 -> a 40-minute track; max |net| 8.61 -> +/-9.0.
+  const allRows = teams.reduce((a,t)=>a.concat(Array.isArray(t.roster)?t.roster:[]), []);
+  const maxOf = fn => allRows.reduce((m,p)=>{ const v = fn(p); return (v!=null && !isNaN(v) && v>m) ? v : m; }, 0);
+  const MIN_DOM = Math.max(5, Math.ceil(maxOf(p=>Number(p.mpg))/5)*5);
+  const NET_DOM = Math.max(0.5, Math.ceil(maxOf(p=>Math.abs(Number(p.net)))*2)/2);
+  // REPLACEMENT LEVEL, derived rather than typed in. Wins contributed is a product — fitted over
+  // the 538 rows, proj_wins = 0.0429 x season_mpg x (net + 4.20), r = 0.9974 — so it changes sign at
+  // one net value and nowhere else, and the published rows separate there CLEANLY: the highest net
+  // among the 36 rows with negative wins is -4.21 and the lowest among the 501 positive rows is
+  // -4.19, so the boundary is their midpoint, -4.20. Read that way it cannot go stale, and if a
+  // future feed ever makes the two sets overlap the rule is simply not drawn rather than drawn wrong.
+  const netsWhere = f => allRows.filter(p=>f(Number(p.proj_wins))).map(p=>Number(p.net)).filter(v=>!isNaN(v));
+  let REPL = null;
+  const negNet = netsWhere(w=>w<0), posNet = netsWhere(w=>w>0);
+  if(negNet.length && posNet.length){
+    const hiNeg = Math.max.apply(null,negNet), loPos = Math.min.apply(null,posNet);
+    if(hiNeg < loPos) REPL = (hiNeg + loPos) / 2;
+  }
+  const D = {min:MIN_DOM, net:NET_DOM, repl:REPL};
+
+  // plan 50 W3c: MPG is MODELLED, never curated — ZERO of the 538 published rows carry a proj_min in
+  // depthcharts_2026_27.csv. The chart supplies the roster and the role; the minutes are ours. That
+  // distinction used to live in a column header's tip; it lives here now, where the reader meets the
+  // track. The four ? tips this sentence carries are the four the .rhead strip used to carry.
+  html += '<p class="rotcap">Two tracks per player, on scales shared by all 30 teams. '
+    + '<b>Minutes</b> — his projected minutes per team game across all 82, in the team colour, '
+    + 'with a tick at his rate in the games he actually plays '
+    // DO NOT "SIMPLIFY" THIS TIP BACK INTO bar = tick x ExpGP / 82. It is not. Measured over the 538
+    // published rows, season_mpg / mpg differs from exp_gp / 82 by more than 5 points on 291 of them:
+    // starters run about 4 points HIGH (they absorb minutes when teammates sit) and buried bodies as
+    // much as 26 points LOW (Jayden Quaintance: implied 0.28 against 44/82 = 0.54, because a deep
+    // name-only body is allocated on rotation rank, not on availability). The two published minutes
+    // are two separate modelled quantities; the tip states each of them and names the gap without
+    // asserting an equation between the three.
+    + '<span class="help" data-tip="Modeled, never curated: the depth chart supplies the roster and '
+    + 'the role, not the minutes. The bar is his minutes per team game averaged over a whole 82; the '
+    + 'tick is his minutes per game in the games he plays. The gap between them is the playing time '
+    + 'he does not get — nights he is unavailable, and for deep-bench players the nights the rotation '
+    + 'never reaches him.">?</span>'
+    + '. <b>Net</b> — projected points per 100 possessions either side of the league average '
+    + '<span class="help" data-tip="Projected on-court net for 2026-27. Cold-start rookies use a '
+    + 'replacement-level prior. Bar length is the distance from league average; the sign is carried '
+    + 'by the direction and by the + or − on the figure, not by colour alone.">?</span>'
+    + (REPL!=null ? ', with a dashed rule at replacement level '
+        + '<span class="help" data-tip="Replacement level, ' + num(REPL,1) + ' points per 100 — read '
+        + 'off this feed, not assumed. A player\'s wins are his minutes times his net above this '
+        + 'line, so every player left of the rule gives wins back, and those are exactly the ones in '
+        + 'the strip under the bar above.">?</span>' : '')
+    + '. The two multiply to the <b>wins</b> beside his name '
+    + '<span class="help" data-tip="Each player\'s share of the team\'s projected wins. The group '
+    + 'subtotals sum to the team total on the bar above.">?</span>.</p>';
 
   // The family is a CURATED fact, read straight off the feed — the page does not re-derive one from
   // `pos`. A row with no family is a row nothing in the data can place, never a row we declined to
@@ -898,26 +1009,30 @@ function render(d){
   const unplaced = [];
   roster.forEach(p=>{ const f = p && p.pos_family; if(groups[f]) groups[f].push(p); else unplaced.push(p||{}); });
   const byContrib = (a,b)=>((b.proj_wins||0)-(a.proj_wins||0));
-  const emitGroup = (label, list, tip)=>{
+  // The share denominator is the team's OWN projected minutes, never 240 — see the .rot comment.
+  const teamMin = roster.reduce((a,p)=>a+(Number(p && p.season_mpg)||0), 0);
+  const emitGroup = (label, list, tip, wide)=>{
     if(!list.length) return '';
-    // a group is a unit: it owns its player count and its share of the projected wins
+    // a group is a unit: it owns its head count, its share of the minutes and its share of the wins
     const gw = list.reduce((a,p)=>a+((p && p.proj_wins!=null && !isNaN(p.proj_wins))?Number(p.proj_wins):0),0);
+    const gm = list.reduce((a,p)=>a+(Number(p && p.season_mpg)||0), 0);
     // THE EXPLANATION GETS THE SAME CARRIER AS EVERY OTHER EXPLANATION ON THE PAGE: a circled ?
     // beside the heading. It used to be the heading itself wearing .help with
     // border:none;width:auto;height:auto — which keeps the cursor:help and the bubble but deletes
-    // the ring, i.e. deletes the only thing that tells a reader an explanation exists. Nothing on
-    // this page hovers what it cannot see is hoverable, so the one tip that most needed finding was
-    // the one with no affordance at all. As a flex child of .rgrphead the ? picks up the same
-    // var(--sp-2) gap the count and wins chips use.
-    let h = '<div class="rgrp"><div class="rgrphead"><b>'+esc(label)+'</b>'
+    // the ring, i.e. deletes the only thing that tells a reader an explanation exists.
+    let h = '<div class="rotcol'+(wide?' wide':'')+'"><div class="rothead"><b>'+esc(label)+'</b>'
       + (tip?' <span class="help" data-tip="'+esc(tip)+'">?</span>':'')
-      + '<span class="gs"><em>'+list.length+'</em> player'+(list.length===1?'':'s')+'</span>'
+      + '<div class="rotstats">'
+      + '<span class="rotstat"><em>'+list.length+'</em> player'+(list.length===1?'':'s')+'</span>'
+      + (teamMin>0 ? '<span class="rotstat"><em>'+num((gm/teamMin)*100,0)+'%</em> of minutes</span>' : '')
       // a group can be net-negative (Brooklyn's two point guards run −1.1); num() prints the −
-      + '<span class="gs"><em>'+num(gw,1)+'</em> wins</span></div>';
-    list.slice().sort(byContrib).forEach(p=>{ h += rosterRow(p, totalWins); });
-    return h + '</div>';
+      + '<span class="rotstat"><em>'+num(gw,1)+'</em> wins</span>'
+      + '</div></div><div class="rotbody">';
+    list.slice().sort(byContrib).forEach(p=>{ h += playerChip(p, totalWins, D); });
+    return h + '</div></div>';
   };
-  FAMILIES.forEach(f=>{ html += emitGroup(f[1], groups[f[0]], null); });
+  html += '<div class="rot">';
+  FAMILIES.forEach(f=>{ html += emitGroup(f[1], groups[f[0]], null, false); });
   // THE HEADING NAMES WHAT IS ACTUALLY TRUE OF THESE ROWS AND OF NO OTHERS (fixed 2026-07-27).
   // It used to read NO POSITION LISTED, which is true of them — and of 75 rows that are NOT under
   // it: measured on the published feed, 94 of the 538 roster rows carry pos=null and 75 of those
@@ -939,19 +1054,8 @@ function render(d){
     'Not on the depth chart these groups come from, and no listed position anywhere either — so '
     + 'nothing in the data can call them a guard, a wing or a big. A gap, not a position. A player '
     + 'the chart also misses but who does have a listed position is filed by that instead, so he is '
-    + 'not here.');
-
-  html += '<div class="rrow rtot"><div class="rid">'
-    + '<span class="rnm" data-tip="Team projected net against the league average, and the roster\'s'
-    + ' wins contributed summed to the projected total.">TOTAL</span>'
-    + '<div class="rsub">'+roster.length+' players</div></div>'
-    + '<div class="rnums">'
-    + '<div class="rnum rn-mpg"><i>MPG</i><b>–</b></div>'
-    + '<div class="rnum rn-gp"><i>Exp GP</i><b>–</b></div>'
-    // no sign class on these two: in this cluster the sign is the + / − glyph (see .rnum b)
-    + '<div class="rnum rn-net"><i>Net</i><b>'+strF.txt+'</b></div>'
-    + '<div class="rnum rn-w"><i>Wins</i><b>'+num(totalWins,1)+'</b></div>'
-    + '</div></div>';
+    + 'not here.', true);
+  html += '</div>';   // /.rot
   html += '</div></section>';   // /.pbody /.panel
 
   html += '</div>';   // /.dash
@@ -1091,12 +1195,16 @@ function fitStackLabels(){
 // reason, and like it, assigned from measured geometry — which carrier sits near an edge depends on
 // how the header wraps. 131 = half the bubble's own max width (260 + its 1px borders); erring
 // towards anchoring is harmless, a bubble that would have fitted centred still fits hung off an end.
-// .rgrphead joins the list because the residual group's heading is long enough to push its ? to the
-// right edge of a narrow panel; it keeps the UPWARD bubble (the flip-down CSS above is keyed on
-// .phead/.fchead only, and a group heading sits mid-body with room above it), it only borrows the
-// horizontal anchoring.
+// .rothead, .rotcap and EVERY CHIP join the list. The chips are the reason this pass now matters at
+// every width rather than only narrow: three columns put ~20 tooltip carriers per team hard against
+// the panel's right edge, and a 260px bubble centred on a value at the right column's right margin
+// runs ~127px past a 964px panel at 1280 — clipped, because .panel owns overflow:hidden. Measured on
+// MEM, whose 24 chips fill all three columns. They keep the UPWARD bubble (the flip-down CSS above
+// is keyed on .phead/.fchead only, and a chip sits mid-body with room above it); they borrow only
+// the horizontal anchoring.
 function fitHeadTips(){
-  document.querySelectorAll('.phead [data-tip], .fchead [data-tip], .rgrphead [data-tip]').forEach(el=>{
+  document.querySelectorAll('.phead [data-tip], .fchead [data-tip], .rothead [data-tip],'
+    + ' .rotcap [data-tip], .pl [data-tip]').forEach(el=>{
     const panel = el.closest('.panel');
     if(!panel) return;
     const r = el.getBoundingClientRect(), p = panel.getBoundingClientRect();
@@ -1123,7 +1231,7 @@ const FAMILIES = [["guard","GUARDS"],["wing","WINGS"],["big","BIGS"]];
 // The feed's model_source is an internal id ("xgb"), and the tooltip was printing it raw as
 // "· source xgb". Reader words, or nothing — an id the reader cannot look up is worse than silence.
 const SRC_WORDS = { xgb:"from rated history", rookie:"from a rookie prior", replacement:"at replacement level" };
-function rosterRow(p, teamW){
+function playerChip(p, teamW, D){
   p = p || {};
   const f = Array.isArray(p.f) ? p.f : [];
   const ftip = f.length===6 ? (' · ' + FACS.map((nm,i)=>nm+' '+num(f[i],1)).join(' · ')) : '';
@@ -1133,43 +1241,76 @@ function rosterRow(p, teamW){
     + (SRC_WORDS[p.model_source] ? ' · '+SRC_WORDS[p.model_source] : '') + ftip;
   const rookie = '<span class="rk" title="Cold-start rookie — net is a replacement-level prior,'
     + ' no rated history yet.">R</span>';
+  // ONE LINK RULE, UNCHANGED. 32 of the 538 published rows resolve to neither a pid the Explorer
+  // will answer to nor a gid, and they get plain text rather than a dead href — a rookie who is not
+  // in the daily board yet has nothing to link TO. Do not add a second rule beside this one.
   let nm;
   if(!p.cold && p.pid!=null){
-    nm = '<a class="rnm" href="index.html?p='+encodeURIComponent(p.pid)+'" title="'+esc(ntip)+'">'+esc(p.name||'')+'</a>';
+    nm = '<a class="plnm" href="index.html?p='+encodeURIComponent(p.pid)+'" title="'+esc(ntip)+'">'+esc(p.name||'')+'</a>';
   } else if(p.gid!=null){
-    nm = '<a class="rnm" href="index.html?p='+encodeURIComponent(p.gid)+'" title="'+esc(ntip)+'">'+esc(p.name||'')+'</a>'+rookie;
+    nm = '<a class="plnm" href="index.html?p='+encodeURIComponent(p.gid)+'" title="'+esc(ntip)+'">'+esc(p.name||'')+'</a>'+rookie;
   } else {
-    nm = '<span class="rnm" title="'+esc(ntip)+'">'+esc(p.name||'')+'</span>'+rookie;
+    nm = '<span class="plnm" title="'+esc(ntip)+'">'+esc(p.name||'')+'</span>'+rookie;
   }
-  // The red-to-green swatch that used to sit beside this number is gone with the table. It restated
-  // the number's own sign and magnitude in a second channel, and in a list that reads down the
-  // names it was the loudest thing on the row. What carries the sign now is the + / − glyph fmt()
-  // prints on the figure — not the figure's colour, which could not clear the text floor on the
-  // light theme's hover row (see .rnum b).
+  // The red-to-green swatch that used to sit beside the net figure is gone with the table. It
+  // restated the number's own sign and magnitude in a second channel. What carries the sign now is
+  // the + / − glyph fmt() prints on the figure, plus the direction of the bar from the axis — the
+  // figure itself stays --text on both themes, because the light --pos measured 2.79:1 on the
+  // tinted hover row when it briefly took the sign colour.
   const nf = fmt(p.net,1);
   const wins = (p.proj_wins!=null) ? Number(p.proj_wins) : null;
-  const shareTip = (wins!=null && teamW>0) ? num((wins/teamW)*100,0)+'% of the team\'s projected wins' : '';
-  const gp = (p.exp_gp==null) ? '–' : num(p.exp_gp,0);
-  // the two small numbers under Exp GP are a range, and nothing on screen says so above 560px —
-  // the column header's ? tip is hover-only. One visually-hidden word makes the pair self-naming.
-  const rng = (p.gp_lo!=null && p.gp_hi!=null)
-    ? '<span class="rng"><span class="vh">80% range </span>'+num(p.gp_lo,0)+'–'+num(p.gp_hi,0)+'</span>' : '';
+  const shareTip = (wins!=null && teamW>0)
+    ? num(wins,2)+' wins contributed · '+num((wins/teamW)*100,0)+'% of the team\'s projected wins'
+    : 'Wins contributed';
+  const gp = (p.exp_gp==null) ? null : num(p.exp_gp,0);
   // The listed position did not vanish with the grouping, it moved: it rides beside the role for
   // the 444 of 538 rows that genuinely have one (431 of the five, 13 a bare G or F) and is simply
-  // absent for the other 94. Same ink as the role — they are peers, and neither is a number.
+  // absent for the other 94. Expected games joins them because it is what the minutes tick below is
+  // explained BY — three words, no numbers to align, all of it --muted.
   const pos = ["PG","SG","SF","PF","C","G","F"].indexOf(String(p.pos||"").toUpperCase()) >= 0
     ? String(p.pos).toUpperCase() : "";
-  const sub = [(p.role||'').replace(/^\w/,c=>c.toUpperCase()), pos].filter(Boolean).join(' · ');
-  return '<div class="rrow">'
-    + '<div class="rid">'+nm
-      + '<div class="rsub">'+esc(sub)+'</div></div>'
-    + '<div class="rnums">'
-      + '<div class="rnum rn-mpg"><i>MPG</i><b>'+num(p.mpg,1)+'</b></div>'
-      + '<div class="rnum rn-gp"><i>Exp GP</i><b>'+gp+'</b>'+rng+'</div>'
-      + '<div class="rnum rn-net"><i>Net</i><b>'+nf.txt+'</b></div>'
-      + '<div class="rnum rn-w"><i>Wins</i><b'
-        + (shareTip?' title="'+esc(shareTip)+'"':'')+'>'+num(wins,1)+'</b></div>'
-    + '</div></div>';
+  const sub = [(p.role||'').replace(/^\w/,c=>c.toUpperCase()), pos,
+               (gp!=null ? gp+' games' : '')].filter(Boolean).join(' · ');
+
+  // ---- the minutes track ----
+  const dom = (D && D.min) || 40;
+  const sm = Number(p.season_mpg), mp = Number(p.mpg);
+  const W = v => clamp(((isNaN(v)?0:v)/dom)*100, 0, 100);
+  const rngTxt = (p.gp_lo!=null && p.gp_hi!=null) ? ' (80% range '+num(p.gp_lo,0)+'–'+num(p.gp_hi,0)+')' : '';
+  // three published figures, stated as three figures. See the .rotcap tip: bar x games / 82 does NOT
+  // reproduce the tick, so this must not read as if it did.
+  const mtip = num(sm,1)+' minutes per team game averaged over all 82 · '+num(mp,1)
+    + ' per game in the games he plays'
+    + (gp!=null ? ' · '+gp+' games expected'+rngTxt : '') + '.';
+  let mtrack = '<span class="pltrack" data-tip="'+esc(mtip)+'">';
+  if(!isNaN(mp)) mtrack += '<span class="plghost" style="width:'+W(mp).toFixed(2)+'%"></span>';
+  if(!isNaN(sm)) mtrack += '<span class="plfill" style="width:'+W(sm).toFixed(2)+'%"></span>';
+  if(!isNaN(mp)) mtrack += '<span class="pltick" style="left:'+W(mp).toFixed(2)+'%"></span>';
+  mtrack += '</span>';
+
+  // ---- the net track ----
+  const nd = (D && D.net) || 9;
+  const X = v => clamp(50 + ((isNaN(v)?0:v)/nd)*50, 0, 100);
+  const nv = Number(p.net), xv = X(nv);
+  // no bar at all when there is no net. .plbar carries min-width:2px so a missing value would
+  // otherwise paint a 2px --zero mark sitting exactly on the axis — i.e. it would draw "precisely
+  // league average", which is the one thing an absent number does not mean. The figure prints "–".
+  let ntrack = '<span class="pltrack '+nf.cls+'" data-tip="'+esc(ntip)+'">'
+    + '<span class="plaxis"></span>'
+    + (isNaN(nv) ? '' : '<span class="plbar" style="left:'+Math.min(50,xv).toFixed(2)+'%;width:'
+      + Math.abs(xv-50).toFixed(2)+'%"></span>')
+    + ((D && D.repl!=null) ? '<span class="plrepl" style="left:'+X(D.repl).toFixed(2)+'%"></span>' : '')
+    + '</span>';
+
+  return '<div class="pl">'
+    + '<div class="plid"><div class="plwho">'+nm+'</div>'
+      + '<span class="plw" data-tip="'+esc(shareTip)+'">'+num(wins,1)+' <i>wins</i></span></div>'
+    + '<div class="plsub">'+esc(sub)+'</div>'
+    + '<div class="plrow"><span class="vh">Minutes per team game </span>'
+      + mtrack + '<b class="plval">'+num(sm,1)+'</b></div>'
+    + '<div class="plrow"><span class="vh">Projected net </span>'
+      + ntrack + '<b class="plval">'+nf.txt+'</b></div>'
+    + '</div>';
 }
 
 /* ---- sticky mini-header + switcher wiring ------------------------------- */

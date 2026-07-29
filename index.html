@@ -22,10 +22,26 @@
      it looking right, it just stops being a perfect square. aspect-ratio:1 was tried first and does
      NOT work here: on a flex item with width:auto the flex algorithm sizes from content, so the
      monogram collapsed to the width of the two letters. */
-  .pc-face,.pc-mono{width:100px;flex:0 0 100px;align-self:stretch;border-radius:var(--r-2);
+  /* .pc-shot owns the 100px box; the headshot fills it. The wrapper exists so the team badge has
+     something to be positioned against — and it has to be the wrapper rather than the <img>,
+     because faceErr() REPLACES the img with a .pc-mono span when every CDN candidate 404s, and a
+     badge parented to the img would vanish with it. */
+  .pc-shot{position:relative;flex:0 0 100px;width:100px;align-self:stretch;display:flex}
+  .pc-face,.pc-mono{width:100%;flex:1 1 auto;border-radius:var(--r-2);
     background:var(--panel-3);border:1px solid var(--line)}
   .pc-body{min-height:76px}
   .pc-face{object-fit:cover;object-position:top}
+  /* Team badge, overlapping the headshot's top-left corner (owner 2026-07-28).
+     THE PLATE IS NOT DECORATION. These are ESPN's own team PNGs, and a large share of college
+     marks are dark-on-transparent — on the dark theme they would be an invisible smudge. A
+     near-white plate is the standard badge treatment and the only one that makes an arbitrary
+     third-party raster legible on BOTH themes; the --line ring is what keeps it from dissolving
+     into the light theme's panel. Fixed white in both themes on purpose: the logo's own inks are
+     fixed, so a theme-following plate would break exactly one of the two. */
+  .pc-badge{position:absolute;top:-6px;left:-6px;width:30px;height:30px;border-radius:50%;
+    background:#fff;border:1px solid var(--line);padding:3px;object-fit:contain;
+    box-shadow:0 1px 3px rgba(0,0,0,.35)}
+  @media(max-width:520px){.pc-badge{width:24px;height:24px;top:-5px;left:-5px;padding:2px}}
   .pc-mono{display:flex;align-items:center;justify-content:center;font-family:var(--font);
     font-weight:700;font-size:27px;color:var(--muted);letter-spacing:.5px}
   /* WHERE THE NAME->SUB GAP ACTUALLY COMES FROM (owner 2026-07-28: "reduce it"). It measured
@@ -54,12 +70,21 @@
      below the name's baseline, and therefore most of the name->sub gap. See .pc-body above. */
   .pc-lab{font-size:11.5px;line-height:1;letter-spacing:.08em;color:var(--faint);text-transform:uppercase}
   .pc-shoot .pc-val{color:var(--muted)}
+  /* The two stat groups ended up FLUSH (measured 0.0px between the PTS label's bottom and the FG%
+     value's top) once the name->sub tightening landed: .pc-body's gap, .pc-cell's gap and
+     .pc-lab's line-height were all pulled in, and those are the same three rules that separate the
+     counting row from the shooting row. Owner 2026-07-28: give the two groups their space back
+     WITHOUT re-opening the name gap.
+     `position:relative` and not a margin, deliberately: .pc-row is align-items:baseline, so a
+     margin-top here would push this group's baseline down and drag .pc-sub — the whole point of
+     the tightening — down with it. A relative offset moves the paint and nothing else. */
+  .pc-shoot{position:relative;top:5px}
   /* The paired rows are a desktop affordance and do not survive the phone: under the 60px headshot
      the body is ~239px wide at 375px (~184px at 320px) against ~256px of counting cells, so a row
      holding the name AND five stats would clip. Below 520px each row breaks in two and everything
      falls back to a LEFT edge — a ragged right beats a clipped one. */
   @media(max-width:520px){.pcard{align-items:flex-start}.pc-name{font-size:var(--fs-5)}
-    .pc-face,.pc-mono{width:60px;height:60px;flex:0 0 60px;align-self:flex-start}
+    .pc-shot{width:60px;height:60px;flex:0 0 60px;align-self:flex-start}
     .pc-row{flex-direction:column;align-items:flex-start;gap:var(--sp-1)}
     .pc-cell{padding:0 8px}
     .pc-group{flex-wrap:wrap;row-gap:6px}}
@@ -278,6 +303,11 @@
 <nav id="topnav" data-active="explorer"></nav>
 <script src="charts.js"></script>
 <script src="nav.js"></script>
+<!-- team_colors.js: the site's one owner of "make this brand hex legible on this theme". The card
+     reads it for the team name's tint (NBA by abbr, college by the ESPN hex card_data ships). It
+     is optional by design — renderCard guards on window.deriveHex, so if this ever fails to load
+     the name simply renders as normal text. Must follow charts.js, which owns theme init. -->
+<script src="team_colors.js"></script>
 <div class="wrap">
   <h1 style="margin-top:6px">Six-factor RAPM, <b>every game-day</b></h1>
   <p class="sub">For any NCAA, G-League or NBA player, on every game-day.</p>
@@ -501,9 +531,9 @@ function paint(){if(!curOpts.length){drop.style.display='none';return}
 // disclosure for a curve drawn on the same axis as the board. Shorten it, never drop it.
 const MODEHINT={
   pure:'Pure RAPM — what the lineup data says on its own, with no prior. Noisiest, and the cleanest read on the raw signal.',
-  prior:'Prior-informed RAPM — the same solve, pulled toward a daily box-score prior where lineup data is thin.',
+  prior:'Prior-informed RAPM — the same solve, pulled toward a daily box-score prior where lineup data is thin. The default.',
   box:'Box prior — the box-score number the solve is pulled toward. Shown at its own honest scale, so it reads cooler than the board, especially on defense.',
-  latent:'Latent — one continuous curve for players who change leagues, instead of a separate line per league. Display-only, and the default.'};
+  latent:'Latent — one continuous curve for players who change leagues, instead of a separate line per league. Display-only.'};
 const MODEHINT_LATENT_ALIAS='Latent — this player never changed leagues, so the curve is just the prior-informed board.';
 // DISPLAY-ONLY SMOOTHING DISCLOSURE (fence F3, owner-reopened 2026-07-17). DORMANT since 2026-07-21:
 // the owner reverted the smoother, so deploy_site.sh no longer sets BOX_SMOOTH_W, build_site_box.py
@@ -511,27 +541,28 @@ const MODEHINT_LATENT_ALIAS='Latent — this player never changed leagues, so th
 // must ship in the same motion as the filter if the filter ever comes back — a smoothed number that
 // does not say it is smoothed is a lie. It is DERIVED: the window quoted is whatever was applied.
 const boxSmoothNote=w=>` Display-smoothed: each of the six factors is filtered along time with a trailing ${w}-point median, reset at every season break (NBA days only). This changes only what is drawn. The rating, the prior and the projection all use the unsmoothed values, and the confidence band is not smoothed.`;
-// Default mode is 'latent', for EVERY player (owner 2026-07-28; supersedes the 2026-07-24 prior
-// default, which had itself superseded a 2026-07-21 latent default). Latent stays DISPLAY-ONLY
-// (fence F4) -- default does not mean "the rating"; nothing downstream reads it.
+// Default mode is 'prior' (owner 2026-07-28 evening; reverts that morning's latent default, which
+// had superseded 2026-07-24 prior, which had superseded 2026-07-21 latent — this pendulum has now
+// swung four times, so change the DEFAULT here and the migration key in nav.js together and leave
+// everything else alone). Latent remains a first-class mode: selectable here, live on the Tables'
+// NBA populations, and Compare still draws it (separate owner ask). It just no longer OPENS.
+// It also stays DISPLAY-ONLY either way (fence F4) — nothing downstream reads it.
 //
-// WHY THIS IS SAFE FOR THE 8,896 PLAYERS WITH NO _latent.json: latent ALIASES to the prior board
-// for them (SERIES.latent === priorPrep below), so the default lands on a real curve for everyone,
-// and syncSeg swaps in MODEHINT_LATENT_ALIAS so the tab never claims a fusion that did not happen.
-//
-// The one-time v4 migration that moves returning visitors onto it lives in nav.js, NOT here: the
-// Tables page shares these two localStorage keys, and a migration that only ran on the Explorer
-// left a Tables-first visitor on their old mode until they happened to open this page. nav.js
-// loads before this script on every page, so `rapm_mode` is already migrated by the time it is
-// read below.
+// The one-time migration that moves returning visitors onto a new default lives in nav.js, NOT
+// here: the Tables page shares these two localStorage keys, and a migration that only ran on the
+// Explorer left a Tables-first visitor on their old mode until they happened to open this page.
+// nav.js loads before this script on every page, so `rapm_mode` is already migrated by the time
+// it is read below.
 let _sm=localStorage.getItem('rapm_mode');
-// PER-PLAYER default: latent for everyone, not just movers. It only applies while the visitor has
-// never PICKED a mode -- `rapm_mode` alone cannot tell "defaulted" from "chose", since the
-// migration above writes it either way, so the choice is recorded separately by setMode. Once
-// someone picks, their pick wins on every player: silently overriding an explicit choice on
-// navigation is worse than showing one mode too few.
+// PER-PLAYER default: prior for EVERYONE, movers included. The 2026-07-26 rule that opened a
+// cross-league mover on latent is deliberately NOT reinstated with this revert — "prior-informed
+// is the default, not Latent" is not satisfied by a default that is still latent for the 16% of
+// players who moved, and a mover landing on Latent is exactly where the revert would look broken.
+// It only applies while the visitor has never PICKED a mode: `rapm_mode` alone cannot tell
+// "defaulted" from "chose", since the migration above writes it either way, so the choice is
+// recorded separately by setMode. Once someone picks, their pick wins on every player.
 const modePinned = ()=>localStorage.getItem('rapm_mode_pinned')==='1';
-let SERIES={}, MODE=(_sm||'latent'), PNAME='', CURID=null;
+let SERIES={}, MODE=(_sm||'prior'), PNAME='', CURID=null;
 function load(id,name){drop.style.display='none';q.value=name;history.replaceState(null,'','?p='+id);
   if(typeof wfStop==='function')wfStop();           // cancel any waterfall sweep from the previous player
   CURID=id; MULTI=null;
@@ -549,7 +580,7 @@ function load(id,name){drop.style.display='none';q.value=name;history.replaceSta
     // plan45 B1 (D3): single-league players have no _latent.json; alias Latent to the prior board
     // (latent === board when there is no cross-league bridge) so the tab is never a dead greyed button.
     LATENT_ALIAS=!latent;
-    if(!modePinned()) MODE='latent';                 // the default, for movers and non-movers alike
+    if(!modePinned()) MODE='prior';                  // the default, for movers and non-movers alike
     // W3: index the atom sidecars BY DATE, not by position. Each one's axis is the NBA subset of
     // the series it decomposes AND build_pages._downsample subsets each sidecar independently (it
     // pins each file's own last-played index), so positional alignment between sidecars is not
@@ -1111,14 +1142,38 @@ function renderCard(){
   // Rendering a team the label disagrees with would print "NCAA · Denver Nuggets". Silence is
   // the correct failure here, and it is also what G-League players get: no id->name table for
   // those 33 franchises exists anywhere on disk, so they are league-only by data, not by choice.
-  const team=(c.team&&c.team_league===lg)?`<span class="tm">${c.team}</span>`:'';
+  const teamOK=!!(c.team&&c.team_league===lg);
+  // TEAM COLOUR. Never the raw brand hex: card_data emits ESPN's own values, and of the 564
+  // (school, colour) pairs it ships ZERO clear 4.5:1 against BOTH themes' panel — the dark-theme
+  // median is 1.98 and three schools ship #ffffff as their primary. team_colors.js owns the
+  // lightness walk that fixes that, and it is the ONLY spelling of it on the site; through it all
+  // 564 clear 4.5:1 on both themes with their hue intact. NBA goes through the same file by abbr,
+  // which is also why no NBA hex is emitted — ESPN's NBA primaries disagree with the shipping
+  // palette on 18 of 30 franchises (ESPN calls Golden State gold, the palette calls it blue).
+  // A team with no legible hue of its own comes back brand=false wearing the site accent, exactly
+  // as the Nets and the Spurs already do — so `tint` is left null and the name reads as text.
+  let tint=null;
+  if(teamOK&&window.deriveHex){
+    const th=document.documentElement.dataset.theme==='light'?'light':'dark';
+    const d=(c.team_league==='nba'&&c.team_abbr)
+      ? {hex:window.teamInk(c.team_abbr,th), brand:window.teamInkIsBrand(c.team_abbr,th)}
+      : (c.team_color ? window.deriveHex(c.team_color,c.team_color_alt,th,'ink') : null);
+    if(d&&d.brand) tint=d.hex;
+  }
+  const team=teamOK?`<span class="tm"${tint?` style="color:${tint}"`:''}>${c.team}</span>`:'';
   const sub=[c.pos?`<span class="pos">${c.pos}</span>`:'',
              `<span style="color:${LC[lg]};font-weight:700">${LNAME[lg]}</span>`, team,
              c.age!=null?`Age ${c.age}`:''].filter(Boolean).join('<span style="color:var(--faint)">·</span>');
+  // The badge is gated on the SAME team_league check as the name — a logo names a team just as
+  // loudly as the string does. onerror removes it rather than leaving a broken-image box: 30
+  // college rows across 22 seasons have a null logo upstream, and the CDN is a third party.
+  const badge=(teamOK&&c.team_logo)
+    ? `<img class="pc-badge" src="${c.team_logo}" alt="" loading="lazy" decoding="async"
+         title="${c.team.replace(/"/g,'&quot;')}" onerror="this.remove()">` : '';
   box.innerHTML=
-    `<img class="pc-face" alt="" loading="lazy" decoding="async"
+    `<div class="pc-shot"><img class="pc-face" alt="" loading="lazy" decoding="async"
        src="${faces[0]||''}" data-srcs='${JSON.stringify(faces).replace(/'/g,'&#39;')}'
-       data-i="0" data-mono="${initials}" onerror="faceErr(this)">`
+       data-i="0" data-mono="${initials}" onerror="faceErr(this)">${badge}</div>`
     // TWO rows, each one line of text on the left against its own stat group on the right:
     //   name          PTS REB AST STL BLK
     //   pos·league·age        FG% 3P% FT%
@@ -1134,6 +1189,13 @@ function renderCard(){
   if(!faces.length)faceErr(box.querySelector('.pc-face'));   // no candidates -> straight to monogram
   box.style.display='flex';
 }
+// The team tint is DERIVED PER THEME (both floors are measured against that theme's panel), and
+// the card is painted once per player — so a theme flip would leave a dark-theme ink on the light
+// panel, which is the exact class of bug site.css:244-248 documents for the crosshair. Re-paint on
+// the attribute the toggle actually writes. Same pattern as team2027.html's observer; charts.js
+// owns the flip itself, so there is nothing to coordinate beyond re-running the render.
+new MutationObserver(()=>{ if(!MULTI&&RAW.prior) renderCard(); })
+  .observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 function show(){
   document.getElementById('empty').style.display='none';
   document.getElementById('player').style.display='block';

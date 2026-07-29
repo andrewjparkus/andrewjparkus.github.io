@@ -13,10 +13,15 @@
      Proj W that also paints Proj W on a ramp is saying the same thing twice, and
      three heat columns side by side is what made the page read as a spreadsheet.
      What it is now: the standings are still the spine, but they sit under a head
-     that answers the two questions the standings cannot — where the 30 teams
-     LAND (one shared win axis, East above it, West below) and who can actually
-     win the thing. Hierarchy comes from scale and space; the only colour left is
-     ONE accent, carried by the win-distribution histograms and the odds bars.
+     that answers the two questions the standings cannot — where the 30 teams are
+     HEADING (projected wins across, change from 2025-26 up the side) and who can
+     actually win the thing. Hierarchy comes from scale and space; the only colour
+     left is ONE accent, carried by the win-distribution histograms and odds bars.
+     REBUILT 2026-07-28 (owner: the 30-logo beeswarm "isn't conveying much"). It
+     was right: that chart encoded ONE variable and spent a full-width panel plus a
+     vertical packing dimension — pure collision noise that reads as if it means
+     something — to do it. The head is now a real scatter; see the WHY THESE TWO
+     AXES note on .field for the measurements that picked them.
      The grid + card idiom (.dash / .panel / .phead / .pbody, spacing and type
      from the shared tokens only) is lifted from team2027.html on purpose, so
      the site's two 2026-27 pages read as one thing.
@@ -52,29 +57,69 @@
   .phead [data-tip]:hover::before{bottom:auto;top:calc(100% + 1px);
     border-top-color:transparent;border-bottom-color:var(--line)}
 
-  /* ---- the field: one win axis, East above it, West below ------------------ */
-  /* Absolutely-positioned logos rather than an SVG scatter: the logos must stay a FIXED 26px
-     while the axis is fluid, which a viewBox cannot do, and collision packing needs the real
-     pixel width anyway (layoutField() measures clientWidth and re-runs on resize). */
-  .swarm{position:relative;min-width:0}
-  .sdot{position:absolute;z-index:1;display:block;line-height:0;transition:transform .12s ease}
+  /* ---- the field: projected wins across, change from 2025-26 up ------------ */
+  /* Absolutely-positioned logos rather than an SVG scatter: the marks must stay a FIXED 26px while
+     both axes are fluid, which a viewBox cannot do — it would scale the logos and the tick text
+     with the panel. layoutField() measures clientWidth and re-runs on resize.
+
+     WHY THESE TWO AXES. Everything else the REQUIRED feed carries is, across the 30 published
+     teams, either a monotone restatement of projected wins or noise, and I measured all of it
+     before drawing anything:
+       95% band width   27–34 wins, sd 1.7, corr with wins −0.007   -> a y-axis of nothing
+       se_strength      2.75–3.54,  sd 0.16, corr +0.360            -> same, plus it restates wins
+       n_cold_start     1–8 (8 levels), corr +0.023                 -> a coverage artifact, and ties
+       championship_prob                                            -> a step: 5 teams at 0, 20 <1%
+       playoffs / play-in prob                                       -> sigmoid, piles at 0 and 1
+     The one genuinely independent quantity the deployed data holds is last season's RESULT.
+     change-from-2025-26 correlates −0.213 with projected wins, so these axes are near-orthogonal
+     and the 30 teams fill the frame instead of lying along a line (measured: 3 of the 435 pairs sit
+     closer than one 26px logo at 994px wide — DAL/MEM and ORL/MIA at 12.1px, ATL/PHX at 17.8px).
+     Two rejected framings, for the next person who reaches for them:
+       x = LAST season's wins, y = change  -> corr −0.652. That is the mean-reversion diagonal: a
+         picture of the estimator, not of the league.
+       x = last, y = projected, y=x diagonal -> corr 0.880, so a tight diagonal cloud, it needs a
+         ~520px-tall square to depack, and the change (the story) is read perpendicular to a line.
+     Keeping projected wins on x also keeps the axis the page publishes, so the beeswarm's one real
+     dimension is preserved rather than traded away.
+     There is NO per-team projected offensive/defensive rating to make the usual NBA quadrant from:
+     neither published feed carries one (checked every key of both), and the only way to fake it is
+     to minute-weight the per-player `f` vectors — which is broken, 97 of the 538 roster rows carry
+     f = [0,0,0,0,0,0] with a non-zero net (every cold-start row), so the o+d subtotals miss the
+     published team strength by up to 2.51 pts/100 and drop 20.4% of Chicago's weighted minutes.
+     Its two axes also correlate 0.797 with each other, so it is barely 2-D even when it works. */
+  .field{position:relative;min-width:0}
+  /* The disc is --panel, i.e. invisible against the card it sits on — it exists only to OCCLUDE.
+     Three of the 435 pairs are genuine near-ties (measured at 962px: DAL/MEM 11.1px apart, ORL/MIA
+     11.2, ATL/PHX 16.2, against a 26px mark), and without a plate two logos on top of each other
+     blend into one unreadable smear. With one, the front mark reads as in front. Nudging them apart
+     instead is exactly the packing-noise lie this chart replaced. */
+  .sdot{position:absolute;z-index:1;display:block;line-height:0;transition:transform .12s ease;
+    background:var(--panel);border-radius:50%}
   .sdot img{width:100%;height:100%;object-fit:contain}
-  .sdot:hover{transform:scale(1.18);z-index:2}
-  /* logo 404 fallback: the anchor keeps its place on the axis and prints the abbr instead, so a
+  /* .hi is the same state, driven from a standings row 700px below: 30 logos is a lot to scan for
+     one team, and the two halves of the page should be able to point at each other. */
+  .sdot:hover,.sdot.hi{transform:scale(1.2);z-index:3}
+  /* logo 404 fallback: the anchor keeps its place on both axes and prints the abbr instead, so a
      dead CDN costs the reader three letters, not the whole chart. */
   .sdot.noimg{display:flex;align-items:center;justify-content:center;line-height:1;
     font-family:var(--font-mono);font-size:10px;font-weight:600;color:var(--muted)}
-  .saxis{position:absolute;left:0;right:0}
-  .sline{position:absolute;top:0;left:0;right:0;height:1px;background:var(--line)}
-  .stick{position:absolute;top:0;width:1px;height:4px;background:var(--line)}
-  .slab{position:absolute;top:8px;transform:translateX(-50%);font-family:var(--font-mono);
-    font-size:11px;color:var(--faint)}
-  /* .500 is a backdrop gridline: --zero (site.css certifies it at the text floor, so it clears the
-     3:1 mark floor easily) and z-index 0, under every logo. Dashed the same way team2027's playoff
-     cut-off is, because it is the same kind of reference line. */
-  .s500{position:absolute;width:1px;z-index:0;
+  /* One frame element, rebuilt on every layout (the ticks depend on width), z-index 0 under every
+     logo. --grid for the tick gridlines, which is the faintest surface token there is; --zero for
+     the two REFERENCE lines, which site.css certifies at the text floor and therefore well clear of
+     the 3:1 mark floor. Dashed the same way team2027's playoff cut-off is, because it is the same
+     kind of line: a reference, not data. */
+  .ffr{position:absolute;inset:0;z-index:0;pointer-events:none}
+  .fgx,.fgy{position:absolute;background:var(--grid)}
+  .fgx{width:1px} .fgy{height:1px}
+  .fzx{position:absolute;width:1px;
     background:repeating-linear-gradient(to bottom,var(--zero) 0 3px,transparent 3px 6px)}
-  .s500lab{position:absolute;top:0;font-family:var(--font-mono);font-size:11px;color:var(--faint)}
+  .fzy{position:absolute;height:1px;
+    background:repeating-linear-gradient(to right,var(--zero) 0 3px,transparent 3px 6px)}
+  .fxl,.fyl,.fzl{position:absolute;font-family:var(--font-mono);font-size:11px;color:var(--faint);
+    white-space:nowrap}
+  .fxl{transform:translateX(-50%)}
+  .fyl{transform:translateY(-50%);text-align:right}
+  .fat{position:absolute;font-size:var(--fs-1);color:var(--muted);white-space:nowrap}
   /* label + value adjacent = the house lockup, never space-between (site.css:147) */
   .locks{display:flex;flex-wrap:wrap;gap:var(--sp-2) var(--sp-5);margin-top:var(--sp-4);
     padding-top:var(--sp-3);border-top:1px solid var(--line-2)}
@@ -162,11 +207,15 @@
     <a href="teams.html">See 2025-26 team ratings →</a></p>
 
   <div class="dash" id="dash" hidden>
-    <section class="panel" id="fieldPanel">
-      <div class="phead"><h2>Where the 30 teams land</h2>
-        <span class="psub">projected wins · Eastern Conference above the axis, Western below</span></div>
-      <div class="pbody"><div class="swarm" id="swarm"></div>
-        <div class="locks" id="locks"></div></div>
+    <!-- Hidden until teams.json lands: the whole subject of this panel is the 2025-26 -> 2026-27
+         move, so with no 2025-26 there is no panel to draw. Inventing a one-axis fallback is
+         exactly how the beeswarm this replaced came about. -->
+    <section class="panel" id="fieldPanel" hidden>
+      <div class="phead"><h2>Where the 30 teams are heading</h2>
+        <span class="psub">projected 2026-27 wins across · change from 2025-26 up the side</span></div>
+      <div class="pbody"><div class="field" id="field"></div>
+        <div class="locks" id="locks"></div>
+        <p class="cap" id="fieldCap"></p></div>
     </section>
 
     <section class="panel p6" id="titlePanel">
@@ -214,7 +263,7 @@ function logoURL(abbr){
 /* Everything the page renders comes off ONE required feed; the other two are enrichment and the
    page has to look finished without them (neither is named in deploy_site.sh's stash list the way
    projection_2026_27*.json are, so a fast-path deploy could in principle drop them). */
-const S = { teams: [], actual: null, dots: {} };
+const S = { teams: [], meta: null, actual: null, dots: {} };
 
 /* ===========================================================================
    WIN-DISTRIBUTION STRIP  (one per standings row)
@@ -265,19 +314,32 @@ function winStrip(hist, mean, p025, p975, actual){
 }
 
 /* ===========================================================================
-   THE FIELD — 30 logos packed onto one win axis, East up / West down.
+   THE FIELD — 30 logos on a real scatter.
+     x = projected 2026-27 wins   (mc_mean_wins, projection_2026_27.json)
+     y = that minus 2025-26 wins  (actual_wins, teams.json — hence S.actual)
+   Both reference lines are DERIVED reference, not data: x = 41 is .500 on an
+   82-game season, y = 0 is "the model has them where they finished". The four
+   quadrants they cut are the whole point of the chart, so neither is optional.
    =========================================================================== */
-const SW = { items: [], axis: null, line: null, lab: null };
+const FLD = { items: [], frame: null };
 function buildField(teams){
-  const host = document.getElementById("swarm");
+  const host = document.getElementById("field");
   host.innerHTML = "";
-  SW.items = teams.map(t => {
+  FLD.items = [];
+  teams.forEach(t => {
+    const act = S.actual ? S.actual[t.franchise] : null;
+    if (act == null) return;                 // no 2025-26 result -> no y -> no mark, silently
+    const d = t.mc_mean_wins - act;
     const a = document.createElement("a");
     a.className = "sdot";
     a.href = "team2027.html?abbr=" + encodeURIComponent(t.franchise);
-    a.dataset.w = t.mc_mean_wins; a.dataset.conf = t.conf; a.dataset.ab = t.franchise;
-    a.title = t.franchise + " · " + n1(t.mc_mean_wins) + " projected wins · "
-      + pct(t.make_playoffs_prob) + " playoffs · " + pct(t.championship_prob||0) + " title";
+    a.dataset.x = t.mc_mean_wins; a.dataset.y = d;
+    // Keeps the "ABBR · " prefix buildPlayers() swaps for the full franchise name once the roster
+    // feed lands. Both coordinates are spelled out: a logo on a scatter is a position, and the
+    // reader should be able to get the two numbers back out of it.
+    a.title = t.franchise + " · " + n1(t.mc_mean_wins) + " projected wins, " + act
+      + " in 2025-26 (" + sgn(d) + ") · " + pct(t.make_playoffs_prob) + " playoffs · "
+      + pct(t.championship_prob||0) + " title";
     a.setAttribute("aria-label", a.title);   // the img is decorative; the anchor carries the name
     const img = document.createElement("img");
     img.src = logoURL(t.franchise); img.alt = ""; img.loading = "lazy";
@@ -285,65 +347,92 @@ function buildField(teams){
     a.appendChild(img);
     host.appendChild(a);
     S.dots[t.franchise] = a;
-    return a;
+    FLD.items.push(a);
   });
-  SW.axis = document.createElement("div"); SW.axis.className = "saxis"; host.appendChild(SW.axis);
-  SW.line = document.createElement("div"); SW.line.className = "s500"; host.appendChild(SW.line);
-  SW.lab  = document.createElement("div"); SW.lab.className = "s500lab"; SW.lab.textContent = ".500";
-  host.appendChild(SW.lab);
+  FLD.frame = document.createElement("div"); FLD.frame.className = "ffr";
+  host.appendChild(FLD.frame);
   layoutField();
 }
 
 function layoutField(){
-  const host = document.getElementById("swarm");
-  if (!host || !SW.items.length) return;
+  const host = document.getElementById("field");
+  if (!host || !FLD.items.length) return;
   const W = host.clientWidth;
   if (!W) return;
-  // 26px logos need 1.2 wins of axis to clear each other at 1040px; at phone width they would need
-  // 3.5, so the mark shrinks rather than the chart growing six rows deep.
-  const L = W < 520 ? 20 : 26, STEP = L + 2, GAP = L + 2;
-  const PADX = L / 2 + 2, TOP = 15, AX = 26;
-  // Domain snapped to the enclosing multiples of 5 (20..65 today, against a 24.5-64.0 spread) so
-  // every tick is a round number. Padding it further only bought dead axis: at min-2/max+2 the
-  // chart carried 6 empty wins on the right.
-  const ws = SW.items.map(a => +a.dataset.w);
-  const lo = Math.floor(Math.min.apply(null, ws) / 5) * 5;
-  const hi = Math.ceil(Math.max.apply(null, ws) / 5) * 5;
-  const X = w => PADX + (w - lo) / (hi - lo) * (W - 2 * PADX);
-
-  // Greedy beeswarm, densest-first: walking the teams in descending wins means the row's last
-  // entry is always the nearest neighbour, so one comparison per row is exact.
-  const rows = { East: [], West: [] }, placed = [];
-  SW.items.slice().sort((a,b) => +b.dataset.w - +a.dataset.w).forEach(a => {
-    const cf = a.dataset.conf === "West" ? "West" : "East", x = X(+a.dataset.w), R = rows[cf];
-    let r = 0;
-    while (r < R.length && Math.abs(x - R[r]) < GAP) r++;
-    if (r === R.length) R.push(x); else R[r] = x;
-    placed.push({ a, x, cf, r });
-  });
-  const axisY = TOP + rows.East.length * STEP;
-  const H = axisY + AX + rows.West.length * STEP;
+  const narrow = W < 560;
+  // The mark shrinks rather than the chart lying about where teams are. Measured on a 313px field
+  // (a 375px phone): a 20px logo leaves 11 of the 435 pairs overlapping, 18px leaves 7, 16px leaves
+  // 4 — and the last 4 are genuine near-ties (ORL/MIA and DAL/MEM are 0.5 wins apart on BOTH axes),
+  // which no mark size fixes. 18 is where the curve stops paying for the lost legibility.
+  const L = W < 340 ? 18 : narrow ? 20 : 26;
+  // Gutters: PL holds a signed 3-char y label, PB holds the x labels AND the x-axis name, PT holds
+  // the y-axis name. PR and half of PT are just the overhang of a mark sitting on the domain edge.
+  const PL = narrow ? 28 : 36, PR = L / 2 + 4, PT = 18 + L / 2, PB = 42;
+  const PH = narrow ? 230 : (W < 880 ? 285 : 330);  // plot height, px
+  const PW = W - PL - PR;
+  const H = PT + PH + PB;
   host.style.height = H + "px";
-  placed.forEach(p => {
-    p.a.style.left = (p.x - L / 2).toFixed(1) + "px";
-    p.a.style.top = (p.cf === "East" ? axisY - (p.r + 1) * STEP : axisY + AX + p.r * STEP) + "px";
-    p.a.style.width = L + "px"; p.a.style.height = L + "px";
+
+  // Domains snapped to the enclosing multiples of 5 (today 20..65 against a 24.5-64.0 win spread,
+  // and -15..+20 against -12.3..+15.4) so every tick is a round number. Math.min/max against 0 on
+  // the y domain guarantees the "no change" line stays inside the frame even in a season where the
+  // model moves every team the same way; the same clamp on x would be wrong, so .500 is drawn only
+  // when it is in range.
+  const xs = FLD.items.map(a => +a.dataset.x), ys = FLD.items.map(a => +a.dataset.y);
+  const snap = (v, f) => f(v / 5) * 5;
+  const xlo = snap(Math.min.apply(null, xs), Math.floor), xhi = snap(Math.max.apply(null, xs), Math.ceil);
+  const ylo = Math.min(0, snap(Math.min.apply(null, ys), Math.floor));
+  const yhi = Math.max(0, snap(Math.max.apply(null, ys), Math.ceil));
+  const X = v => PL + (v - xlo) / (xhi - xlo || 1) * PW;
+  const Y = v => PT + (yhi - v) / (yhi - ylo || 1) * PH;
+
+  FLD.items.forEach(a => {
+    a.style.left = (X(+a.dataset.x) - L / 2).toFixed(1) + "px";
+    a.style.top  = (Y(+a.dataset.y) - L / 2).toFixed(1) + "px";
+    a.style.width = L + "px"; a.style.height = L + "px";
   });
 
-  // 5-win ticks need ~105px each at 1040 and only ~33px at 390, where the labels start to touch.
-  let ah = '<div class="sline"></div>';
-  const TS = W < 520 ? 10 : 5;
-  for (let v = Math.ceil(lo / TS) * TS; v <= hi; v += TS){
-    ah += '<i class="stick" style="left:' + X(v).toFixed(1) + 'px"></i>'
-        + '<span class="slab" style="left:' + X(v).toFixed(1) + 'px">' + v + '</span>';
+  // 5-win x ticks need ~105px each at 1040 and only ~33px at 390, where the labels start to touch;
+  // the y labels are two characters taller apart than that, so they hold 5 at every width.
+  const XS = narrow ? 10 : 5, YS = 5;
+  let h = "";
+  for (let v = Math.ceil(xlo / XS) * XS; v <= xhi; v += XS){
+    const x = X(v).toFixed(1);
+    h += '<i class="fgx" style="left:' + x + 'px;top:' + PT + 'px;height:' + PH + 'px"></i>'
+       + '<span class="fxl" style="left:' + x + 'px;top:' + (PT + PH + 7) + 'px">' + v + '</span>';
   }
-  SW.axis.style.top = axisY + "px"; SW.axis.style.height = AX + "px"; SW.axis.innerHTML = ah;
-  SW.line.style.left = X(41).toFixed(1) + "px";
-  SW.line.style.top = TOP - 1 + "px"; SW.line.style.height = (H - TOP + 1) + "px";
-  SW.lab.style.left = (X(41) + 4).toFixed(1) + "px";
+  for (let v = Math.ceil(ylo / YS) * YS; v <= yhi; v += YS){
+    const y = Y(v).toFixed(1);
+    h += '<i class="fgy" style="top:' + y + 'px;left:' + PL + 'px;width:' + PW + 'px"></i>'
+       + '<span class="fyl" style="top:' + y + 'px;left:0;width:' + (PL - 7) + 'px">'
+       + (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v) + '</span>';
+  }
+  h += '<i class="fzy" style="top:' + Y(0).toFixed(1) + 'px;left:' + PL + 'px;width:' + PW + 'px"></i>';
+  if (41 >= xlo && 41 <= xhi){
+    h += '<i class="fzx" style="left:' + X(41).toFixed(1) + 'px;top:' + PT + 'px;height:' + PH + 'px"></i>'
+       + '<span class="fzl" style="left:' + (X(41) + 5).toFixed(1) + 'px;top:' + PT + 'px">.500</span>';
+  }
+  // Axis names live in the gutters, unrotated: rotated y-axis text costs a transform-origin fight
+  // for a label that is read once. The arrows say which way is which without a sentence.
+  h += '<span class="fat" style="left:' + PL + 'px;top:0">↑ better than 2025-26</span>'
+     + '<span class="fat" style="left:' + PL + 'px;top:' + (PT + PH + 24) + 'px">projected 2026-27 wins →</span>';
+  FLD.frame.innerHTML = h;
 }
 let _rt = null;
 window.addEventListener("resize", () => { clearTimeout(_rt); _rt = setTimeout(layoutField, 120); });
+
+/* The standings tables are the only place a reader can look a team up by name, and they are 700px
+   below the chart. Hovering a row lifts that team's logo out of the cloud. */
+function linkRows(sec){
+  const set = (e, on) => {
+    const tr = e.target.closest("tr[data-ab]");
+    if (!tr) return;
+    const d = S.dots[tr.getAttribute("data-ab")];
+    if (d) d.classList.toggle("hi", on);
+  };
+  sec.addEventListener("mouseover", e => set(e, true));
+  sec.addEventListener("mouseout",  e => set(e, false));
+}
 
 /* ===========================================================================
    PANELS
@@ -356,24 +445,50 @@ function logoTag(ab, px){
     + 'alt="" onerror="this.style.visibility=\'hidden\'">';
 }
 
-// derived readouts under the field. Every one of these is computed off the feed at render time
-// rather than written down: measured today they are 16 of 30, 42.9 / 41.4 and 32 wins.
+/* "8th team by projected wins" is the same definition team2027.html draws its cut-off from: the
+   field is 16, and the play-in decides 7-10 into 8 in each conference. It reads better in the
+   conference panel's own subhead than as a league-wide lock, so that is where it moved. */
+const CUT_TIP = "The 8th team by projected wins. The field is 16; the play-in decides 7-10 into 8.";
+
+/* Derived readouts under the field — every one computed off the two feeds at render time rather
+   than written down. Measured today: 16 of 30 above .500, IND +15.4, DET −12.3, median move 5.3
+   (upper median of |Δ| on an even count — the two middle teams are 5.1 and 5.3 wins).
+   The old "Median 95% band 32 wins wide" lock retired with the beeswarm: the band is the subject of
+   the standings strips and their legend, and at 27-34 wide for all 30 teams it was a constant. */
 function buildLocks(teams){
   const above = teams.filter(t => t.mc_mean_wins > 41).length;
-  const cut = c => {
-    const l = teams.filter(t => t.conf === c).sort((a,b) => b.mc_mean_wins - a.mc_mean_wins);
-    return l[7] ? n1(l[7].mc_mean_wins) : "–";
-  };
-  const bands = teams.map(t => t.p97_5_wins - t.p2_5_wins).sort((a,b) => a-b);
-  const med = bands.length ? bands[Math.floor(bands.length/2)] : null;
-  // "8th by projected wins" is the same definition team2027.html draws its cut-off from: the field
-  // is 16, and the play-in decides 7-10 into 8 in each conference.
-  const cutTip = "The 8th team by projected wins. The field is 16; the play-in decides 7-10 into 8.";
+  const mv = teams.map(t => ({ ab: t.franchise, d: t.mc_mean_wins - S.actual[t.franchise] }))
+                  .filter(x => isFinite(x.d)).sort((a,b) => b.d - a.d);
+  const lock = (lab, val, note) =>
+    '<span class="lock">' + lab + ' <b>' + val + '</b>' + (note ? '<i>' + note + '</i>' : '') + '</span>';
+  const abs = mv.map(x => Math.abs(x.d)).sort((a,b) => a-b);
   document.getElementById("locks").innerHTML =
-      '<span class="lock">Above .500 <b>' + above + '</b><i>of ' + teams.length + '</i></span>'
-    + '<span class="lock" title="' + cutTip + '">East playoff cut <b>' + cut("East") + '</b></span>'
-    + '<span class="lock" title="' + cutTip + '">West playoff cut <b>' + cut("West") + '</b></span>'
-    + (med != null ? '<span class="lock">Median 95% band <b>' + med + '</b><i>wins wide</i></span>' : '');
+      lock("Above .500", above, "of " + teams.length)
+    + (mv.length ? lock("Biggest rise", sgn(mv[0].d), mv[0].ab) : "")
+    + (mv.length ? lock("Biggest fall", sgn(mv[mv.length-1].d), mv[mv.length-1].ab) : "")
+    + (abs.length ? lock("Median move", n1(abs[Math.floor(abs.length/2)]), "wins") : "");
+}
+
+/* The caption is the chart's whole disclosure, and all four numbers in it are read off the feeds:
+   today 16 of 30 improve, and the 30 recorded win totals sum to 1226 against the 1230-game season
+   meta.n_games publishes. That 4-game shortfall is real — the 2025-26 standings file has franchises
+   on 78 to 85 games, not 82 — and it is worth up to ~1.5 wins on one team's y position, against a
+   spread of −12.3 to +15.4. Saying it with the sum is better than asserting a games-played count
+   the page cannot see: teams.json carries actual_wins and no n_games. */
+function buildFieldCap(teams){
+  const n = FLD.items.length;
+  const up = teams.filter(t => S.actual[t.franchise] != null
+                            && t.mc_mean_wins > S.actual[t.franchise]).length;
+  const tot = teams.reduce((a,t) => a + (S.actual[t.franchise] || 0), 0);
+  const sched = (S.meta && S.meta.n_games) ? Number(S.meta.n_games) : null;
+  const shy = (sched != null && sched > tot) ? (sched - tot) : null;
+  document.getElementById("fieldCap").textContent =
+    "Each logo sits at the wins the model projects it for (across) and at how that compares with "
+    + "what it actually won last season (up the side). Above the dashed horizontal the model has a "
+    + "team better than in 2025-26 — " + up + " of the " + n + " are — and right of the dashed "
+    + "vertical it has them over .500. 2025-26 totals are wins as recorded: they sum to " + tot
+    + (shy ? ", " + shy + " short of a complete " + sched.toLocaleString() + "-game season, so a "
+           + "few franchises are a game or two light." : ".");
 }
 
 function buildTitle(teams){
@@ -497,11 +612,15 @@ function buildConf(mountId, name, teams){
   }).join("");
 
   const sec = document.getElementById(mountId);
+  const cut = sorted[7] ? n1(sorted[7].mc_mean_wins) : null;
   sec.innerHTML = '<div class="phead"><h2>' + esc(name) + '</h2>'
-    + '<span class="psub">' + sorted.length + ' teams · sorted by projected wins</span></div>'
+    + '<span class="psub">' + sorted.length + ' teams · sorted by projected wins'
+    + (cut ? ' · playoff cut ' + cut + ' <span class="help" data-tip="' + esc(CUT_TIP) + '">?</span>' : '')
+    + '</span></div>'
     + '<div class="pbody flush"><div class="scroll"><table class="tbl">'
     + head + '<tbody>' + body + '</tbody></table></div></div>';
   drawStrips(sec);
+  linkRows(sec);
 }
 
 function drawStrips(scope){
@@ -526,14 +645,23 @@ function setLegend(){
   document.getElementById("legend").hidden = false;
 }
 
-/* teams.json is the site's measured 2025-26 board. It is not in deploy_site.sh's stash list, so
-   this is a strictly optional enrichment: no caret, no 25-26 column, page still finished. */
+/* teams.json is the site's measured 2025-26 board. It is not in deploy_site.sh's require_public_file
+   gate list (checked: only projection_2026_27{,_distribution,_teams}.json, projection_series.json,
+   accuracy.json, scoreboard.json and api/manifest.json are), so it is a strictly optional
+   enrichment. Without it: no head chart, no caret, no 25-26 column — the odds panel, the player
+   panel and both standings still make a finished page. */
 function applyActual(data){
   const map = {};
-  Object.keys(data.conferences||{}).forEach(c =>
+  Object.keys((data||{}).conferences||{}).forEach(c =>
     (data.conferences[c]||[]).forEach(t => { if (t.actual_wins != null) map[t.abbr] = t.actual_wins; }));
   if (!Object.keys(map).length) return;
   S.actual = map;
+  // Unhide FIRST. layoutField() measures clientWidth, and a hidden panel measures 0, so building
+  // into it left the chart at height 0 with an empty frame (observed, 2026-07-28).
+  document.getElementById("fieldPanel").hidden = false;
+  buildField(S.teams);
+  buildLocks(S.teams);
+  buildFieldCap(S.teams);
   document.querySelectorAll("#confEast tr[data-ab], #confWest tr[data-ab]").forEach(tr => {
     const v = map[tr.getAttribute("data-ab")];
     if (v != null) tr.querySelector("td.lastw").textContent = v;
@@ -566,11 +694,9 @@ function setFoot(meta){
 function render(data){
   const teams = data.teams || [];
   if (!teams.length) throw new Error("no teams");
-  S.teams = teams;
+  S.teams = teams; S.meta = data.meta || {};
   document.getElementById("dash").hidden = false;
   document.getElementById("msg").style.display = "none";
-  buildField(teams);
-  buildLocks(teams);
   buildTitle(teams);
   buildConf("confEast", "Eastern Conference", teams.filter(t => (t.conf||"") === "East"));
   buildConf("confWest", "Western Conference", teams.filter(t => (t.conf||"") === "West"));
@@ -585,15 +711,18 @@ function render(data){
    different Monte Carlo run (distribution minutes mode) that disagrees materially with this feed
    — OKC 62.8 wins / 33.2% title against the 64.0 / 38.0% published here — so drawing any part of
    it under these captions would put a picture on screen that contradicts its own labels.
-   team2027.html:748-753 carries the same fence. */
+   team2027.html:748-753 carries the same fence.
+   teams.json now carries the head chart's whole y axis, so it goes out in the SAME round trip as
+   the required feed rather than after it: sequencing them cost a visible reflow — the standings
+   painted, then a ~400px panel appeared above them and shoved the page down. */
+const pActual = fetch("teams.json").then(r => r.ok ? r.json() : null).catch(() => null);
+const pRoster = fetch("projection_2026_27_teams.json").then(r => r.ok ? r.json() : null).catch(() => null);
 fetch("projection_2026_27.json")
   .then(r => { if(!r.ok) throw new Error("projection_2026_27.json " + r.status); return r.json(); })
   .then(d => {
     render(d);
-    fetch("teams.json").then(r => r.ok ? r.json() : null)
-      .then(t => { if (t) applyActual(t); }).catch(()=>{});
-    fetch("projection_2026_27_teams.json").then(r => r.ok ? r.json() : null)
-      .then(t => { if (t) buildPlayers(t); }).catch(()=>{});
+    pActual.then(t => { if (t) applyActual(t); });
+    pRoster.then(t => { if (t) buildPlayers(t); });
   })
   .catch(() => {
     document.getElementById("dash").hidden = true;

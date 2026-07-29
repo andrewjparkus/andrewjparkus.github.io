@@ -36,20 +36,27 @@
  * that can be the single spelling. Duplicating it per page is exactly the drift this file exists
  * to prevent.
  *
- * v4 (owner 2026-07-28): default latent, everywhere, for every player. It also CLEARS the pin --
- * deliberately, and it is the only reason the new default is visible to anyone who has used the
- * site, because any click on either page's toggle sets the pin. It costs one prior pick, once.
+ * WHY EACH BUMP CLEARS THE PIN: any click on either page's mode toggle sets `rapm_mode_pinned`,
+ * so a returning visitor is almost always pinned and would never see a new default at all. The
+ * clear is what makes the change visible, and it costs them one re-pick, once.
+ *
+ * v4 (owner 2026-07-28 morning): default latent everywhere.
+ * v5 (owner 2026-07-28 evening): REVERTED to prior-informed. Latent stays a first-class mode —
+ *   selectable on the Explorer and on the Tables' NBA populations, and Compare still draws it by
+ *   owner request — it just no longer opens by default. Bump the KEY, never edit v4 in place:
+ *   every visitor already carries rapm_dflt_v4=1, so re-using it is a silent no-op and the revert
+ *   would appear not to have shipped.
  */
 (function () {
   "use strict";
   try {
-    if (!localStorage.getItem("rapm_dflt_v4")) {
-      localStorage.setItem("rapm_mode", "latent");
+    if (!localStorage.getItem("rapm_dflt_v5")) {
+      localStorage.setItem("rapm_mode", "prior");
       localStorage.removeItem("rapm_mode_pinned");
-      localStorage.setItem("rapm_dflt_v4", "1");
+      localStorage.setItem("rapm_dflt_v5", "1");
     }
   } catch (e) { /* storage disabled (private mode / blocked cookies) -> pages fall back to their
-                   own default, which is already latent. Never let this break the nav. */ }
+                   own default, which is already prior. Never let this break the nav. */ }
 })();
 
 (function () {

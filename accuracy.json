@@ -32,8 +32,8 @@
       "gp_artifact_sha256": "a0fc4beb00cc80086f1ab512ff694cb2b1907bc08859c93fd274b7b01b7b51f8",
       "forward_model_artifact": "daily_v5/out/forward_xgb.parquet",
       "forward_model_artifact_sha256": "2e117e527891c6f1b305925a5fe817745d8c7d4b190b1b53059c9651516a6e11",
-      "forward_model_input_stamp": "da78661c3feb0918769e74a537a63e955509053dbe20ff7e96ae189520ec8677",
-      "forward_model_input_stamp_written": "2026-07-29T01:56:13.287583+00:00",
+      "forward_model_input_stamp": "96d3c4e3a0cfffe6591ddc065f717ab07a35c68e7e39cab17079ed9a4293ea06",
+      "forward_model_input_stamp_written": "2026-07-29T04:14:01.933755+00:00",
       "minutes_distribution_artifact": "daily_v5/out/minutes_distribution.parquet",
       "minutes_distribution_artifact_sha256": "cadf3f48fa1d450bf1f87f5151aa84f1ead7db756b4c7c1e56f1c4d0fb1ddb45",
       "depth_csv_artifact": "daily_v5/out/depthcharts_2026_27.csv",
@@ -609,8 +609,8 @@
       "stored_str": "0.498",
       "artifact": "daily_v5/out/oos/retro_net_report.json"
     },
-    "forecast_frozen": "2026-07-28",
-    "forecast_freeze_note": "Committed <strong>2026-07-28</strong>, before the 2026-27 season. \u201cRealized\u201d fills as games are played and the forecast is scored against actual wins \u2014 win or lose, the number was frozen in advance.",
+    "forecast_frozen": "2026-07-29",
+    "forecast_freeze_note": "Committed <strong>2026-07-29</strong>, before the 2026-27 season. \u201cRealized\u201d fills as games are played and the forecast is scored against actual wins \u2014 win or lose, the number was frozen in advance.",
     "provenance": {
       "frozen_preseason": "daily_v5/out/p2_0/verify_composite/frozen_preseason_all.json",
       "game_margin": "daily_v5/out/p2_0/darko_daily_rescore.json (+ composite_report.json for the blend)",
@@ -638,18 +638,18 @@
       "path": "daily_v5/out/oos/scorecard_current.parquet",
       "exists": true,
       "size": 3819,
-      "mtime": 1785290446.4290307
+      "mtime": 1785298776.3153155
     },
     "manifest": {
       "path": "daily_v5/out/oos/manifest_current.json",
       "exists": true,
       "size": 7246,
-      "mtime": 1785290447.6407738
+      "mtime": 1785298777.617854
     },
     "git": {
-      "sha": "cd3aad808bc03ad3a6e1b2e65be0c3e591141cb1",
+      "sha": "3e67c70df2f248dcd17b78f2b3ea90f7ff5788c6",
       "dirty": true,
-      "dirty_entries": 17
+      "dirty_entries": 12
     },
     "game_model_params": {
       "hca": 1.5370466094308175,
