@@ -1,0 +1,843 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rest of 2026 — WNBA Daily RAPM</title>
+<link rel="stylesheet" href="site.css">
+<link rel="icon" href="favicon.svg"><link rel="manifest" href="manifest.webmanifest">
+<style>
+  /* ===========================================================================
+     REST OF 2026 — rebuilt 2026-07-29 as a dashboard (owner ask 3: "more
+     visually appealing main projection page").
+     WHAT IT WAS: a .kpis strip, two callouts, one 16-column table and a bar
+     list — functional, but it read as a report, and the whole page was ONE
+     accent because the WNBA identity layer did not exist yet.
+     WHAT IT IS NOW: the men's site's panel grammar (.dash of .panel, each with
+     a .phead + .pbody, lifted from site/projection.html and site/team2027.html
+     on purpose so the two projections read as one system) plus the .wt-*
+     franchise vocabulary from research/wnba/fork_site_html.py. Every colour on
+     the page is either a shared token or one franchise's own two brand hexes
+     run through the certified OKLCh derivation in team_colors_wnba.js — no new
+     ramp, no new hue.
+     HAND-WRITTEN, not forked: fork_site_html.py only writes index/table/
+     site.css/nav.js/manifest/team_colors, so this file is safe from a fork run
+     (same arrangement as model.html). The men's projection.html was not a
+     viable fork SOURCE either — its spine is a 5-year player trajectory model
+     and a 30-team East/West split, neither of which exists here — so this is a
+     port of its IDIOM, not of its code.
+     Do not write a token glob like "--sp-<star>/--fs-<star>" in a comment in
+     here: the star-slash pair closes the comment and eats the next rule.
+     =========================================================================== */
+
+  /* ---- grid + the one card style (same idiom as the men's two 2026-27 pages) */
+  .dash{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:var(--sp-4);
+    margin-top:var(--sp-5)}
+  .panel{grid-column:1/-1;min-width:0;background:var(--panel);border:1px solid var(--line);
+    border-radius:var(--r-2);overflow:hidden}
+  .p7{grid-column:span 7} .p5{grid-column:span 5} .p6{grid-column:span 6}
+  @media(max-width:880px){ .p7,.p5,.p6{grid-column:1/-1} }
+  .phead{display:flex;align-items:baseline;gap:var(--sp-2);flex-wrap:wrap;
+    padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--line)}
+  .phead h2{margin:0;font-size:var(--fs-3);font-weight:700;letter-spacing:.2px;color:var(--accent)}
+  .phead .psub{font-size:var(--fs-1);color:var(--faint);font-weight:400}
+  .pbody{padding:var(--sp-4)}
+  .pbody.flush{padding:0}
+  /* .panel owns a radius and therefore overflow:hidden, which clips the shared tooltip's UPWARD
+     bubble out of a panel header. Same fix the men's pages use: flip those tips DOWN. */
+  .phead [data-tip]:hover::after{bottom:auto;top:calc(100% + 6px)}
+  .phead [data-tip]:hover::before{bottom:auto;top:calc(100% + 1px);
+    border-top-color:transparent;border-bottom-color:var(--line)}
+
+  /* ---- hero ---------------------------------------------------------------- */
+  /* .panel.wt-hero + .wt-ident are the identity layer's own components; all this adds is the
+     placement of the readouts inside them. The tint, the 3px top rule and the ink are solved
+     against the current theme by applyTeamTheme(), so nothing here picks a colour. */
+  /* 170px, not the shared 130px: "33.1–10.9" is nine mono glyphs at --fs-5, which is 130px of ink
+     before the cell's own padding, so the shared minimum broke the headline readout onto a second
+     line. Everything else about the .kpi is the site's. */
+  .hero .kpis{margin:0 0 var(--sp-4);grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+  /* The cards keep --panel so they read as cards ON the tint, and take the franchise's --team-line
+     for their edge. That alpha was solved to be a 3:1 mark on --team-tint, which is --panel plus at
+     most 5% of the accent, so painting it on --panel itself moves the ratio by under a percent —
+     well inside the margin. Anything louder than a hairline here would put a brand fill under a
+     readout, which is the one thing the identity layer's hero rule refuses to do. */
+  .hero .kpi{background:var(--panel);border-color:var(--team-line,var(--line))}
+  .hero .kpi .v{color:var(--text)}
+  /* label + value adjacent = the house lockup, never space-between (site.css:147) */
+  .locks{display:flex;flex-wrap:wrap;gap:var(--sp-2) var(--sp-5);
+    padding-top:var(--sp-3);border-top:1px solid var(--team-soft,var(--line-2))}
+  .lock{display:flex;align-items:baseline;gap:var(--sp-1);font-size:var(--fs-1);color:var(--muted)}
+  .lock b{font-family:var(--font-mono);font-size:var(--fs-4);font-weight:600;color:var(--text);
+    font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+  .lock i{font-style:normal;font-size:var(--fs-1);color:var(--faint)}
+
+  /* ---- the field: offence across, defence up the side ---------------------- */
+  /* Absolutely-positioned logos rather than an SVG scatter: the marks must stay a FIXED size while
+     both axes are fluid, which a viewBox cannot do — it would scale the logos and the tick text
+     with the panel. layoutField() measures clientWidth and re-runs on resize.
+     WHY THESE TWO AXES. The men's page says in its own comment that there is NO per-team projected
+     offensive/defensive rating to make the usual quadrant from. Here there is: workstream 1 ships
+     orapm/drapm per team as the offence and defence triads of factors_dev, and the six factors sum
+     to the published strength EXACTLY (meta.factor_profile.closure_max_error = 3.6e-15). So
+     x + y IS strength, and the chart is a decomposition, not a reconstruction.
+     Measured across the 15 teams before drawing anything:
+       orapm vs drapm      r +0.187  -> genuinely 2-D; the cloud fills the frame
+       orapm range         -6.16 .. +5.73     drapm range  -5.44 .. +4.06
+     Two rejected framings: x = proj wins, y = strength (r 0.98, one variable drawn twice), and
+     x = proj wins, y = remaining SOS (r -0.48, and SOS is already a standings column). */
+  .field{position:relative;min-width:0}
+  /* The plate on each mark is the identity layer's .wt-plate, which exists because most WNBA marks
+     are dark-on-transparent — and it doubles as the occluder the men's .sdot needed a --panel disc
+     for: where two logos overlap, the front one reads as in front instead of smearing. */
+  .sdot{position:absolute;z-index:1;display:block;line-height:0;transition:transform .12s ease}
+  .sdot .wt-logo{width:100%;height:100%}
+  /* .hi is the same state, driven from a standings row further down the page: 15 marks is a lot to
+     scan for one team, and the two halves of the page should be able to point at each other. */
+  .sdot:hover,.sdot.hi{transform:scale(1.18);z-index:3}
+  .ffr{position:absolute;inset:0;z-index:0;pointer-events:none}
+  .fgx,.fgy{position:absolute;background:var(--grid)}
+  .fgx{width:1px} .fgy{height:1px}
+  /* --zero for the two REFERENCE lines: site.css certifies it at the TEXT floor and therefore well
+     clear of the 3:1 mark floor. Dashed because they are references, not data. */
+  .fzx{position:absolute;width:1px;
+    background:repeating-linear-gradient(to bottom,var(--zero) 0 3px,transparent 3px 6px)}
+  .fzy{position:absolute;height:1px;
+    background:repeating-linear-gradient(to right,var(--zero) 0 3px,transparent 3px 6px)}
+  .fxl,.fyl{position:absolute;font-family:var(--font-mono);font-size:11px;color:var(--faint);
+    white-space:nowrap}
+  .fxl{transform:translateX(-50%)}
+  .fyl{transform:translateY(-50%);text-align:right}
+  .fat{position:absolute;font-size:var(--fs-1);color:var(--muted);white-space:nowrap}
+  .fqd{position:absolute;font-size:11px;color:var(--faint);white-space:nowrap;letter-spacing:.2px}
+
+  /* ---- odds / leader lists (one row idiom, three column templates) --------- */
+  /* SIX columns: rank, logo, tricode, nickname, bar, value. Every list on this page is a .orow;
+     what differs is the template, and each variant must name exactly as many columns as its row
+     has children — a short template silently wraps the last child onto a second line. */
+  /* THE SECOND CHANNEL, and it is not decoration. The OKLCh walk certifies contrast but cannot
+     invent hues: six of fifteen franchises collapse onto two accents (ATL=IND red, DAL=MIN=WAS
+     navy, LVA within dE 3 of the reds on light), so on a fifteen-row list the accent alone does
+     NOT identify a team. tvars() already emits --team-2 per row; this is where it earns its keep.
+     3px on the leading edge, the franchise's SECONDARY mark, so adjacent same-accent rows are
+     separable without adding a hue the brand does not own. Falls back to --team, then --accent. */
+  .olist .orow,.plist .orow{border-left:3px solid var(--team-2,var(--team,var(--accent)))}
+  .olist .orow{display:grid;align-items:center;gap:var(--sp-2);padding:6px var(--sp-2);
+    padding-left:var(--sp-2);
+    margin:0 calc(var(--sp-2) * -1);border-bottom:1px solid var(--line-2);color:var(--text);
+    grid-template-columns:18px 24px 34px minmax(0,1fr) minmax(48px,1.4fr) 50px}
+  .plist .orow{grid-template-columns:20px 26px minmax(0,1fr) 46px minmax(60px,1fr) 44px}
+  /* 112px for the minutes column, not 92: "24.9 → 31.2 mpg" is 15 mono glyphs and at 92 it ran
+     into the wins readout with no gap at all. */
+  .wlist .orow{grid-template-columns:26px minmax(0,1fr) 112px 52px}
+  .orow:last-child{border-bottom:none}
+  .orow:hover{background:var(--team-hover,var(--panel-3))}
+  .ork{font-family:var(--font-mono);font-size:var(--fs-1);color:var(--faint);text-align:right}
+  .oab{font-family:var(--font-mono);font-weight:700;font-size:var(--fs-2);letter-spacing:.2px;
+    color:var(--team-ink,var(--accent))}
+  .onm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:var(--fs-2)}
+  .onm a{color:var(--text)} .onm a:hover{color:var(--team-ink,var(--accent))}
+  .onm .nk{color:var(--muted)}
+  /* .wt-track/.wt-fill are the identity layer's length encoding: the track is --panel-2 inside a
+     --line hairline and the FILL is the franchise's certified 3:1 mark. Every row carries its own
+     --team inline, so fifteen franchises can sit in one list. */
+  .obar{height:9px;border-radius:2px;min-width:0}
+  .oval{font-family:var(--font-mono);font-size:var(--fs-2);font-weight:600;text-align:right;
+    font-variant-numeric:tabular-nums}
+  .onet{font-family:var(--font-mono);font-size:var(--fs-1);color:var(--muted);text-align:right;
+    font-variant-numeric:tabular-nums}
+  .omin{font-family:var(--font-mono);font-size:var(--fs-1);color:var(--muted);text-align:right;
+    font-variant-numeric:tabular-nums;white-space:nowrap}
+  .olist a.orow{text-decoration:none}
+
+  /* ---- the standings ------------------------------------------------------- */
+  .teamcell{display:flex;align-items:center;gap:8px;min-width:0}
+  .teamcell .ab{font-family:var(--font-mono);font-weight:700;font-size:var(--fs-2);letter-spacing:.2px;
+    color:var(--team-ink,var(--text))}
+  .teamcell .nk{color:var(--muted);font-weight:500}
+  a.teamcell:hover .ab{color:var(--team-ink,var(--accent))}
+  /* THE SCALE HIERARCHY: projected wins is the number the page publishes, so it is the biggest
+     thing in the row and everything else steps down from it. This is what replaces a heat ramp. */
+  td.projw{font-family:var(--font-mono);font-size:var(--fs-4);font-weight:600;letter-spacing:-.3px}
+  /* 15 columns: the shared 8px of side padding costs 240px of the 992 the panel has, which put the
+     table 7px over its own box and hid the Seed column behind a scrollbar at the full 1040 layout
+     width. 6px fits it exactly; below 992 it still scrolls, which is what .scroll is for.
+     Spelled `table.stand`, not `.stand`: site.css's `table.tbl th` outranks a bare class selector,
+     so a one-class override is parsed, applied and silently lost. */
+  table.stand th,table.stand td{padding-left:6px;padding-right:6px}
+  td.range{padding:4px 6px} td.range svg{display:block}
+  td.po{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+  td.dim{color:var(--faint)} td.strong{font-weight:700}
+  /* the 8-team field is an ASSUMPTION (see the callout), so the cut is drawn as a reference line
+     in --zero dashed, the same weight the field chart gives its two reference lines. */
+  tr.cut>td{border-bottom:1px dashed var(--zero)}
+  .cutlab{display:flex;align-items:center;gap:var(--sp-2);padding:6px var(--sp-4);
+    font-size:var(--fs-1);color:var(--faint);border-bottom:1px solid var(--line-2)}
+  /* header ? tooltips live in a sticky thead inside a .scroll box that itself sits in a radiused
+     .panel — flip the tips DOWN, and hang the last two off the right edge so they cannot be
+     clipped sideways. Both are the men's fixes, for the same two reasons. */
+  .scroll thead th .help[data-tip]:hover::after{bottom:auto;top:calc(100% + 6px)}
+  .scroll thead th .help[data-tip]:hover::before{bottom:auto;top:calc(100% + 1px);
+    border-top-color:transparent;border-bottom-color:var(--line)}
+  .stand thead th:nth-last-child(-n+2) .help[data-tip]:hover::after{left:auto;right:0;transform:none}
+
+  /* ---- staleness ---------------------------------------------------------- */
+  /* Derived at render time from the viewer's clock — see render(). Amber rather than red: the page
+     is not WRONG, it is behind, and a red banner on a projection reads as "these numbers are
+     broken". */
+  .stalewarn{display:inline-block;margin-top:6px;padding:3px 8px;border-radius:var(--r-1);
+    background:rgba(255,145,56,.14);border:1px solid rgba(255,145,56,.34);
+    color:#ffb877;font-size:var(--fs-1);font-weight:600}
+  :root[data-theme=light] .stalewarn{background:rgba(192,86,0,.12);
+    border-color:rgba(192,86,0,.3);color:#8a3d00}
+  .pj-msg{color:var(--muted);font-size:var(--fs-3);margin-top:var(--sp-5)}
+  .caveats{color:var(--muted);font-size:var(--fs-2);line-height:1.6;max-width:840px;
+    margin:8px 0 0;padding-left:20px}
+  .caveats li{margin:4px 0}
+  @media(max-width:560px){
+    .lock b{font-size:var(--fs-3)}
+    /* Six columns here too — the phone override used to name five, and the missing one silently
+       wrapped every odds value onto a line of its own. */
+    .olist .orow{grid-template-columns:16px 22px 32px minmax(0,1fr) minmax(34px,.7fr) 46px}
+    .plist .orow{grid-template-columns:16px 22px minmax(0,1fr) 40px minmax(34px,.7fr) 42px}
+    .wlist .orow{grid-template-columns:22px minmax(0,1fr) 104px 46px}
+  }
+</style></head>
+<body class="wt-scope">
+<nav id="topnav" data-active="proj"></nav>
+<script src="charts.js"></script>
+<script src="nav.js"></script>
+<script src="team_colors_wnba.js"></script>
+
+<div class="wrap">
+  <h1 style="margin-top:6px">Rest of <b>2026</b></h1>
+  <p class="sub" id="sub">Loading projection…</p>
+
+  <div class="dash" id="dash" hidden>
+    <!-- HERO. The favourite, in its own colours, and the constants the whole run used. -->
+    <section class="panel wt-hero hero" id="hero"></section>
+
+    <!-- THE FIELD. The analogue of the men's "Where the 30 teams are heading". -->
+    <section class="panel p7" id="fieldPanel">
+      <div class="phead"><h2>Where the 15 teams stand</h2>
+        <span class="psub">offence across · defence up the side · both in points per 100</span></div>
+      <div class="pbody"><div class="field" id="field"></div>
+        <div class="locks" id="locks" style="margin-top:var(--sp-4)"></div>
+        <p class="cap" id="fieldCap"></p></div>
+    </section>
+
+    <section class="panel p5" id="titlePanel">
+      <div class="phead"><h2>Title odds</h2><span class="psub" id="titleSub"></span></div>
+      <div class="pbody"><div class="olist" id="titleList"></div>
+        <p class="cap" id="titleCap"></p></div>
+    </section>
+
+    <!-- THE SPINE. Kept as a table on purpose: it is the only place a reader can look one team
+         up by name and read every published quantity for it on one line. -->
+    <section class="panel" id="standPanel">
+      <div class="phead"><h2>Projected standings</h2>
+        <span class="psub" id="standSub"></span></div>
+      <div class="pbody flush" id="standBody"></div>
+      <div class="pbody" style="padding-top:0"><p class="cap" id="tblCap"></p></div>
+    </section>
+
+    <section class="panel p6" id="carryPanel">
+      <div class="phead"><h2>Who is carrying it</h2>
+        <span class="psub">wins still to come, by player</span></div>
+      <div class="pbody"><div class="olist plist" id="carryList"></div>
+        <p class="cap" id="carryCap"></p></div>
+    </section>
+
+    <section class="panel p6" id="watchPanel">
+      <div class="phead"><h2>Minutes watchlist</h2>
+        <span class="psub">players the recency window is not crediting</span></div>
+      <div class="pbody"><div class="olist wlist" id="watchList"></div>
+        <p class="cap" id="watchCap"></p></div>
+    </section>
+  </div>
+
+  <!-- The two disclosures that must not be buried. Both are read out of the JSON, so neither can
+       outlive the fact it describes. They sit BELOW the dashboard rather than above it because
+       they qualify every panel in it, and a reader who has seen the numbers knows what to do with
+       a caveat; one who has not, skips it. -->
+  <div class="callout" id="fmtCallout" hidden></div>
+  <div class="callout" id="boardCallout" hidden style="margin-top:10px"></div>
+
+  <p class="sectitle" id="cavTitle" hidden>What this projection does not know</p>
+  <ul class="caveats" id="caveats"></ul>
+  <p class="foot" id="foot"></p>
+  <div class="pj-msg" id="msg">Loading projection…</div>
+</div>
+
+<script>
+"use strict";
+const el = RC.el;
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g,
+  c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const n1 = v => Number(v).toFixed(1);
+// The site prints a typographic minus everywhere else; match it.
+const sgn = (v, d) => (Number(v) >= 0 ? "+" : "−") + Math.abs(Number(v)).toFixed(d == null ? 2 : d);
+const pc = p => (Number(p) * 100).toFixed(1) + "%";
+// A 10,000-sim MC cannot resolve below ~1 in 10,000, and pc() prints anything under 0.0005 as a
+// flat "0.0%" that reads as *impossible*. Everything past the resolution of the simulation is
+// printed as a bound instead, in both tails: 0/10,000 is "<0.1%", not "0.0%".
+const pcOdds = p => p < 0.001 ? "&lt;0.1%" : p > 0.999 ? "&gt;99.9%" : pc(p);
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+
+/* THE PER-TEAM PAGE. It is `team.html?t=TRI` (that page also accepts ?abbr= so nav.js's command
+   palette can reach it, but ?t= is its own canonical spelling). One constant and one builder, so
+   re-pointing every link on this page stays a one-line change. */
+const TEAM_PAGE = "team.html";
+const teamHref = tri => TEAM_PAGE + "?t=" + encodeURIComponent(tri);
+
+let P = null, LINKABLE = new Set(), FLD = { items: [], frame: null }, DOTS = {};
+
+/* Franchise colours for ONE row/mark, as an inline style string. Per-item rather than on :root,
+   because a list of fifteen teams needs fifteen accents at once while --team-* still describes the
+   page's one selected team (the .wt-rail pattern from the identity contract). Re-derived on every
+   render: every value is solved against the CURRENT theme's surfaces. */
+function tvars(tri) {
+  const th = document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+  return "--team:" + teamAccent(tri, th) + ";--team-2:" + teamAlt(tri, th)
+    + ";--team-ink:" + teamInk(tri, th) + ";--team-on:" + teamOnFill(teamAccent(tri, th));
+}
+// Two of the fifteen pairs derive the same hex (ATL/IND red, DAL/MIN/WAS navy), so anywhere two
+// teams appear together the logo and the --team-2 stripe have to come along. Every list on this
+// page is logo-led for exactly that reason.
+const logo = (tri, px, opts) => wnbaLogoIMG(tri, px, opts || {});
+
+fetch("projection_2026.json").then(r => {
+  if (!r.ok) throw new Error("projection_2026.json " + r.status);
+  return r.json();
+}).then(proj => {
+  P = proj;
+  // Only to decide which player names can be links: build_wnba_site.py publishes a player page
+  // only above its activity floor, so a bench name with no file would 404 the Explorer. The
+  // projection feed already carries `linkable` per roster row; players.json is what resolves the
+  // minutes-watchlist rows, which do not carry the flag.
+  return fetch("players.json").then(r => r.ok ? r.json() : []).catch(() => []);
+}).then(players => {
+  LINKABLE = new Set((players || []).map(p => p.id));
+  document.getElementById("msg").hidden = true;
+  document.getElementById("dash").hidden = false;
+  render();
+}).catch(e => {
+  document.getElementById("msg").textContent = "Could not load projection_2026.json: " + e;
+});
+
+/* An Explorer link, or plain text when the player has no published page. 17 of the 194 roster rows
+   are unlinkable and every one carries linkable=false; the watchlist rows do not carry the flag, so
+   they are resolved against players.json instead. Both routes agree on the 177 that do link. */
+function playerName(r) {
+  const gid = r.gid || ("w" + r.pid);
+  const ok = r.linkable != null ? r.linkable : LINKABLE.has(gid);
+  return ok ? '<a href="index.html?p=' + encodeURIComponent(gid) + '">' + esc(r.name) + "</a>"
+            : esc(r.name);
+}
+
+/* ===========================================================================
+   WIN-DISTRIBUTION STRIP (one per standings row)
+   win_hist[k] = P(exactly k wins), so it indexes directly and its length is games_total+1.
+   Drawn on a FIXED 0..44 domain shared by every row — the previous version scaled each strip to
+   its own team's span, which quietly stretched the two 43-game teams (PDX and CON: one 2026
+   fixture is missing upstream) onto the same width as everyone else's 44.
+     caret above  = wins already banked (t.w), i.e. the part of the total that has happened
+     bars         = P[exactly k wins] across the sims, / that team's peak
+     vertical     = .500 for that team's own games_total
+     rule beneath = the 95% band
+   The MEAN is deliberately not drawn: it is printed in the Proj W column one cell to the left.
+   Hand-rolled rather than RC.spark/RC.pctBar: spark() is a polyline over a series and pctBar()
+   draws a single percentile against a fixed midpoint tick — neither is a histogram with a band
+   rule and a caret. RC.el is used for every node, so the SVG namespace handling is still shared.
+   =========================================================================== */
+const STRIP_W = 150, STRIP_H = 30, STRIP_PAD = 2, BAR_TOP = 7, BAR_BASE = 22, RULE_Y = 26;
+function winStrip(t, maxG) {
+  const N = maxG + 1, bw = (STRIP_W - 2 * STRIP_PAD) / N;
+  const xEdge = k => STRIP_PAD + k * bw;
+  const xCtr = v => STRIP_PAD + (Number(v) + 0.5) * bw;
+  const svg = el("svg", { viewBox: "0 0 " + STRIP_W + " " + STRIP_H, width: STRIP_W,
+    height: STRIP_H, role: "img", "aria-label": "win-total distribution, projected mean "
+      + n1(t.proj_wins) + ", 95% band " + t.p2_5 + " to " + t.p97_5 + ", " + t.w + " wins banked" });
+  const half = t.games_total / 2;
+  svg.appendChild(el("line", { x1: xCtr(half - 0.5), y1: BAR_TOP, x2: xCtr(half - 0.5), y2: BAR_BASE,
+    stroke: "var(--zero)", "stroke-width": 1 }));
+  const hist = t.win_hist || [], mx = Math.max.apply(null, hist) || 1, span = BAR_BASE - BAR_TOP;
+  for (let k = 0; k < Math.min(N, hist.length); k++) {
+    const f = hist[k] / mx;
+    if (f < 0.02) continue;   // under 0.3px: it prints as grain, not as a bar
+    const h = f * span;
+    // style="fill:..." not fill="...": an ATTRIBUTE does not resolve a custom property in SVG
+    // (gotcha 1 of the identity contract). --team is inherited from the row's inline style.
+    const r = el("rect", { x: xEdge(k).toFixed(2), y: (BAR_BASE - h).toFixed(2),
+      width: Math.max(0.7, bw - 0.2).toFixed(2), height: h.toFixed(2) });
+    r.setAttribute("style", "fill:var(--team,var(--accent))");
+    svg.appendChild(r);
+  }
+  if (t.p2_5 != null && t.p97_5 != null) {
+    svg.appendChild(el("line", { x1: xCtr(t.p2_5), y1: RULE_Y, x2: xCtr(t.p97_5), y2: RULE_Y,
+      stroke: "var(--muted)", "stroke-width": 2 }));
+    [t.p2_5, t.p97_5].forEach(v => svg.appendChild(el("line", { x1: xCtr(v), y1: RULE_Y - 3,
+      x2: xCtr(v), y2: RULE_Y + 3, stroke: "var(--muted)", "stroke-width": 1 })));
+  }
+  const x = xCtr(t.w);
+  svg.appendChild(el("polygon", { points: (x - 3.5).toFixed(2) + ",0 " + (x + 3.5).toFixed(2)
+    + ",0 " + x.toFixed(2) + ",5", fill: "var(--text)" }));
+  return svg;
+}
+
+/* ===========================================================================
+   THE FIELD — 15 logos on the offence/defence quadrant.
+     x = orapm  (oTS + oTOV + oSC deviations)
+     y = drapm  (dTS + dTOV + dSC deviations, sign-aligned so higher is better)
+   x + y = the published strength, exactly. Both reference lines are DERIVED reference, not data:
+   x = 0 and y = 0 are the 2026 league average on that half of the game.
+   =========================================================================== */
+function buildField(order, T) {
+  const host = document.getElementById("field");
+  host.innerHTML = ""; FLD.items = []; DOTS = {};
+  order.forEach(tri => {
+    const t = T[tri];
+    const a = document.createElement("a");
+    a.className = "sdot";
+    a.href = teamHref(tri);
+    a.dataset.x = t.orapm; a.dataset.y = t.drapm; a.dataset.tri = tri;
+    // A logo on a scatter is a position, and the reader should be able to get the numbers back
+    // out of it — both coordinates and the strength they add up to are spelled out.
+    a.title = t.name + " · offence " + sgn(t.orapm) + ", defence " + sgn(t.drapm)
+      + " = strength " + sgn(t.strength) + " · " + n1(t.proj_wins) + " projected wins · "
+      + pc(t.title_prob) + " title";
+    a.setAttribute("aria-label", a.title);
+    a.innerHTML = logo(tri, 26, { alt: "" });   // the anchor carries the name
+    host.appendChild(a);
+    DOTS[tri] = a; FLD.items.push(a);
+  });
+  FLD.frame = document.createElement("div");
+  FLD.frame.className = "ffr";
+  host.appendChild(FLD.frame);
+  layoutField();
+}
+
+function layoutField() {
+  const host = document.getElementById("field");
+  if (!host || !FLD.items.length) return;
+  const W = host.clientWidth;
+  if (!W) return;
+  const narrow = W < 520;
+  // The mark shrinks rather than the chart lying about where teams are.
+  const L = W < 340 ? 20 : narrow ? 22 : 26;
+  const PL = narrow ? 26 : 32, PR = L / 2 + 4, PT = 18 + L / 2, PB = 40;
+  const PH = narrow ? 250 : (W < 880 ? 290 : 320);
+  const PW = W - PL - PR, H = PT + PH + PB;
+  host.style.height = H + "px";
+
+  // Domains snapped to the enclosing multiple of 2 and forced to contain 0, so the two reference
+  // lines are always inside the frame and every tick is a round number.
+  const xs = FLD.items.map(a => +a.dataset.x), ys = FLD.items.map(a => +a.dataset.y);
+  const snap = (v, f) => f(v / 2) * 2;
+  const xlo = Math.min(0, snap(Math.min.apply(null, xs), Math.floor));
+  const xhi = Math.max(0, snap(Math.max.apply(null, xs), Math.ceil));
+  const ylo = Math.min(0, snap(Math.min.apply(null, ys), Math.floor));
+  const yhi = Math.max(0, snap(Math.max.apply(null, ys), Math.ceil));
+  const X = v => PL + (v - xlo) / (xhi - xlo || 1) * PW;
+  const Y = v => PT + (yhi - v) / (yhi - ylo || 1) * PH;
+
+  FLD.items.forEach(a => {
+    a.style.left = (X(+a.dataset.x) - L / 2).toFixed(1) + "px";
+    a.style.top = (Y(+a.dataset.y) - L / 2).toFixed(1) + "px";
+    a.style.width = L + "px"; a.style.height = L + "px";
+  });
+
+  const S = narrow ? 4 : 2;
+  let h = "";
+  for (let v = Math.ceil(xlo / S) * S; v <= xhi; v += S) {
+    const x = X(v).toFixed(1);
+    h += '<i class="fgx" style="left:' + x + 'px;top:' + PT + 'px;height:' + PH + 'px"></i>'
+      + '<span class="fxl" style="left:' + x + 'px;top:' + (PT + PH + 6) + 'px">'
+      + (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v) + "</span>";
+  }
+  for (let v = Math.ceil(ylo / S) * S; v <= yhi; v += S) {
+    const y = Y(v).toFixed(1);
+    h += '<i class="fgy" style="top:' + y + 'px;left:' + PL + 'px;width:' + PW + 'px"></i>'
+      + '<span class="fyl" style="top:' + y + 'px;left:0;width:' + (PL - 6) + 'px">'
+      + (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v) + "</span>";
+  }
+  h += '<i class="fzy" style="top:' + Y(0).toFixed(1) + 'px;left:' + PL + 'px;width:' + PW + 'px"></i>'
+    + '<i class="fzx" style="left:' + X(0).toFixed(1) + 'px;top:' + PT + 'px;height:' + PH + 'px"></i>';
+  // Axis names live in the gutters, unrotated: rotated y-axis text costs a transform-origin fight
+  // for a label read once. The arrows say which way is which without a sentence.
+  h += '<span class="fat" style="left:' + PL + 'px;top:0">↑ better defence</span>'
+    + '<span class="fat" style="left:' + PL + 'px;top:' + (PT + PH + 22) + 'px">better offence →</span>';
+  if (!narrow) {
+    // The four quadrants are the point of the chart, so they are named — factually, off the two
+    // axis signs, not editorially.
+    h += '<span class="fqd" style="right:4px;top:' + (PT + 4) + 'px">above average both ends</span>'
+      + '<span class="fqd" style="left:' + (PL + 6) + 'px;top:' + (PT + PH - 16) + 'px">below average both ends</span>';
+  }
+  FLD.frame.innerHTML = h;
+}
+let _rt = null;
+window.addEventListener("resize", () => { clearTimeout(_rt); _rt = setTimeout(layoutField, 120); });
+
+/* ===========================================================================
+   PANELS
+   =========================================================================== */
+function buildHero(M, order, T) {
+  const tri = order[0], t = T[tri];
+  // Sets the nine --team-* properties on :root from the favourite's brand hexes, solved against
+  // the current theme. Called on every render, which is also every theme flip.
+  applyTeamTheme(tri);
+  const gm = M.game_model;
+  const kpi = [
+    ["Projected", n1(t.proj_wins) + "–" + n1(t.proj_losses),
+      t.w + "–" + t.l + " through " + t.gp + " of " + t.games_total + " games"],
+    // FIVE readouts, not six: the .kpi minimum this panel needs is 170px and the panel is ~990px
+    // wide, so a sixth wrapped onto a row of its own with four empty cells beside it. The bracket
+    // ladder (playoffs / semis / finals / title) is a whole column group in the standings; here it
+    // is the note under the one number a favourite is picked by.
+    ["Title odds", pc(t.title_prob), "playoffs " + pcOdds(t.playoff_prob) + " · reaches the final "
+      + pcOdds(t.finals_prob)],
+    ["Strength", sgn(t.strength), "rank " + t.strength_rank + " of " + order.length
+      + " · 0.0 is average"],
+    ["80% band", t.p10 + "–" + t.p90, "95% band " + t.p2_5 + "–" + t.p97_5],
+    ["Games left", String(t.games_remaining), "remaining schedule "
+      + sgn(t.schedule_remaining.sos) + ", " + ord(t.schedule_remaining.sos_rank) + " hardest"]
+  ];
+  const lock = (lab, val, note) => '<span class="lock">' + lab + " <b>" + val + "</b>"
+    + (note ? "<i>" + note + "</i>" : "") + "</span>";
+  document.getElementById("hero").innerHTML =
+    '<div class="phead wt-htop"><div class="wt-ident">' + logo(tri, 46)
+    + '<div class="wt-who"><h2><span class="wt-name">' + esc(t.name) + "</span>"
+    + '<span class="wt-tag">favourite</span></h2>'
+    + '<div class="wt-sub"><b>' + esc(tri) + "</b> · most projected wins and the best title odds "
+    + "in the simulation · <a href=\"" + teamHref(tri) + "\">team page →</a></div></div>"
+    + "</div></div>"
+    + '<div class="pbody"><div class="kpis">' + kpi.map(k =>
+      '<div class="kpi"><div class="k">' + esc(k[0]) + '</div><div class="v">' + k[1]
+      + '</div><div class="x">' + k[2] + "</div></div>").join("") + "</div>"
+    + '<div class="locks">'
+    + lock("Board as of", shortDay(M.as_of), esc(M.as_of))
+    + lock("Games left", String(M.schedule.games_remaining),
+        shortDay(M.schedule.remaining_first_date) + " → " + shortDay(M.schedule.remaining_last_date))
+    + lock("Simulations", M.n_sims.toLocaleString(), "seed " + M.seed)
+    + lock("Home edge", sgn(gm.hca), "points")
+    + lock("Game σ", gm.sigma_game.toFixed(2), "points")
+    + "</div></div>";
+}
+
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+// Short month-day in a mono slot: a full ISO date is 10 mono glyphs and wraps onto two lines.
+function shortDay(iso) {
+  const p = String(iso).split("-");
+  return (+p[2]) + " " + (MON[+p[1] - 1] || p[1]);
+}
+function ord(n) {
+  const s = ["th", "st", "nd", "rd"], v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+/* Pearson r, used once: to say in the caption whether the field's two axes are actually
+   independent across the fifteen teams, rather than asserting it. */
+function corr(a, b) {
+  const n = a.length, ma = a.reduce((x, y) => x + y, 0) / n, mb = b.reduce((x, y) => x + y, 0) / n;
+  let sa = 0, sb = 0, sab = 0;
+  for (let i = 0; i < n; i++) { sa += (a[i] - ma) ** 2; sb += (b[i] - mb) ** 2; sab += (a[i] - ma) * (b[i] - mb); }
+  return sab / Math.sqrt(sa * sb || 1);
+}
+
+function buildLocks(order, T) {
+  const o = order.slice().sort((a, b) => T[b].orapm - T[a].orapm)[0];
+  const d = order.slice().sort((a, b) => T[b].drapm - T[a].drapm)[0];
+  const both = order.filter(k => T[k].orapm > 0 && T[k].drapm > 0).length;
+  const r = corr(order.map(k => T[k].orapm), order.map(k => T[k].drapm));
+  const lock = (lab, val, note) => '<span class="lock">' + lab + " <b>" + val + "</b>"
+    + (note ? "<i>" + note + "</i>" : "") + "</span>";
+  document.getElementById("locks").innerHTML =
+      lock("Best offence", sgn(T[o].orapm), esc(o))
+    + lock("Best defence", sgn(T[d].drapm), esc(d))
+    + lock("Above average both ends", String(both), "of " + order.length)
+    + lock("Offence–defence r", sgn(r), "across the " + order.length);
+  document.getElementById("fieldCap").textContent =
+    "Each logo sits at its team's offence (across) and defence (up the side), both as deviations "
+    + "from the 2026 league average in points per 100 possessions, defence sign-aligned so higher "
+    + "is better. The two add up to the Strength column exactly — the six factors close on it to "
+    + "within 4e-15 — so a team's distance up the diagonal IS its strength, and the dashed lines "
+    + "are the league average on each half of the game. The two axes correlate " + sgn(r)
+    + " across the fifteen, which is why this is a cloud and not a line. Hover a standings row to "
+    + "find a team; click a logo for its page.";
+}
+
+/* The standings table is the only place a reader can look a team up by name. Hovering a row lifts
+   that team's logo out of the cloud above it. */
+function linkRows(scope) {
+  const set = (e, on) => {
+    const tr = e.target.closest("tr[data-tri]");
+    if (!tr) return;
+    const dot = DOTS[tr.getAttribute("data-tri")];
+    if (dot) dot.classList.toggle("hi", on);
+  };
+  scope.addEventListener("mouseover", e => set(e, true));
+  scope.addEventListener("mouseout", e => set(e, false));
+}
+
+function buildTitle(M, order, T) {
+  const s = order.slice().sort((a, b) => T[b].title_prob - T[a].title_prob);
+  const live = s.filter(k => T[k].title_prob > 0);
+  const mx = T[live[0]].title_prob || 1;
+  const top3 = s.slice(0, 3).reduce((a, k) => a + T[k].title_prob, 0);
+  document.getElementById("titleSub").textContent =
+    "share of " + M.n_sims.toLocaleString() + " simulated seasons";
+  document.getElementById("titleList").innerHTML = live.map((k, i) => {
+    const t = T[k];
+    return '<a class="orow" style="' + tvars(k) + '" href="' + teamHref(k) + '" title="'
+      + esc(t.name + " · " + n1(t.proj_wins) + " projected wins") + '">'
+      + '<span class="ork">' + (i + 1) + "</span>" + logo(k, 24)
+      + '<span class="oab">' + esc(k) + "</span>"
+      + '<span class="onm"><span class="nk">' + esc(t.nickname) + "</span></span>"
+      + '<span class="obar wt-track"><i class="wt-fill" style="width:'
+      + (clamp(t.title_prob / mx, 0, 1) * 100).toFixed(1) + '%"></i></span>'
+      // pcOdds, not pc: LAS's title chance is under 1 in 2,000 and pc() prints it as a flat
+      // "0.0%", which reads as impossible in a list whose caption says the impossible ones are
+      // NOT in it.
+      + '<span class="oval">' + pcOdds(t.title_prob) + "</span></a>";
+  }).join("");
+  const zero = s.filter(k => T[k].title_prob <= 0);
+  document.getElementById("titleCap").innerHTML =
+    "Bars are relative to the favourite. The top three hold " + (top3 * 100).toFixed(0)
+    + "% of the title odds between them. "
+    + (zero.length ? esc(zero.join(", ")) + " won a title in none of the "
+        + M.n_sims.toLocaleString() + " simulations, so they are below the resolution of the "
+        + "simulation — not impossible, and the same thing any “&lt;0.1%” cell means." : "");
+}
+
+const TIP_BAND = "How often the team finished on each win total across the simulations, on a fixed "
+  + "0–44 scale shared by every row. The rule beneath spans the 95% band; the vertical line is "
+  + ".500 for that team's own schedule; the caret above marks the wins already banked.";
+const TIP_SOS = "Mean published strength of the remaining opponents, so positive = harder than "
+  + "average. Home court is not folded in. Rank 1 is the hardest remaining slate.";
+const TIP_SEED = "Mean seed in the simulations where the team qualified, so it is conditional and "
+  + "not comparable across teams with very different playoff odds.";
+const TIP_CUT = "The 8th team by projected wins. The field is assumed to be 8 of 15 — see the "
+  + "bracket note below the dashboard.";
+
+function buildStandings(M, order, T) {
+  const maxG = Math.max.apply(null, order.map(k => T[k].games_total));
+  const cutAt = M.playoff_format.field_size;
+  const head = "<thead><tr>"
+    + '<th class="l rank">#</th><th class="l">Team</th>'
+    + '<th class="l">Record</th><th>PD</th><th>Rem</th>'
+    + '<th>SOS <span class="help" data-tip="' + esc(TIP_SOS) + '">?</span></th>'
+    + '<th class="grp">Strength</th>'
+    + '<th class="grp">Proj W</th><th>80% band</th>'
+    + '<th class="l">Win distribution <span class="help" data-tip="' + esc(TIP_BAND) + '">?</span></th>'
+    + '<th class="grp">Playoffs</th><th>Semis</th><th>Finals</th><th>Title</th>'
+    + '<th class="grp">Seed <span class="help" data-tip="' + esc(TIP_SEED) + '">?</span></th>'
+    + "</tr></thead>";
+
+  const oddsCell = (p, cls) => '<td class="po' + (cls ? " " + cls : "")
+    + (p >= 0.9 ? " strong" : p < 0.1 ? " dim" : "") + '">' + pcOdds(p) + "</td>";
+
+  const body = order.map((tri, i) => {
+    const t = T[tri];
+    return '<tr data-tri="' + esc(tri) + '" style="' + tvars(tri) + '"'
+      + (i + 1 === cutAt ? ' class="cut"' : "") + ">"
+      + '<td class="l rank">' + (i + 1) + "</td>"
+      + '<td class="l"><a class="teamcell" href="' + teamHref(tri) + '" title="'
+        + esc(t.name + " — team page") + '">' + logo(tri, 24)
+        + '<span class="ab">' + esc(tri) + "</span>"
+        + '<span class="nk">' + esc(t.nickname) + "</span></a></td>"
+      + '<td class="l">' + t.w + "–" + t.l + "</td>"
+      + "<td>" + sgn(t.point_diff, 0) + "</td>"
+      + "<td>" + t.games_remaining + "</td>"
+      + "<td>" + sgn(t.schedule_remaining.sos) + "</td>"
+      + '<td class="grp">' + sgn(t.strength) + "</td>"
+      + '<td class="grp projw">' + n1(t.proj_wins) + "</td>"
+      + '<td style="color:var(--muted)">' + t.p10 + "–" + t.p90 + "</td>"
+      + '<td class="l range"></td>'
+      + oddsCell(t.playoff_prob, "grp") + oddsCell(t.semis_prob)
+      + oddsCell(t.finals_prob) + oddsCell(t.title_prob)
+      + '<td class="grp">' + (t.avg_seed_if_qualified == null
+        // null = never made the field in any sim. An em-dash, never NaN.
+        ? '<span style="color:var(--faint)" title="never reached the field in any simulation">—</span>'
+        : t.avg_seed_if_qualified.toFixed(2)) + "</td>"
+      + "</tr>";
+  }).join("");
+
+  const sec = document.getElementById("standBody");
+  sec.innerHTML = '<div class="cutlab">Dashed rule = the assumed ' + cutAt + '-team playoff cut, '
+    + 'at ' + n1(T[order[cutAt - 1]].proj_wins) + ' projected wins <span class="help" data-tip="'
+    + esc(TIP_CUT) + '">?</span></div>'
+    + '<div class="scroll"><table class="tbl stand">' + head + "<tbody>" + body + "</tbody></table></div>";
+  // The strips are appended rather than serialised into the row HTML: they are SVG, and they read
+  // --team off the <tr> they are inserted into.
+  sec.querySelectorAll("tr[data-tri]").forEach(tr => {
+    tr.querySelector("td.range").appendChild(winStrip(T[tr.getAttribute("data-tri")], maxG));
+  });
+  linkRows(sec);
+
+  document.getElementById("standSub").textContent =
+    order.length + " teams · sorted by projected wins";
+  const sumT = order.reduce((a, k) => a + T[k].title_prob, 0);
+  const g43 = order.filter(k => T[k].games_total !== maxG);
+  document.getElementById("tblCap").innerHTML =
+    "<b>W</b>–<b>L</b> and <b>PD</b> are the record to date, derived from the same play-by-play the "
+    + "board is solved on; everything from <b>Proj W</b> rightward is simulated. Title odds sum to "
+    + sumT.toFixed(3) + ", playoff odds to "
+    + order.reduce((a, k) => a + T[k].playoff_prob, 0).toFixed(2) + " (the field size) and finals "
+    + "odds to " + order.reduce((a, k) => a + T[k].finals_prob, 0).toFixed(2)
+    + " — an arithmetic check on the simulation, not on the model. Every distribution is drawn on "
+    + "the same fixed 0–" + maxG + " scale"
+    // Kept as a guard, not as live copy: since the Clean-excluded result is recovered into the
+    // standings, every team plays a full 44 and this branch is inert. It fires again only if the
+    // upstream package loses a fixture entirely, and it must not reference a meta key by name --
+    // an earlier version cited missing_from_corpus, which was renamed and would have thrown here.
+    + (g43.length ? ", including " + esc(g43.join(" and ")) + ", who play "
+        + T[g43[0]].games_total + " games here because a scheduled 2026 fixture is missing "
+        + "upstream" : "")
+    + ".";
+}
+
+/* Every roster row across the fifteen teams, ranked by the wins it is projected to add over the
+   remaining schedule. This reconciles exactly by construction: the 194 rows sum to the 128 wins
+   still to be won, one per remaining game — and that invariant is the caption. */
+function buildCarry(M, order, T) {
+  const rows = [];
+  order.forEach(tri => (T[tri].roster || []).forEach(r => rows.push({ tri, r })));
+  rows.sort((a, b) => b.r.wins_contrib_remaining - a.r.wins_contrib_remaining);
+  const top = rows.slice(0, 12), mx = top[0] ? top[0].r.wins_contrib_remaining : 1;
+  document.getElementById("carryList").innerHTML = top.map((x, i) => {
+    const r = x.r;
+    const tip = r.name + " · " + x.tri + " · net " + sgn(r.net) + " pts/100 · " + n1(r.exp_mpg)
+      + " expected mpg · " + sgn(r.wins_per_10mpg, 3) + " wins per 10 mpg";
+    return '<div class="orow" style="' + tvars(x.tri) + '" title="' + esc(tip) + '">'
+      + '<span class="ork">' + (i + 1) + "</span>"
+      + '<a href="' + teamHref(x.tri) + '" title="' + esc(x.tri) + '">' + logo(x.tri, 24) + "</a>"
+      + '<span class="onm">' + playerName(r) + "</span>"
+      + '<span class="onet">' + sgn(r.net, 1) + "</span>"
+      + '<span class="obar wt-track"><i class="wt-fill" style="width:'
+      + (clamp(r.wins_contrib_remaining / mx, 0, 1) * 100).toFixed(1) + '%"></i></span>'
+      + '<span class="oval">' + sgn(r.wins_contrib_remaining) + "</span></div>";
+  }).join("");
+  const tot = rows.reduce((a, x) => a + x.r.wins_contrib_remaining, 0);
+  document.getElementById("carryCap").textContent =
+    "Wins a player is projected to add over the rest of the season, at their expected minutes. All "
+    + rows.length + " roster rows sum to " + n1(tot) + " — one per remaining game — and each "
+    + "team's rows sum to its own remaining wins, both exactly by construction. The middle number "
+    + "is the player's rating on the board, in points per 100 possessions.";
+}
+
+/* The minutes watchlist is the page's honest edge: there is no availability feed, so a player who
+   has missed the last ten games is projected at ~0 minutes whether or not they are about to
+   return. wins_per_10mpg is the exact derivative, so the reader can add them back by hand — and
+   the "if restored" column is that arithmetic done once. */
+function buildWatch(M, order, T) {
+  const rows = [];
+  order.forEach(tri => (T[tri].minutes_watchlist || []).forEach(w => {
+    const gap = w.mpg_when_available - w.window_mpg;
+    rows.push({ tri, w, gap, wins: gap * w.wins_per_10mpg / 10 });
+  }));
+  rows.sort((a, b) => b.wins - a.wins);
+  const top = rows.slice(0, 10);
+  document.getElementById("watchList").innerHTML = top.map(x => {
+    const w = x.w;
+    const tip = w.name + " · " + x.tri + " · " + w.appearances_in_window + " of "
+      + w.window_games + " games in the window · season " + n1(w.season_mpg) + " mpg · net "
+      + sgn(w.net) + " · " + sgn(w.wins_per_10mpg, 3) + " wins per 10 mpg";
+    return '<div class="orow" style="' + tvars(x.tri) + '" title="' + esc(tip) + '">'
+      + '<a href="' + teamHref(x.tri) + '" title="' + esc(x.tri) + '">' + logo(x.tri, 24) + "</a>"
+      + '<span class="onm">' + playerName(w) + "</span>"
+      + '<span class="omin">' + n1(w.window_mpg) + " → " + n1(w.mpg_when_available) + " mpg</span>"
+      + '<span class="oval">' + sgn(x.wins) + "</span></div>";
+  }).join("");
+  document.getElementById("watchCap").textContent =
+    "There is no WNBA injury or availability feed in this repo, so nobody's return is modelled. "
+    + "These are the " + rows.length + " players across the fifteen rosters whose minutes in the "
+    + "last " + M.minutes.window_games + " team games sit well below what they play on the nights "
+    + "they are available. The right-hand number is what closing that gap would be worth to their "
+    + "team's projection — the gap times the player's own wins-per-10-minutes derivative — not a "
+    + "prediction that it closes.";
+}
+
+function render() {
+  const M = P.meta, order = P.standings_order, T = P.teams;
+
+  // STALENESS. The board is refreshed in batches, so this page starts drifting the day after it is
+  // built: games in the "remaining" set get played while the projection still counts them. Derived
+  // from the viewer's clock against remaining_first_date rather than stamped at build time, because
+  // the drift grows while the file sits still and a build-time stamp would report zero forever.
+  // Counting DATES, not games, keeps it honest without shipping a schedule.
+  const firstRem = Date.parse(M.schedule.remaining_first_date + "T00:00:00Z");
+  const staleDays = Math.floor((Date.now() - firstRem) / 864e5) + 1;
+
+  document.getElementById("sub").innerHTML =
+    "A Monte-Carlo of the <b>" + M.schedule.games_remaining + "</b> remaining regular-season games "
+    + "and the playoffs, run <b>" + M.n_sims.toLocaleString() + "</b> times from the "
+    + '<span class="wn">prior-informed</span> board as of ' + esc(M.as_of)
+    + ". Every number here is simulated; none of it has happened."
+    + (staleDays > 0
+       ? ' <span class="stalewarn">This projection is ' + staleDays + " day"
+         + (staleDays === 1 ? "" : "s") + " behind: games from "
+         + shortDay(M.schedule.remaining_first_date)
+         + " onward are still counted as unplayed. Re-run it against a fresher board.</span>"
+       : "");
+
+  buildHero(M, order, T);
+  buildField(order, T);
+  buildLocks(order, T);
+  buildTitle(M, order, T);
+  buildStandings(M, order, T);
+  buildCarry(M, order, T);
+  buildWatch(M, order, T);
+
+  const fc = document.getElementById("fmtCallout");
+  fc.hidden = false;
+  fc.innerHTML = "<strong>The bracket is an assumption.</strong> The four odds columns are "
+    + "conditional on an " + M.playoff_format.field_size + "-team field out of "
+    + M.playoff_format.n_teams_in_league + " teams, which is what 2025 used — but 2026 is an "
+    + "expansion year and the league has not published a 2026 bracket in this data. The format "
+    + "itself is <em>verified</em> against 2025: of all 40,320 possible seedings, "
+    + M.playoff_format.verified_against_2025.n_seedings_reproducing_2025_exactly
+    + " reproduce the 2025 playoffs game for game, and they imply champion "
+    + esc(M.playoff_format.verified_against_2025.champion_2025_implied)
+    + ", which is correct. Seeding here breaks ties on point differential; the league uses "
+    + "head-to-head, which this repo has no feed for.";
+
+  // Replaces the old "the level is arbitrary, read the column against +4.91" note: workstream 1
+  // centred the column, so that copy would now contradict its own table. What is left to disclose
+  // is which board the run used and how big its measured edge actually is.
+  const bc = document.getElementById("boardCallout");
+  const lv = M.strength_level;
+  bc.hidden = false;
+  bc.innerHTML = "<strong>The board is prior-informed, and Strength is centred.</strong> This runs "
+    + "on the same in-ridge box-prior board the Explorer and Tables default to, not the pure one. "
+    + "It predicts games slightly better out of sample — margin RMSE 12.5513 → 12.4831, a gain "
+    + "whose CI excludes zero — but it wins only 24 of 42 walk-forward blocks (sign test p=0.44), "
+    + "so treat it as a small edge, not a different model. <strong>Strength</strong> is a team's "
+    + "minute-weighted five-man on-floor rating with the 15-team mean of "
+    + sgn(lv.centring_constant_subtracted) + " taken out, so <strong>0.0 is an average 2026 "
+    + "team</strong> and every team also carries its uncentred value in the feed. Only differences "
+    + "enter the game model, so that shift changes nothing: on the same seed, every projected win "
+    + "and every title chance is bit-identical either way.";
+
+  document.getElementById("cavTitle").hidden = false;
+  document.getElementById("caveats").innerHTML =
+    (M.caveats || []).map(c => "<li>" + esc(c) + "</li>").join("");
+
+  const gm = M.game_model;
+  document.getElementById("foot").innerHTML =
+    "Board: " + esc(M.board) + ". Game model: " + esc(gm.file) + " (block <code>"
+    + esc(gm.block_used) + "</code>, hca " + gm.hca.toFixed(2) + ", a " + gm.a.toFixed(3) + ", σ "
+    + gm.sigma_total.toFixed(2) + " split into a per-game " + gm.sigma_game.toFixed(2)
+    + " plus a persistent per-team " + gm.team_error_sd_pts.toFixed(2)
+    + "). Minutes: mean over each team's last " + M.minutes.window_games + " games, normalized to "
+    + M.minutes.minutes_per_team_game + " player-minutes per team per game — a WNBA game is 40 "
+    + "minutes × 5 on the floor, not the NBA's 240. The window is a measured null, not a tuned "
+    + "parameter. Logos are ESPN's; team colours are each franchise's own two brand hexes run "
+    + "through the site's contrast derivation.";
+}
+
+/* THEME. Every franchise colour on this page — the nine --team-* properties, and the per-row
+   --team/--team-2/--team-ink triples — is solved against the CURRENT theme's surfaces, so a stale
+   set is a contrast guarantee that no longer holds. nav.js flips data-theme on <html> and emits no
+   event, so the attribute itself is the signal. A full re-render is the honest response: it
+   re-derives every one of them instead of patching some. */
+new MutationObserver(() => { if (P) render(); })
+  .observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+</script>
+</body></html>

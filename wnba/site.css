@@ -1,0 +1,456 @@
+/* ============================================================================
+   site.css — the ONE shared stylesheet for every Daily RAPM page (Plan 15).
+   Replaces the copy-pasted :root blocks + per-page component CSS. Every page
+   does <link rel="stylesheet" href="site.css"> and uses the classes below.
+   Tokens + components + the unified table + responsive rules live here so the
+   interface is consistent and can never drift per-page again.
+   ========================================================================== */
+
+/* Type: two voices — Plex Sans (UI/prose, real tabular figures) and
+   Plex Mono (readouts, axis ticks, code: the instrument voice). */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+/* ---- Tokens ---------------------------------------------------------------- */
+/* CONTRAST FLOOR (2026-07-27). Every token that carries TEXT clears 4.5:1 against the WORST
+   surface it can land on, and that surface is --panel-3 in BOTH themes: it is the table
+   row-hover / .opt hover plate, so any cell ink meets it the moment a cursor crosses the row.
+   Measuring against --panel alone is what hid the misses before — light --pos read 3.35 on
+   --panel but only 2.79 on --panel-3, and every number on every board was below the floor.
+   Marks (chart strokes, borders, band fills) are held to 3:1 against what they composite onto.
+   Light --panel-3 #e3ebf5 is the DARKEST light surface; dark --panel-3 #141e2b is the LIGHTEST
+   dark one — so both are the binding case for their theme. Re-measure on both if you touch these. */
+:root{
+  /* dark palette (default) */
+  --bg:#080b11; --panel:#0e141d; --panel-2:#0c121b; --panel-3:#141e2b;
+  --line:#1b2532; --line-2:#121a25; --navbg:#0a0e16;
+  /* --muted/--faint lifted 2026-07-27: --faint measured 2.76 on --panel-3, i.e. every .note,
+     .cap, .foot and axis tick was under the text floor in dark exactly as --pos was in light.
+     --muted came with it (4.90 -> 6.31) because a --faint at the floor lands within dL* 2 of the
+     old --muted and the two rungs collapse into one grey; the ramp is now L* 94 / 65 / 56. */
+  --text:#e7eef7; --muted:#92a0b2; --faint:#78879d;
+  --accent:#56b6ff; --accent-ink:#06121f; --grid:#161f2c;
+  /* league colors — NBA blue / G-League orange / NCAA rose. Three different HUE
+     FAMILIES on purpose: the old teal+purple pair sat 39 deg from NBA blue in Lab
+     hue and collapsed to dE 1.1 under deuteranopia (i.e. identical). */
+  --nba:#4aa8ff; --gleague:#ff9138; --college:#ff5f8f; --wnba:#2ec4b6;
+  /* status / sign colors. --zero lifted 2026-07-27 (3.09 -> 4.98 on --panel-3): it prints as a
+     number in the same columns as --pos/--neg, so it is text and takes the text floor. */
+  --pos:#3ddc97; --neg:#ff6b6b; --zero:#7f8da1;
+  /* page-specific accents kept as tokens so they theme too */
+  --pure:#56b6ff; --box:#f2a154; --amp:#2dd4bf; --amber:#f0b429;
+  /* type scale — bumped TWICE on 2026-07-26. First notch: "the text and numbers are small" (the old
+     scale bottomed out at 9-11px on readouts and axis ticks). Second: "slightly bigger text overall
+     on the page instead of condensing everything" — so the answer to a crowded panel is a bigger
+     type ramp, not tighter copy. Every page draws its type from these six tokens, so the whole site
+     moves together and nothing can drift back per-page. */
+  --fs-1:12.5px; --fs-2:14px; --fs-3:15px; --fs-4:17px; --fs-5:24px; --fs-6:28px;
+  /* spacing scale (4px base) */
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:36px;
+  /* radius + layout */
+  --r-1:4px; --r-2:7px; --maxw:1040px;
+  --font:"IBM Plex Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+/* light theme: token-only override (toggle in nav.js, persisted in localStorage) */
+:root[data-theme=light]{
+  --bg:#f5f8fc; --panel:#ffffff; --panel-2:#eef3f9; --panel-3:#e3ebf5;
+  --line:#d7e0ec; --line-2:#e6edf5; --navbg:#ffffff;
+  /* --faint was 2.44 on --panel-3 — the worst miss on the site, and it carries .note/.cap/.foot
+     and every axis tick. --muted moved with it for the same ramp reason as dark: L* 8 / 37 / 44. */
+  --text:#0e1828; --muted:#4b5766; --faint:#5b6a7e;
+  --accent:#1b68c0; --accent-ink:#ffffff; --grid:#e6edf5;
+  /* league colors stay put: with .gl/.nb/.co unused they are MARKS only (chart strokes, badge
+     tints), and the worst of them clears the 3:1 mark floor on --panel-3. --accent no longer
+     equals --nba on purpose — one is the interactive-affordance ink, the other is league identity. */
+  --nba:#1f7ae0; --gleague:#c05600; --college:#c81e5a; --wnba:#0f8a80;
+  /* --pos was the reported bug: 3.35 on --panel, 2.79 on --panel-3. Both sign colors now sit at
+     4.58 on --panel-3 and within 0.1 L* of each other, so neither outweighs the other — a green
+     that reads heavier than its red is the same defect wearing the other sign. */
+  --pos:#0d784f; --neg:#c72b2c; --zero:#566478;
+  /* --amber had NO light override at all: #f0b429 measured 1.86 on --panel, so the projection
+     readout and the trade page's cold-minutes note were failing even the 3:1 MARK floor. */
+  --pure:#1f7ae0; --box:#9a581c; --amp:#0e9e8c; --amber:#88620a;
+}
+
+/* ---- Base ------------------------------------------------------------------ */
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);
+  -webkit-font-smoothing:antialiased;line-height:1.5}
+/* every chart's tick labels, axis numbers & radar factor names are data: mono */
+svg,svg text{font-family:var(--font-mono)}
+svg{display:block;width:100%;height:auto}
+a{color:var(--accent);text-decoration:none}
+a:hover{color:var(--text)}
+/* THE SITE'S OWN FOCUS RING. It did not exist until 2026-07-28, which meant every .seg button,
+   .btn, .chip, .help and nav tab fell back to the UA default — and team2027.html:47-50 had already
+   scoped its franchise-coloured ring "so the shared top nav keeps the site's own ring", assuming
+   this rule was here. It was not. :focus-visible, not :focus, so a mouse click never draws it.
+   2px/offset 2px/radius 2px matches team2027's ring exactly, so the two read as one system. */
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:var(--sp-5) 22px 70px}
+
+/* page headings */
+h1{font-size:var(--fs-5);margin:6px 0 0;font-weight:600;letter-spacing:-.2px}
+h1 b{color:var(--accent);font-weight:700}
+h1 small{font-size:13.5px;color:var(--muted);font-weight:500;margin-left:6px}
+.sub{color:var(--muted);font-size:var(--fs-2);margin:6px 0 0;line-height:1.5;max-width:840px}
+.note{color:var(--faint);font-size:13px;margin:8px 0 0;line-height:1.6;max-width:840px}
+.sectitle{font-size:var(--fs-3);font-weight:700;color:#aebccd;margin:22px 0 8px;letter-spacing:.2px}
+:root[data-theme=light] .sectitle{color:#33425a}
+.legend{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.6;max-width:840px}
+.foot{color:var(--faint);font-size:12.5px;margin-top:28px;line-height:1.7;max-width:840px}
+.cap{color:var(--faint);font-size:12.5px;margin-top:var(--sp-3);line-height:1.55;max-width:840px}
+.empty,.msg{color:var(--muted);text-align:center;padding:72px 0;font-size:16px}
+
+/* ---- Nav (moved out of nav.js so it themes + can't drift) ------------------ */
+.topnav{border-bottom:1px solid var(--line);background:var(--navbg);position:sticky;top:0;z-index:50}
+.topnav .navinner{max-width:var(--maxw);margin:0 auto;padding:0 22px;display:flex;
+  align-items:center;gap:6px;height:52px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.topnav .brand{font-size:16px;font-weight:700;letter-spacing:-.2px;margin-right:14px;
+  color:var(--text);text-decoration:none;white-space:nowrap}
+.topnav .brand b{color:var(--accent)}
+.topnav .tab{font-size:var(--fs-3);color:var(--muted);text-decoration:none;padding:16px 11px;
+  border-bottom:2px solid transparent;white-space:nowrap}
+.topnav .tab:hover{color:var(--text)}
+.topnav .tab.active{color:var(--text);border-bottom-color:var(--accent)}
+.topnav .navspace{flex:1 1 auto}
+/* League switch (NBA | WNBA). Sits in the right-hand chrome cluster with search + theme, not in
+   the tab run: it selects a SITE, not a page, and beside the tabs it reads as a fifth tab.
+   Tokens only, so light theme comes free; .on pairs --text on --panel-3, which is the worst
+   surface in STYLEGUIDE's contrast rule and already certified for that pair. No league tint --
+   the two words are the encoder, and colour alone would fail the CVD rule anyway. */
+.topnav .leaguesw{display:inline-flex;align-items:center;gap:2px;margin-right:6px;padding:2px;
+  border:1px solid var(--line);border-radius:var(--r-1)}
+.topnav .leaguesw .lg{font-size:var(--fs-1);line-height:1;padding:5px 7px;white-space:nowrap;
+  color:var(--muted);text-decoration:none;border-radius:calc(var(--r-1) - 1px)}
+.topnav .leaguesw a.lg{cursor:pointer}
+.topnav .leaguesw a.lg:hover{color:var(--text)}
+.topnav .leaguesw .lg.on{background:var(--panel-3);color:var(--text);font-weight:600}
+.topnav .themebtn{cursor:pointer;background:none;border:1px solid var(--line);color:var(--muted);
+  font:inherit;font-size:14px;line-height:1;padding:6px 9px;border-radius:var(--r-1);white-space:nowrap}
+.topnav .themebtn:hover{color:var(--text);border-color:var(--accent)}
+
+/* ---- Search box (Explorer / compare) -------------------------------------- */
+.searchbox{position:relative;max-width:480px;margin:16px 0 6px}
+.searchbox input{width:100%;padding:11px 14px;font-size:15.5px;background:var(--panel);
+  border:1px solid var(--line);color:var(--text);outline:none;border-radius:var(--r-1)}
+.searchbox input:focus{border-color:var(--accent)}
+.drop{position:absolute;top:46px;left:0;right:0;background:var(--panel-2);border:1px solid var(--line);
+  z-index:30;max-height:330px;overflow-y:auto;display:none;border-radius:var(--r-1)}
+.opt{padding:8px 13px;cursor:pointer;display:flex;justify-content:space-between;gap:10px;
+  border-bottom:1px solid var(--line-2);align-items:center}
+.opt:hover,.opt.active{background:var(--panel-3)}
+.opt .nm{font-size:var(--fs-3);font-weight:600}
+.opt .meta{font-size:var(--fs-1);color:var(--muted);display:flex;gap:7px;align-items:center}
+
+/* ---- Badges (league) + chips ---------------------------------------------- */
+.badge{font-size:11px;padding:2px 6px;font-weight:700;letter-spacing:.3px;border-radius:3px}
+.b-n{background:rgba(74,168,255,.16);color:#9fccff}
+.b-g{background:rgba(255,145,56,.16);color:#ffc48f}
+.b-c{background:rgba(255,95,143,.16);color:#ffa8c4}
+.b-w{background:rgba(46,196,182,.16);color:#8fe3d9}
+/* badges had no light-theme override at all — dark tints were bleeding into light */
+:root[data-theme=light] .b-n{background:rgba(31,122,224,.16);color:#14508f}
+:root[data-theme=light] .b-g{background:rgba(192,86,0,.16);color:#8a3d00}
+:root[data-theme=light] .b-c{background:rgba(200,30,90,.16);color:#8f1440}
+:root[data-theme=light] .b-w{background:rgba(15,138,128,.16);color:#0a5a53}
+.chip{font-size:13.5px;padding:5px 11px;background:var(--panel);border:1px solid var(--line);
+  color:var(--muted);cursor:pointer;border-radius:var(--r-1)}
+.chip:hover{color:var(--text);border-color:var(--accent)}
+
+/* ---- Cards / panels / KPIs ------------------------------------------------- */
+.card{border:1px solid var(--line);background:var(--panel);border-radius:var(--r-1)}
+.netcard{border:1px solid var(--line);background:var(--panel);margin:14px 0;padding:6px 8px 2px;border-radius:var(--r-1)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:10px}
+.cell{border:1px solid var(--line);background:var(--panel);padding:5px 7px 2px;border-radius:var(--r-1)}
+/* Panel header = a LOCKUP, not a justified row. It used to be `justify-content:space-between`,
+   which on a 493px factor cell threw the label ("oTOV") hard left and the number ("−0.59 ±0.69")
+   hard right with ~380px of nothing between them — you had to saccade across the card to pair a
+   name with its value (owner, 2026-07-26). Label and number now sit adjacent at the left and read
+   as one unit; anything that still wants the right edge asks for it with `margin-left:auto`
+   (the net card's off/def + projection controls do exactly that). */
+.ctitle{font-size:13.5px;font-weight:700;color:#aebccd;display:flex;gap:var(--sp-2);
+  align-items:baseline;padding:2px 2px 6px}
+:root[data-theme=light] .ctitle{color:#33425a}
+/* Owner 2026-07-26: label and number are the SAME size — they read as one lockup, and the number
+   no longer has to shout to be found now that it sits beside its label. */
+.ctitle .v{font-family:var(--font-mono);font-size:13.5px;font-weight:600;color:var(--text);
+  font-variant-numeric:tabular-nums;letter-spacing:-.2px;line-height:1}
+.ctitle .v b{color:var(--text);font-weight:600}
+/* The trailing ±SE (and the opt-in O/D split) are qualifiers on the headline, not headlines.
+   Scoped to spans that FOLLOW the <b> deliberately: in compare mode setHoverMulti's put() fills
+   .v with one bare <span> per player and no <b> at all, and those spans ARE the headline — a plain
+   `.ctitle .v span` rule would shrink every compared player's number to footnote size. */
+.ctitle .v b ~ span{font-size:12px;font-weight:500;letter-spacing:0}
+/* KPI block — big number stat for team/player headers */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:14px 0}
+.kpi{border:1px solid var(--line);background:var(--panel);padding:10px 14px;border-radius:var(--r-1)}
+.kpi .k{font-size:12.5px;color:var(--muted);font-weight:600}
+.kpi .v{font-family:var(--font-mono);font-size:24px;font-weight:600;margin-top:2px;
+  font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.kpi .x{font-size:12.5px;color:var(--faint);margin-top:1px}
+
+/* ---- Segmented control + buttons ------------------------------------------ */
+/* overflow-x:auto (after the hidden, so only the x axis changes) lets a control that cannot fit
+   scroll instead of being clipped: the buttons are nowrap and a .seg cannot wrap internally, so on
+   a phone the Tables page's five-way table picker ran past the viewport edge with its last option
+   unreachable. Vertical stays hidden so the radius still clips. */
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--r-2);overflow:hidden;
+  overflow-x:auto;max-width:100%;background:var(--panel-2)}
+.seg button{font:inherit;font-size:13.5px;font-weight:600;color:var(--muted);background:none;border:none;
+  padding:6px 12px;cursor:pointer;transition:background .12s,color .12s;white-space:nowrap}
+.seg button:hover{color:var(--text)}
+.seg button.on{color:var(--accent-ink);background:var(--accent)}
+.seg button:disabled{opacity:.32;cursor:not-allowed}
+.seg button:disabled:hover{color:var(--muted)}
+.seglab{font-size:13px;color:var(--faint);margin-right:2px}
+.btn{font-size:13.5px;font-weight:600;color:var(--muted);background:var(--panel);border:1px solid var(--line);
+  padding:6px 12px;cursor:pointer;border-radius:var(--r-1)}
+.btn:hover{color:var(--text);border-color:var(--accent)}
+.btn.active{color:var(--text);border-color:var(--accent);background:var(--panel-3)}
+
+/* ---- The ONE table (Tables / Teams / Trade) ------------------------------- */
+.scroll{overflow-x:auto;border:1px solid var(--line);background:var(--panel);border-radius:var(--r-1)}
+table.tbl{border-collapse:collapse;width:100%;font-size:13.5px;
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+/* compact body cells everywhere (matches the Team page) — keeps every table consistent
+   and stops the Tables page / trade ledger from rendering at the 16px browser default */
+table.tbl th,table.tbl td{padding:6px 8px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line-2)}
+table.tbl tbody td{font-size:13.5px}
+table.tbl thead th{font-size:12.5px;color:var(--muted);font-weight:600;background:var(--panel-2);
+  border-bottom:1px solid var(--line);position:sticky;top:0;z-index:1}
+table.tbl thead th.sortable{cursor:pointer;user-select:none}
+table.tbl thead th.sortable:hover{color:var(--text)}
+table.tbl th.l,table.tbl td.l{text-align:left}
+table.tbl td.rank{color:var(--muted);font-size:13px;width:32px}
+table.tbl tbody tr:hover>td{background:var(--panel-3)}
+table.tbl th.grp{color:#9fb0c4;border-left:1px solid var(--line)}
+/* .grp headers were the one table token with no light-theme override: #9fb0c4 on the light thead
+   is ~2:1, i.e. the grouped columns' headings ("Proj net", "Wins contributed") faded out on every
+   page that groups columns. Matches the .sectitle / .ctitle overrides above. */
+:root[data-theme=light] table.tbl th.grp{color:#33425a}
+table.tbl td.grp{border-left:1px solid var(--line-2)}
+table.tbl td.net{font-weight:700}
+table.tbl tr.total td{border-top:1px solid var(--line);border-bottom:none;font-weight:700;background:var(--panel-2)}
+/* sign colors (shared everywhere) */
+.pos{color:var(--pos)} .neg{color:var(--neg)} .zero{color:var(--zero)}
+/* league name spans */
+.gl{color:var(--gleague);font-weight:700}.nb{color:var(--nba);font-weight:700}.co{color:var(--college);font-weight:700}.wn{color:var(--wnba);font-weight:700}
+
+/* ---- Banners / callouts --------------------------------------------------- */
+.banner{margin-top:16px;padding:10px 13px;border-radius:var(--r-1);font-size:var(--fs-2);line-height:1.5}
+.banner.ok{background:#0d2018;border:1px solid #1f4d38;color:var(--pos)}
+.banner.warn{background:#241c08;border:1px solid #5c4912;color:var(--amber)}
+/* The two plates were hard-coded dark and had no light override, so the light theme was painting
+   a dark green/brown block into a white page and, once --pos and --amber came down to the text
+   floor, the ink on those plates fell to 3.09 and 3.05. Light gets its own tinted plates: the ink
+   measures 4.71 (ok) and 4.75 (warn) on them. The 1px edge is a plate boundary, not a state
+   indicator — the fill and the ink carry the state — so it is held at the same ~1.8 presence the
+   dark plates have always shipped rather than at the 3:1 mark floor. */
+:root[data-theme=light] .banner.ok{background:#dff2e7;border-color:#7ec4a8}
+:root[data-theme=light] .banner.warn{background:#faedcd;border-color:#d9b757}
+.callout{font-size:var(--fs-2);color:#cfdae7;background:var(--panel);border-left:3px solid var(--accent);
+  padding:9px 13px;margin:14px 0;line-height:1.55;max-width:840px;border-radius:0 var(--r-1) var(--r-1) 0}
+:root[data-theme=light] .callout{color:#2a3a52}
+
+/* ---- Chart helpers (used by charts.js output) ----------------------------- */
+/* 95% measurement CI envelope. Themed here rather than hard-coded on the polygon: the dark-mode
+   wash (#8aa0bb @ .07) all but vanished on the white light-mode panel, so light gets its own
+   darker, slightly stronger step. Do not narrow or rescale the band itself (F1) — this is purely
+   how visible the same envelope is. */
+.ciband{fill:#8aa0bb;fill-opacity:.07}
+:root[data-theme=light] .ciband{fill:#61728a;fill-opacity:.15}
+/* var(--faint), not #3a4862: the hard-coded hairline measured 9.20 on the light --panel but 2.01
+   on the dark one, so the hover crosshair — the affordance that tells you which date you are
+   reading — was under the 3:1 mark floor in the DEFAULT theme and far over-inked in the other.
+   Themed, it lands at 5.5 light / 5.1 dark: the same weight in both. */
+.crosshair{stroke:var(--faint);stroke-width:1;stroke-dasharray:3 3;pointer-events:none}
+.hdot{pointer-events:none;stroke:var(--bg);stroke-width:1.2}
+.spark{display:inline-block;vertical-align:middle}
+
+/* ---- Inline methodology tooltip ( ? next to a factor ) -------------------- */
+.help{display:inline-block;width:15px;height:15px;line-height:13px;text-align:center;font-size:10.5px;
+  font-weight:700;color:var(--muted);border:1px solid var(--line);border-radius:50%;cursor:help;
+  vertical-align:middle;position:relative;top:-1px}
+.help:hover{color:var(--text);border-color:var(--accent)}
+/* CSS-only hover tooltip driven by data-tip (avoids the slow/unstyled native title= popup).
+   Keyed on the ATTRIBUTE, not on .help: the affordance is "this element has a definition", and the
+   circled ? is only its most common carrier. A chip or a column header can carry one too (the
+   2026-07-26 prose cull moved a lot of body copy into exactly those). Every data-tip carrier needs
+   its own positioning context or the bubble anchors to some distant ancestor.
+   ponytail: edge-clips at the viewport right for v1; max-width keeps it small. */
+[data-tip]{position:relative}
+[data-tip]:hover::after{
+  content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);
+  background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:var(--r-1);
+  padding:8px 11px;font-size:13px;font-weight:400;line-height:1.45;width:max-content;max-width:260px;
+  white-space:normal;text-align:left;z-index:60;box-shadow:0 6px 18px rgba(0,0,0,.4);pointer-events:none}
+[data-tip]:hover::before{
+  content:'';position:absolute;left:50%;bottom:calc(100% + 1px);transform:translateX(-50%);
+  border:5px solid transparent;border-top-color:var(--line);z-index:60}
+
+/* ---- Command palette (Cmd-K / "/" global search; built by nav.js) --------- */
+.navsearch{cursor:pointer;background:none;border:1px solid var(--line);color:var(--muted);font:inherit;
+  font-size:13.5px;line-height:1;padding:6px 9px;border-radius:var(--r-1);white-space:nowrap;margin-right:6px}
+.navsearch:hover{color:var(--text);border-color:var(--accent)}
+.navsearch b{color:var(--faint);font-weight:600;margin-left:6px;letter-spacing:.3px}
+.pal-bg{position:fixed;inset:0;background:rgba(4,7,12,.55);z-index:100;display:none;
+  align-items:flex-start;justify-content:center;padding-top:11vh}
+.pal-bg.open{display:flex}
+.pal{width:min(560px,92vw);background:var(--panel);border:1px solid var(--line);border-radius:var(--r-2);
+  box-shadow:0 12px 34px rgba(0,0,0,.42);overflow:hidden}
+.pal>input{width:100%;padding:14px 16px;font-size:15px;background:var(--panel);border:none;
+  border-bottom:1px solid var(--line);color:var(--text);outline:none}
+.pal-list{max-height:48vh;overflow-y:auto}
+.pal-list .opt{border-bottom:1px solid var(--line-2)}
+.pal-empty{padding:18px;color:var(--muted);font-size:14.5px;text-align:center}
+.pal-hint{display:flex;gap:14px;padding:7px 14px;border-top:1px solid var(--line-2);font-size:12px;color:var(--faint)}
+.pal-hint b{color:var(--muted);font-weight:600}
+
+/* ---- Responsive ----------------------------------------------------------- */
+@media(max-width:560px){
+  .wrap{padding:18px 14px 60px}
+  h1{font-size:18px}
+  .kpis{grid-template-columns:repeat(auto-fit,minmax(110px,1fr))}
+}
+
+
+/* ============================================================================
+   WNBA TEAM IDENTITY (.wt-*) — generated by research/wnba/fork_site_html.py.
+   The shared half of ask 1: the logo plate, the team chip, the tinted panel
+   header, and the switcher rail. The pages own their layout; these own the
+   franchise's appearance, so two pages cannot invent two vocabularies.
+
+   WHO SETS WHAT. window.applyTeamTheme(tri) puts nine properties on :root —
+     --team        the 3:1 MARK colour (fills, bars, borders, rings)
+     --team-2      the second channel: the franchise's SECONDARY, same floor.
+                   ATL/IND share a red and DAL/MIN/WAS share a navy, so this is
+                   the only thing that separates five of the fifteen clubs.
+     --team-ink    the 4.5:1 TEXT colour. Never paint text with --team.
+     --team-on     pure #fff or #000, for text sitting ON a --team fill
+     --team-tint   solid hex, panel + ~5% of the accent (hero cards)
+     --team-hover  solid hex, panel + ~14% (row hover)
+     --team-line   rgba of the accent at the smallest alpha that is still a
+                   certified 3:1 mark on the tinted card
+     --team-wash   rgba at 3:1 on --panel-2 (bands, tracks)
+     --team-soft   rgba(.34), for section rules only — NOT a mark
+   Every one is solved against the CURRENT theme's surfaces, so re-call
+   applyTeamTheme() on the theme toggle or the guarantees go stale. Each rule
+   below carries its own var(..., fallback) so an unthemed page still renders.
+   ========================================================================== */
+
+/* ---- logo plate ----------------------------------------------------------- */
+/* THE PLATE IS NOT DECORATION. These are ESPN's own PNGs and most WNBA marks are
+   dark-on-transparent — GSV is 62% black, LVA 58%, NYL 51%, TOR a single #441D36
+   plum — so on the dark theme they would be an invisible smudge. Near-white plate
+   + --line ring is the men's .pc-badge treatment and the only thing that makes an
+   arbitrary third-party raster legible on BOTH themes. Fixed white in both themes
+   ON PURPOSE: the logo's own inks are fixed, so a theme-following plate would
+   break exactly one of the two. .wt-logo alone (plate:false) is for marks already
+   on a plate of their own. */
+.wt-logo{object-fit:contain;flex:0 0 auto;display:block}
+.wt-plate{background:#fff;border:1px solid var(--line);border-radius:50%;padding:3px;
+  box-shadow:0 1px 3px rgba(0,0,0,.35)}
+.wt-plate.sq{border-radius:var(--r-1)}
+@media(max-width:400px){.wt-plate{padding:2px}}
+
+/* ---- team chip ------------------------------------------------------------ */
+/* The atom for "this row is a team": plate + tricode, the franchise's own ring.
+   Sized off --fs-* so it moves with the type ramp. As an <a> it is a link and
+   takes the ring on hover; as a <span> it is a label. The 2px --team-2 stripe on
+   the right is the second channel — it is what tells DAL from MIN from WAS at a
+   glance when all three derive the same navy. */
+.wt-chip{display:inline-flex;align-items:center;gap:var(--sp-2);min-width:0;
+  padding:4px 4px 4px 5px;border:1px solid var(--line);border-radius:999px;
+  background:var(--panel);text-decoration:none;font-size:var(--fs-2);font-weight:600;
+  color:var(--team-ink,var(--text));position:relative;overflow:hidden}
+.wt-chip .wt-tri{font-family:var(--font-mono);font-weight:600;letter-spacing:.3px;
+  padding-right:var(--sp-2)}
+.wt-chip .wt-nm{color:var(--muted);font-weight:500;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis}
+.wt-chip::after{content:'';position:absolute;right:0;top:0;bottom:0;width:3px;
+  background:var(--team-2,var(--team,var(--accent)))}
+a.wt-chip:hover{border-color:var(--team-line,var(--accent));background:var(--team-hover,var(--panel-2))}
+.wt-chip.on{border-color:var(--team-line,var(--accent));background:var(--team-tint,var(--panel-2))}
+
+/* ---- team tag ------------------------------------------------------------- */
+/* The franchise-fill pill, --team-on for its label (pure white or pure black,
+   whichever measures further from the fill). Same role as the men's
+   .forwardtag; named separately so it cannot inherit that page's margins. */
+.wt-tag{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.5px;
+  text-transform:uppercase;border-radius:999px;padding:2px 8px;vertical-align:middle;
+  color:var(--team-on,var(--accent-ink));background:var(--team,var(--accent))}
+
+/* ---- tinted panel header -------------------------------------------------- */
+/* A panel modifier, NOT a new card: .panel.wt-hero keeps whatever .panel the page
+   defines and adds the franchise. The tint is a SOLID hex solved to stay inside
+   the luminance range the inks were certified against, so text on a hero card is
+   provably no worse off than on the row-hover plate the whole site already ships.
+   The 3px top rule is the loudest the franchise gets — a full-bleed brand fill
+   would put every readout on an uncertified ground. */
+/* THE SELECTOR IS .panel.wt-hero (0-2-0), NOT .wt-hero (0-1-0), and that is load-bearing.
+   No page gets .panel from this file — every page defines its own
+   `.panel{background:var(--panel);border:1px solid var(--line)}` in its own <style>, which
+   is parsed AFTER this stylesheet is linked. At equal specificity the later rule wins, so a
+   bare `.wt-hero` loses both the tint and the 3px rule to the page's own .panel. MEASURED:
+   projection.html's hero came back rgb(14,20,29) = plain --panel with a 1px --line top edge
+   while --team-tint was #111925 and --team #4676b4, i.e. the franchise silently did not land.
+   team.html had already worked around this with a local .panel.wt-hero copy; fixing it here
+   instead means the component behaves the same on every page and no page needs the override. */
+.panel.wt-hero{background:var(--team-tint,var(--panel));border-top:3px solid var(--team,var(--accent))}
+.wt-hero>.phead,.wt-htop{border-bottom-color:var(--team-soft,var(--line))}
+.wt-name{color:var(--team-ink,var(--accent))}
+/* identity row: plate + name/tricode + readouts. Wraps, so a phone stacks it. */
+.wt-ident{display:flex;align-items:center;gap:var(--sp-3);flex-wrap:wrap;min-width:0}
+.wt-ident .wt-who{flex:1 1 220px;min-width:0}
+.wt-ident h1,.wt-ident h2{margin:0;display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap}
+.wt-ident .wt-sub{color:var(--muted);font-size:var(--fs-1);margin-top:2px}
+.wt-ident .wt-sub b{color:var(--text);font-weight:600}
+
+/* ---- switcher rail -------------------------------------------------------- */
+/* Fifteen franchises will not wrap onto a 390px screen and must not become a
+   15-row list, so the rail SCROLLS on one line and each item carries its OWN
+   colours inline: --wt-a is that team's accent (3:1, the ring) and --wt-i its ink
+   (4.5:1, the label). They are per-item, so the rail can show fifteen franchises
+   at once while --team-* still describes the page's one selected team.
+   -webkit-overflow-scrolling + scroll-snap so a thumb-flick lands on an item. */
+.wt-rail{display:flex;gap:var(--sp-2);overflow-x:auto;padding:var(--sp-1) 0 var(--sp-2);
+  scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.wt-rail::-webkit-scrollbar{height:6px}
+.wt-rail::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+.wt-rail>*{scroll-snap-align:start;flex:0 0 auto}
+/* 15 chips, not the men's 30-in-a-<select>: at 10px padding / 60px min the rail measured
+   scrollWidth 1012 against clientWidth 962 at a 1280 viewport, so the 15th chip (CON) was
+   sheared in half with no scroll affordance -- it read as a layout accident. 7px/54px brings
+   the full league inside the panel on desktop; the rail still scrolls on narrow viewports,
+   which is where scrolling is an expected affordance rather than a surprise. */
+.wt-rail a{display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;
+  padding:var(--sp-2) 7px;border:1px solid var(--line);border-radius:var(--r-1);
+  background:var(--panel);min-width:54px}
+.wt-rail a .wt-tri{font-family:var(--font-mono);font-size:var(--fs-1);font-weight:600;
+  color:var(--muted);letter-spacing:.3px}
+.wt-rail a:hover{border-color:var(--wt-a,var(--accent))}
+.wt-rail a:hover .wt-tri{color:var(--wt-i,var(--text))}
+.wt-rail a.on{border-color:var(--wt-a,var(--accent));box-shadow:inset 0 -3px 0 var(--wt-a,var(--accent))}
+.wt-rail a.on .wt-tri{color:var(--wt-i,var(--text))}
+
+/* ---- length encodings ----------------------------------------------------- */
+/* A bar in the franchise's mark colour, on a track that is the same colour at the
+   smallest alpha that still reads as a 3:1 mark on --panel-2. Two rules rather
+   than a component because every page draws a different length; what they must
+   share is WHICH colour is the fill and which is the track. */
+.wt-track{position:relative;background:var(--panel-2);border:1px solid var(--line);
+  border-radius:2px;overflow:hidden}
+.wt-fill{position:absolute;left:0;top:0;bottom:0;background:var(--team,var(--accent))}
+.wt-fill.alt{background:var(--team-2,var(--accent))}
+.wt-fill-lab{font-size:11px;font-weight:700;color:var(--team-on,var(--accent-ink))}
+.wt-band{background:var(--team-wash,var(--panel-2))}
+
+/* ---- focus, scoped ------------------------------------------------------- */
+/* The franchise owns the focus ring INSIDE a themed region only. Scoped to
+   .wt-scope so the shared top nav and command palette keep the site's own ring —
+   the men's page scopes this to .wrap, which would have caught nav.js's palette
+   on a page that renders it inside the wrap. */
+.wt-scope :focus-visible{outline:2px solid var(--team,var(--accent));outline-offset:2px;
+  border-radius:2px}

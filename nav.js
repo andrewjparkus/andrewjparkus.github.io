@@ -75,6 +75,33 @@
     });
   }
 
+  /* ── the league switch ──────────────────────────────────────────────────────────────────────
+   * The men's board is the site root; the women's is /wnba/ (a subdirectory of the same Pages
+   * repo since the 2026-07-30 fold).
+   *
+   * THIS FILE IS FORKED to site_wnba/nav.js by research/wnba/fork_site_html.py, and every fork
+   * substitution asserts its pattern still matches. So the switch works out which side it is on
+   * from location.pathname rather than from a build-time constant: both sites then ship the
+   * IDENTICAL function and there is no fork delta to keep in sync. Do not "simplify" this to a
+   * hardcoded direction per site — that is precisely the drift the fork asserts exist to stop.
+   *
+   * Only the four shared nav pages carry across. team.html exists on both sides but is a
+   * different product (the men's is the daily team page, the women's is the forward one) and is
+   * addressed by tricodes that share no vocabulary, so it falls back to the Explorer like every
+   * other unshared page. Query strings are always dropped: ?p= ids are league-scoped (WNBA global
+   * ids carry a `w` prefix) and ?abbr= tricodes do not overlap, so carrying either across would
+   * land on a "no such player/team" state every time.
+   */
+  var SHARED_PAGES = { "index.html": 1, "table.html": 1, "projection.html": 1, "model.html": 1 };
+
+  function leagueHref(path) {
+    var onW = path === "/wnba" || path.indexOf("/wnba/") === 0;
+    var base = onW ? path.slice(5) : path;          // strip the /wnba segment to compare pages
+    var page = base.split("/").pop();
+    if (!SHARED_PAGES[page]) page = "";             // "" -> the destination site's own index
+    return onW ? "/" + page : "/wnba/" + page;
+  }
+
   function render() {
     var nav = document.getElementById("topnav");
     if (!nav) return;
@@ -88,6 +115,20 @@
       html += '<a class="' + cls + '" href="' + esc(t.href) + '">' + esc(t.label) + "</a>";
     });
     html += '<span class="navspace"></span>';
+    // Two segments rather than one "go to the other league" button: a single button cannot say
+    // which board you are currently reading, and these two boards are on DIFFERENT SCALES that
+    // must never be compared (there is no WNBA<->NBA translation and there cannot be one). The
+    // pair states where you are as well as where you can go. Labels are words, not colour alone,
+    // per STYLEGUIDE's CVD rule. hrefs are attached below as DOM PROPERTIES, never written as
+    // literal href attributes here -- check_links.py resolves every such literal in this file
+    // against site/, where a cross-site target is a hard failure. (Nor may this comment spell one
+    // out: test_published_pages_only_reference_staged_assets scans comments too, and an example
+    // in prose fails the gate exactly like real markup would.)
+    var onW = location.pathname === "/wnba" || location.pathname.indexOf("/wnba/") === 0;
+    html += '<span class="leaguesw" role="group" aria-label="League">';
+    html += '<a class="lg' + (onW ? '' : ' on') + '" id="nav-lg-n">NBA</a>';
+    html += '<a class="lg' + (onW ? ' on' : '') + '" id="nav-lg-w">WNBA</a>';
+    html += '</span>';
     html += '<button class="navsearch" id="nav-search" type="button" title="Search players & teams (⌘K)" aria-label="Search">Search<b>⌘K</b></button>';
     html += '<button class="themebtn" id="nav-theme" type="button" title="Toggle light / dark" aria-label="Toggle theme"></button>';
     html += "</div>";
@@ -95,6 +136,18 @@
 
     var sb = document.getElementById("nav-search");
     if (sb) sb.addEventListener("click", openPalette);
+
+    // Only the segment you are NOT on gets an href. The current one stays a bare <a> -- not
+    // focusable, not clickable, marked aria-current -- so tabbing never lands on a control that
+    // does nothing and "NBA" while already on the NBA board cannot bounce you off table.html
+    // back to the index. Assigned as a property, so no literal href attribute exists in this file.
+    var other = document.getElementById(onW ? "nav-lg-n" : "nav-lg-w");
+    var here = document.getElementById(onW ? "nav-lg-w" : "nav-lg-n");
+    if (other) {
+      other.href = leagueHref(location.pathname);
+      other.title = (onW ? "NBA" : "WNBA") + " board — a separate scale, not comparable";
+    }
+    if (here) here.setAttribute("aria-current", "page");
 
     // theme toggle (RC.toggleTheme lives in charts.js, loaded alongside nav.js).
     var tb = document.getElementById("nav-theme");

@@ -1,0 +1,1291 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Team · Rest of 2026 · WNBA Daily RAPM</title>
+<link rel="stylesheet" href="site.css">
+<link rel="icon" href="favicon.svg"><link rel="manifest" href="manifest.webmanifest">
+<style>
+  /* ===========================================================================
+     WNBA PER-TEAM PAGE (?t=TRI, also ?abbr=TRI so nav.js's command palette hits it).
+     HAND-WRITTEN, like projection.html and model.html: fork_site_html.py only writes
+     index/table/site.css/nav.js/manifest/team_colors_wnba, so a fork run cannot revert
+     this file.
+
+     It is modelled on the men's site/team2027.html — the SAME panel grammar (.dash of
+     .panel, each with a .phead and a .pbody), the SAME length-encoding idioms (.frow's
+     band+edges+axis+bar, the stacked wins bar, the per-player two-track chip) — and it
+     is NOT a fork of it. The men's page renders a 30-team two-conference NEXT-season
+     projection built on a depth chart, positional families, a GP model and a rookie
+     prior. None of those exist here: this league is MID-SEASON, has 15 teams and one
+     table, no depth chart, no positions, and a recency minutes window instead of a GP
+     model. A fork would have been mostly deletions around a misleading skeleton.
+
+     Everything the franchise owns comes from team_colors_wnba.js (--team, --team-2,
+     --team-ink, --team-on, --team-tint, --team-hover, --team-line, --team-wash,
+     --team-soft) via window.applyTeamTheme(tri), which SOLVES every alpha against the
+     current theme's surfaces. So it is re-called on every theme flip; a stale set is a
+     contrast guarantee that no longer holds. Every rule below carries its own
+     var(--team-*, fallback) so the page still renders with that file absent.
+     =========================================================================== */
+
+  /* ---- offence / defence identity ---------------------------------------- */
+  /* The same two tokens model.html defines, same values. They are used here as MARKS
+     ONLY — a swatch, a column rule, a header underline — never as text: at --fs-2/700
+     the light --off (#0e9e8c on #ffffff) does not clear the 4.5:1 TEXT floor, while a
+     3px rule only owes 3:1. Column headings stay --team-ink, which team_colors_wnba.js
+     certifies at >=4.5:1 on every surface of the theme. */
+  :root{--off:#2dd4bf;--def:#a78bfa}
+  :root[data-theme=light]{--off:#0e9e8c;--def:#7c3aed}
+
+  /* ---- the grid and the one card style ----------------------------------- */
+  .dash{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:var(--sp-4);margin-top:var(--sp-4)}
+  .panel{grid-column:1/-1;min-width:0;background:var(--panel);border:1px solid var(--line);
+    border-radius:var(--r-2);overflow:hidden}
+  .phead{display:flex;align-items:baseline;gap:var(--sp-2);flex-wrap:wrap;
+    padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--team-soft,var(--line))}
+  .phead h2{margin:0;font-size:var(--fs-3);font-weight:700;letter-spacing:.2px;
+    color:var(--team-ink,var(--accent))}
+  .phead .psub{font-size:var(--fs-1);color:var(--faint);font-weight:400}
+  .pbody{padding:var(--sp-4)}
+  /* .panel owns overflow:hidden (it owns a radius), which clips the site tooltip's UPWARD
+     bubble out of anything in a panel header. Same device the men's page uses: flip down. */
+  .phead [data-tip]:hover::after,.fchead [data-tip]:hover::after{bottom:auto;top:calc(100% + 6px)}
+  .phead [data-tip]:hover::before,.fchead [data-tip]:hover::before{bottom:auto;top:calc(100% + 1px);
+    border-top-color:transparent;border-bottom-color:var(--line)}
+  /* rank pill: the BORDER carries the franchise (solved to exactly 3:1 on the tinted card,
+     the mark floor); the TEXT stays --muted, because team ink beside a --neg numeral on a
+     red franchise is the one collision this palette cannot win. */
+  .lgrank{font-family:var(--font-mono);font-size:var(--fs-1);color:var(--muted);white-space:nowrap;
+    border:1px solid var(--team-line,var(--line));border-radius:999px;padding:1px 7px;cursor:help}
+
+  /* ---- hero -------------------------------------------------------------- */
+  .hero{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:var(--sp-4);align-items:start}
+  .heroid{grid-column:span 5;min-width:0}
+  .herostat{grid-column:span 7;min-width:0}
+  @media(max-width:880px){ .heroid,.herostat{grid-column:1/-1} }
+  .wt-ident img{width:54px;height:54px}
+  .wt-ident h1{font-size:var(--fs-5)}
+  /* At 390 the name, the tag and the record wrap to three lines and site.css's centred
+     alignment leaves the plate floating half-way down them. Level with the name is where a
+     mark belongs; only the alignment changes, so the desktop lockup is untouched. */
+  @media(max-width:560px){ .wt-ident{align-items:flex-start} .wt-ident img{width:44px;height:44px} }
+  /* the one number the page exists to publish, derived FROM the type ramp rather than
+     invented beside it. The decimal is set smaller: a mono '.' carries a full character
+     advance and opens a visible hole on both sides at display size. */
+  .bignum{font-family:var(--font-mono);font-weight:600;font-variant-numeric:tabular-nums;
+    letter-spacing:-.03em;line-height:1;color:var(--text);font-size:calc(var(--fs-6) * 1.7);
+    margin:var(--sp-4) 0 var(--sp-2);display:flex;align-items:baseline}
+  .bignum .dec{font-size:.5em;color:var(--muted);letter-spacing:-.02em}
+  .bignum .wl{font-size:.34em;color:var(--muted);margin-left:.5em;letter-spacing:0}
+  .herox{font-size:var(--fs-1);color:var(--faint)}
+  .herox b{color:var(--text);font-weight:600}
+  /* label + value ADJACENT, value louder than label — the house lockup. Never space-between. */
+  .lock{display:flex;align-items:baseline;gap:var(--sp-1);flex-wrap:wrap;font-size:var(--fs-1);
+    color:var(--muted)}
+  .lock b{font-family:var(--font-mono);font-size:var(--fs-4);font-weight:600;
+    font-variant-numeric:tabular-nums;letter-spacing:-.2px;color:var(--text)}
+  .locks{display:flex;flex-wrap:wrap;gap:var(--sp-3) var(--sp-5);margin-top:var(--sp-4)}
+  .locks .lock b{font-size:var(--fs-3)}
+
+  /* ---- round odds -------------------------------------------------------- */
+  .odds{display:grid;grid-template-columns:64px minmax(0,1fr) 58px;align-items:center;
+    gap:var(--sp-1) var(--sp-2);font-size:var(--fs-1)}
+  .odds .ol{color:var(--muted);font-weight:600}
+  .odds .ov{text-align:right;font-family:var(--font-mono);font-weight:600;
+    font-variant-numeric:tabular-nums;color:var(--text)}
+  .odds .wt-track{height:13px}
+  .odds .wt-fill{border-radius:1px}
+
+  /* ---- the win-total distribution --------------------------------------- */
+  /* HTML + CSS, not SVG, on purpose: site.css sets svg{width:100%;height:auto}, so an SVG
+     with a fixed viewBox scales its TEXT with the box — a 12px tick label becomes 6px at
+     390. Bars are flex children, annotations are absolutely positioned, and every label
+     stays real selectable text at the site's own type size. */
+  .dist{position:relative;min-width:0}
+  .distanno{position:relative;height:19px}
+  .cutlab{position:absolute;top:0;font-size:var(--fs-1);color:var(--muted);white-space:nowrap}
+  .cutlab b{color:var(--text);font-weight:600;font-family:var(--font-mono);
+    font-variant-numeric:tabular-nums}
+  .distmarks{position:relative;height:9px}
+  .dmean{position:absolute;bottom:0;width:0;height:0;margin-left:-5px;
+    border-left:5px solid transparent;border-right:5px solid transparent;
+    border-top:7px solid var(--team,var(--accent));cursor:help}
+  .distrail{position:relative;height:124px;border:1px solid var(--line);border-radius:var(--r-1);
+    background:var(--panel-2)}
+  .bars{position:absolute;inset:0;display:flex;align-items:flex-end;z-index:1}
+  .bars i{flex:1 1 0;min-width:0;display:block}
+  /* Inside the middle 80%: the accent at FULL strength. team_colors_wnba.js certifies every
+     accent at >=3:1 on the LIGHTEST surface of its theme, so on the darker rail it is louder
+     still. Outside it: --team-wash, whose alpha applyTeamTheme SOLVES against --panel-2 for
+     exactly 3:1 — a low guessed alpha is how the men's page shipped a band nobody could see. */
+  .bars i.in{background:var(--team,var(--accent))}
+  .bars i.out{background:var(--team-wash,var(--accent))}
+  /* the wins already banked. A team cannot finish below its current total, so the left end of
+     every distribution is structurally empty; shading it says WHY instead of leaving a hole.
+     A HINT, never a mark (1.10:1 dark / 1.12:1 light) — the right EDGE is the mark. */
+  .dzone{position:absolute;left:0;top:0;bottom:0;z-index:0;background:var(--panel-3)}
+  :root[data-theme=light] .dzone{background:var(--panel-2)}
+  .dzlab{position:absolute;bottom:3px;font-size:11px;color:var(--muted);font-family:var(--font-mono);
+    white-space:nowrap;transform:translateX(-100%);padding-right:5px;z-index:3}
+  /* the .fedge idiom: --muted (>=4.9:1 on either ground), overshooting the rail 3px top and
+     bottom into the row's own gap where no bar can ever paint over it */
+  .dedge{position:absolute;top:-3px;bottom:-3px;z-index:3;width:1px;background:var(--muted)}
+  /* the median lands ON a bar by definition, so it is inked AGAINST the fill: --team-on is
+     pure white or pure black, whichever measures further from it (4.58:1 worst case). */
+  .dmed{position:absolute;top:4px;bottom:4px;z-index:4;width:2px;margin-left:-1px;
+    background:var(--team-on,var(--text));border-radius:1px;cursor:help}
+  /* the playoff cut-off crosses three grounds — bare rail, a full-strength accent bar, and the
+     shaded zone — and no single ink clears 3:1 on all three. A two-tone dash does: the --bg
+     segments are >=3:1 on any certified accent, the --text segments >=14:1 on rail and panel. */
+  .dcut{position:absolute;top:-9px;bottom:0;z-index:5;width:1.5px;margin-left:-.75px;
+    pointer-events:none;background:repeating-linear-gradient(to bottom,var(--text) 0 3px,var(--bg) 3px 6px)}
+  .distaxis{position:relative;height:17px;margin-top:3px;font-size:11px;color:var(--faint);
+    font-family:var(--font-mono)}
+  .distaxis span{position:absolute;top:0}
+  .distcap{display:flex;flex-wrap:wrap;gap:var(--sp-2) var(--sp-4);margin-top:var(--sp-3)}
+  .caplock{display:flex;align-items:baseline;gap:var(--sp-1);font-size:var(--fs-1);color:var(--muted)}
+  .caplock b{color:var(--text);font-weight:600;font-family:var(--font-mono);
+    font-variant-numeric:tabular-nums}
+
+  /* ---- factor profile ---------------------------------------------------- */
+  /* ONE deviation domain shared by all SIX rows across BOTH columns. Split per column, an oTS
+     bar and a dTS bar of equal length would mean different numbers of points and the two sides
+     would stop being comparable — which is the only reason to put them side by side. */
+  .fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-4) var(--sp-5)}
+  @media(max-width:760px){ .fgrid{grid-template-columns:minmax(0,1fr);gap:var(--sp-5)} }
+  .fcol{min-width:0;padding-left:var(--sp-3);border-left:3px solid var(--line)}
+  .fcol.off{border-left-color:var(--off)}
+  .fcol.def{border-left-color:var(--def)}
+  .fchead{display:flex;align-items:baseline;gap:var(--sp-2);flex-wrap:wrap;
+    padding-bottom:var(--sp-2);border-bottom:1px solid var(--line)}
+  .fcol.off .fchead{border-bottom-color:var(--off)}
+  .fcol.def .fchead{border-bottom-color:var(--def)}
+  .fchead h3{margin:0;font-size:var(--fs-2);font-weight:700;letter-spacing:.2px;
+    color:var(--team-ink,var(--accent));display:flex;align-items:center;gap:6px}
+  /* the swatch is the second, non-textual carrier of "this column is offence": 3:1 as a mark,
+     which --off/--def clear, and it repeats at every width including the stacked phone layout */
+  .fsw{width:9px;height:9px;border-radius:2px;flex:0 0 auto;background:var(--line)}
+  .off .fsw{background:var(--off)} .def .fsw{background:var(--def)}
+  .fchead .n{font-family:var(--font-mono);font-size:var(--fs-3);font-weight:600;
+    font-variant-numeric:tabular-nums;letter-spacing:-.2px}
+  .frow{display:grid;grid-template-columns:52px minmax(0,1fr) 58px 44px;align-items:center;
+    gap:var(--sp-2);padding:var(--sp-2) 0;border-bottom:1px solid var(--line-2)}
+  .frow:last-child{border-bottom:none}
+  .flab{font-size:var(--fs-1);font-weight:700;color:#aebccd;display:flex;align-items:center;
+    justify-content:flex-end;gap:3px}
+  :root[data-theme=light] .flab{color:#33425a}
+  .ftrack{position:relative;height:20px;border:1px solid var(--line);border-radius:3px;min-width:0}
+  /* the answer to "is +1.73 unusual or ordinary": the middle 80% of the 15 teams, behind the bar.
+     The FILL can only be a hint — on light any tint dark enough to see drops a --pos bar sitting
+     on it below 3:1 — so the EDGES are the real mark. */
+  .fband{position:absolute;top:0;bottom:0;z-index:0;background:var(--panel-3)}
+  :root[data-theme=light] .fband{background:var(--panel-2)}
+  .fedge{position:absolute;top:-3px;bottom:-3px;z-index:3;width:1px;background:var(--muted)}
+  .faxis{position:absolute;top:0;bottom:0;z-index:2;left:50%;width:1px;background:var(--zero)}
+  /* NO DIVERGING RAMP. Sign is --pos/--neg, magnitude is bar length alone, and the bar takes
+     currentColor from the same pos/neg/zero class the number beside it wears — so the bar and
+     the figure are literally one colour and cannot drift apart. min-width so a team a tenth of
+     a point off average still draws a mark instead of rounding away. */
+  .fbar{position:absolute;top:5px;bottom:5px;z-index:1;min-width:2px;border-radius:2px;
+    background:currentColor}
+  .fval{font-family:var(--font-mono);font-size:var(--fs-1);text-align:right;
+    font-variant-numeric:tabular-nums;font-weight:600}
+  .frank{text-align:right}
+  @media(max-width:560px){ .frow{grid-template-columns:44px minmax(0,1fr) 54px 42px} }
+  .fclose{margin:var(--sp-4) 0 0;font-size:var(--fs-1);color:var(--muted);line-height:1.6;max-width:840px}
+  .fclose b{color:var(--text);font-weight:600}
+
+  /* ---- roster · the stacked wins bar ------------------------------------- */
+  /* WHY A STACK. wins_contrib_remaining is exactly additive: the column sums to the wins still
+     to come, which is the hero's projected total minus the wins already banked. Nothing else in
+     this feed has that property — minutes here are per-game and do not sum to 200.
+     THE SCALE IS THE POSITIVE SUM, not the total: 16 of 194 published rows are negative, so an
+     axis pinned to the published remainder would be overflowed by the positive blocks. Positive
+     blocks run 0..sum(positives); the players who give wins back are the strip beneath, right-
+     aligned, and their left edge is where the published remainder falls. */
+  .wstack{margin:0 0 var(--sp-5)}
+  .wsbody{position:relative}
+  .wsbar{display:flex;height:38px;border:1px solid var(--line);border-radius:var(--r-1);
+    background:var(--panel-2)}
+  /* the giveback strip has no track of its own — an empty tray would draw a scale where there is
+     no data. SHAPE, not colour, separates it from the stack (--neg against a red franchise's
+     accent is ~1.9:1): a third the height, hanging below the baseline. */
+  .wsback{display:flex;justify-content:flex-end;height:12px}
+  .wseg,.wnseg{position:relative;min-width:2px;cursor:help}
+  .wseg{background:var(--team,var(--accent));box-shadow:inset -1px 0 0 var(--panel)}
+  .wseg:first-child{border-radius:3px 0 0 3px}
+  .wseg:last-child{box-shadow:none;border-radius:0 3px 3px 0}
+  .wnseg{background:var(--neg);box-shadow:inset 1px 0 0 var(--panel)}
+  .wnseg:first-child{box-shadow:none}
+  .wnseg:last-child{border-radius:0 0 3px 0}
+  .wseg>span,.wnseg>span{position:absolute;inset:0;display:flex;align-items:center;padding:0 6px;
+    overflow:hidden;white-space:nowrap;pointer-events:none;font-size:11px;font-weight:700;
+    letter-spacing:.1px;color:var(--team-on,var(--accent-ink))}
+  .wnseg>span{color:var(--neg-on,#000);font-size:9.5px}
+  .wseg[data-tip]:hover::after,.wnseg[data-tip]:hover::after{bottom:auto;top:calc(100% + 6px)}
+  .wseg[data-tip]:hover::before,.wnseg[data-tip]:hover::before{bottom:auto;top:calc(100% + 1px);
+    border-top-color:transparent;border-bottom-color:var(--line)}
+  .tipR[data-tip]:hover::after{left:auto;right:0;transform:none}
+  .tipR[data-tip]:hover::before{left:auto;right:7px;transform:none}
+  .tipL[data-tip]:hover::after{left:0;transform:none}
+  .tipL[data-tip]:hover::before{left:7px;transform:none}
+  .wsmark{position:absolute;top:-3px;bottom:-3px;z-index:4;width:1.5px;margin-left:-.75px;
+    pointer-events:none;background:repeating-linear-gradient(to bottom,var(--text) 0 3px,var(--bg) 3px 6px)}
+  .wsaxis{position:relative;height:17px;margin-top:5px;font-size:11px;color:var(--faint);
+    font-family:var(--font-mono)}
+  .wsaxis .z{position:absolute;left:0;top:0}
+  .wsaxis .t{position:absolute;top:0;white-space:nowrap;text-align:right}
+  .wsaxis .t b{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
+
+  /* ---- roster · player chips -------------------------------------------- */
+  .rot{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:0 var(--sp-4)}
+  /* NO inner card: a bordered card inside a bordered panel is a second frame round the same
+     content. The two tracks are the only ruled things in the chip, so they are what the eye
+     lands on. The hover ground is applyTeamTheme's solved --team-hover, which stays inside the
+     luminance range every ink on this page was certified against. */
+  .pl{padding:var(--sp-2);border-radius:var(--r-1)}
+  .pl:hover{background:var(--team-hover,var(--panel-2))}
+  .plid{display:flex;align-items:baseline;gap:var(--sp-2)}
+  .plwho{flex:1 1 auto;min-width:0}
+  /* the name wears the franchise ink, which team_colors_wnba.js certifies at >=4.5:1 on every
+     surface INCLUDING the hovered plate. The hazard is real on ATL/IND/LVA, whose ink is a red:
+     every mitigation is NON-colour — the name is body face at 600, every number is mono and
+     right-aligned, the net figure carries an explicit sign glyph no name contains, and no
+     figure in the chip is sign-coloured (only the bars are, and neither is text).
+     The name WRAPS rather than ellipsing: a truncated name is one the reader cannot look up. */
+  .plnm{font-size:var(--fs-2);font-weight:600;color:var(--team-ink,var(--accent));
+    text-decoration:none;overflow-wrap:anywhere}
+  a.plnm:hover{color:var(--text);text-decoration:underline}
+  .plw{flex:0 0 auto;font-family:var(--font-mono);font-size:var(--fs-2);font-weight:600;
+    font-variant-numeric:tabular-nums;color:var(--text);cursor:help;white-space:nowrap}
+  /* the space before "wins" is a REAL SPACE in the markup, not a margin: with a margin the DOM
+     text is "2.6wins" and that is what a screen reader is handed */
+  .plw i{font-style:normal;font-family:var(--font);font-size:10px;font-weight:600;color:var(--muted)}
+  .plsub{font-size:var(--fs-1);color:var(--muted);margin-top:1px}
+  .plrow{display:flex;align-items:center;gap:var(--sp-2);margin-top:6px}
+  .pltrack{position:relative;flex:1 1 auto;min-width:0;height:14px;border:1px solid var(--line);
+    border-radius:3px}
+  .plval{flex:0 0 50px;text-align:right;font-family:var(--font-mono);font-size:var(--fs-1);
+    font-weight:600;font-variant-numeric:tabular-nums;color:var(--text);line-height:1.2}
+  .plfill{position:absolute;top:2px;bottom:2px;left:0;z-index:1;min-width:2px;border-radius:2px;
+    background:var(--team,var(--accent))}
+  .plghost{position:absolute;top:0;bottom:0;left:0;z-index:0;background:var(--panel-3)}
+  :root[data-theme=light] .plghost{background:var(--panel-2)}
+  .pltick{position:absolute;top:-3px;bottom:-3px;z-index:3;width:1px;background:var(--muted)}
+  .plaxis{position:absolute;top:0;bottom:0;z-index:2;left:50%;width:1px;background:var(--zero)}
+  .plbar{position:absolute;top:2px;bottom:2px;z-index:1;min-width:2px;border-radius:2px;
+    background:currentColor}
+  .rotcap{margin:var(--sp-4) 0 0;font-size:var(--fs-1);color:var(--muted);line-height:1.6;max-width:840px}
+  .rotcap b{color:var(--text);font-weight:600}
+  /* the per-track labels are hidden VISUALLY, not removed: a bar has no text of its own, and
+     .rotcap is a sibling with no programmatic association to any track */
+  .vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;
+    clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
+  /* one ink for the whole flag, glyph and ring, so the ring is a measured mark rather than the
+     --line hairline (1.19:1 on --panel) it would otherwise be */
+  .flagchip{display:inline-block;margin-left:6px;font-size:9.5px;font-weight:800;letter-spacing:.3px;
+    color:var(--muted);border:1px solid var(--muted);border-radius:3px;padding:0 4px;
+    vertical-align:middle;cursor:help}
+
+  /* ---- remaining schedule ----------------------------------------------- */
+  .sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(252px,1fr));gap:0 var(--sp-4)}
+  .sg{display:grid;grid-template-columns:46px 20px minmax(0,1fr) 52px;align-items:center;
+    gap:var(--sp-2);padding:5px var(--sp-1);border-bottom:1px solid var(--line-2);font-size:var(--fs-1)}
+  .sg .sd{color:var(--muted);font-family:var(--font-mono);white-space:nowrap}
+  /* home / away is a GLYPH plus a title, not a colour: on a two-hue page a third hue for
+     "home" would compete with the franchise, and colour alone is not an encoding anyway */
+  .sg .sha{font-weight:800;font-size:10px;text-align:center;color:var(--muted);cursor:help;
+    border:1px solid var(--line);border-radius:3px;line-height:1.5}
+  .sg .sha.h{color:var(--team-ink,var(--text));border-color:var(--team-line,var(--line))}
+  .sg .so{min-width:0;display:flex;align-items:center;gap:6px}
+  .sg .so img{width:18px;height:18px}
+  .sg .so a,.sg .so span.nolink{font-family:var(--font-mono);font-weight:600;letter-spacing:.3px;
+    text-decoration:none;color:var(--text)}
+  .sg .so a:hover{color:var(--accent)}
+  .sg .st{position:relative;height:12px}
+  .sg .st::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--zero)}
+  .sg .stb{position:absolute;top:1px;bottom:1px;min-width:2px;border-radius:1px;background:currentColor}
+  .sgcap{margin:var(--sp-4) 0 0;font-size:var(--fs-1);color:var(--muted);line-height:1.6;max-width:840px}
+
+  /* ---- watchlist --------------------------------------------------------- */
+  .wl{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:var(--sp-3) var(--sp-4)}
+  .wlrow{padding:var(--sp-2);border-radius:var(--r-1)}
+  .wlrow:hover{background:var(--team-hover,var(--panel-2))}
+  .wlnm{font-size:var(--fs-2);font-weight:600;color:var(--team-ink,var(--accent));text-decoration:none}
+  a.wlnm:hover{color:var(--text);text-decoration:underline}
+  .wlsub{font-size:var(--fs-1);color:var(--muted);margin-top:2px;line-height:1.55}
+  .wlsub b{color:var(--text);font-weight:600;font-family:var(--font-mono);
+    font-variant-numeric:tabular-nums}
+
+  /* ---- sticky mini header ------------------------------------------------ */
+  /* Fixed at 52px = the topnav's own height, z-index 40 < the nav's 50, so it can never cover
+     the nav and never fights its position:sticky. visibility:hidden in the off state keeps its
+     controls unfocusable. */
+  .minibar{position:fixed;top:52px;left:0;right:0;z-index:40;background:var(--navbg);
+    border-bottom:1px solid var(--line);visibility:hidden;opacity:0;transform:translateY(-8px);
+    transition:opacity .16s ease,transform .16s ease,visibility 0s linear .16s}
+  .minibar.on{visibility:visible;opacity:1;transform:none;
+    transition:opacity .16s ease,transform .16s ease}
+  .mininner{max-width:var(--maxw);margin:0 auto;padding:0 22px;height:46px;display:flex;
+    align-items:center;gap:var(--sp-3);min-width:0}
+  .mininner img{width:24px;height:24px}
+  .mininner .ab{font-family:var(--font-mono);font-weight:700;font-size:var(--fs-2);letter-spacing:.3px;
+    flex:0 0 auto;color:var(--team-ink,var(--text))}
+  .mstat{display:flex;align-items:baseline;gap:var(--sp-1);flex:0 0 auto;white-space:nowrap}
+  .mstat i{font-style:normal;font-size:var(--fs-1);color:var(--muted)}
+  .mstat b{font-family:var(--font-mono);font-size:var(--fs-2);font-variant-numeric:tabular-nums}
+  .minispace{flex:1 1 auto;min-width:0}
+  .herofoot{position:absolute;left:0;right:0;bottom:0;height:1px;pointer-events:none}
+  /* The tint and the 3px franchise rule are NOT set here -- they live once in site.css as
+     `.panel.wt-hero`, at the 0-2-0 that beats this page's own later `.panel`. This page used to
+     carry its own copy of those two declarations; the specificity fix moved into the shared
+     layer so projection.html's hero gets the identity too, and the duplicate came out. All that
+     is left is the positioning context .herofoot needs. */
+  .panel.wt-hero{position:relative}
+  /* prev / next / jump. A native <select> is the jump target on purpose: keyboard- and
+     screen-reader-complete for free, and it is the one control the Arrow hotkeys must skip. */
+  .switch{display:flex;align-items:center;gap:var(--sp-1);flex:0 0 auto;min-width:0}
+  .switch .navb{font:inherit;font-size:var(--fs-3);line-height:1;color:var(--muted);cursor:pointer;
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--r-1);padding:5px 9px}
+  .switch .navb:hover{color:var(--text);border-color:var(--team,var(--accent))}
+  .switch select{font:inherit;font-size:var(--fs-1);color:var(--text);background:var(--panel);
+    border:1px solid var(--line);border-radius:var(--r-1);padding:5px 7px;max-width:170px;cursor:pointer}
+  .switch select:hover{border-color:var(--team,var(--accent))}
+  @media(max-width:560px){
+    .mininner{padding:0 14px;gap:var(--sp-2)}
+    .minibar .switch select{max-width:74px;padding:5px 3px}
+  }
+
+  /* ---- the team picker (unknown / missing ?t=) --------------------------- */
+  .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:var(--sp-3)}
+  /* each card carries its OWN two colours inline (--wt-a the 3:1 mark, --wt-i the 4.5:1 ink),
+     because fifteen franchises are on screen at once while --team-* still describes one team */
+  .pcard{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3);text-decoration:none;
+    border:1px solid var(--line);border-left:3px solid var(--wt-a,var(--accent));
+    border-radius:var(--r-1);background:var(--panel);min-width:0}
+  .pcard:hover{background:var(--panel-2);border-color:var(--wt-a,var(--accent))}
+  .pcard img{width:36px;height:36px}
+  /* a <span> is inline, so tricode and name ran together as "MINMinnesota Lynx" -- two lines
+     was the intent and a flex column is what delivers it */
+  .pcard .pcn{min-width:0;flex:1 1 auto;display:flex;flex-direction:column;gap:1px}
+  .pcard .pctri{font-family:var(--font-mono);font-weight:700;letter-spacing:.3px;font-size:var(--fs-2);
+    color:var(--wt-i,var(--text))}
+  .pcard .pcnm{font-size:var(--fs-1);color:var(--muted);white-space:nowrap;overflow:hidden;
+    text-overflow:ellipsis}
+  .pcard .pcw{flex:0 0 auto;text-align:right;font-family:var(--font-mono);font-weight:600;
+    font-variant-numeric:tabular-nums;font-size:var(--fs-3);color:var(--text)}
+  .pcard .pcw em{display:block;font-style:normal;font-size:10px;color:var(--faint);font-weight:400}
+
+  /* staleness. Amber, not red: the page is not WRONG, it is behind, and a red banner on a
+     projection reads as "these numbers are broken". Same treatment as projection.html. */
+  .stalewarn{display:inline-block;margin-top:6px;padding:3px 8px;border-radius:var(--r-1);
+    background:rgba(255,145,56,.14);border:1px solid rgba(255,145,56,.34);color:#ffb877;
+    font-size:var(--fs-1);font-weight:600}
+  :root[data-theme=light] .stalewarn{background:rgba(192,86,0,.12);border-color:rgba(192,86,0,.3);
+    color:#8a3d00}
+  /* Lifted from the men's team2027.html:320 along with the caption itself. The bar was inherited
+     without it, which is why the below-replacement strip had no visible explanation. */
+  .wscap{margin:var(--sp-2) 0 0;font-size:var(--fs-1);color:var(--muted);line-height:1.5;max-width:840px}
+</style></head>
+<body>
+<nav id="topnav" data-active="proj"></nav>
+<script src="charts.js"></script>
+<script src="nav.js"></script>
+<!-- The franchise layer. Classic script, must load before render(). With it absent every
+     var(--team-*) falls back to the site accent and the page looks completely normal. -->
+<script src="team_colors_wnba.js"></script>
+<div id="minimount"></div>
+<div class="wrap wt-scope" id="wrap">
+  <div class="msg" id="msg">Loading team…</div>
+</div>
+
+<script>
+"use strict";
+
+const FAC6 = ["oTS", "oTOV", "oSC", "dTS", "dTOV", "dSC"];
+const OFF = ["oTS", "oTOV", "oSC"], DEF = ["dTS", "dTOV", "dSC"];
+// Every factor arrives SIGN-ALIGNED in the feed (meta.factor_profile.sign_convention), so
+// higher is better on all six and rank 1 is the highest value everywhere on this page.
+const FAC_TIP = {
+  oTS: "Offensive true-shooting RAPM — points per 100 from shot-making efficiency.",
+  oTOV: "Offensive turnover RAPM — ball security. Fewer turnovers is positive.",
+  oSC: "Offensive second-chance RAPM — value from offensive rebounds and the extra possessions they buy.",
+  dTS: "Defensive true-shooting RAPM — suppressing opponent shot efficiency. Positive is good.",
+  dTOV: "Defensive turnover RAPM — forcing turnovers. Positive is good.",
+  dSC: "Defensive second-chance RAPM — limiting opponent offensive rebounds. Positive is good."
+};
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+let P = null, TRI = null, ORDER = [], LINKSET = null, DOM = null;
+
+/* ---- formatting ---------------------------------------------------------- */
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g,
+    c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+// ONE minus glyph on the page: U+2212 everywhere, never toFixed's hyphen.
+function num(v, dec) {
+  if (v == null || isNaN(v)) return "–";
+  const s = Number(v).toFixed(dec == null ? 1 : dec);
+  // A value that ROUNDS to zero has no sign to carry: toFixed(1) on -0.049 gives "-0.0", and
+  // "−0.0 wins" beside a player's name reads as a rendering bug rather than as "about nothing".
+  // Live case: MIN's Dorka Juhasz at -0.049 wins.
+  if (/^-0\.?0*$/.test(s)) return s.slice(1);
+  return s.replace("-", "−");
+}
+function fmt(v, dec) {
+  dec = (dec == null) ? 1 : dec;
+  if (v == null || isNaN(v)) return { txt: "–", cls: "zero" };
+  const n = Number(v);
+  const abs = Math.abs(n).toFixed(dec);
+  // same rule as num(): no sign glyph on a rounded zero. The sign encoding is only meaningful
+  // where there is a sign, and the .zero class already says "indistinguishable from average".
+  return { txt: (/^0\.?0*$/.test(abs) ? "" : (n >= 0 ? "+" : "−")) + abs,
+    cls: n >= 0.05 ? "pos" : (n <= -0.05 ? "neg" : "zero") };
+}
+function clamp(x, a, b) { return Math.max(a, Math.min(b, x)); }
+function pc(p, d) { return (Number(p) * 100).toFixed(d == null ? 1 : d) + "%"; }
+// A 10,000-sim MC cannot resolve below ~1 in 10,000, and "0.0%" reads as IMPOSSIBLE. Anything
+// past the resolution of the simulation prints as a bound, in both tails. Same rule as
+// projection.html — the two pages must not disagree about what 0/10,000 means.
+function pcOdds(p) { return p < 0.001 ? "&lt;0.1%" : (p > 0.999 ? "&gt;99.9%" : pc(p)); }
+function ord(n) {
+  if (n == null) return "";
+  const s = ["th", "st", "nd", "rd"], v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+function shortDay(iso) {
+  const p = String(iso).split("-");
+  return (+p[2]) + " " + (MON[+p[1] - 1] || p[1]);
+}
+function qp(k) { return new URLSearchParams(location.search).get(k); }
+// rank among the 15, higher = better. Ties share the better rank.
+function rankHigh(v, arr) {
+  if (v == null || isNaN(v)) return null;
+  let better = 0;
+  arr.forEach(x => { if (x != null && !isNaN(x) && Number(x) > Number(v)) better++; });
+  return better + 1;
+}
+function rankPill(rank, n, label) {
+  if (rank == null) return "";
+  return '<span class="lgrank" data-tip="' + esc(label) + ": " + ord(rank) + " of " + n
+    + ' teams. 1 = best.">' + ord(rank) + "</span>";
+}
+
+/* ---- the franchise layer, guarded --------------------------------------- */
+/* Every call is optional: with team_colors_wnba.js absent the page keeps the site accent and
+   the logos degrade to nothing (the <img> hides itself on error). */
+function tAccent(tri) { try { return window.teamAccent(tri) || ""; } catch (e) { return ""; } }
+function tInk(tri) { try { return window.teamInk(tri) || ""; } catch (e) { return ""; } }
+function tName(tri, fallback) {
+  try { const n = window.wnbaTeamName(tri); if (n && n !== tri) return n; } catch (e) {}
+  return fallback || tri;
+}
+function canon(tri) {
+  const k = String(tri || "").trim().toUpperCase();
+  try { return window.wnbaCanonTri(k) || k; } catch (e) { return k; }
+}
+// EAGER, never lazy. loading="lazy" on the 15-item rail and the 18-row schedule left most of
+// their marks blank in a real browser -- a horizontal scroller and a grid of 18px images are
+// not the "genuinely long scrolling list" the identity layer reserves lazy for, and the logo is
+// how a reader tells DAL from MIN from WAS when all three derive the same navy.
+function logoIMG(tri, size, opts) {
+  try { return window.wnbaLogoIMG(tri, size, opts || {}); } catch (e) { return ""; }
+}
+function applyTheme(tri) {
+  try { window.applyTeamTheme(tri); } catch (e) {}
+}
+// per-item colours for the rail and the picker: they show all fifteen franchises at once, so
+// each carrier needs its own pair while --team-* still describes the one selected team
+function itemVars(tri) {
+  const a = tAccent(tri), k = tInk(tri);
+  return (a || k) ? ' style="' + (a ? "--wt-a:" + a + ";" : "") + (k ? "--wt-i:" + k + ";" : "") + '"' : "";
+}
+function retheme() {
+  if (TRI) applyTheme(TRI);
+  document.querySelectorAll("[data-wt]").forEach(el => {
+    const t = el.getAttribute("data-wt"), a = tAccent(t), k = tInk(t);
+    if (a) el.style.setProperty("--wt-a", a);
+    if (k) el.style.setProperty("--wt-i", k);
+  });
+}
+
+/* ---- load ---------------------------------------------------------------- */
+Promise.all([
+  fetch("projection_2026.json").then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }),
+  // Only to decide which names may be links: build_wnba_site.py publishes a player page only
+  // above its activity floor, so a deep-bench name with no file would 404 the Explorer.
+  fetch("players.json").then(r => r.ok ? r.json() : null).catch(() => null)
+]).then(([proj, players]) => {
+  P = proj;
+  LINKSET = Array.isArray(players) ? new Set(players.map(p => p.id)) : null;
+  render();
+}).catch(e => {
+  document.getElementById("msg").innerHTML = "Couldn't load <code>projection_2026.json</code> ("
+    + esc(String(e && e.message || e)) + ').<br><a href="projection.html">'
+    + "← back to the projected standings</a>";
+});
+
+/* ONE link rule. A row is a link only if the feed says it resolves AND players.json agrees;
+   with players.json unavailable the feed's own flag decides. Never emit an href that 404s. */
+function canLink(gid, flag) {
+  if (!gid) return false;
+  return LINKSET ? LINKSET.has(gid) : !!flag;
+}
+function playerName(gid, name, flag, cls, tip, offBoard) {
+  const t = tip ? ' title="' + esc(tip) + '"' : "";
+  const flagHTML = offBoard
+    ? '<span class="flagchip" title="Not on the daily board — too few possessions to rate.'
+      + ' Imputed at 0, which is why the net track is empty.">OFF BOARD</span>' : "";
+  return (canLink(gid, flag)
+    ? '<a class="' + cls + '" href="index.html?p=' + encodeURIComponent(gid) + '"' + t + ">"
+      + esc(name) + "</a>"
+    : '<span class="' + cls + '"' + t + ">" + esc(name) + "</span>") + flagHTML;
+}
+
+/* ---- the picker: unknown or missing ?t= --------------------------------- */
+function picker(rawAsked) {
+  const T = P.teams, order = P.standings_order;
+  let h = "";
+  if (rawAsked) {
+    h += '<h1 style="margin-top:6px">No such team</h1><p class="sub">There is no WNBA team <b>'
+      + esc(rawAsked) + "</b> in this projection. The fifteen 2026 franchises are below.</p>";
+  } else {
+    h += '<h1 style="margin-top:6px">Teams</h1><p class="sub">Every 2026 WNBA franchise, in '
+      + "projected order. Rest-of-season projection as of <b>" + esc(P.meta.as_of)
+      + "</b>; see all fifteen side by side on the "
+      + '<a href="projection.html">projected standings</a>.</p>';
+  }
+  h += '<div class="dash"><section class="panel" id="picker"><div class="phead">'
+    + "<h2>Choose a team</h2><span class=\"psub\">15 franchises · ordered by projected wins</span>"
+    + '</div><div class="pbody"><div class="pgrid">';
+  order.forEach(tri => {
+    const t = T[tri];
+    h += '<a class="pcard" data-wt="' + esc(tri) + '"' + itemVars(tri)
+      + ' href="team.html?t=' + encodeURIComponent(tri) + '">'
+      + logoIMG(tri, 36, {})
+      + '<span class="pcn"><span class="pctri">' + esc(tri) + '</span>'
+      + '<span class="pcnm">' + esc(tName(tri, t.name)) + "</span></span>"
+      + '<span class="pcw">' + num(t.proj_wins, 1) + "<em>" + t.w + "–" + t.l + " now</em></span></a>";
+  });
+  h += "</div></div></section></div>";
+  document.getElementById("wrap").innerHTML = h;
+  document.title = "Teams · Rest of 2026 · WNBA Daily RAPM";
+  const mm = document.getElementById("minimount");
+  if (mm) mm.innerHTML = "";
+  TRI = null;
+  retheme();
+}
+
+/* ---- league-wide domains ------------------------------------------------ */
+/* Solved over every published row on all fifteen teams, so a Lynx bar and a Storm bar mean the
+   same thing. The page never invents a number it can read off the feed. */
+function domains(T) {
+  const teams = Object.keys(T).map(k => T[k]);
+  const rows = teams.reduce((a, t) => a.concat(t.roster || []), []);
+  let mpg = 0, net = 0, dev = 0, sos = 0;
+  rows.forEach(r => {
+    [r.exp_mpg, r.mpg_when_available, r.season_mpg].forEach(v => {
+      if (v != null && !isNaN(v)) mpg = Math.max(mpg, Number(v));
+    });
+    if (r.net != null && !isNaN(r.net)) net = Math.max(net, Math.abs(Number(r.net)));
+  });
+  const band = (P.meta.factor_profile || {}).band || {};
+  teams.forEach(t => FAC6.forEach(f => {
+    const v = (t.factors_dev || {})[f];
+    if (v != null && !isNaN(v)) dev = Math.max(dev, Math.abs(Number(v)));
+  }));
+  FAC6.forEach(f => (band[f] || []).forEach(v => { dev = Math.max(dev, Math.abs(Number(v))); }));
+  teams.forEach(t => {
+    const s = (t.schedule_remaining || {}).sos;
+    if (s != null && !isNaN(s)) sos = Math.max(sos, Math.abs(Number(s)));
+  });
+  return {
+    mpg: Math.max(5, Math.ceil(mpg / 5) * 5),          // 35.4 -> a 40-minute track
+    net: Math.max(0.5, Math.ceil(net * 2) / 2),        // |net| <= 8.43 -> +/-8.5
+    dev: Math.max(0.5, Math.ceil(dev * 2) / 2),        // shared by all six factor rows
+    opp: Math.max(0.5, Math.ceil(Math.max(sos, ...teams.map(t => Math.abs(t.strength || 0))) * 2) / 2)
+  };
+}
+
+/* ---- team factor values, and the fifteen-team context ------------------- */
+/* factors / factors_dev / orapm / drapm are all PRECOMPUTED in the feed, and its closure is
+   verified there to 3.6e-15: the six deviations sum EXACTLY to the team's centred strength.
+   So this page reads them; it does not re-derive them from the roster the way the men's page
+   has to. All that is computed here is each team's RANK among the fifteen. */
+function facContext(T) {
+  const tris = Object.keys(T);
+  const devAll = {}, avg = (P.meta.factor_profile || {}).league_avg || {};
+  FAC6.forEach(f => { devAll[f] = tris.map(k => Number((T[k].factors_dev || {})[f])); });
+  return {
+    n: tris.length, devAll: devAll, avg: avg,
+    band: (P.meta.factor_profile || {}).band || {},
+    sd: (P.meta.factor_profile || {}).league_sd || {},
+    oAll: tris.map(k => Number(T[k].orapm)), dAll: tris.map(k => Number(T[k].drapm))
+  };
+}
+
+/* ---- switcher ----------------------------------------------------------- */
+function goTeam(tri) { if (tri) location.href = "team.html?t=" + encodeURIComponent(tri); }
+function switcherHTML() {
+  const i = ORDER.indexOf(TRI);
+  const prev = ORDER[(i - 1 + ORDER.length) % ORDER.length], next = ORDER[(i + 1) % ORDER.length];
+  const opts = ORDER.map((tri, k) => '<option value="' + esc(tri) + '"'
+    + (tri === TRI ? " selected" : "") + ">" + (k + 1) + "  "
+    + esc(tName(tri, P.teams[tri].name)) + "</option>").join("");
+  return '<div class="switch">'
+    + '<button type="button" class="navb" data-go="' + esc(prev) + '" title="'
+      + esc(tName(prev, prev)) + '" aria-label="Previous team: ' + esc(tName(prev, prev)) + '">‹</button>'
+    + '<select aria-label="Jump to a team">' + opts + "</select>"
+    + '<button type="button" class="navb" data-go="' + esc(next) + '" title="'
+      + esc(tName(next, next)) + '" aria-label="Next team: ' + esc(tName(next, next)) + '">›</button>'
+    + "</div>";
+}
+function railHTML() {
+  return '<div class="wt-rail" role="navigation" aria-label="Jump to another team">'
+    + ORDER.map((tri, k) => '<a data-wt="' + esc(tri) + '"' + itemVars(tri)
+      + (tri === TRI ? ' class="on" aria-current="page"' : "")
+      + ' href="team.html?t=' + encodeURIComponent(tri) + '" title="'
+      + esc(tName(tri, P.teams[tri].name)) + " · projected " + num(P.teams[tri].proj_wins, 1)
+      + ' wins">' + logoIMG(tri, 22, {})
+      + '<span class="wt-tri">' + esc(tri) + "</span></a>").join("")
+    + "</div>";
+}
+
+/* ---- render ------------------------------------------------------------- */
+function render() {
+  const M = P.meta, T = P.teams;
+  ORDER = P.standings_order.slice();
+  const asked = qp("t") || qp("abbr") || qp("team");
+  const tri = canon(asked);
+  if (!asked || !T[tri]) { picker(asked); return; }
+  TRI = tri;
+  const t = T[tri];
+  const N = ORDER.length;
+  DOM = domains(T);
+  const FC = facContext(T);
+  applyTheme(tri);
+  const full = tName(tri, t.name);
+  document.title = full + " · Rest of 2026 · WNBA Daily RAPM";
+
+  // STALENESS, derived from the viewer's clock against the first unplayed date rather than
+  // stamped at build time: the drift grows while the file sits still, so a build-time stamp
+  // would report zero forever. Same derivation as projection.html.
+  const staleDays = Math.floor((Date.now()
+    - Date.parse(M.schedule.remaining_first_date + "T00:00:00Z")) / 864e5) + 1;
+
+  const rkStr = t.strength_rank != null ? t.strength_rank : rankHigh(t.strength,
+    ORDER.map(k => T[k].strength));
+  const rkWins = rankHigh(t.proj_wins, ORDER.map(k => T[k].proj_wins));
+  const strF = fmt(t.strength, 2);
+  const cut = (ORDER.length >= M.playoff_format.field_size)
+    ? Number(T[ORDER[M.playoff_format.field_size - 1]].proj_wins) : null;
+
+  let html = "";
+
+  // ---- PANEL 1 · hero ----------------------------------------------------
+  html += '<div class="dash"><section class="panel wt-hero" id="hero">'
+    + '<div class="phead wt-htop" style="align-items:center">'
+    + '<div class="wt-ident" style="flex:1 1 auto">' + logoIMG(tri, 54, {})
+    + '<div class="wt-who"><h1><span class="wt-name">' + esc(full) + "</span>"
+    + '<span class="wt-tag">rest of 2026</span></h1>'
+    + '<div class="wt-sub"><b>' + esc(tri) + "</b> · <b>" + t.w + "–" + t.l
+    + "</b> through " + t.gp + " of " + t.games_total + " games · <b>" + t.games_remaining
+    + "</b> left · point differential <b>" + num(t.point_diff, 0) + "</b>"
+    // Inert while every team plays 44. Left wired for the case where a fixture really does go
+    // missing upstream. The previous copy claimed game 1022600052 was "missing at every stage",
+    // which was false -- it is in the full normalized play-by-play with a complete score and is
+    // dropped only by the package's lineup-validation step, so its RESULT is now counted.
+    + (t.games_total < 44
+       ? ' <span class="help" data-tip="A short season: a scheduled 2026 fixture is missing from'
+         + ' the source package. An upstream gap, not one introduced here.">?</span>' : "")
+    + "</div></div></div></div>"
+    + '<div class="pbody"><div class="hero">';
+
+  // identity column: the projected record, its rank, and the strength lockups
+  const wTxt = num(t.proj_wins, 1).split(".");
+  html += '<div class="heroid">'
+    + '<div class="bignum" id="bignum">' + wTxt[0]
+      + (wTxt.length > 1 ? '<span class="dec">.' + wTxt[1] + "</span>" : "")
+      + '<span class="wl">–' + num(t.proj_losses, 1) + "</span></div>"
+    + '<div class="herox">projected wins · '
+      + (rkWins ? "<b>" + ord(rkWins) + "</b> of " + N : "") + "</div>"
+    + '<div class="locks">'
+    + '<span class="lock">Strength <b class="' + strF.cls + '">' + strF.txt + "</b>"
+      + rankPill(rkStr, N, "Strength")
+      + ' <span class="help" data-tip="Points per 100 possessions, as a team: the minute-weighted'
+      + " sum of the five on-floor board ratings. CENTRED on the fifteen-team mean, so 0.0 is an"
+      + " average 2026 team. The board's own level for this team is "
+      + num(t.strength_uncentred, 2) + "; a constant "
+      + num(M.strength_level.centring_constant_subtracted, 3) + " was subtracted from all fifteen."
+      + " The shift is simulation-invariant: same seed, every projected win and title chance"
+      + ' bit-identical.">?</span></span>'
+    + '<span class="lock">Offence <b class="' + fmt(t.orapm, 2).cls + '">' + fmt(t.orapm, 2).txt + "</b>"
+      + rankPill(rankHigh(t.orapm, FC.oAll), N, "Offence") + "</span>"
+    + '<span class="lock">Defence <b class="' + fmt(t.drapm, 2).cls + '">' + fmt(t.drapm, 2).txt + "</b>"
+      + rankPill(rankHigh(t.drapm, FC.dAll), N, "Defence") + "</span>"
+    + "</div>"
+    + (staleDays > 0
+       ? '<div class="stalewarn">' + staleDays + " day" + (staleDays === 1 ? "" : "s")
+         + " behind: games from " + shortDay(M.schedule.remaining_first_date)
+         + " on are still counted unplayed.</div>" : "")
+    + "</div>";
+
+  // odds column: the four rounds as lengths, then the rail
+  const rounds = [
+    ["Playoffs", t.playoff_prob, "Reached the " + M.playoff_format.field_size
+      + "-team field in this share of the " + M.n_sims.toLocaleString() + " simulated seasons."],
+    ["Semifinals", t.semis_prob, "Won a best-of-3 first round."],
+    ["Finals", t.finals_prob, "Won a best-of-5 semifinal."],
+    ["Title", t.title_prob, "Won a best-of-7 final."]
+  ];
+  html += '<div class="herostat"><div class="odds">'
+    + rounds.map(r => '<span class="ol">' + r[0] + "</span>"
+      + '<span class="wt-track" data-tip="' + esc(r[2]) + '"><i class="wt-fill" style="width:'
+      + (clamp(Number(r[1]), 0, 1) * 100).toFixed(1) + '%"></i></span>'
+      + '<span class="ov">' + pcOdds(Number(r[1])) + "</span>").join("")
+    + "</div>"
+    + '<div class="locks" style="margin-top:var(--sp-4)">'
+    + '<span class="lock">Mean seed <b>'
+      + (t.avg_seed_if_qualified == null ? "—" : num(t.avg_seed_if_qualified, 2)) + "</b>"
+      + ' <span class="help" data-tip="Mean seed in the simulations where this team qualified, so'
+      + " it is conditional and not comparable across teams with very different playoff odds."
+      + (t.avg_seed_if_qualified == null
+         ? " This team reached the field in none of the " + M.n_sims.toLocaleString()
+           + " simulations, so there is no seed to average — below the resolution of the"
+           + " simulation, not impossible." : "") + '">?</span></span>'
+    + '<span class="lock">80% band <b>' + t.p10 + "–" + t.p90 + "</b></span>"
+    + '<span class="lock">95% band <b>' + t.p2_5 + "–" + t.p97_5 + "</b></span>"
+    + "</div></div>";
+
+  html += "</div>";                                       // /.hero
+  html += '<div style="margin-top:var(--sp-4);padding-top:var(--sp-3);'
+    + 'border-top:1px solid var(--team-soft,var(--line))">' + railHTML() + "</div>";
+  html += '</div><div class="herofoot" id="herofoot"></div></section>';
+
+  // ---- PANEL 2 · the win-total distribution ------------------------------
+  html += '<section class="panel"><div class="phead"><h2>Projected wins</h2>'
+    + '<span class="psub">' + t.games_total + " games · "
+    + M.n_sims.toLocaleString() + " simulated seasons</span>"
+    + ' <span class="help" data-tip="One bar per final win total, its height the share of the '
+    + M.n_sims.toLocaleString() + " simulations that ended there. Bars inside the middle 80% are"
+    + " drawn at full strength, the tails lighter. The shaded left end is the wins already banked"
+    + ' — a season cannot finish below them.">?</span>'
+    + '</div><div class="pbody">' + distHTML(t, cut, M) + "</div></section>";
+
+  // ---- PANEL 3 · factor profile ------------------------------------------
+  html += '<section class="panel"><div class="phead"><h2>Factor profile</h2>'
+    + '<span class="psub">vs the fifteen-team average · rank of ' + N + "</span>"
+    + ' <span class="help" data-tip="Bar length = distance from the league average, on ONE scale'
+    + " shared by all six rows in both columns, so an offensive bar and a defensive bar of the same"
+    + " length are the same number of points. The two upright rules mark the middle 80% of the "
+    + N + " teams: a bar that stops inside them is ordinary, a bar past one is not."
+    + ' All six are sign-aligned, so higher is better on every row.">?</span>'
+    + '</div><div class="pbody">' + facHTML(t, FC, N) + "</div></section>";
+
+  // ---- PANEL 4 · roster --------------------------------------------------
+  html += '<section class="panel"><div class="phead"><h2>Roster</h2>'
+    + '<span class="psub">' + (t.roster || []).length
+    + " players · ordered by wins still to come</span>"
+    + (t.board_minute_coverage != null && t.board_minute_coverage < 0.999
+       ? ' <span class="badge b-w" data-tip="' + pc(1 - t.board_minute_coverage, 2) + " of this"
+         + " roster's expected minutes go to players with too few possessions to rate, imputed at"
+         + ' 0.">' + pc(t.board_minute_coverage, 1) + " rated minutes</span>" : "")
+    + '</div><div class="pbody">' + rosterHTML(t, M) + "</div></section>";
+
+  // ---- PANEL 5 · remaining schedule --------------------------------------
+  html += '<section class="panel"><div class="phead"><h2>Remaining schedule</h2>'
+    + '<span class="psub">' + t.schedule_remaining.n + " games · "
+    + shortDay(M.schedule.remaining_first_date) + " → "
+    + shortDay(M.schedule.remaining_last_date) + "</span>"
+    + '</div><div class="pbody">' + schedHTML(t, T, N) + "</div></section>";
+
+  // ---- PANEL 6 · minutes watchlist (only when the feed has one) ----------
+  const watch = t.minutes_watchlist || [];
+  if (watch.length) {
+    html += '<section class="panel"><div class="phead"><h2>Minutes watchlist</h2>'
+      + '<span class="psub">' + watch.length + " player" + (watch.length === 1 ? "" : "s")
+      + " the recency window is not crediting</span></div>"
+      + '<div class="pbody">' + watchHTML(watch, M) + "</div></section>";
+  }
+
+  html += "</div>";                                       // /.dash
+  html += '<p class="foot" id="foot">' + footHTML(M) + "</p>";
+
+  document.getElementById("wrap").innerHTML = html;
+  fitStackLabels();
+  fitDistLabel();
+  fitTips();
+  mountMini(t, tri, strF);
+  wireSwitchers();
+}
+
+/* ---- the win-total distribution ---------------------------------------- */
+function distHTML(t, cut, M) {
+  const hist = Array.isArray(t.win_hist) ? t.win_hist : [];
+  const n = hist.length;                                  // = games_total + 1, one bin per total
+  if (!n) return '<p class="rotcap">No win distribution in the feed for this team.</p>';
+  const hi = Math.max.apply(null, hist) || 1;
+  // bin k occupies [k/n, (k+1)/n], so a value v is drawn at the CENTRE of its own bin
+  const X = v => clamp(((Number(v) + 0.5) / n) * 100, 0, 100);
+  const inBand = k => k >= t.p10 && k <= t.p90;
+
+  const bars = hist.map((p, k) => {
+    if (!(p > 0)) return '<i class="out" style="height:0"></i>';
+    const h = Math.max(1.2, (p / hi) * 100);
+    return '<i class="' + (inBand(k) ? "in" : "out") + '" style="height:' + h.toFixed(2)
+      + '%" data-tip="' + k + " win" + (k === 1 ? "" : "s") + ": " + pc(p, 2) + ' of simulations"></i>';
+  }).join("");
+
+  // the banked wins: bins 0..w-1 are structurally impossible, so the region says why
+  const zw = X(t.w - 0.5);
+  let h = '<div class="dist" role="img" aria-label="Win-total distribution over ' + t.games_total
+    + " games. Mean " + num(t.proj_wins, 1) + ", median " + t.p50 + ", middle 80% " + t.p10
+    + " to " + t.p90 + ", 95% " + t.p2_5 + " to " + t.p97_5 + ". " + t.w + " wins already banked."
+    + (cut != null ? " Playoff cut-off about " + num(cut, 1) + " wins." : "") + '">';
+
+  h += '<div class="distanno">';
+  if (cut != null) {
+    const cx = X(cut);
+    const pos = cx > 66 ? "right:" + (100 - cx).toFixed(2) + "%;text-align:right"
+      : (cx < 34 ? "left:" + cx.toFixed(2) + "%"
+        : "left:" + cx.toFixed(2) + "%;transform:translateX(-50%)");
+    h += '<span class="cutlab" style="' + pos + '">Playoff cut-off <b>' + num(cut, 1)
+      + "</b> · odds <b>" + pcOdds(t.playoff_prob) + "</b></span>";
+  }
+  h += "</div>";
+
+  h += '<div class="distmarks"><span class="dmean" style="left:' + X(t.proj_wins).toFixed(2)
+    + '%" data-tip="Mean of the ' + M.n_sims.toLocaleString() + " simulated seasons: "
+    + num(t.proj_wins, 1) + ' wins."></span></div>';
+
+  h += '<div class="distrail">'
+    + (t.w > 0 ? '<span class="dzone" style="width:' + zw.toFixed(2) + '%" data-tip="'
+        + t.w + " win" + (t.w === 1 ? "" : "s") + " already banked through " + t.gp
+        + ' games. No simulated season can finish below them."></span>'
+      + '<span class="dedge" style="left:' + zw.toFixed(2) + '%"></span>'
+      + (zw > 16 ? '<span class="dzlab" style="left:' + zw.toFixed(2) + '%">' + t.w + " won</span>" : "")
+      : "")
+    + '<div class="bars">' + bars + "</div>"
+    + '<span class="dmed" style="left:' + X(t.p50).toFixed(2) + '%" data-tip="Median season: '
+      + t.p50 + ' wins."></span>'
+    + (cut != null ? '<span class="dcut" style="left:' + X(cut).toFixed(2) + '%"></span>' : "")
+    + "</div>";
+
+  // PDX and CON play 43 games, not 44 -- one 2026 fixture is missing from the source package at
+  // every stage -- so their .500 line is 21.5 and there is no 21.5-21.5 record to name. Rounding
+  // it to "22" and captioning that "a .500 season, 22-22" would publish an impossible record for
+  // two of the fifteen teams. Odd totals get the half-win and words that admit it.
+  const half = t.games_total / 2, odd = (t.games_total % 2) !== 0;
+  const halfTxt = odd ? num(half, 1) : num(half, 0);
+  h += '<div class="distaxis"><span style="left:0">0</span>'
+    + '<span style="left:' + X(half).toFixed(2) + '%;transform:translateX(-50%)" data-tip="'
+      + (odd ? "The .500 line, " + halfTxt + " of " + t.games_total
+          + " — an odd schedule has no even split."
+        : "A .500 season — " + halfTxt + "–" + halfTxt + ".")
+      + '">' + halfTxt + "</span>"
+    + '<span style="right:0">' + t.games_total + "</span></div>";
+
+  h += '<div class="distcap">'
+    + '<span class="caplock">Mean <b>' + num(t.proj_wins, 1) + "</b></span>"
+    + '<span class="caplock">Median <b>' + t.p50 + "</b></span>"
+    + '<span class="caplock">Middle 80% <b>' + t.p10 + "–" + t.p90 + "</b></span>"
+    + '<span class="caplock">95% <b>' + t.p2_5 + "–" + t.p97_5 + "</b></span>"
+    + '<span class="caplock">Banked <b>' + t.w + "</b></span>"
+    + "</div></div>";
+  return h;
+}
+
+/* ---- factor rows -------------------------------------------------------- */
+function facHTML(t, FC, N) {
+  const dom = DOM.dev;
+  const X = v => clamp(50 + (v / dom) * 50, 0, 100);
+  const row = f => {
+    const dev = Number((t.factors_dev || {})[f]);
+    const raw = Number((t.factors || {})[f]);
+    const se = Number((t.factors_se || {})[f]);
+    const b = FC.band[f] || [0, 0];
+    const x0 = X(Number(b[0])), x1 = X(Number(b[1])), xv = X(isNaN(dev) ? 0 : dev);
+    const v = fmt(dev, 2);
+    const tip = FAC_TIP[f] + " This team " + num(raw, 2) + ", league average "
+      + num(FC.avg[f], 2) + ", league spread (sd) " + num(FC.sd[f], 2)
+      + (isNaN(se) ? "" : ". Standard error " + num(se, 2)
+        + ", which is a conservative UPPER bound (it assumes teammates' estimates are"
+        + " independent; the ridge makes them negatively correlated, so a team aggregate is"
+        + " better identified than this implies). The band drawn behind the bar is the league"
+        + " spread, not this uncertainty.");
+    return '<div class="frow">'
+      + '<div class="flab">' + f + ' <span class="help" data-tip="' + esc(tip) + '">?</span></div>'
+      + '<div class="ftrack" data-tip="' + esc(tip) + '">'
+      + '<span class="fband" style="left:' + x0.toFixed(2) + "%;width:" + (x1 - x0).toFixed(2) + '%"></span>'
+      + '<span class="fedge" style="left:' + x0.toFixed(2) + '%"></span>'
+      + '<span class="fedge" style="left:' + x1.toFixed(2) + '%"></span>'
+      + '<span class="faxis"></span>'
+      + '<span class="fbar ' + v.cls + '" style="left:' + Math.min(50, xv).toFixed(2)
+        + "%;width:" + Math.abs(xv - 50).toFixed(2) + '%"></span>'
+      + "</div>"
+      + '<div class="fval ' + v.cls + '">' + v.txt + "</div>"
+      + '<div class="frank">' + rankPill(rankHigh(dev, FC.devAll[f]), N, f) + "</div>"
+      + "</div>";
+  };
+  const side = (cls, label, facs, val, rank, tip) => {
+    const sv = fmt(val, 2);
+    return '<div class="fcol ' + cls + '"><div class="fchead">'
+      + "<h3><span class=\"fsw\"></span>" + label + "</h3>"
+      + '<span class="n ' + sv.cls + '">' + sv.txt + "</span>"
+      + rankPill(rank, DOM_N(), label)
+      + ' <span class="help" data-tip="' + esc(tip) + '">?</span></div>'
+      + facs.map(row).join("") + "</div>";
+  };
+  const sum6 = FAC6.reduce((a, f) => a + Number((t.factors_dev || {})[f] || 0), 0);
+  return '<div class="fgrid">'
+    + side("off", "Offence", OFF, t.orapm, rankHigh(t.orapm, FC.oAll),
+        "ORAPM: oTS + oTOV + oSC, each against the league average.")
+    + side("def", "Defence", DEF, t.drapm, rankHigh(t.drapm, FC.dAll),
+        "DRAPM: dTS + dTOV + dSC, each against the league average. Higher is better.")
+    + "</div>"
+    + '<p class="fclose">The six deviations are a decomposition, not a summary: they sum to '
+    + "<b>" + fmt(sum6, 2).txt + "</b>, which is this team's strength of <b>"
+    + fmt(t.strength, 2).txt + "</b> — exactly, to fifteen decimal places, and the same is "
+    + "true of offence plus defence. So a factor is a share of the rating, and nothing here is "
+    + "left over.</p>";
+}
+function DOM_N() { return ORDER.length; }
+
+/* ---- roster ------------------------------------------------------------- */
+function rosterHTML(t, M) {
+  const roster = (t.roster || []).slice()
+    .sort((a, b) => (Number(b.wins_contrib_remaining) || 0) - (Number(a.wins_contrib_remaining) || 0));
+  const left = Number(t.proj_wins) - Number(t.w);
+  let h = winsStack(roster, left);
+  h += '<div class="rot">' + roster.map(p => chip(p, t, left)).join("") + "</div>";
+  h += '<p class="rotcap">Two tracks per player, on scales shared by all fifteen teams. '
+    + "<b>Minutes</b> — the expected minutes per game this projection hands her, in the team "
+    + "colour, with a tick at her rate on the nights she actually played in the window "
+    + '<span class="help" data-tip="Expected minutes are that player\'s mean over the team\'s last '
+    + M.minutes.window_games + " games, renormalized so the five on the floor add to "
+    + M.minutes.minutes_per_team_game + " player-minutes per team game — a WNBA game is 40 "
+    + "minutes × 5 on the floor, not the NBA's 240. The tick is window minutes divided by "
+    + "appearances, i.e. her rate when available. The gap between them is availability, and "
+    + "nothing here models a return date.\">?</span>. <b>Net</b> — her rating in points per "
+    + "100 possessions, either side of zero on the board's own scale "
+    + '<span class="help" data-tip="This is the SAME number the Explorer and the Tables publish '
+    + "for her, on the board's raw scale — deliberately not shifted. Team strength above IS "
+    + "shifted (centred on the fifteen-team mean), so the two columns sit on different levels by "
+    + "design; the one that adds up to the team's strength is strength_contrib, in each player's "
+    + "tooltip.\">?</span>. The wins beside each name are what she is expected to add over the "
+    + t.games_remaining + " games that remain, and they sum to the <b>" + num(left, 1)
+    + "</b> wins still to come.</p>";
+  return h;
+}
+
+function winsStack(roster, left) {
+  const rows = roster.filter(p => p && p.wins_contrib_remaining != null
+      && !isNaN(p.wins_contrib_remaining))
+    .map(p => ({ name: String(p.name || ""), w: Number(p.wins_contrib_remaining) }))
+    .sort((a, b) => b.w - a.w);
+  const pos = rows.filter(r => r.w > 0), neg = rows.filter(r => r.w < 0);
+  const Pp = pos.reduce((a, r) => a + r.w, 0), Nn = neg.reduce((a, r) => a - r.w, 0);
+  if (!(Pp > 0)) return "";
+  const last = s => { const p = s.trim().split(/\s+/); return p.length > 1 ? p.slice(1).join(" ") : s; };
+  const seg = (r, cls) => {
+    const share = left > 0 ? " · " + num((r.w / left) * 100, 0) + "% of the wins to come" : "";
+    return '<span class="' + cls + '" style="width:' + ((Math.abs(r.w) / Pp) * 100).toFixed(3)
+      + '%" data-tip="' + esc(r.name) + " · " + num(r.w, 2) + " wins" + esc(share)
+      + '"><span>' + esc(last(r.name)) + "</span></span>";
+  };
+  const Tx = clamp(((Pp - Nn) / Pp) * 100, 0, 100);
+  let h = '<div class="wstack"><div class="wsbody">'
+    + '<div class="wsbar" role="img" aria-label="Wins still to come by player, largest first, '
+    + "summing to " + num(left, 1) + (Nn > 0 ? " after " + neg.length + " player"
+      + (neg.length === 1 ? "" : "s") + " below replacement give back " + num(Nn, 1) : "") + '.">'
+    + pos.map(r => seg(r, "wseg")).join("") + "</div>";
+  if (Nn > 0) {
+    h += '<div class="wsback">' + neg.slice().reverse().map(r => seg(r, "wnseg")).join("") + "</div>"
+      + '<span class="wsmark" style="left:' + Tx.toFixed(3) + '%"></span>';
+  }
+  h += '</div><div class="wsaxis"><span class="z">0</span>'
+    + '<span class="t" style="right:' + (100 - Tx).toFixed(3) + '%"><b>' + num(left, 1)
+    + "</b> wins still to come</span></div>"
+    // The men's page states this in VISIBLE caption text (team2027.html:1166-1168); the WNBA
+    // fork inherited the chart and kept the explanation only inside a tooltip, which left the
+    // red sliver on the right end reading as a rendering glitch.
+    + '<p class="wscap">Each block is one player\'s share of the wins still to come, largest '
+    + "first."
+    + (Nn > 0 ? " The strip beneath is what the "
+        + (neg.length === 1 ? "one player below replacement gives"
+                            : neg.length + " players below replacement give")
+        + " back." : "")
+    + "</p></div>";
+  return h;
+}
+
+function chip(p, t, left) {
+  p = p || {};
+  const gid = p.gid || (p.pid != null ? "w" + p.pid : null);
+  const f = Array.isArray(p.f) ? p.f : [];
+  const ftip = (f.length === 6 && p.on_board)
+    ? " · " + FAC6.map((nm, i) => nm + " " + num(f[i], 1)).join(" · ") : "";
+  const ntip = (p.net == null
+      ? "No board rating — too few possessions. Imputed at 0."
+      : "Net " + num(p.net, 2) + " pts/100 on the board's own scale")
+    + " · contributes " + num(p.strength_contrib, 2) + " to the team's strength" + ftip;
+  const wins = (p.wins_contrib_remaining != null) ? Number(p.wins_contrib_remaining) : null;
+  const wtip = (wins == null ? "Wins still to come"
+      : num(wins, 2) + " of the " + num(left, 1) + " wins still to come"
+        + (left > 0 ? " · " + num((wins / left) * 100, 0) + "%" : ""))
+    + (p.wins_per_10mpg != null
+      ? " · " + fmt(p.wins_per_10mpg, 3).txt + " wins per extra 10 minutes a game" : "");
+
+  const nm = playerName(gid, p.name, p.linkable, "plnm", ntip, p.on_board === false);
+
+  // minutes: the fill is what the projection hands her; the ghost + tick is her rate when she
+  // actually played. The tick is the MARK (the .fedge idiom); the ghost is only a hint.
+  const md = DOM.mpg, W = v => clamp(((v == null || isNaN(v)) ? 0 : Number(v) / md) * 100, 0, 100);
+  const ex = Number(p.exp_mpg), av = Number(p.mpg_when_available);
+  const mtip = num(ex, 1) + " expected minutes per game · " + num(av, 1)
+    + " per game on the nights she played · " + p.appearances_in_window + " of "
+    + (P.meta.minutes.window_games) + " games in the window · season "
+    + num(p.season_mpg, 1) + ".";
+  let mt = '<span class="pltrack" data-tip="' + esc(mtip) + '">';
+  if (!isNaN(av)) mt += '<span class="plghost" style="width:' + W(av).toFixed(2) + '%"></span>';
+  if (!isNaN(ex)) mt += '<span class="plfill" style="width:' + W(ex).toFixed(2) + '%"></span>';
+  if (!isNaN(av)) mt += '<span class="pltick" style="left:' + W(av).toFixed(2) + '%"></span>';
+  mt += "</span>";
+
+  // net: no bar at all when there is no rating. .plbar carries min-width:2px, so a missing value
+  // would otherwise paint a 2px mark sitting exactly on the axis — i.e. it would draw "precisely
+  // zero", which is the one thing an absent number does not mean. The figure prints an en dash.
+  const nd = DOM.net, XN = v => clamp(50 + (Number(v) / nd) * 50, 0, 100);
+  const nf = fmt(p.net, 2);
+  const nv = (p.net == null || isNaN(p.net)) ? null : Number(p.net);
+  const nt = '<span class="pltrack ' + nf.cls + '" data-tip="' + esc(ntip) + '">'
+    + '<span class="plaxis"></span>'
+    + (nv == null ? "" : '<span class="plbar" style="left:' + Math.min(50, XN(nv)).toFixed(2)
+      + "%;width:" + Math.abs(XN(nv) - 50).toFixed(2) + '%"></span>')
+    + "</span>";
+
+  const sub = [num(p.exp_mpg, 1) + " mpg",
+    (p.appearances_in_window != null ? p.appearances_in_window + " of "
+      + P.meta.minutes.window_games + " nights" : ""),
+    (p.wins_per_10mpg != null ? fmt(p.wins_per_10mpg, 2).txt + " wins / 10 mpg" : "")]
+    .filter(Boolean).join(" · ");
+
+  return '<div class="pl">'
+    + '<div class="plid"><div class="plwho">' + nm + "</div>"
+    + '<span class="plw" data-tip="' + esc(wtip) + '">' + num(wins, 1) + " <i>wins</i></span></div>"
+    + '<div class="plsub">' + esc(sub) + "</div>"
+    + '<div class="plrow"><span class="vh">Expected minutes per game </span>' + mt
+      + '<b class="plval">' + num(ex, 1) + "</b></div>"
+    + '<div class="plrow"><span class="vh">Net rating, points per 100 </span>' + nt
+      + '<b class="plval">' + nf.txt + "</b></div>"
+    + "</div>";
+}
+
+/* ---- remaining schedule ------------------------------------------------- */
+function schedHTML(t, T, N) {
+  const s = t.schedule_remaining || {};
+  const games = Array.isArray(s.games) ? s.games : [];
+  const od = DOM.opp, X = v => clamp((Math.abs(Number(v)) / od) * 50, 0, 50);
+  let h = '<div class="locks" style="margin-top:0">'
+    + '<span class="lock">Strength of schedule <b class="' + fmt(s.sos, 2).cls + '">'
+      + fmt(s.sos, 2).txt + "</b>" + rankPill(s.sos_rank, N, "Hardest remaining slate")
+      + ' <span class="help" data-tip="Mean centred strength of the remaining opponents, so'
+      + " positive is harder than average and rank 1 is the hardest slate in the league."
+      + ' Home-court is not folded in — the home and away splits are separate.">?</span></span>'
+    + '<span class="lock">Home <b>' + s.home + "</b></span>"
+    + '<span class="lock">Away <b>' + s.away + "</b></span>"
+    + '<span class="lock">SOS at home <b class="' + fmt(s.sos_home, 2).cls + '">'
+      + fmt(s.sos_home, 2).txt + "</b></span>"
+    + '<span class="lock">SOS away <b class="' + fmt(s.sos_away, 2).cls + '">'
+      + fmt(s.sos_away, 2).txt + "</b></span>"
+    + "</div>";
+
+  if (!games.length) return h + '<p class="sgcap">No remaining games in the feed for this team.</p>';
+
+  h += '<div class="sgrid" style="margin-top:var(--sp-4)">' + games.map(g => {
+    const opp = canon(g.opp), ot = T[opp];
+    const os = ot ? Number(ot.strength) : null;
+    const of_ = fmt(os, 2);
+    const oname = tName(opp, ot ? ot.name : opp);
+    const oppLink = ot
+      ? '<a href="team.html?t=' + encodeURIComponent(opp) + '" title="' + esc(oname)
+        + " · strength " + of_.txt + '">' + esc(g.opp) + "</a>"
+      : '<span class="nolink">' + esc(g.opp) + "</span>";
+    return '<div class="sg">'
+      + '<span class="sd">' + esc(shortDay(g.date)) + "</span>"
+      + '<span class="sha' + (g.home ? " h" : "") + '" title="'
+        + (g.home ? "Home game" : "Away game") + '">' + (g.home ? "H" : "A") + "</span>"
+      + '<span class="so">' + logoIMG(opp, 18, {}) + oppLink + "</span>"
+      + '<span class="st ' + of_.cls + '" data-tip="' + esc(oname) + " strength " + of_.txt
+        + " · " + (g.home ? "at home" : "on the road") + '">'
+        + (os == null ? "" : '<span class="stb" style="'
+          + (os >= 0 ? "left:50%;width:" : "right:50%;width:") + X(os).toFixed(2) + '%"></span>')
+      + "</span></div>";
+  }).join("") + "</div>";
+
+  // hardest / easiest read, derived from the same opponent strengths the bars draw
+  const withS = games.map(g => ({ g: g, s: T[canon(g.opp)] ? Number(T[canon(g.opp)].strength) : null }))
+    .filter(x => x.s != null).sort((a, b) => b.s - a.s);
+  h += '<p class="sgcap">Each bar is that opponent\'s strength either side of the league average, '
+    + "on the same centred scale as this team's own — so a bar to the right of the rule is a "
+    + "team better than average."
+    + (withS.length ? " Hardest night remaining: <b>" + esc(withS[0].g.opp) + "</b> ("
+      + fmt(withS[0].s, 2).txt + (withS[0].g.home ? ", at home" : ", away") + "). Easiest: <b>"
+      + esc(withS[withS.length - 1].g.opp) + "</b> (" + fmt(withS[withS.length - 1].s, 2).txt
+      + (withS[withS.length - 1].g.home ? ", at home" : ", away") + ")." : "")
+    + " Opponents faced: " + (s.opponents || []).length + " of " + (N - 1) + ".</p>";
+  return h;
+}
+
+/* ---- minutes watchlist -------------------------------------------------- */
+function watchHTML(watch, M) {
+  const rows = watch.map(w => {
+    const gid = "w" + w.pid;
+    const nm = playerName(gid, w.name, false, "wlnm", null, false);
+    return '<div class="wlrow">' + nm
+      + '<div class="wlsub"><b>' + num(w.window_mpg, 1) + "</b> expected mpg against <b>"
+      + num(w.mpg_when_available, 1) + "</b> on the nights she played — <b>"
+      + w.appearances_in_window + "</b> of " + w.window_games + " games in the window. Net <b>"
+      + fmt(w.net, 2).txt + "</b>, and <b>" + fmt(w.wins_per_10mpg, 3).txt
+      + "</b> wins per extra 10 minutes a game.</div></div>";
+  }).join("");
+  return '<p class="rotcap" style="margin:0 0 var(--sp-4)">There is <b>no WNBA injury or '
+    + "availability feed in this repo</b>, so nobody's return is modelled. These are the players "
+    + "whose expected minutes sit well below what they play when available: the projection is not "
+    + "crediting them, and the last figure is the exact derivative if you want to add them back "
+    + "by hand. An upper bound on “everybody healthy” for this team is <b>"
+    + num(bound(M), 1) + "</b> projected wins, not a forecast.</p>"
+    + '<div class="wl">' + rows + "</div>";
+}
+// the all-available rebuild the feed publishes per team, read rather than re-derived
+function bound(M) {
+  const t = P.teams[TRI];
+  return (t && t.proj_wins_all_available != null) ? t.proj_wins_all_available : t.proj_wins;
+}
+
+/* ---- footer ------------------------------------------------------------- */
+function footHTML(M) {
+  const gm = M.game_model;
+  return "Board: " + esc(M.board) + ". Game model: <code>" + esc(gm.file) + "</code> (block <code>"
+    + esc(gm.block_used) + "</code>, home edge " + num(gm.hca, 2) + ", slope " + gm.a.toFixed(3)
+    + ", σ " + num(gm.sigma_total, 1) + " split into a per-game " + num(gm.sigma_game, 1)
+    + " plus a persistent per-team " + num(gm.team_error_sd_pts, 1) + "). "
+    + M.n_sims.toLocaleString() + " simulations, seed " + M.seed + ", as of " + esc(M.as_of)
+    + ". The bracket is an assumption for 2026 — an "
+    + M.playoff_format.field_size + "-team field out of " + M.playoff_format.n_teams_in_league
+    + ", which is what 2025 used and what "
+    + M.playoff_format.verified_against_2025.n_seedings_reproducing_2025_exactly
+    + " of the 40,320 possible seedings reproduce game for game. The prior-informed board is used "
+    + "because it predicts games marginally better out of sample, but it wins only 24 of 42 "
+    + "walk-forward blocks, so that edge is magnitude-driven rather than consistent. "
+    + 'Every number here is simulated; none of it has happened. <a href="projection.html">All '
+    + "fifteen teams →</a>";
+}
+
+/* ---- post-layout passes ------------------------------------------------- */
+// A name is drawn inside its block only when the block is wide enough to hold it — measured
+// after layout, not guessed from a percentage, because the same 3% block is 8px at 390 and 29px
+// at 1280. The same pass decides which end of a block its tooltip hangs from.
+function fitStackLabels() {
+  document.querySelectorAll(".wseg > span, .wnseg > span").forEach(lab => {
+    lab.style.display = "";
+    if (lab.scrollWidth > lab.clientWidth) lab.style.display = "none";
+  });
+  document.querySelectorAll(".wseg, .wnseg").forEach(seg => {
+    const host = seg.offsetParent, w = host ? host.clientWidth : 0;
+    if (!(w > 0)) return;
+    const c = (seg.offsetLeft + seg.offsetWidth / 2) / w;
+    seg.classList.toggle("tipR", c > 0.72);
+    seg.classList.toggle("tipL", c < 0.28);
+  });
+}
+// .panel owns overflow:hidden, so a 260px bubble centred on a carrier near a panel edge is
+// clipped. Which carriers sit near an edge depends on how the header wraps and how many chips
+// the roster has, so it is measured rather than selected by nth-child. 131 = half the bubble's
+// own max width; erring towards anchoring is harmless.
+function fitTips() {
+  document.querySelectorAll(".phead [data-tip], .fchead [data-tip], .pl [data-tip],"
+    + " .rotcap [data-tip], .sg [data-tip], .odds [data-tip], .bars [data-tip],"
+    + " .locks [data-tip], .frow [data-tip]").forEach(el => {
+    const panel = el.closest(".panel");
+    if (!panel) return;
+    const r = el.getBoundingClientRect(), p = panel.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const overR = (cx + 131) - p.right, overL = p.left - (cx - 131);
+    el.classList.toggle("tipR", overR > 0 && overR >= overL);
+    el.classList.toggle("tipL", overL > 0 && overL > overR);
+  });
+}
+// The banked-wins label sits at the right edge of the shaded zone and the playoff cut-off rule is
+// drawn at the 8th team's projected wins -- two independent numbers, so on some teams they land on
+// each other. Measured on MIN at 1280: the label's glyphs run to x=534 and the dashed rule sits at
+// x=530-532, straight through the "n" of "22 won". Which team it happens to is a property of the
+// standings, not of the layout, so it is measured after layout rather than special-cased: if the
+// rule crosses the text, the label goes and the number keeps its three other carriers (the zone's
+// own tooltip, the "Banked" lock in the caption, and the record in the hero).
+function fitDistLabel() {
+  document.querySelectorAll(".dist").forEach(dist => {
+    const lab = dist.querySelector(".dzlab"), cut = dist.querySelector(".dcut");
+    if (!lab) return;
+    lab.style.visibility = "";
+    if (!cut) return;
+    const r = document.createRange();
+    r.selectNodeContents(lab);
+    const a = r.getBoundingClientRect(), b = cut.getBoundingClientRect();
+    if (b.right >= a.left - 2 && b.left <= a.right + 2) lab.style.visibility = "hidden";
+  });
+}
+let fitTimer = null;
+window.addEventListener("resize", () => {
+  clearTimeout(fitTimer);
+  fitTimer = setTimeout(() => { fitStackLabels(); fitDistLabel(); fitTips(); }, 120);
+});
+
+/* ---- sticky mini header + wiring --------------------------------------- */
+function mountMini(t, tri, strF) {
+  const mount = document.getElementById("minimount");
+  if (!mount) return;
+  mount.innerHTML = '<div class="minibar" id="minibar"><div class="mininner">'
+    + logoIMG(tri, 24, {})
+    + '<span class="ab">' + esc(tri) + "</span>"
+    + '<span class="mstat"><i>Proj</i><b>' + num(t.proj_wins, 1) + "–"
+      + num(t.proj_losses, 1) + "</b></span>"
+    + '<span class="mstat"><i>Strength</i><b class="' + strF.cls + '">' + strF.txt + "</b></span>"
+    + '<span class="mstat"><i>Title</i><b>' + pcOdds(t.title_prob) + "</b></span>"
+    + '<span class="minispace"></span>' + switcherHTML() + "</div></div>";
+  const bar = document.getElementById("minibar"), foot = document.getElementById("herofoot");
+  if (!bar || !foot || !window.IntersectionObserver) return;
+  new IntersectionObserver(es => {
+    es.forEach(e => bar.classList.toggle("on",
+      !e.isIntersecting && e.boundingClientRect.top < 0));
+  }, { rootMargin: "-56px 0px 0px 0px", threshold: 0 }).observe(foot);
+}
+function wireSwitchers() {
+  document.querySelectorAll(".switch .navb").forEach(b =>
+    b.addEventListener("click", () => goTeam(b.getAttribute("data-go"))));
+  document.querySelectorAll(".switch select").forEach(s =>
+    s.addEventListener("change", () => goTeam(s.value)));
+}
+// Left / right step the projected standings the same way the arrows do. Skipped whenever a
+// control is focused (a focused <select> uses the same keys for its own options) or a modifier
+// is held, so browser and OS shortcuts still work.
+document.addEventListener("keydown", e => {
+  if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+  if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+  const tag = e.target && e.target.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT"
+    || (e.target && e.target.isContentEditable)) return;
+  if (!TRI || !ORDER.length) return;
+  const i = ORDER.indexOf(TRI);
+  if (i < 0) return;
+  e.preventDefault();
+  goTeam(ORDER[(i + (e.key === "ArrowRight" ? 1 : -1) + ORDER.length) % ORDER.length]);
+});
+// Every --team-* value is solved against the CURRENT theme's surfaces, so the theme toggle has
+// to re-solve them — otherwise a dark-theme hex stays on a white page and the contrast
+// guarantee it was chosen for no longer holds. The rail and picker carry per-item colours, so
+// those are re-set too.
+new MutationObserver(retheme)
+  .observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+</script>
+</body></html>

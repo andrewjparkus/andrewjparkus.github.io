@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tables · WNBA Daily RAPM</title>
+<link rel="stylesheet" href="site.css">
+<link rel="icon" href="favicon.svg"><link rel="manifest" href="manifest.webmanifest">
+<style>
+  /* ===== filter bar =======================================================
+     Table picker, rating picker and search used to be three controls on three
+     separate lines with nothing tying them together. They are one filter bar:
+     one bordered surface, one set of label+control lockups inside it. It still
+     wraps to two lines under ~1000px — but it wraps as ONE object. */
+  .filters{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-3) var(--sp-4);
+    border:1px solid var(--line);background:var(--panel);border-radius:var(--r-2);
+    padding:var(--sp-3) var(--sp-4);margin:var(--sp-5) 0 var(--sp-3)}
+  /* label sits ADJACENT to its control, never justified apart from it (house lockup rule) */
+  .fld{display:flex;align-items:center;gap:var(--sp-2);min-width:0}
+  .fld > .seglab{flex:0 0 auto;margin:0}
+  /* min-width:0 is load-bearing: a flex item's automatic minimum size is its
+     CONTENT width, so without this the five-way table picker refuses to shrink
+     and pushes the whole PAGE into horizontal scroll at 390px — the .seg's own
+     overflow-x:auto never gets a chance to fire. */
+  .fld .seg{min-width:0}
+  .findbox{margin-left:auto;display:flex;align-items:center;gap:var(--sp-2);min-width:0}
+  .findbox input{font:inherit;font-size:var(--fs-1);background:var(--panel-2);
+    border:1px solid var(--line);color:var(--text);outline:none;padding:6px 10px;
+    border-radius:var(--r-1);width:184px;min-width:110px}
+  .findbox input:focus{border-color:var(--accent)}
+  /* The draft class picker is a native <select> on purpose: ten classes is too many for a sixth
+     segmented control — the five-way table picker already has to be told it may shrink or it
+     pushes the page sideways (see .fld .seg above) — and the platform control is keyboard- and
+     screen-reader-complete for free. Same surface tokens as the search input, so the two read as
+     one bar; the only page-specific bytes are colours, and every one is a token, so both themes
+     follow without an override. */
+  .filters select{font:inherit;font-size:var(--fs-1);background:var(--panel-2);
+    border:1px solid var(--line);color:var(--text);padding:6px 8px;
+    border-radius:var(--r-1);cursor:pointer}
+  .filters select:hover{border-color:var(--accent)}
+  .filters select:focus{border-color:var(--accent);outline:none}
+  .findbox .hits{font-size:var(--fs-1);color:var(--muted);font-variant-numeric:tabular-nums;
+    white-space:nowrap}
+  /* the data stamp belongs with the controls, not stacked as a third grey line under them */
+  .filters .asof{font-size:var(--fs-1);color:var(--muted);white-space:nowrap;margin-left:auto}
+  /* These labels and captions step DOWN by size, not by fading out. --muted re-measured after the
+     2026-07-27 palette lift: 6.95:1 dark / 7.36:1 light on --panel. (--faint now clears the text
+     floor too — 5.06 / 5.52 — but the label is subordinate to its control, not to the caption
+     under it, so it stays on the same grey as the rest of the chrome.) */
+  .filters .seglab{color:var(--muted)}
+
+  /* ===== captions ========================================================= */
+  .notes{margin:0 2px var(--sp-3);max-width:840px}
+  .notes p{margin:0;font-size:var(--fs-1);color:var(--muted);line-height:1.55}
+  .notes p + p{margin-top:3px}
+
+  /* ===== table ============================================================
+     Frozen-column widths as tokens so the wide (draft) variant and the phone
+     variant are one-line overrides instead of duplicated rules. --pnw is a
+     PREFERRED width, not a clamp: a name longer than it widens the column
+     rather than being truncated. */
+  .tablebox{--rkw:46px;--pnw:198px;--edge:rgba(0,0,0,.8)}
+  .tablebox.wide{--pnw:250px}
+  :root[data-theme=light] .tablebox{--edge:rgba(16,32,56,.22)}
+
+  /* The header only LOOKED sticky: .scroll's overflow-x:auto makes .scroll the
+     sticky scrollport in BOTH axes, and it has no height limit, so the thead
+     scrolled away after 14 of 500 rows. Above 1024px the table fits the 1040px
+     column, so the scroll box is not needed and the page becomes the scrollport
+     — which is what makes the header actually stick. fitScroll() puts the scroll
+     box back if a table ever outgrows the column, so the page can never scroll
+     sideways. Below 1024px the numeric block still scrolls inside its box, and
+     the KNOWN CEILING is that the header stops sticking there: the alternative
+     is a nested vertical scroller on touch, which is worse. The frozen name
+     column still anchors the row, which is the bigger of the two wins. */
+  @media(min-width:1024px){
+    .scroll{overflow-x:visible}
+    /* the PAGE is now the scroll container, so park the header under the 53px nav */
+    .scroll:not(.overflowing) #otable thead tr.ghead th{top:53px}
+    .scroll:not(.overflowing) #otable thead tr.chead th{top:77px}
+  }
+  .scroll.overflowing{overflow-x:auto}
+
+  /* Everything below is scoped to #otable on purpose: site.css owns table.tbl at
+     (0,2,2), so a plain .tablebox td rule silently loses to it. The id wins once
+     and the overrides stay readable. */
+  /* The header's own rules are inset shadows, not borders. In a border-collapse:collapse
+     table a collapsed border is painted with the TABLE, not with the cell, so it stays
+     behind when the row sticks — leaving a 1px transparent seam that scrolling rows
+     bleed their glyph tops through. A shadow travels with the cell. */
+  #otable thead th{z-index:3;border-bottom:none;box-shadow:inset 0 -1px 0 var(--line)}
+  /* Two-level header. These offsets are for the case where .scroll IS the scroll container
+     (narrow, or the fallback below): the header sticks to the top of the BOX, and a
+     nav-height offset here would shove it DOWN over the first rows rather than hold it up.
+     The wide-screen rule above swaps in the page-nav offsets. */
+  #otable thead tr.ghead th{top:0;height:24px;padding:2px 8px;font-size:var(--fs-1);
+    font-weight:600;text-align:left;background:var(--panel-2);box-shadow:none}
+  #otable thead tr.chead th{top:24px}
+  /* a rule under the spanner is the group boundary made visible — the offense /
+     defense split existed only as a hairline before and did not register */
+  #otable thead tr.ghead th.g{color:var(--muted);box-shadow:inset 0 -1px 0 var(--line)}
+  /* header ? tooltips live in the sticky thead; the shared tooltip renders
+     upward and gets clipped — flip header tips DOWN */
+  .tablebox th .help[data-tip]:hover::after{bottom:auto;top:calc(100% + 6px)}
+  .tablebox th .help[data-tip]:hover::before{bottom:auto;top:calc(100% + 1px);
+    border-top-color:transparent;border-bottom-color:var(--line)}
+
+  /* frozen identity columns: nine numbers wide, a reader loses the row without them */
+  #otable th.rk,#otable td.rank{position:sticky;left:0;width:var(--rkw);min-width:var(--rkw);
+    text-align:right;background:var(--panel)}
+  #otable th.pnh,#otable td.pn{position:sticky;left:var(--rkw);width:var(--pnw);
+    background:var(--panel);box-shadow:inset -1px 0 0 var(--line)}
+  /* Only when the box can actually scroll does anything pass under the frozen column — and
+     then the edge has to be unmistakable, because a half-covered "−0.72" reads as "0.72".
+     A whisper-weight rule is not enough for that, so the edge steps up to --zero (measured from
+     rendered pixels after the 2026-07-27 palette lift: 5.48:1 dark / 6.02:1 light on the row,
+     4.98:1 / 5.01:1 hovered) and gains a short shadow. No scroll, no edge, never decoration. */
+  .scroll.overflowing #otable th.pnh,.scroll.overflowing #otable td.pn{
+    box-shadow:inset -1px 0 0 var(--zero), 8px 0 8px -6px var(--edge)}
+  #otable thead th.rk,#otable thead th.pnh{background:var(--panel-2);z-index:4}
+  #otable tbody td.rank,#otable tbody td.pn{z-index:1}
+  #otable tbody tr:hover>td.rank,#otable tbody tr:hover>td.pn{background:var(--panel-3)}
+
+  /* rank: the head of the board reads as the head of the board. Both steps clear the 4.5:1 text
+     floor (re-measured 2026-07-27: 6.95:1 and 15.81:1 dark) — the top ten are separated by weight
+     and ink, not by pushing everything below them under the contrast floor. */
+  #otable td.rank{color:var(--muted);font-family:var(--font-mono);font-size:var(--fs-1)}
+  #otable td.rank.top{color:var(--text);font-weight:600}
+  /* every tenth row gets the full-strength rule — a scanning grid, not decoration */
+  #otable tbody tr.dec>td{border-bottom-color:var(--line)}
+  #otable td.pn{font-weight:600}
+  #otable td.pn .sub2{color:var(--muted);font-size:var(--fs-1);font-weight:400;margin-left:7px}
+  /* The 95% band rides with the Net it qualifies: one step down the type scale, --muted, normal
+     weight. It is a qualifier on that number, not a second number, and it is the whole reason the
+     retired Draft page existed — see the band note under the filter bar. */
+  #otable td .se{font-size:var(--fs-1);font-weight:400;color:var(--muted);margin-left:5px}
+
+  /* subtotals (ORAPM / DRAPM) outrank their three factors by weight, not colour */
+  #otable td.tot{font-weight:600}
+  /* The sorted column's header is the only one at full ink — every other label is --muted, so
+     it reads as the sorted one at a glance. Accent was the first try: on the thead it now
+     measures 4.97:1 in light (it was under the text floor before the 2026-07-27 lift), but full
+     ink at 15.95:1 is still the stronger signal. The accent is spent on the direction arrow
+     instead, where it is a mark and not a word (8.53:1 dark / 4.97:1 light). */
+  #otable thead th.sorted{color:var(--text);font-weight:700}
+  #otable thead th .arr{font-size:9px;margin-left:3px;color:var(--accent)}
+  /* A column this basis does not carry is not a control: it never takes .sortable, so it gets
+     no pointer, no hover-to-full-ink and no click. cursor:help matches the em-dash cells below
+     it, which carry the same explanation. */
+  #otable thead th.dead{cursor:help}
+  /* a cell the active basis structurally does not carry (ORAPM/DRAPM in box mode)
+     — an em-dash, deliberately heavier than fmt()'s en-dash for an ordinary
+     missing value */
+  #otable td.na{color:var(--muted);cursor:help}
+  .nohit{color:var(--muted);font-size:var(--fs-2);padding:26px 10px;text-align:center}
+
+  @media(max-width:560px){
+    .filters{padding:var(--sp-3);gap:var(--sp-3)}
+    .filters .asof{margin-left:0}
+    .findbox{margin-left:0;width:100%}
+    .findbox input{flex:1 1 auto;width:auto}
+    .tablebox{--rkw:36px;--pnw:140px}
+    .tablebox.wide{--pnw:160px}
+    #otable th,#otable td{padding:6px 7px}
+  }
+</style></head>
+<body>
+<nav id="topnav" data-active="tables"></nav>
+<script src="charts.js"></script>
+<script src="nav.js"></script>
+<div class="wrap">
+  <h1>RAPM <b>tables</b></h1>
+  <p class="sub">Six-factor RAPM leaderboards on the WNBA's own scale. There is no translation to the NBA scale &mdash; see the Model page.</p>
+
+  <!-- ===================== OVERALL ===================== -->
+  <section id="view-overall">
+    <div class="filters">
+      <!-- Order is a wrapping decision, not a reading one: the bar is too wide for one line at
+           1040px, and this order makes it break into two BALANCED rows (picker + search, then
+           rating + stamp) instead of one full row and one nearly empty one. -->
+      <div class="fld"><span class="seglab">Table</span><div class="seg" id="tableseg"></div></div>
+      <!-- Draft only: ten classes in ONE table, picked with the platform control. Hidden (not
+           disabled) on the four tables that carry no `classes` list — a permanently dead picker
+           is worse than no picker. -->
+      <div class="fld" id="classfld" style="display:none"><span class="seglab">Class</span>
+        <select id="classsel" aria-label="Draft class"></select>
+      </div>
+      <div class="findbox">
+        <input id="find" type="text" placeholder="Search this table…" autocomplete="off">
+        <span class="hits" id="hits"></span>
+      </div>
+      <!-- Same .seg classes and the same localStorage key ('wrapm_mode') as the Explorer's
+           #modeseg, so a mode chosen on one page is already selected on the other — including
+           the pin ('wrapm_mode_pinned'), see setMode. Latent is a real column here: the exporter
+           joins the fused cross-league state per player-season and aliases the rest to the prior
+           board exactly as the Explorer does, and says how many rows that touched. -->
+      <div class="fld"><span class="seglab">Rating</span>
+        <div class="seg" id="modeseg">
+          <button data-mode="pure" type="button">Pure RAPM</button>
+          <button data-mode="prior" type="button" title="The same daily solve, shrunk toward a WNBA box-score prior instead of toward zero.">Prior-informed</button>
+          <button data-mode="box" type="button">Box prior</button>
+        </div>
+      </div>
+      <span class="asof" id="asof"></span>
+    </div>
+
+    <div class="notes">
+      <p id="tcap"></p>
+      <p id="modehint"></p>
+    </div>
+
+    <div class="scroll"><div class="tablebox"><table class="tbl" id="otable"></table></div></div>
+  </section>
+
+  <div class="empty" id="empty">Loading tables…</div>
+
+  <!-- "measured, never projected" is the keeper: these boards are the season that happened. The
+       draft clause stops a class board being read as a draft forecast — and it says PRE-DRAFT
+       season, not 2025-26, now that the Draft table holds ten classes. -->
+  <p class="foot">Measured, never projected. Draft picks are ranked by their pre-draft college / G-League season, not by draft slot.</p>
+</div>
+
+<script>
+"use strict";
+const TIP={
+  net:"Net RAPM = ORAPM (oTS+oTOV+oSC) + DRAPM (dTS+dTOV+dSC), points/100 on the WNBA's own scale. The ± is the 95% band (1.96 standard errors).",
+  ORAPM:"Offensive RAPM = oTS + oTOV + oSC, points/100 on the WNBA's own scale.",
+  DRAPM:"Defensive RAPM = dTS + dTOV + dSC, points/100 on the WNBA's own scale.",
+  oTS:"Offensive true-shooting RAPM — points/100 from shot-making efficiency, WNBA scale.",
+  oTOV:"Offensive turnover RAPM — ball-security value (fewer turnovers = positive).",
+  oSC:"Offensive second-chance RAPM — value from offensive rebounding / extra possessions.",
+  dTS:"Defensive true-shooting RAPM — suppressing opponent shot efficiency.",
+  dTOV:"Defensive turnover RAPM — forcing turnovers / ball pressure.",
+  dSC:"Defensive second-chance RAPM — limiting opponent offensive rebounds.",
+  // The column means two different things on the two tables that carry it, so it says both.
+  school:"The player's most recent WNBA franchise in that season."
+};
+
+/* ---- formatting ---------------------------------------------------------- */
+function signCls(n){ if(n==null||isNaN(n)) return "zero"; if(n>=0.05) return "pos"; if(n<=-0.05) return "neg"; return "zero"; }
+function fmt(v,dec){ dec=(dec==null)?2:dec;
+  if(v==null||isNaN(v)) return "–";
+  const n=Number(v); return (n>=0?"+":"−")+Math.abs(n).toFixed(dec); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+/* =========================================================================
+   STATE
+   ========================================================================= */
+let TBL=null;             // table.json
+let tableKey=null;        // current overall table key
+let query='';             // overall search
+let sortKey=null;         // overall sort column (null = file order by rank)
+let sortDir=-1;           // -1 desc, +1 asc
+let POOL=0;               // rows this mode ranks into the cap = the search hit count's denominator
+let POOLROWS=[];          // …those same rows, BEFORE the search filter (the latent note's basis)
+let dclass=null;          // selected draft class; null = every class pooled ("All classes")
+const Z95=1.959964;       // 95% band = Z95 x se_net, same constant the retired Draft page used
+
+/* =========================================================================
+   RATING MODE  (mirrors the Explorer's #modeseg; shares localStorage 'wrapm_mode')
+   ========================================================================= */
+const MODELAB={pure:'Pure RAPM', prior:'Prior-informed', box:'Box prior', latent:'Latent'};
+// One line per mode. The box line keeps its "reads cooler" clause: without it a reader compares a
+// box number against a board number and concludes the player got worse. Prior-informed's line stays
+// EMPTY even though it is the default again (owner 2026-07-28 evening): the owner deleted that
+// sentence by name this morning, and being the default is not a reason to reinstate copy they cut.
+// It is also the basis every other line is described against, so it needs no line of its own here.
+const MODEHINT={
+  pure:'The prior-free six-factor solve. The default here.',
+  prior:'The same solve, shrunk toward a WNBA box-score prior instead of toward zero — box-only, because there is no WNBA equivalent of the commercial metric the men\'s version also uses. Better at predicting game margins than Pure, but not centred on zero, and thin-exposure players sit lower on it.',
+  box:'A box-score prediction of the same six factors, fit on WNBA box stats only, at its own scale — it reads cooler than the board, especially on defense.'};
+// Rendered only when the exporter STAMPED the equality (build_table_site.py derives it by
+// comparing every emitted cell), so this sentence cannot outlive the fact it describes.
+const SAMENOTE='Same numbers as Prior-informed here — the prior only touches NBA rows.';
+// Says what is ON SCREEN: those cells render td.na's em-dash, deliberately heavier than fmt()'s
+// en-dash so it reads as "not carried", not as an ordinary missing value. "Blank" was wrong.
+const SPLITNOTE='ORAPM / DRAPM show “—”: this basis publishes the six factors and net, not the split.';
+// THE ALIAS, SAID OUT LOUD. Latent only exists for a player who actually changed leagues; every
+// other row is that player's prior-informed number copied wholesale (the exporter stamps each one
+// m.latent.alias=1). Same fact the Explorer states per player — "never changed leagues, so the
+// curve is just the prior-informed board" — restated as a count, because a table is many players.
+// Counted off the rows ON SCREEN, not off the exporter's table-wide `latent_real`: that count's
+// denominator is every emitted row, while the board on screen is this mode's top-cap slice and,
+// on Draft, one class of ten. Measured 2026-07-28: exporter says 509/539 for NBA, the top-500 the
+// reader is actually looking at is 471/500.
+// The band clause is the second half of the same disclosure — see the se suppression in
+// renderOverall(): under latent, a ± means the row is the prior board, and its absence means the
+// row is a fused state whose SE is not a confidence band.
+const LATENTNOTE=(real,n)=>
+  real===n ? 'Every row here is a real cross-league fusion, so none carries a ±: a fused state’s band is a smoothing SE, not a confidence interval.'
+  : real===0 ? 'No row here ever changed leagues, so this whole board is the prior-informed one.'
+  : (n-real)+' of these '+n+' players never changed leagues, so those rows are just the prior-informed board — and the only ones with a ±, because a fused state’s band is a smoothing SE, not a confidence interval.';
+// "Top N by the selected rating." was DELETED 2026-07-28 (owner) along with the College table's
+// description — it was the second sentence of the same quoted paragraph. The machinery it described
+// is untouched and still load-bearing: the board is capped, each mode ranks a DIFFERENT set into
+// that cap, so table.json ships the union of every mode's top-cap and the page slices per mode
+// (without which a player who is top-500 in box but 700th in prior would simply not exist here).
+// Only the sentence is gone; `tb.cap` is still what sortedRows/rank-slicing read.
+
+// MODE is the user's stored preference and is NEVER overwritten by a fallback: a table that
+// cannot serve it falls back for display only, so returning to the Explorer still finds the
+// original choice. DEFAULT: prior, matching the Explorer's modePinned() / MODE pair — and read
+// the same way it reads it. The two pages MUST spell the same default: they share one key, so a
+// disagreement here shows up as the toggle changing under the visitor when they navigate.
+// 'wrapm_mode' is the last mode SHOWN on either page, so it cannot tell "the visitor chose this"
+// from "we defaulted to this"; only 'wrapm_mode_pinned' can, and it is written by a click and by
+// nothing else. So: pinned -> their pick, unpinned -> today's default. The one-shot migration that
+// clears stale pins is NOT duplicated here — it lives in the rapm_dflt_v5 block at the top of
+// nav.js, which every page loads before its own script.
+let MODE=(localStorage.getItem('wrapm_mode_pinned')==='1' && localStorage.getItem('wrapm_mode'))||'pure';
+// A table.json predating the toggle has no `modes`/`cap`/`m` — treat it as prior-only rather
+// than greying out every button, so this page still renders if it is deployed ahead of a
+// build_table_site.py run (deploy_site.sh:356 ships them together, but order is not enforced).
+function modeOK(m){ const tb=curTable(); return !!(tb&&(tb.modes||['prior']).indexOf(m)>=0); }
+function activeMode(){ return modeOK(MODE)?MODE:'prior'; }
+function vals(r,m){ return (r&&r.m&&r.m[m])||{}; }   // WNBA: top level is PURE, so EVERY mode reads its own r.m block
+
+function setMode(m){
+  if(!modeOK(m))return;                       // button is disabled anyway
+  MODE=m; localStorage.setItem('wrapm_mode',m);
+  // PIN IT. Both keys, same as the Explorer's setMode (index.html:571-572). Writing only
+  // 'wrapm_mode' made one click here look like a default to the Explorer, which re-defaults an
+  // unpinned visitor on every player — so picking Box on Tables silently rewrote the Explorer's
+  // mode and then lost it again. A click is a choice on either page or on neither.
+  localStorage.setItem('wrapm_mode_pinned','1');
+  syncMode(); renderOverall();
+}
+function syncMode(){
+  const am=activeMode();
+  document.querySelectorAll('#modeseg button').forEach(b=>{
+    const ok=modeOK(b.dataset.mode);
+    b.disabled=!ok; b.classList.toggle('on', ok&&b.dataset.mode===am);
+  });
+  // .seg is overflow-x:auto, and the fourth button pushed the rating picker past a phone's width:
+  // measured at a 386px viewport the seg scrolls 71px, and "Latent" — now the DEFAULT — starts
+  // off its right edge, so the control opened looking like nothing was selected. Scroll the seg,
+  // never scrollIntoView, which would also move the page.
+  // (offsetLeft is no use here: .seg is not positioned, so a button's offsetLeft is measured
+  // against the PAGE, not against the scrolling seg. Rects are, and the browser clamps.)
+  const seg=document.getElementById('modeseg'), on=seg.querySelector('button.on');
+  if(on && seg.scrollWidth>seg.clientWidth)
+    seg.scrollLeft+=on.getBoundingClientRect().left-seg.getBoundingClientRect().left-8;
+  // The hint itself is written by renderOverall(): the latent sentence counts the rows ON SCREEN,
+  // which only sortedRows() knows. Every path that calls syncMode() calls renderOverall() next.
+}
+// Does the ACTIVE basis publish the ORAPM / DRAPM split at all? meta.split is derived per mode by
+// the exporter from its SOURCES, before the latent alias runs — which is the only way to get this
+// right now, because an aliased latent row carries the PRIOR's split verbatim. meta.box_split is
+// the older file-wide boolean, kept as the fallback for a table.json that predates meta.split.
+function splitOK(m){
+  const M=TBL&&TBL.meta; if(!M) return true;
+  return M.split ? M.split[m]!==false : !(m==='box'&&M.box_split===false);
+}
+// The mode's own paragraph. Assembled as sentences and joined, never concatenated with leading
+// spaces: Prior-informed's line is now empty, and " Same numbers as…" would have opened the
+// paragraph with a space.
+function modeNote(){
+  const am=activeMode(), tb=curTable(), out=[MODEHINT[am]||''];
+  // same_as_prior can name latent too (a 100%-aliased table trips it). Suppress it there: the
+  // reason would be wrong — those rows are not equal because the prior skipped them, they are
+  // equal because they ARE the prior. The latent sentence below says exactly that.
+  if(tb&&am!=='latent'&&(tb.same_as_prior||[]).indexOf(am)>=0) out.push(SAMENOTE);
+  if(!splitOK(am)) out.push(SPLITNOTE);
+  if(am==='latent'&&POOLROWS.length){
+    const al=POOLROWS.filter(r=>((r.m&&r.m.latent)||{}).alias).length;
+    out.push(LATENTNOTE(POOLROWS.length-al, POOLROWS.length));
+  }
+  return out.filter(Boolean).join(' ');
+  // The per-mode scale sentence (meta.scales) used to be pasted into the subhead. It is exporter
+  // copy written for us — "raw mu_box + calibration offset" — and it duplicated the mode hint
+  // directly below it. The hint is now the one place a mode explains itself, box caveat included,
+  // so the subhead stays static. meta.scales is still emitted; nothing on this page reads it.
+}
+document.querySelectorAll('#modeseg button').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
+
+/* =========================================================================
+   SHARED: segmented control builder
+   ========================================================================= */
+function buildSeg(id, items, getLabel, cur, onpick){
+  const seg=document.getElementById(id); seg.innerHTML='';
+  items.forEach(it=>{
+    const btn=document.createElement('button'); btn.type='button';
+    btn.textContent=getLabel(it);
+    btn.classList.toggle('on', it===cur);
+    btn.onclick=()=>onpick(it);
+    seg.appendChild(btn);
+  });
+}
+
+/* =========================================================================
+   OVERALL view
+   ========================================================================= */
+// The exporter packs the row's identity line into ONE field, r.sub, and it packs two different
+// things into it: the college board ships a bare school ("Gonzaga"), the draft board ships
+// "#45 · Houston" — or just "#45" for the 12 of 486 picks bbref has no school for. One split
+// serves both, so the School COLUMN and the "#pick" that belongs beside the name are derived,
+// not declared per table. (Verified against this feed: no college sub contains the separator or
+// a leading '#', and no draft sub contains two separators.)
+function subparts(s){ s=String(s||''); const i=s.indexOf(' · ');
+  if(i>=0) return [s.slice(0,i), s.slice(i+3)];
+  return s.charAt(0)==='#' ? [s,''] : ['',s]; }
+const pickOf=r=>subparts(r.sub)[0];
+const schoolOf=r=>subparts(r.sub)[1];
+
+// grp marks the first column of a group — it carries the group's boundary rule and, in the
+// header, its spanner label. tot marks the group SUBTOTAL, which outranks its three factors —
+// and ORAPM/DRAPM are exactly the two cells meta.split is about. text marks a column that holds
+// words: it is mode-independent, sorts by collation, and is never run through fmt()/signCls().
+const OCOLS=[
+  {key:'school',label:'Team',grp:false, text:true},
+  {key:'net',   label:'Net',   grp:false, net:true},
+  {key:'ORAPM', label:'ORAPM', grp:true, tot:true, span:'Offense'},
+  {key:'oTS',   label:'oTS',   grp:false},
+  {key:'oTOV',  label:'oTOV',  grp:false},
+  {key:'oSC',   label:'oSC',   grp:false},
+  {key:'DRAPM', label:'DRAPM', grp:true, tot:true, span:'Defense'},
+  {key:'dTS',   label:'dTS',   grp:false},
+  {key:'dTOV',  label:'dTOV',  grp:false},
+  {key:'dSC',   label:'dSC',   grp:false}
+];
+// Each category tab is inherently sorted by its headline metric (everything -> Net).
+// Selecting a tab sets sortKey to that column so BOTH the sort and the bold/emphasis
+// land on the column the user came to look at.
+const DEFSORT={nba:'net', rookies:'net', draft:'net', gleague:'net', college:'net'};
+
+function curTable(){ return TBL?TBL.tables.find(t=>t.key===tableKey):null; }   // null-safe: the mode
+// buttons exist before table.json resolves, and modeOK()/syncMode() run off them.
+
+// The columns THIS table can fill. Derived: School is dropped where no row carries one (NBA,
+// Rookies, G-League ship r.sub=""). A whole column of em-dashes is not a disclosure, it is noise —
+// the MISS / "—" machinery is for a column the BASIS drops, not one the table never had.
+function cols(){ const tb=curTable();
+  const sch=!!(tb&&tb.rows.some(r=>schoolOf(r)));
+  return OCOLS.filter(c=>!c.text||sch); }
+const colOf=k=>OCOLS.find(c=>c.key===k);
+// ONE cell accessor. A text column is a property of the ROW (the school does not change when the
+// rating does); everything else is read out of the active mode's own dict.
+const cellVal=(c,r,m)=>c.text?schoolOf(r):vals(r,m)[c.key];
+// The selected draft class, or null when this table has no class dimension or "All classes" is
+// picked. Both mean the same thing downstream: no class filter, pooled `rank`.
+function curClass(){ const tb=curTable(); return (tb&&tb.classes&&dclass!=null)?dclass:null; }
+// Within one class a row's own rank is `crank`; pooled over all ten it is `rank`. The exporter
+// derives crank per (class, mode) as a contiguous 1..N, so a filtered board never shows a hole.
+const rk=(r,m,cl)=>{ const V=vals(r,m); return (cl!=null&&V.crank!=null)?V.crank:V.rank; };
+
+function sortedRows(){
+  const tb=curTable(); if(!tb) return [];
+  const m=activeMode(), cap=tb.cap, cl=curClass();
+  // Slice to the ACTIVE mode's own top-cap. tb.rows is the union of every mode's top-cap, so a
+  // row is shown iff this mode ranks it — that is what makes switching mode an honest re-rank
+  // instead of a re-sort inside a set some other metric chose. The cap is sliced on the POOLED
+  // rank on purpose (that is what the exporter's union machinery capped), and the class filter
+  // then applies to what survived — never the other way round.
+  let rows=tb.rows.filter(r=>{ const k=vals(r,m).rank; return k!=null && (cap==null||k<=cap); });
+  if(cl!=null) rows=rows.filter(r=>r.class===cl);
+  POOL=rows.length;                       // denominator for the search hit count
+  POOLROWS=rows;                          // the mode's whole board: what the latent note counts
+  if(query){
+    const q=query.toLowerCase();
+    rows=rows.filter(r=>String(r.name||'').toLowerCase().includes(q)
+                     || String(r.sub||'').toLowerCase().includes(q));
+  }
+  const sk=activeSort(), sc=sk&&colOf(sk);
+  if(sk){
+    rows.sort((a,b)=>{
+      const av=cellVal(sc,a,m), bv=cellVal(sc,b,m);
+      // isNaN() alone cannot do this any more: isNaN('Gonzaga') is true, so a text column would
+      // have counted every school as a missing value and sorted the board into DOM order.
+      const dead=v=>v==null||v===''||(!sc.text&&isNaN(v));
+      const an=dead(av), bn=dead(bv);
+      if(an&&bn) return 0; if(an) return 1; if(bn) return -1;   // nulls last
+      // Ties break on the mode's own rank. The feed rounds net to 3dp, so real ties exist (draft,
+      // box basis: Ayton and Morant are both −0.174) and the stable sort left them in FILE order —
+      // which under a class filter is the prior board's order, so the # column read 40, 42, 41, 43
+      // under a header claiming a Net sort. The rank is the ordering the exporter already chose.
+      return (sc.text ? String(av).localeCompare(String(bv)) : (av-bv))*sortDir
+             || rk(a,m,cl)-rk(b,m,cl);
+    });
+  }else{
+    rows.sort((a,b)=>rk(a,m,cl)-rk(b,m,cl));   // this mode's own ranking, inside this class
+  }
+  return rows;
+}
+
+// Which columns the ACTIVE basis structurally does not carry — derived, not declared: a column
+// is "absent" only if every row in this table is null for it under this mode. So if the box basis
+// ever starts publishing ORAPM/DRAPM, the em-dashes become numbers with no code change here.
+let MISS={};
+function computeMiss(){
+  const tb=curTable(), m=activeMode(); MISS={};
+  if(!tb) return;
+  // The all-null test cannot see the O/D split any more: latent's ALIASED rows carry the prior's
+  // ORAPM/DRAPM verbatim, so on College (499 of the 500 on screen are aliased) the test would say
+  // "carried" and print a prior split under a latent header. Ask the basis — meta.split — and fall
+  // back to the row test for every other column, which keeps the property above intact.
+  const nosplit=!splitOK(m);
+  cols().forEach(c=>{
+    MISS[c.key]=(c.tot&&nosplit) ||
+      tb.rows.every(r=>{ const v=cellVal(c,r,m); return v==null||v===''; });
+  });
+}
+// A column the basis does not carry cannot sort anything: its comparator returned 0 for every
+// pair, so the rows fell back to DOM order and the # column read 1, 2, 5, 4, 6, 48 under a header
+// wearing the full sorted treatment. sortKey itself is KEPT — same rule as MODE — so switching
+// back to a basis that carries the column restores the sort the reader actually chose.
+function activeSort(){ return (sortKey && !MISS[sortKey]) ? sortKey : null; }
+
+// The band paragraph under the filter bar — a median-band sentence plus a 1-D Helly overlap test
+// that said the ordering might be a display order rather than a ranking — was removed whole
+// (owner 2026-07-28), and bandNote() went with it rather than being left computing for nobody.
+// WHAT SURVIVES: the per-row ± beside every Net, which is the same fact on the row it qualifies.
+// WHAT DOES NOT: this was the page's only statement that overlapping bands make the ORDER soft.
+// If that claim is ever wanted back, it is a paragraph over POOLROWS, not a per-row change.
+
+function renderOverall(){
+  const tb=curTable();
+  const cap=document.getElementById('tcap');
+  if(!tb){ cap.textContent=''; document.getElementById('otable').innerHTML=''; return; }
+  computeMiss();
+  // Just the table's own description now. The cap sentence that used to be appended here went with
+  // the College description the owner deleted; on College this leaves the caption empty, which is
+  // the intended end state, not a missing string.
+  cap.textContent=tb.sub||'';
+
+  const shown=sortedRows();   // full ranked list — static, no cap
+  const m=activeMode(), C=cols(), cl=curClass();
+  const skey=activeSort()||'net';
+  // After sortedRows(), never before: the latent sentence counts POOLROWS, the board on screen.
+  document.getElementById('modehint').textContent=modeNote();
+
+  document.getElementById('hits').textContent =
+    query ? (shown.length+' of '+POOL) : '';
+  // the draft board carries "#pick" beside the name and needs the wider frozen column; the school
+  // no longer rides there, it is a column of its own
+  const box=document.querySelector('.tablebox');
+  box.classList.toggle('wide', tb.rows.some(r=>pickOf(r)));
+
+  // header: group spanners over the columns they own, then the columns
+  let ghead='<tr class="ghead"><th class="rk"></th><th class="pnh"></th>';
+  let chead='<tr class="chead"><th class="rk">#</th><th class="l pnh">Player</th>';
+  let gskip=0;                 // columns already covered by the spanner that opened this group
+  C.forEach(c=>{
+    const active=(skey===c.key);
+    const arr=active?'<span class="arr">'+(sortDir<0?'▼':'▲')+'</span>':'';
+    const tip=TIP[c.key]?' <span class="help" data-tip="'+esc(TIP[c.key])+'">?</span>':'';
+    if(gskip>0) gskip--;                                        // inside a spanner
+    else if(c.span){ ghead+='<th class="g grp" colspan="4">'+c.span+'</th>'; gskip=3; }
+    else ghead+='<th></th>';                                    // Net and School stand alone
+    // A dead column takes neither .sortable nor a data-k, so it is never wired for click and
+    // never wears the sorted treatment — the em-dashes under it are the whole column.
+    const dead=MISS[c.key];
+    chead+='<th class="'+(dead?'dead':'sortable')+(c.grp?' grp':'')+(c.text?' l':'')+(active?' sorted':'')+'"'
+          +(dead?' title="Not carried on the '+esc(MODELAB[m])+' basis"':' data-k="'+c.key+'"')
+          +'>'+c.label+tip+arr+'</th>';
+  });
+  const head='<thead>'+ghead+'</tr>'+chead+'</tr></thead>';
+
+  // body
+  let body='';
+  if(!shown.length){
+    // DERIVED span: # + Player + whatever cols() decided this table carries. It was hard-coded to
+    // 11 and the School column made that wrong on exactly the two tables (College, Draft) where a
+    // search is most likely to miss.
+    body='<tr><td colspan="'+(2+C.length)+'"><div class="nohit">No players match “'+esc(query)+'”.</div></td></tr>';
+  }else{
+    for(let i=0;i<shown.length;i++){
+      const r=shown[i], V=vals(r,m);
+      // Name links to the player's Explorer profile. The exporter only emits r.pid for ids that
+      // exist in the deployed players.json, so a missing pid = no profile -> plain text, never a
+      // dead link (a bogus ?p= silently lands on the Explorer's Jokic default). Styling comes from
+      // the global site.css `a` rule, same as the team pages.
+      const nm=esc(r.name);
+      const pcell=r.pid?'<a href="index.html?p='+encodeURIComponent(r.pid)+'">'+nm+'</a>':nm;
+      // Emphasis follows POSITION in the list on screen, not the stored rank: re-sort by dTS and
+      // the ten names at the top are the ten best at dTS, which is what "the top of the board"
+      // means. The # column keeps showing the rating's own rank, which is the honest number.
+      const pk=pickOf(r);                    // draft: "#45" — the school is its own column now
+      const n=rk(r,m,cl);
+      const seOK=(m!=='latent')||!!((r.m&&r.m.latent)||{}).alias;   // see the ± comment below
+      body+='<tr'+(((i+1)%10===0)?' class="dec"':'')+'>'+
+        '<td class="rank'+(i<10?' top':'')+'">'+(n!=null?n:'')+'</td>'+
+        '<td class="l pn">'+pcell+
+          (pk?'<span class="sub2">'+esc(pk)+'</span>':'')+'</td>';
+      C.forEach(c=>{
+        const v=cellVal(c,r,m), act=(skey===c.key);
+        let cls=(act?'net ':(c.tot?'tot ':''))+(c.grp?'grp ':'')+(c.text?'l ':'');
+        // A column the active basis does not carry (ORAPM/DRAPM under box AND under latent)
+        // renders an em-dash, not a number: the split is absent from that basis, so there is
+        // nothing honest to print. Tested on MISS alone, not on `v==null` as well — an aliased
+        // latent row DOES carry a value there, and it is the prior's, not this basis's.
+        if(MISS[c.key]){
+          body+='<td class="'+cls+'na" title="Not carried on the '+MODELAB[m]+' basis">—</td>';
+        }else if(c.text){
+          body+='<td class="'+cls+'">'+esc(v||'')+'</td>';
+        }else{
+          // The band the feed already carries, on the number it belongs to, in the page's own
+          // register (two decimals). Only where the row actually has one — never a filled-in zero.
+          // …and never on a REAL latent row: that se_net is a Kalman smoothing SE, ~29x tighter
+          // than the true ability CI, which is why the Explorer suppresses the band there too
+          // (index.html:888-893). Printing it would put SGA at ±0.23 beside an aliased Jokic at
+          // ±3.23 in one column, under one heading, meaning two different things. An ALIASED row
+          // IS the prior row, so the prior's own band is correct and stays. Said in LATENTNOTE.
+          const se=(c.net && seOK && V.se_net!=null && !isNaN(V.se_net))
+            ? '<span class="se">±'+(Z95*V.se_net).toFixed(2)+'</span>' : '';
+          body+='<td class="'+cls+signCls(v)+'">'+fmt(v)+se+'</td>';
+        }
+      });
+      body+='</tr>';
+    }
+  }
+  document.getElementById('otable').innerHTML=head+'<tbody>'+body+'</tbody>';
+  fitScroll();
+
+  // wire sortable headers
+  document.querySelectorAll('#otable th.sortable').forEach(th=>{
+    th.onclick=()=>{
+      const k=th.getAttribute('data-k');
+      if(sortKey===k){ sortDir=-sortDir; }
+      // new column -> desc first for a number (best at the top), but A-Z first for a text column,
+      // where "biggest first" means nothing and Z-A is nobody's first guess
+      else { sortKey=k; sortDir=(colOf(k)||{}).text?1:-1; }
+      renderOverall();
+    };
+  });
+}
+
+// The wide-screen rule drops .scroll's overflow so the page becomes the sticky scrollport and the
+// header actually sticks. That is only safe while the table fits the column — if one ever does
+// not, put the scroll box back rather than letting the whole PAGE scroll sideways.
+function fitScroll(){
+  const sc=document.querySelector('.scroll'), t=document.getElementById('otable');
+  if(!sc||!t) return;
+  sc.classList.remove('overflowing');
+  if(t.offsetWidth > sc.clientWidth+1) sc.classList.add('overflowing');
+}
+// fitScroll reads GEOMETRY, so it has to run after layout. On a 'resize' listener it ran before
+// reflow and left .overflowing one resize behind in both directions: after 1280->800 the box
+// genuinely scrolled (measured client 754 vs scroll 891) while the frozen name column still wore its
+// no-scroll edge — exactly when numbers start sliding under it — and after 800->1280 the edge
+// stayed on with nothing to scroll. A ResizeObserver delivers the post-layout box instead.
+new ResizeObserver(fitScroll).observe(document.querySelector('.scroll'));
+
+/* =========================================================================
+   refresh
+   ========================================================================= */
+// Only the TABLE picker resets the class, and it resets it to the newest class the table carries.
+// Mode and sort deliberately do not: switching rating or re-sorting is a question about the SAME
+// list, and silently widening it back to ten classes under the reader is not an answer.
+function pickTable(k){
+  tableKey=k; sortKey=DEFSORT[k]||'net'; sortDir=-1;
+  query=''; document.getElementById('find').value='';
+  const t=curTable(); dclass=(t&&t.classes&&t.classes.length)?t.classes[0]:null;
+  refresh();
+}
+function buildClassSel(){
+  const tb=curTable(), fld=document.getElementById('classfld'), sel=document.getElementById('classsel');
+  const cs=(tb&&tb.classes)||null;
+  fld.style.display=cs?'':'none';        // '' = back to .fld's flex, not inline
+  if(!cs) return;
+  sel.innerHTML='<option value="">All classes</option>'+
+    cs.map(y=>'<option value="'+y+'">'+y+'</option>').join('');
+  sel.value=(dclass==null?'':String(dclass));
+}
+function refresh(){
+  const asof=document.getElementById('asof');
+  asof.textContent = TBL?('WNBA as of '+TBL.meta.as_of):'';
+  if(!TBL) return;
+  buildSeg('tableseg', TBL.tables.map(t=>t.key),
+    k=>(TBL.tables.find(t=>t.key===k)||{}).title||k, tableKey, pickTable);
+  buildClassSel();     // draft only; hidden everywhere else
+  syncMode();          // per-table mode availability (the hint is written by renderOverall)
+  renderOverall();
+}
+document.getElementById('classsel').addEventListener('change',e=>{
+  dclass=e.target.value===''?null:+e.target.value;
+  renderOverall();     // same table, same mode, same sort — only the class filter moved
+});
+
+/* live search-within (overall) */
+document.getElementById('find').addEventListener('input',e=>{
+  query=e.target.value.trim();
+  renderOverall();
+});
+
+/* =========================================================================
+   LOAD
+   ========================================================================= */
+fetch('table.json').then(r=>{ if(!r.ok) throw new Error('table.json '+r.status); return r.json(); })
+  .then(t=>{
+    TBL=t; tableKey=TBL.tables[0]&&TBL.tables[0].key; sortKey=DEFSORT[tableKey]||'net'; sortDir=-1;
+    const t0=curTable(); dclass=(t0&&t0.classes&&t0.classes.length)?t0.classes[0]:null;
+    document.getElementById('empty').style.display='none';
+    refresh();
+  })
+  .catch(()=>{
+    document.getElementById('empty').textContent="Couldn't load the tables.";
+  });
+</script>
+</body></html>

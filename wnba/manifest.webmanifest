@@ -1,0 +1,13 @@
+{
+  "name": "WNBA Daily RAPM",
+  "short_name": "WNBA RAPM",
+  "description": "Six-factor daily RAPM for WNBA players — every game-day, on the WNBA's own scale.",
+  "start_url": "index.html",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#080b11",
+  "theme_color": "#0a0e16",
+  "icons": [
+    { "src": "favicon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "any" }
+  ]
+}

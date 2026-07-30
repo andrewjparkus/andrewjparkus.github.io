@@ -1,0 +1,1709 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Explorer · WNBA Daily RAPM</title>
+<link rel="stylesheet" href="site.css">
+<link rel="icon" href="favicon.svg"><link rel="manifest" href="manifest.webmanifest">
+<style>
+  /* ── page-unique CSS only (tokens/nav/search/grid/cell/seg live in site.css) ── */
+  #player{display:none;margin-top:20px}
+  .phead{display:flex;align-items:baseline;gap:13px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:11px}
+  .pname{font-size:var(--fs-6);font-weight:700;letter-spacing:-.5px}
+  /* ── player card (headshot + name + age + per-game box line) — Explorer-only ── */
+  /* align-items:stretch, not center: the headshot spans the full height of the two-row body, so its
+     top edge is flush with the name and its bottom with the shooting line. Centering left it
+     floating against a body it no longer matched (owner 2026-07-26: "should be flush"). */
+  .pcard{display:none;gap:var(--sp-4);align-items:stretch;background:var(--panel);
+    border:1px solid var(--line);border-radius:var(--r-2);padding:var(--sp-3) var(--sp-4);margin-bottom:14px}
+  /* Height comes from `stretch` so the image is flush with both rows; the width is FIXED at the
+     height those two rows come to (100px, measured), which makes it square.
+     ponytail: the 100 is a hand-matched constant, not derived. CEILING, stated plainly: change the
+     type scale or the row gap and the headshot goes slightly off-square -- object-fit:cover keeps
+     it looking right, it just stops being a perfect square. aspect-ratio:1 was tried first and does
+     NOT work here: on a flex item with width:auto the flex algorithm sizes from content, so the
+     monogram collapsed to the width of the two letters. */
+  /* .pc-shot owns the 100px box; the headshot fills it. The wrapper exists so the team badge has
+     something to be positioned against — and it has to be the wrapper rather than the <img>,
+     because faceErr() REPLACES the img with a .pc-mono span when every CDN candidate 404s, and a
+     badge parented to the img would vanish with it. */
+  .pc-shot{position:relative;flex:0 0 100px;width:100px;align-self:stretch;display:flex}
+  .pc-face,.pc-mono{width:100%;flex:1 1 auto;border-radius:var(--r-2);
+    background:var(--panel-3);border:1px solid var(--line)}
+  .pc-body{min-height:76px}
+  .pc-face{object-fit:cover;object-position:top}
+  /* Team badge, overlapping the headshot's top-left corner (owner 2026-07-28).
+     THE PLATE IS NOT DECORATION. These are ESPN's own team PNGs, and a large share of college
+     marks are dark-on-transparent — on the dark theme they would be an invisible smudge. A
+     near-white plate is the standard badge treatment and the only one that makes an arbitrary
+     third-party raster legible on BOTH themes; the --line ring is what keeps it from dissolving
+     into the light theme's panel. Fixed white in both themes on purpose: the logo's own inks are
+     fixed, so a theme-following plate would break exactly one of the two. */
+  .pc-badge{position:absolute;top:-6px;left:-6px;width:30px;height:30px;border-radius:50%;
+    background:#fff;border:1px solid var(--line);padding:3px;object-fit:contain;
+    box-shadow:0 1px 3px rgba(0,0,0,.35)}
+  @media(max-width:520px){.pc-badge{width:24px;height:24px;top:-5px;left:-5px;padding:2px}}
+  .pc-mono{display:flex;align-items:center;justify-content:center;font-family:var(--font);
+    font-weight:700;font-size:27px;color:var(--muted);letter-spacing:.5px}
+  /* WHERE THE NAME->SUB GAP ACTUALLY COMES FROM (owner 2026-07-28: "reduce it"). It measured
+     21.89px at desktop, and only 2px of that was this rule's gap. 18.39px was the PTS/REB/AST
+     stat group's SECOND line -- the uppercase .pc-lab -- hanging below the baseline the name is
+     aligned to inside row 1, and 1.50px was row 2's own baseline alignment. So the levers are
+     down there, not here: .pc-lab's line-height (it inherited 1.5 from site.css, i.e. 17.25px of
+     box for an 11.5px glyph) and .pc-cell's internal gap. Those three together take it to ~13px
+     without moving the two stat groups, which the comments below say were deliberately placed. */
+  .pc-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:0}
+  /* one text line on the left, its stat group on the right, baselines shared */
+  .pc-row{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-5)}
+  .pc-name{font-size:var(--fs-6);font-weight:700;letter-spacing:-.5px;line-height:1.08}
+  .pc-sub{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;font-size:var(--fs-2);
+    color:var(--muted)}
+  .pc-sub .pos{font-weight:700;color:var(--text);letter-spacing:.02em}
+  .pc-sub .tm{color:var(--text)}   /* team reads as identity, like the position, not as metadata */
+  /* The two stat groups sit at the right end of their own row, so the ragged-length rows still share
+     one flush right edge. `.pc-cell:last-child{padding-right:0}` is what lands that edge — do not
+     give the last cell its padding back. */
+  .pc-group{display:flex;font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+  .pc-cell{display:flex;flex-direction:column;gap:0;padding:0 11px;border-right:1px solid var(--line)}
+  .pc-cell:first-child{padding-left:0}.pc-cell:last-child{border-right:none;padding-right:0}
+  .pc-val{font-size:var(--fs-3);font-weight:600;color:var(--text)}
+  /* line-height:1 is load-bearing, not cosmetic: this is the box that sets how far row 1 hangs
+     below the name's baseline, and therefore most of the name->sub gap. See .pc-body above. */
+  .pc-lab{font-size:11.5px;line-height:1;letter-spacing:.08em;color:var(--faint);text-transform:uppercase}
+  .pc-shoot .pc-val{color:var(--muted)}
+  /* The two stat groups ended up FLUSH (measured 0.0px between the PTS label's bottom and the FG%
+     value's top) once the name->sub tightening landed: .pc-body's gap, .pc-cell's gap and
+     .pc-lab's line-height were all pulled in, and those are the same three rules that separate the
+     counting row from the shooting row. Owner 2026-07-28: give the two groups their space back
+     WITHOUT re-opening the name gap.
+     `position:relative` and not a margin, deliberately: .pc-row is align-items:baseline, so a
+     margin-top here would push this group's baseline down and drag .pc-sub — the whole point of
+     the tightening — down with it. A relative offset moves the paint and nothing else. */
+  .pc-shoot{position:relative;top:5px}
+  /* The paired rows are a desktop affordance and do not survive the phone: under the 60px headshot
+     the body is ~239px wide at 375px (~184px at 320px) against ~256px of counting cells, so a row
+     holding the name AND five stats would clip. Below 520px each row breaks in two and everything
+     falls back to a LEFT edge — a ragged right beats a clipped one. */
+  @media(max-width:520px){.pcard{align-items:flex-start}.pc-name{font-size:var(--fs-5)}
+    .pc-shot{width:60px;height:60px;flex:0 0 60px;align-self:flex-start}
+    .pc-row{flex-direction:column;align-items:flex-start;gap:var(--sp-1)}
+    .pc-cell{padding:0 8px}
+    .pc-group{flex-wrap:wrap;row-gap:6px}}
+  .pmeta{color:var(--muted);font-size:var(--fs-2)}
+  .readout{font-family:var(--font-mono);font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:150px;text-align:left}
+  .readout b{color:var(--text)}
+  .modehint{font-size:13px;color:var(--faint);margin:7px 0 -4px;line-height:1.55;max-width:840px}
+  /* bespoke interactive crosshair charts (owned locally).
+     .crosshair is NOT redeclared here. It used to be, as `stroke:#3a4862`, and because this
+     <style> follows the site.css <link> the local copy WON — which quietly killed the themed fix
+     site.css:244-248 documents. That hairline measures 9.20 against the light --panel but 2.01
+     against the dark one, so on the DEFAULT theme the affordance that tells you which date you are
+     reading sat under the 3:1 mark floor. site.css's var(--faint) lands at 5.5 light / 5.1 dark.
+     .hdot is kept local because the charts here own the hover dot's geometry. */
+  .hdot{pointer-events:none;stroke:var(--bg);stroke-width:1.2}
+  .grid svg,.netcard svg{touch-action:none}
+  /* ── cursor tooltip on the crosshair ──────────────────────────────────────────────────────────
+     The crosshair and the hover dots already existed; what did not was a readout AT the pointer, so
+     reading a value meant looking away from the day you were pointing at, up to the panel header.
+     ONE node, position:fixed, reused by whichever chart the pointer is over: the bubble belongs to
+     the pointer, not to a panel, and a fixed node cannot be clipped by a panel's radius or overflow.
+     pointer-events:none so it can never swallow the pointermove that drives it. */
+  #ctip{position:fixed;left:0;top:0;z-index:70;display:none;pointer-events:none;white-space:nowrap;
+    border:1px solid var(--line);border-radius:var(--r-1);padding:6px 8px;
+    box-shadow:0 6px 18px rgba(0,0,0,.45)}
+  /* The SURFACE is theme-split on purpose and the reason is measurable. The swatches are MARKS
+     (3:1 floor) and the binding one is light --off #0e9e8c: 3.34:1 on --panel (#ffffff) but 2.99 on
+     --panel-2 and 2.78 on --panel-3 — so in LIGHT this bubble cannot reuse [data-tip]'s --panel-2
+     surface without putting a swatch under the floor. DARK has the opposite problem: it floats over
+     .cell/--panel, and --panel-2 sits 1.02:1 against that (no visible step at all), so it takes
+     --panel-3 at 1.10 and lifts.
+     RE-MEASURED after the swatches became live tokens (see tipShow), by sampling the RENDERED PNG
+     at 1280 — the swatch pixel and the modal bubble-interior pixel, both themes, single-row bubble
+     on ?p=c4896963's oTS cell: LIGHT surface (255,255,255), swatch --off (14,158,140) = 3.34:1;
+     DARK surface (20,30,43) = --panel-3, swatch --off (45,212,191) = 9.02:1. Text on the same
+     samples: value ink 17.80:1 light / 14.37:1 dark, and the weakest, the ± qualifier in --faint,
+     5.52:1 light / 4.60:1 dark. Over 3:1 for marks and 4.5:1 for text in both themes.
+     SCOPE, HONESTLY. Those numbers cover the LEAGUE and SIDE swatches, which are tokens. They do
+     NOT cover the COMPARE view, whose swatches are the Okabe-Ito slots — theme-independent
+     literals, baked identically into the polyline they label. Pixel-sampled on the same rig
+     (?p=203999,1630169,201939,1628369, light): #0072B2 (0,114,178) 5.19:1, #CC79A7 (204,121,167)
+     3.06:1, and #E69F00 (230,159,0) 2.25:1 — that last one is UNDER the 3:1 mark floor on the light
+     bubble. It is under it on every light surface on the site, not just here, because the palette
+     is chosen for dichromat SEPARATION rather than for luminance against white, and it paints the
+     compare LINES too; nothing this tooltip can do fixes it without moving the palette everywhere.
+     What keeps it honest meanwhile is that the compare bubble is the one place colour is never the
+     sole encoder — every row prints the player's NAME beside the swatch at 5.52:1. Recorded as a
+     palette decision for the owner, not papered over here with a border. */
+  #ctip{background:var(--panel-3)}
+  :root[data-theme=light] #ctip{background:var(--panel);box-shadow:0 6px 18px rgba(14,24,40,.16)}
+  #ctip .d{font-size:var(--fs-1);color:var(--muted);margin-bottom:4px}
+  /* LOCKUP, not space-between. The rows used to be independent flex lines with `margin-left:auto`
+     on the number, which pinned every value to the bubble's right edge — so in a 4-way compare the
+     numbers sat a variable distance from the name they belong to and did not line up with each
+     other. One grid for ALL rows fixes both at once: the four columns are sized once, so the label
+     column is as wide as the longest label and every number starts at the same x. The gap after
+     the label is the grid's own 7px (the same 7px the swatch gets), which is a lockup gap, and the
+     number still outranks its label by weight and colour. */
+  #ctip .rows{display:grid;grid-template-columns:9px minmax(0,max-content) max-content max-content;
+    align-items:center;gap:2px 7px;
+    font-family:var(--font-mono);font-size:var(--fs-2);font-variant-numeric:tabular-nums;line-height:1.5}
+  #ctip .sw{width:9px;height:9px;border-radius:2px}
+  /* the compare view puts full player names in here, so the label truncates and the number does not */
+  #ctip .k{color:var(--muted);overflow:hidden;text-overflow:ellipsis;max-width:150px}
+  #ctip .n{color:var(--text);font-weight:600;text-align:right}
+  #ctip .e{color:var(--faint)}
+  /* add-to-compare affordance in the player header */
+  .cmpadd{font-size:13.5px;font-weight:600;color:var(--muted);background:var(--panel);border:1px solid var(--line);
+    padding:5px 11px;cursor:pointer;border-radius:var(--r-1)}
+  .cmpadd:hover{color:var(--text);border-color:var(--accent)}
+  .cmptray{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0 0}
+  .cmptray .seglab{align-self:center}
+  .cmpchip{display:inline-flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);
+    padding:4px 9px;font-size:13.5px;border-radius:var(--r-1)}
+  .cmpchip .sw{width:10px;height:10px;border-radius:2px}
+  .cmpchip .x{cursor:pointer;color:var(--muted);font-weight:700;margin-left:1px}
+  .cmpchip .x:hover{color:var(--neg)}
+  .cmpgo{font-size:13.5px;font-weight:700;color:var(--accent-ink);background:var(--accent);border:none;
+    padding:5px 12px;cursor:pointer;border-radius:var(--r-1)}
+  .cmpgo:disabled{opacity:.4;cursor:not-allowed}
+  /* ── production profile section ── */
+  #profile{display:none;margin-top:28px;border-top:1px solid var(--line);padding-top:6px}
+  .barrow{display:flex;align-items:center;gap:10px;margin:7px 0}
+  .barrow .lab{width:58px;font-size:14.5px;font-weight:700;color:#cdd9e6;font-variant-numeric:tabular-nums}
+  :root[data-theme=light] .barrow .lab{color:#33425a}
+  .barrow .val{width:70px;font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}
+  .barrow .pctlab{width:48px;font-size:13.5px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+  .barwrap{flex:1;min-width:120px}
+  /* two balanced columns: percentile bars (left) + radar (right), both top-aligned (align-items:start) */
+  .profcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px 30px;align-items:start}
+  /* Owner 2026-07-26: keep the radar INSIDE the vertical run of the six percentile bars.
+     RC.radar() draws a square viewBox and site.css sets svg{width:100%;height:auto}, so the
+     rendered height IS this max-width. Left column measures ~300px at 1040: two .sectitle blocks
+     (21px line + collapsed 22px/8px margins) + six .barrow rows (20.25px + 7px margins) + the
+     ~19px legend line. The "Profile shape" title above the radar eats 21+8 = 29px, leaving 271px
+     — capped at 270 (was 330). This is a LAYOUT cap only: the viewBox is untouched, and
+     RC.radar() is shared with the team pages, so nothing there moves. */
+  .radarwrap{max-width:270px;margin:0 auto;width:100%}
+  /* The radar's factor labels are sized in viewBox units, so the 270/320 = 0.84 scale would have
+     shrunk them from 11.9px to 9.7px rendered. 14 units x 0.84 = 11.8px — same as before the cap. */
+  #radar svg text{font-size:14px}
+  /* plan49 W1: 3x2 grid — offence DOWN column 1 (oTS,oTOV,oSC), defence DOWN column 2.
+     Column flow + the FIXED FAC insertion order at :471-473 does this with no JS change.
+     Do NOT reorder FAC to get here: facProj(i) indexes traj_f[h][i] POSITIONALLY. */
+  #grid{grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(3,auto);grid-auto-flow:column}
+  @media(max-width:640px){#grid{grid-template-columns:1fr;grid-auto-flow:row}}
+  /* ── atoms expanded ────────────────────────────────────────────────────────────────────────
+     Drilling into oTS/dTS gives that one factor the whole grid and takes the other five off
+     screen. The point is width: seven component charts across a 493px half-cell are 150px each,
+     which is where the year labels had to be hidden. Across the full 996px they are ~240px.
+     grid-template-rows is overridden to `auto` because the 3-row template would otherwise hold
+     two empty rows open under the expanded cell. */
+  #grid.atoms-open>.cell{display:none}
+  #grid.atoms-open>.cell.atom-open{display:block;grid-column:1/-1}
+  #grid.atoms-open{grid-template-rows:auto}
+  /* The morph itself. 260ms is long enough to read as motion and short enough not to sit in the
+     way of a second click; the five leaving cells fade a touch faster than the survivor grows. */
+  ::view-transition-old(root),::view-transition-new(root){animation-duration:260ms}
+  @media(prefers-reduced-motion:reduce){
+    ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}
+  }
+  /* plan49 W1: in the SIX FACTOR charts the LINE colour encodes SIDE, not league (owner's ask).
+     Teal is the existing --amp token. Measured with a Vienot dichromat sim + dE76:
+     teal/violet separate at dE 51.8 deuteranopia / 68.0 protanopia, and both sit >64 from
+     --amber, the projection overlay drawn on the same chart. Accepted cost, stated plainly:
+     violet collapses onto --nba under deuteranopia (dE 3.2). Every hue at usable lightness does
+     — the palette already spends blue/orange/rose on leagues. It is tolerable here only because
+     the factor charts no longer draw league colour at all, so there is nothing to confuse it
+     WITH inside the grid; the net chart above is a separate panel and keeps league colour. */
+  :root{--off:#2dd4bf;--def:#a78bfa}
+  :root[data-theme=light]{--off:#0e9e8c;--def:#7c3aed}
+  .swoff{color:var(--off);font-weight:700}.swdef{color:var(--def);font-weight:700}
+  /* plan49 W2: the net card's title row now carries THREE controls (off/def, projection, readout).
+     Measured at 375px: adding #odseg pushed documentElement.scrollWidth to 447 against a 375
+     clientWidth — a real horizontal page scroll. The shared `.ctitle` rule in site.css is a nowrap
+     flex row (cited by SELECTOR, never by line number — that file is edited under us), so let this
+     ONE row (and the control group inside it) wrap instead. Scoped to .netcard so the six factor
+     cells keep their single-line titles. */
+  .netcard .ctitle{flex-wrap:wrap;row-gap:6px}
+  .netcard .ctitle>span{flex-wrap:wrap;max-width:100%}
+  /* Owner 2026-07-26: the six factor headers (oTS/oTOV/oSC/dTS/dTOV/dSC) read too small. Label
+     12.5px -> 15.5px (+24%, and now ON the --fs-* scale instead of off it). Raising the label to
+     15.5 crosses the old 15px number, so the number moves with it (15 -> 18) to keep the site.css
+     lockup rule intact: the NUMBER outranks its label. Settled ratio 18/15.5 = 1.16 (was 1.20).
+     The trailing ±SE / O-D split stays a qualifier at 13px = 0.72 of the number (was 0.77).
+     Scoped to #player so this can only ever touch the Explorer — .ctitle is a shared site.css
+     component and other pages' panels must keep the 12.5/15 default. Applies to the net card too,
+     which is the same lockup; measured at 1040 the net title row is 876px of 980px available and
+     still does not wrap. */
+  #player .ctitle{font-size:var(--fs-4)}
+  #player .ctitle .v{font-size:var(--fs-4)}
+  #player .ctitle .v b ~ span{font-size:var(--fs-2)}
+  /* A DELIBERATE LOOK, NOT AN OVERFLOW GUARD. The single-line decision above was settled on the
+     single-player readout, which holds one number; a 4-way compare puts four in the same .v.
+     Below the grid's 1-column breakpoint that reads as a cramped label+numbers run, so the numbers
+     are allowed to drop under their label. Nothing overflows without this rule — an earlier version
+     of this comment claimed a 375px page scroll and it does not reproduce. Do not re-justify it as
+     a scroll fix; delete it if the wrapped look is ever unwanted. */
+  @media(max-width:640px){#player .ctitle{flex-wrap:wrap;row-gap:2px}}
+  /* plan49 W3: TS -> atom drill-down. The panel lives INSIDE the .cell so the 3x2 column-flow
+     grid keeps working — the cell simply grows and its column reflows. minmax(0,1fr) is a cheap
+     guard against a grid item refusing to shrink below its content, NOT a fix for an observed
+     bug: measured at 1280, plain `repeat(3,1fr)` yields the identical 151px tracks and the same
+     scrollWidth 1280 == clientWidth. Kept because it costs one token; do not cite it as a fix. */
+  .drill{font:inherit;font-size:12px;font-weight:600;letter-spacing:.02em;margin-left:6px;
+    padding:1px 6px;border:1px solid var(--line);border-radius:999px;background:none;
+    color:var(--faint);cursor:pointer;vertical-align:middle}
+  .drill:hover{color:var(--text);border-color:var(--faint)}
+  .drill.on{color:var(--bg);background:var(--faint);border-color:var(--faint)}
+  .atompanel{display:none;margin-top:8px;border-top:1px solid var(--line);padding-top:8px}
+  .atomnote{font-size:13px;line-height:1.5;color:var(--faint);margin-bottom:8px}
+  .atomgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px 12px}
+  @media(max-width:640px){.atomgrid{grid-template-columns:minmax(0,1fr)}}
+  .atitle{display:flex;align-items:baseline;gap:7px;
+    font-size:13px;color:var(--faint);margin-bottom:3px}
+  .atitle .v{font-variant-numeric:tabular-nums;color:var(--text)}
+  /* At 151px wide an 11-season career puts Chart()'s year ticks 6.7px apart with 15.3px labels —
+     measured overlap, unreadable. Hide the LABELS only; the year GRIDLINES stay, and the parent
+     TS chart sits directly above on the identical x-axis with its years legible (25.8px apart).
+     Selector targets middle-anchored text, which in Chart() is the year tick and the projection
+     season tick; atom charts are built with proj=null, so only year ticks can match here.
+     ponytail: CSS instead of a `noYearLabels` flag threaded through Chart(). CEILING, stated
+     plainly: nothing enforces this coupling — if Chart() ever draws another middle-anchored
+     label, or these panels are ever given a projection, it disappears here silently.
+     Scoped to the 3-up layout: at <=640px the panel is single-column (331px wide at a 375px
+     viewport), the ticks are ~4x further apart and the labels are legible, so they stay. */
+  @media(min-width:641px){.atomcell svg text[text-anchor="middle"]{display:none}}
+  /* forward projection overlay (opt-in, ORANGE = projected, NOT measured) — 1-5yr trajectory, drawn on each chart */
+  .projconn{stroke:var(--amber);stroke-width:1.4;fill:none;stroke-dasharray:4 2;stroke-linejoin:round;stroke-linecap:round;opacity:.65}
+  .projci{stroke:var(--amber);stroke-width:1.6;stroke-linecap:butt}
+  .projcap{stroke:var(--amber);stroke-width:1.6;stroke-linecap:round}
+  /* ── impact waterfall (6 factors → off/def; continuous play across game-days) ── */
+  #waterfall{display:none;margin-top:24px;border-top:1px solid var(--line);padding-top:6px}
+  .wfbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 5px}
+  .wfscrub{flex:1;min-width:130px;accent-color:var(--accent)}
+  .wfsum{font-family:var(--font-mono);font-size:13.5px;color:var(--muted);font-variant-numeric:tabular-nums;margin:0 0 4px}
+  .wfsum b{color:var(--text)}
+  .wfstack{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:720px){.wfstack{grid-template-columns:1fr}}
+  .wfchart{border:1px solid var(--line);background:var(--panel);border-radius:var(--r-1);padding:6px 9px 3px}
+  .wfhd{display:flex;align-items:baseline;gap:9px;font-size:12.5px;font-weight:700;
+    color:#aebccd;letter-spacing:.16em;padding:1px 2px 2px}
+  :root[data-theme=light] .wfhd{color:#33425a}
+  .wfsvg{width:100%;height:auto}
+  .wfg{stroke:var(--grid);stroke-width:1}
+  .wft{fill:var(--faint);font-size:12px;font-variant-numeric:tabular-nums}
+  .wfax{stroke:var(--zero);stroke-width:1}
+  .wftr{fill:none;stroke:var(--muted);stroke-width:1.2;stroke-dasharray:3 4;opacity:.5}
+  .wfb.pos{fill:var(--pos);opacity:.9}.wfb.neg{fill:var(--neg);opacity:.9}.wfb.zero{fill:var(--zero);opacity:.6}
+  .wfb.tot.pos{fill:var(--pos);opacity:1}.wfb.tot.neg{fill:var(--neg);opacity:1}
+  .wfl{fill:var(--muted);font-size:13px;font-weight:700}
+  .wfv{font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums}
+  .wfv.pos{fill:var(--pos)}.wfv.neg{fill:var(--neg)}.wfv.zero{fill:var(--muted)}
+</style></head>
+<body>
+<nav id="topnav" data-active="explorer"></nav>
+<script src="charts.js"></script>
+<script src="nav.js"></script>
+<!-- team_colors.js: the site's one owner of "make this brand hex legible on this theme". The card
+     reads it for the team name's tint (NBA by abbr, college by the ESPN hex card_data ships). It
+     is optional by design — renderCard guards on window.deriveHex, so if this ever fails to load
+     the name simply renders as normal text. Must follow charts.js, which owns theme init. -->
+<script src="team_colors_wnba.js"></script>
+<div class="wrap">
+  <h1 style="margin-top:6px">WNBA six-factor RAPM, <b>every game-day</b></h1>
+  <p class="sub">For any WNBA player, on every game-day, 2022&ndash;2026. Rated on the WNBA's own scale &mdash; not comparable to the NBA board.</p>
+  <div class="searchbox">
+    <input id="q" autocomplete="off" placeholder="Search a player…  (e.g. A'ja Wilson, Napheesa Collier)">
+    <div class="drop" id="drop"></div>
+  </div>
+  <div class="cmptray" id="suggest"></div>
+
+  <div id="player">
+    <div class="pcard" id="pcard"></div>
+    <div class="phead">
+      <span class="pname" id="pname"></span>
+      <span class="pmeta" id="pmeta"></span>
+      <span class="readout" id="readout"></span>
+      <div id="modeseg" class="seg" style="margin-left:auto;display:none">
+        <button data-mode="pure" type="button">Pure RAPM</button>
+        <button data-mode="prior" type="button" title="The same daily solve, shrunk toward a WNBA box-score prior instead of toward zero.">Prior-informed</button>
+        <button data-mode="box" type="button">Box prior</button>
+      </div>
+    </div>
+    <div class="modehint" id="modehint"></div>
+
+    <!-- add-to-compare affordance (single view only) — above the charts for easy access -->
+    <div class="cmptray" id="cmptray" style="display:none">
+      <span class="seglab">Compare:</span>
+      <button class="cmpadd" id="cmpadd" type="button">+ Add this player</button>
+      <span id="cmplist"></span>
+      <button class="cmpgo" id="cmpgo" type="button" disabled>Compare →</button>
+    </div>
+
+    <div class="netcard">
+      <!-- Owner 2026-07-26: tooltip trimmed to two sentences. The CI sentence is a REQUIRED honesty
+           statement (the band measures what already happened, and is ~4x too wide read as a
+           forecast) — shorten it if you must, never drop it. Full derivation: the CAL-2 band audit,
+           and the band comment in Chart() below. -->
+      <div class="ctitle"><span>Net RAPM <span style="color:var(--faint);font-weight:400">· ORAPM + DRAPM</span> <span class="help" data-tip="Offense plus defense, in points per 100 possessions on the WNBA's own scale (there is no translation to the NBA scale, and there cannot be one). The grey band is a 95% confidence interval on what already happened — not a next-season forecast, and about 4× too wide to read as one.">?</span></span>
+        <!-- the readout sits NEXT TO its own label, same lockup as the six factor cells below.
+             It used to live at the far end of the control group, ~700px from the words "Net RAPM". -->
+        <span class="v" id="v_net"></span>
+        <span style="display:inline-flex;align-items:center;gap:8px;margin-left:auto">
+          <!-- plan49 W2: draw ORAPM (oTS+oTOV+oSC) and DRAPM (dTS+dTOV+dSC) on the SAME net axis.
+               They sum vertically to the net line. Defensive factors are already sign-flipped so
+               positive = good (msolve.py:712), so DRAPM is ADDED, never subtracted. -->
+          <!-- Owner 2026-07-26: the reader needs two facts — the lines add to net, and they carry no
+               band. WHY there is no band (SEs are not stored, and inventing one would misuse the
+               six-factor kappa) is in the `extras` comment in Chart(); the ≤0.03 rounding slack is
+               noted at odRead() in setHoverAll(). Neither belongs in a tooltip. -->
+          <span id="odseg" class="seg" style="display:none" title="Draw offense and defense on the net axis. The two lines add to net; no confidence band is drawn for them.">
+            <button data-od="off" type="button" class="on">Net only</button>
+            <!-- plain text, NOT the side colours: when this button is active its background is the
+                 accent blue, on which --off measures 1.18:1 and --def 1.24:1 contrast (WCAG AA wants
+                 4.5). The colour legend lives in the chart title beside it instead. -->
+            <button data-od="on"  type="button">+ Off / Def</button>
+          </span>
+          <span id="projseg" class="seg" style="display:none" title="Overlay the 1–5 year forward projection (per-factor XGBoost; off by default)">
+            <button data-proj="off" type="button" class="on">Descriptive</button>
+            <button data-proj="on"  type="button">+ Projection</button>
+          </span>
+        </span></div>
+      <div id="c_net"></div>
+    </div>
+    <div class="grid" id="grid"></div>
+
+    <!-- ── IMPACT WATERFALL (single-player only) — 6 factors → off/def, continuous play across game-days ── -->
+    <div id="waterfall">
+      <div class="sectitle" style="margin-bottom:4px">Impact waterfall
+        <span class="help" data-tip="The six factors stacked into Offense and Defense totals for one game-day. Press Play to morph the waterfall continuously across every game-day of this player's career.">?</span>
+      </div>
+      <div class="wfbar">
+        <button class="btn" id="wfplay" type="button" style="font-weight:700">▶ Play</button>
+        <input class="wfscrub" id="wfscrub" type="range" min="0" max="0" value="0" step="1" aria-label="Scrub game-day">
+      </div>
+      <div class="wfsum" id="wfsum"></div>
+      <div class="wfstack" id="wfstack"></div>
+    </div>
+
+    <!-- ── PRODUCTION PROFILE (single-player only) ── -->
+    <div id="profile">
+      <div class="profcols">
+        <div>
+          <div class="sectitle" style="margin-top:0">Production profile</div>
+          <div class="sectitle">Offense</div>
+          <div id="off"></div>
+          <div class="sectitle">Defense</div>
+          <div id="def"></div>
+          <div class="legend" id="proflegend"></div>
+        </div>
+        <div>
+          <div class="sectitle" style="margin-top:0">Profile shape</div>
+          <div class="radarwrap" id="radar"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="empty" id="empty">Search for a player to see their daily 6-factor RAPM trajectory.</div>
+
+</div>
+
+<!-- the one cursor tooltip every chart shares; filled by tipShow(), positioned by tipPlace() -->
+<div id="ctip" role="tooltip" aria-hidden="true"></div>
+
+<script>
+const FAC=[["oTS","oTS"],["oTOV","oTOV"],["oSC","oSC"],["dTS","dTS"],["dTOV","dTOV"],["dSC","dSC"]];
+const TIP={
+  oTS:"Offensive true-shooting RAPM — points/100 from shot-making efficiency, WNBA scale.",
+  oTOV:"Offensive turnover RAPM — ball-security value (fewer turnovers = positive).",
+  oSC:"Offensive second-chance RAPM — value from offensive rebounding / extra possessions.",
+  dTS:"Defensive true-shooting RAPM — suppressing opponent shot efficiency.",
+  dTOV:"Defensive turnover RAPM — forcing turnovers / ball pressure.",
+  dSC:"Defensive second-chance RAPM — limiting opponent offensive rebounds."};
+const FACK=["oTS","oTOV","oSC","dTS","dTOV","dSC"];
+const OFFF=["oTS","oTOV","oSC"], DEFF=["dTS","dTOV","dSC"];
+// ── plan49 W3: factor -> atoms drill-down ────────────────────────────────────────────────────
+// MIRRORS daily_v5/joint_alpha.py LEGACY_FACTOR_COMPONENTS, and ONLY the two factors that
+// actually decompose. The other four are 1:1 with a single leaf metric (oTOV/dTOV ->
+// ALT_TOV_VALUE, oSC/dSC -> SECOND_CHANCE_CLEAN), so a drill-down there is the same number
+// twice — which is why the affordance is TS-only. build_site_atoms.py fails closed if that
+// map ever changes, and tests/test_atoms_closure.py pins the 2-of-6 count.
+const ATOMK={oTS:["oDECOMP_RIM_FG","oDECOMP_RIM_FREQ","oDECOMP_MID_FG","oDECOMP_THREE_FG","oDECOMP_THREE_FREQ","oALT_FT"],
+             dTS:["dDECOMP_RIM_FG","dDECOMP_RIM_FREQ","dDECOMP_MID_FG","dDECOMP_THREE_FG","dDECOMP_THREE_FREQ","dALT_FT"]};
+const ALAB={DECOMP_RIM_FG:"Rim make",DECOMP_RIM_FREQ:"Rim rate",DECOMP_MID_FG:"Mid make",
+            DECOMP_THREE_FG:"Three make",DECOMP_THREE_FREQ:"Three rate",ALT_FT:"Free throws"};
+const alab=k=>ALAB[k.slice(1)]||k;
+// ATOMSRC holds BOTH decompositions, date-keyed; ATOMS is whichever one is currently on screen
+// (set by renderAtoms from the active mode). ATOMOPEN is which TS cell is expanded.
+let ATOMSRC={pure:null,prior:null}, ATOMS=null, ATOMOPEN=null;
+// NOT named byDate: prep() below declares its own local `const byDate` object, and a helper that
+// a function silently shadows is a trap waiting for the first person who calls it from in there.
+const indexAtoms=a=>{                              // {d:[iso], <atom>:[...], off:{}} -> {byDate, off}
+  if(!a||!Array.isArray(a.d))return null;
+  const by={}; a.d.forEach((iso,i)=>{const o={};
+    for(const k in a) if(k!=='d'&&k!=='off') o[k]=a[k][i];   // 'off' is a scalar map, not a per-date list
+    by[iso]=o;});
+  return {byDate:by, off:a.off||{}};               // off = the fixed calibration offset per TS factor
+};
+// WHICH BOARD'S ATOMS BACK THE MODE ON SCREEN, or null if that mode has no atom layer at all.
+// pure   -> the pure board's atoms.
+// prior  -> the prior-informed board's atoms.
+// latent -> only when it ALIASES to prior (SERIES.latent === priorPrep, i.e. this player never
+//           changed leagues, which is 84% of them). Then the curve being drawn IS the prior board
+//           and the prior atoms close against it exactly. For a real cross-league mover, latent is
+//           a state-space re-score of that board, not a solve over the atoms -- nothing adds up.
+// box    -> never. It is a different estimator whose LEAVES are the six factors; there is no atom
+//           layer under it (out/box_prior_daily_*.parquet is 6 factors + net, full stop).
+const atomsFor=m=>(m==='pure')?ATOMSRC.pure
+                 :(m==='prior'||(m==='latent'&&LATENT_ALIAS))?ATOMSRC.prior:null;
+const LC={wnba:'var(--wnba)'};
+const LNAME={wnba:'WNBA'};
+const q=document.getElementById('q'), drop=document.getElementById('drop');
+let INDEX=[], curOpts=[], active=-1, CHARTS=[], SER=null;
+
+// ── lazy-loaded, cached secondary data files ────────────────────────────────
+let QUANT=null;
+function lazy(file, cache){ return cache.p || (cache.p = fetch(file).then(r=>r.ok?r.json():null).catch(()=>null)); }
+const _q={};
+const getQuant = ()=>lazy('quantiles.json',_q).then(d=>QUANT=d);
+
+// ── forward-projection overlay (opt-in; fetched ONCE, cached) ─────────────────
+// projection_series.json: { meta:{factors,...}, players:{ "<pid>":{ last_season,
+//   anchor:[net,se], next:[season,net,se], anchor_f:[6], next_f:[6], next_f_se:[6] } } }.
+// 1-5yr trajectory. Rendered as ORANGE projected points + 80% CI on each chart. OFF by default.
+let PROJ=null; const _p={};
+const Z80=1.2816;                                  // 80% two-sided band half-width
+let PROJON=false;                                  // always land on Descriptive; projection is opt-in, session-only
+const getProj = ()=>lazy('projection_series.json',_p).then(d=>PROJ=d);
+function projFor(){ return (PROJON && PROJ && PROJ.players && CURID && PROJ.players[CURID]) || null; }
+
+fetch('players.json').then(r=>r.json()).then(d=>{
+  INDEX=d;
+  const u=new URLSearchParams(location.search),pid=u.get('p'),nq=u.get('q');
+  // Multi-player comparison overlay: ?p=id1,id2,... (2-4 players). One id -> normal single view.
+  const ids=(pid||'').split(',').map(s=>s.trim()).filter(Boolean);
+  if(ids.length>1){loadMulti(ids.slice(0,4));return;}
+  let hit=pid?INDEX.find(x=>x.id===pid):(nq?INDEX.find(x=>x.n.toLowerCase()===nq.toLowerCase())||INDEX.find(x=>x.n.toLowerCase().includes(nq.toLowerCase())):null);
+  if(hit){load(hit.id,hit.n);return;}
+  // DEFAULT: open on whoever leads the board. Data-driven rather than a pinned id --
+  // players.json is sorted by net descending, so this survives a re-solve, a roster change
+  // and the end of a career without anyone remembering to edit it.
+  if(INDEX.length) load(INDEX[0].id, INDEX[0].n);
+});
+
+q.addEventListener('input',()=>filt(q.value.trim()));
+q.addEventListener('focus',()=>{if(q.value.trim())filt(q.value.trim())});
+q.addEventListener('keydown',e=>{if(!curOpts.length)return;
+  if(e.key==='ArrowDown'){active=Math.min(active+1,curOpts.length-1);paint()}
+  else if(e.key==='ArrowUp'){active=Math.max(active-1,0);paint()}
+  else if(e.key==='Enter'){const o=curOpts[active<0?0:active];if(o)load(o.id,o.n)}
+  else if(e.key==='Escape')drop.style.display='none';});
+document.addEventListener('click',e=>{if(!e.target.closest('.searchbox'))drop.style.display='none'});
+
+function filt(query){if(!query){drop.style.display='none';return}
+  const ql=query.toLowerCase();
+  curOpts=INDEX.filter(x=>x.n.toLowerCase().includes(ql))
+    .sort((a,b)=>{const ai=a.n.toLowerCase().startsWith(ql),bi=b.n.toLowerCase().startsWith(ql);return ai!==bi?(bi-ai):(b.net-a.net)}).slice(0,12);
+  active=-1;paint();}
+function paint(){if(!curOpts.length){drop.style.display='none';return}
+  drop.innerHTML='';
+  curOpts.forEach((o,i)=>{const badges=[...o.lg].map(c=>`<span class="badge b-w">WNBA</span>`).join('');
+    const el=document.createElement('div');el.className='opt'+(i===active?' active':'');
+    el.innerHTML=`<span class="nm">${o.n}</span><span class="meta">${badges}<span>${o.s}–${o.e}</span><span style="color:#cbd5e1;font-weight:700">${o.net>=0?'+':''}${o.net}</span></span>`;
+    el.onclick=()=>load(o.id,o.n);drop.appendChild(el);});
+  drop.style.display='block';}
+
+// Global data mode, persisted across players. Four daily series per player, swapped into the charts
+// on toggle: 'pure' (prior-free), 'prior' (box-prior-informed, default), 'box' (the prior itself),
+// 'latent' (display-only cross-league curve).
+// Owner 2026-07-26: these render under the toggle on every page load, on a PUBLIC dashboard — one or
+// two short sentences each, no internal framing. The framing that used to sit in the strings lives
+// here instead, which is where a reader of the code wants it anyway:
+//   pure   — prior-free six-factor decomp, calibrated to the public DataBallR ridge; one line per league.
+//   prior  — same daily solve, all six factors shrunk toward a daily box-score prior; shrinkage is
+//            strongest where lineup data is thin (rookies, early season) and fades as exposure grows.
+//   box    — the prior itself, re-fit every game-day from NCAA/G-League/NBA box stats on that day's
+//            prior-free cross-section.
+//   latent — DARKO-style state-space pass over the prior-informed board, so a league-mover gets one
+//            line instead of disjoint per-league graphs; net chart coloured by league played (F4).
+// The box hint's "reads cooler than the board" clause is NOT filler — it is the honest-scale
+// disclosure for a curve drawn on the same axis as the board. Shorten it, never drop it.
+// THREE modes here, not the men's four.
+//   pure   — the default (owner's pick, kept when Prior-informed shipped 2026-07-29).
+//   prior  — the SAME per-atom daily solve, shrunk toward a WNBA BOX-SCORE prior instead of
+//            toward zero. NOT the men's mode: that one is box+EPM and there is no WNBA EPM.
+//            Two things the hint has to say out loud, because both look like bugs otherwise —
+//            the board is no longer mean-zero, and thin-exposure players move DOWN on it.
+//   box    — the prior itself, at its own scale.
+//   latent — ABSENT. It fuses a player's legs ACROSS leagues; one league => identity.
+const MODEHINT={
+  pure:'Pure RAPM — what the lineup data says on its own, with no prior. The default here. Noisiest, and the cleanest read on the raw signal.',
+  prior:'Prior-informed RAPM — the same solve, shrunk toward a WNBA box-score prior instead of toward zero, hardest where lineup data is thin. Box-only: there is no WNBA equivalent of the commercial metric the men\'s version also uses. It predicts game margins better than Pure, but it is not centred on zero and a thin-exposure player the box sheet dislikes can sit ~2 points lower here.',
+  box:'Box prior — a box-score prediction of the same six factors, fit on WNBA box stats only. Shown at its own honest scale, so it reads cooler than the board, especially on defense.'};
+const MODEHINT_LATENT_ALIAS='';
+// DISPLAY-ONLY SMOOTHING DISCLOSURE (fence F3, owner-reopened 2026-07-17). DORMANT since 2026-07-21:
+// the owner reverted the smoother, so deploy_site.sh no longer sets BOX_SMOOTH_W, build_site_box.py
+// never stamps `sm`, and this sentence never renders. Kept wired, not deleted, because the disclosure
+// must ship in the same motion as the filter if the filter ever comes back — a smoothed number that
+// does not say it is smoothed is a lie. It is DERIVED: the window quoted is whatever was applied.
+const boxSmoothNote=w=>` Display-smoothed: each of the six factors is filtered along time with a trailing ${w}-point median, reset at every season break (NBA days only). This changes only what is drawn. The rating, the prior and the projection all use the unsmoothed values, and the confidence band is not smoothed.`;
+// Default mode is 'prior' (owner 2026-07-28 evening; reverts that morning's latent default, which
+// had superseded 2026-07-24 prior, which had superseded 2026-07-21 latent — this pendulum has now
+// swung four times, so change the DEFAULT here and the migration key in nav.js together and leave
+// everything else alone). Latent remains a first-class mode: selectable here, live on the Tables'
+// NBA populations, and Compare still draws it (separate owner ask). It just no longer OPENS.
+// It also stays DISPLAY-ONLY either way (fence F4) — nothing downstream reads it.
+//
+// The one-time migration that moves returning visitors onto a new default lives in nav.js, NOT
+// here: the Tables page shares these two localStorage keys, and a migration that only ran on the
+// Explorer left a Tables-first visitor on their old mode until they happened to open this page.
+// nav.js loads before this script on every page, so `rapm_mode` is already migrated by the time
+// it is read below.
+let _sm=localStorage.getItem('wrapm_mode');
+// PER-PLAYER default: prior for EVERYONE, movers included. The 2026-07-26 rule that opened a
+// cross-league mover on latent is deliberately NOT reinstated with this revert — "prior-informed
+// is the default, not Latent" is not satisfied by a default that is still latent for the 16% of
+// players who moved, and a mover landing on Latent is exactly where the revert would look broken.
+// It only applies while the visitor has never PICKED a mode: `rapm_mode` alone cannot tell
+// "defaulted" from "chose", since the migration above writes it either way, so the choice is
+// recorded separately by setMode. Once someone picks, their pick wins on every player.
+const modePinned = ()=>localStorage.getItem('wrapm_mode_pinned')==='1';
+let SERIES={}, MODE=(_sm||'pure'), PNAME='', CURID=null;
+function load(id,name){drop.style.display='none';q.value=name;history.replaceState(null,'','?p='+id);
+  if(typeof wfStop==='function')wfStop();           // cancel any waterfall sweep from the previous player
+  CURID=id; MULTI=null;
+  const opt=u=>fetch(u).then(r=>r.ok?r.json():null).catch(()=>null);
+  Promise.all([
+    fetch('data/'+id+'.json').then(r=>r.json()),     // PURE board (base here; carries name)
+    opt('data/'+id+'_prior.json'),                   // prior-informed (in-ridge WNBA box prior)
+    opt('data/'+id+'_box.json')                      // box prior
+  ]).then(([pure,priorS,box])=>{
+    // `prior` is the BASE file here, i.e. pure: it is the one that carries .name and the one
+    // priorPrep below is built from. The prior-informed SERIES entry comes from priorS.
+    const prior=pure, latent=null, atoms=null, atomsp=null;   // no latent/atom boards here
+    PNAME=prior.name||name;
+    const priorPrep=prep(prior);
+    // plan45 B1 (D3): single-league players have no _latent.json; alias Latent to the prior board
+    // (latent === board when there is no cross-league bridge) so the tab is never a dead greyed button.
+    LATENT_ALIAS=!latent;
+    if(!modePinned()) MODE='pure';                   // pure is the WNBA default
+    // W3: index the atom sidecars BY DATE, not by position. Each one's axis is the NBA subset of
+    // the series it decomposes AND build_pages._downsample subsets each sidecar independently (it
+    // pins each file's own last-played index), so positional alignment between sidecars is not
+    // guaranteed even when the lengths happen to match. Date is the only safe join.
+    ATOMSRC={pure:indexAtoms(atoms), prior:indexAtoms(atomsp)}; ATOMS=null; ATOMOPEN=null;
+    BOX_SM=(box&&box.sm)||0;                        // per-player: what was actually applied (F3)
+    SERIES={pure:priorPrep, prior:priorS?prep(priorS):null, box:box?prep(box):null};
+    RAW={prior, pure, box, latent};
+    show();
+  });}
+let RAW={}, LATENT_ALIAS=false, BOX_SM=0;   // BOX_SM: trailing-median window build_site_box.py
+//   actually applied to this player's box curve (0/absent = not smoothed). Drives the F3 disclosure.
+
+function activeMode(){return SERIES[MODE]?MODE:'pure';}  // honor preference; fall back per-player without dropping it
+function setMode(m){
+  if(!SERIES[m])return;                              // ignore unavailable mode (button disabled anyway)
+  MODE=m; localStorage.setItem('wrapm_mode',m);
+  localStorage.setItem('wrapm_mode_pinned','1');      // an explicit pick; stop auto-selecting per player
+  syncSeg(); renderActive(); renderProfile();        // re-render on Pure / Prior-informed / Box toggle
+}
+function syncSeg(){
+  const am=activeMode();
+  document.querySelectorAll('#modeseg button').forEach(b=>{
+    const avail=!!SERIES[b.dataset.mode];
+    b.disabled=!avail; b.classList.toggle('on',avail&&b.dataset.mode===am);
+  });
+  let hint=(am==='latent'&&LATENT_ALIAS)?MODEHINT_LATENT_ALIAS:MODEHINT[am];
+  if(am==='box'&&BOX_SM>1)hint+=boxSmoothNote(BOX_SM);   // disclose the filter iff it was applied
+  document.getElementById('modehint').textContent=hint;
+}
+document.querySelectorAll('#modeseg button').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
+
+// ── projection toggle (opt-in forward overlay on the NET chart) ──────────────
+function syncProjSeg(){
+  document.querySelectorAll('#projseg button').forEach(b=>b.classList.toggle('on',(b.dataset.proj==='on')===PROJON));
+}
+function setProj(on){
+  if(PROJON===on)return;
+  PROJON=on;                                       // session-only; not persisted (Descriptive is the default landing)
+  syncProjSeg();
+  if(MULTI)return;                                 // projection overlay is single-player only
+  if(on) getProj().then(renderActive);             // lazy-load then re-draw charts with orange overlay
+  else   renderActive();                           // re-draw charts without the overlay
+}
+document.querySelectorAll('#projseg button').forEach(b=>b.addEventListener('click',()=>setProj(b.dataset.proj==='on')));
+
+// ── plan49 W2: off/def split on the net chart (opt-in, session-only, like the projection toggle) ──
+let ODON=false;
+const OD_EXTRAS=[['ORAPM','--off'],['DRAPM','--def']];   // same tokens W1 gave the factor grid
+function syncOdSeg(){document.querySelectorAll('#odseg button').forEach(b=>b.classList.toggle('on',(b.dataset.od==='on')===ODON));}
+function setOD(on){if(ODON===on)return;ODON=on;syncOdSeg();if(!MULTI)renderActive();}
+document.querySelectorAll('#odseg button').forEach(b=>b.addEventListener('click',()=>setOD(b.dataset.od==='on')));
+
+// plan49 W2: the ONE place a side total is summed. The waterfall (wfRenderAt) and the net-chart
+// off/def overlay both call this, so there is exactly one spelling of "ORAPM = oTS+oTOV+oSC".
+const odSum=(row,facs)=>facs.reduce((a,f)=>a+(row[f]||0),0);
+
+// collapse off-seasons: one row per date, sorted; d may be null (mode unavailable) -> null series
+function prep(d){
+  if(!d)return null;
+  const byDate={};
+  for(let i=0;i<d.d.length;i++){const k=d.d[i];
+    if(!byDate[k]) byDate[k]={};
+    const o=byDate[k];
+    o.date=k;o.lg=d.lg[i];o.net=d.net[i];o.net_se=d.net_se[i];
+    o.pg=d.pg?d.pg[i]:null;   // plan49 W6: 1=played (box row), 0=carried/decayed, null=series has no pg
+    for(const[f]of FAC){o[f]=d[f][i];o[f+'_se']=d[f+'_se'][i];}
+    // derived side totals (msolve.py:721-723, re-asserted aggregate.py:129-131). null in -> null out,
+    // so a missing factor blanks the split rather than silently reading as a zero contribution.
+    o.ORAPM=OFFF.some(f=>o[f]==null)?null:odSum(o,OFFF);
+    o.DRAPM=DEFF.some(f=>o[f]==null)?null:odSum(o,DEFF);
+  }
+  return Object.values(byDate).sort((a,b)=>a.date<b.date?-1:1);
+}
+
+const el=RC.el;
+// resolve a CSS var to a concrete color for raw SVG attributes (lines/fills the helpers don't take vars for)
+function cssvar(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim()||'#888';}
+function lgColor(lg){return cssvar(lgToken(lg));}
+// The SAME colour as lgColor, left as an UNRESOLVED token. Both forms are needed and they are not
+// interchangeable: RC.radar/RC.pctBar in charts.js take a concrete colour and do string work on it,
+// while every mark this file draws itself wants the token so the theme toggle re-colours it (see
+// the tipShow comment for the defect that came of mixing the two).
+function lgToken(lg){return lg==='wnba'?'--wnba':'--accent';}
+function lgVar(lg){return 'var('+lgToken(lg)+')';}
+// plan49 W1: the six factor charts colour the LINE by side (offence/defence). Returns null for every
+// other key ('net', and ChartMulti's compare series), which then falls back to lgVar as before.
+// ponytail: keyed off the first character of the factor name because FACK is frozen at
+// ["oTS","oTOV","oSC","dTS","dTOV","dSC"] — a seventh factor whose name starts with o/d would be
+// swept in silently. That order is load-bearing elsewhere (traj_f is positional), so it will not move.
+function sideColor(key){return key[0]==='o'?'var(--off)':key[0]==='d'?'var(--def)':null;}
+
+// ── cursor tooltip layer ──────────────────────────────────────────────────────────────────────
+// The half of the hover the charts did not have. Crosshair, dots and the ONE shared index are
+// untouched: setHoverAll/setHoverMulti still drive every panel together, and this only adds a
+// bubble at the pointer so the number can be read where you are pointing. Each chart exposes
+// tipData(i) -> {date, rows:[{c,k,v,e}]} and a `host` panel; there is exactly one tooltip NODE and
+// the chart under the pointer fills it, so seven panels never bloom seven bubbles.
+const CTIP=document.getElementById('ctip');
+const tipSgn=v=>(v>=0?'+':'')+v.toFixed(2);
+const tipLabel=k=>k==='net'?'Net':k==='BASE'?'Baseline':alab(k);   // alab passes non-atom keys through
+const tipEsc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function tipHide(){if(CTIP.style.display!=='none')CTIP.style.display='none';}
+// SWATCH/LINE AGREEMENT: both sides are now UNRESOLVED CSS TOKENS ('var(--nba)'), so both follow
+// the theme toggle and cannot drift apart. An earlier comment here claimed agreement was already
+// guaranteed "including the site-wide fact that a theme toggle does not re-render charts". That was
+// FALSE for every league-coloured mark, and the two chart families were broken in opposite
+// directions — MEASURED, by rendering, flipping data-theme with no re-render, and reading both
+// values in the same frame:
+//   * net chart / compare: lgColor() ran at HOVER time, so it resolved live, while the polyline
+//     stroke had been baked at render. On a college player rendered light then flipped to dark:
+//     line #c81e5a, swatch rgb(255,95,143) (=#ff5f8f). Two different colours for one line.
+//   * the six factor charts + the atom cells: SIDEC was baked at render, so BOTH were stale — they
+//     agreed with each other but not with the theme. Worse, a dark --off #2dd4bf swatch left on the
+//     flipped LIGHT bubble surface (--panel #ffffff) measures 1.86:1, under the 3:1 this file's own
+//     surface comment sets for swatches.
+// Tokens fix both at once, and the swatch is then correct by construction rather than by luck: it
+// carries the same token string that painted the line, so nothing can resolve them at two different
+// moments. Verified by driving the flip three times (render light -> read light -> flip dark ->
+// flip back) and comparing getComputedStyle(polyline).stroke with getComputedStyle(swatch)
+// .backgroundColor in the same frame: equal in all three states, on both the net chart
+// (rgb(200,30,90) <-> rgb(255,95,143)) and a factor chart (rgb(14,158,140) <-> rgb(45,212,191)).
+// The contrast numbers this restores are re-measured from pixels in the #ctip surface comment.
+// var() is legal in an SVG presentation attribute here (the file already relies on that for
+// --grid/--zero/--amber).
+// The ONE colour that stays a literal is the compare view's Okabe-Ito slot (OKABE[]): it is not a
+// token, is identical in both themes, and is baked into the polyline the same way.
+function tipShow(c,ev,i){
+  const d=c.tipData&&c.tipData(i);
+  if(!d||!d.rows.length){tipHide();return;}
+  // LOCKUP, not space-between (site-wide rule: a label and its number read as one unit, and the
+  // number outranks the label). The rows share ONE grid so the four columns line up down the
+  // bubble; every row emits all four cells, empty ones included, or a row with no ± would slide
+  // the next row's swatch into the wrong column.
+  CTIP.innerHTML=`<div class="d">${tipEsc(d.date)}</div><div class="rows">`+d.rows.map(r=>
+      `<span class="sw" style="background:${tipEsc(r.c)}"></span>`
+     +`<span class="k">${tipEsc(r.k)}</span><span class="n">${tipEsc(r.v)}</span>`
+     +`<span class="e">${r.e?tipEsc(r.e):''}</span>`).join('')+`</div>`;
+  CTIP.style.display='block';                       // display first: offsetWidth below needs layout
+  tipPlace(ev,c.host,c.hoverPt?c.hoverPt(i):null);
+}
+// Two rules. Never cover the point being pointed at, and never get clipped.
+//
+// RULE ONE is anchored on the SNAPPED POINT, not on the cursor. That is the whole fix: the
+// crosshair and the hover dot snap to the nearest game-day, so on any sparse series the cursor and
+// the thing it describes are up to half a step apart, and a bubble hung off ev.clientX lands on the
+// dot. The old comment here derived a "ceiling" arithmetically (clearance 10.2 - step/2, "reaches
+// zero at a 20.4px step") and concluded it never covered the point. MEASURED, it was wrong and not
+// by a little: on BJ Simmons (c4896963, 10 game-days, net chart at 1280 -> step 103.22px), sweeping
+// the cursor along the line at 2px intervals across the plot, 160 of 465 positions (34.4%) put the
+// bubble over the hover dot. Worst read: cursor x=1068 on the line, snapped dot at x=1017.8, bubble
+// spanning 885 -> 1054.2 — the dot buried mid-bubble, 50px from the cursor.
+// hoverPt(i) hands us the snapped point in CLIENT coordinates (charts already compute X(i)/Y(v) in
+// viewBox units; the scale factor is the svg's own rect / its viewBox). The bubble is then placed
+// TIP_GAP from that column, and the clearance is INDEPENDENT OF STEP — there is no step ceiling
+// left to state. MEASURED on the same 465-position sweep after the change: 0 cover the dot, and the
+// tightest horizontal clearance from the point's column over the whole sweep is 13.78px (nominal
+// TIP_GAP 14, less sub-pixel rect rounding), i.e. 9.98px clear of .hdot's outer edge (r 3.2 + half
+// its 1.2 stroke = 3.8) — at a 103.22px step, where the old code was 34.4% covered.
+//
+// RULE TWO: the flip is decided against the PANEL rather than the viewport, because a bubble hung
+// off a point near a cell's right edge would otherwise lie across the neighbouring cell's chart.
+// Same edge-flip .wseg and the .phead tips on team2027 already do, for the same reason.
+//
+// WHERE THE TWO RULES FIGHT, AND WHO WINS. A 236px atom cell (measured, 1280) against a bubble that
+// is 100-170px wide cannot always do both: a point in the middle of that cell has room for the
+// bubble on neither side without leaving the cell. Containment wins and the separation goes
+// VERTICAL — the bubble is clamped inside its panel and lifted clear above the dot (or dropped
+// below it if there is no room above). Vertical is the cheap direction: the bubble is already
+// unbounded vertically by the panel, so this trades no new overlap for the one thing rule one
+// forbids. If the bubble is wider than the panel entirely, the panel bound is dropped and only the
+// viewport binds: half over a neighbour beats numbers cut off.
+const TIP_GAP=14, TIP_EDGE=6, TIP_DOT=5;   // TIP_DOT: .hdot outer radius 3.8, rounded up with slack
+function tipPlace(ev,host,pt){
+  const w=CTIP.offsetWidth, h=CTIP.offsetHeight;
+  const r=host?host.getBoundingClientRect():null;
+  let lo=TIP_EDGE, hi=innerWidth-TIP_EDGE;
+  if(r&&r.width>=w+2*TIP_EDGE){lo=Math.max(lo,r.left+TIP_EDGE);hi=Math.min(hi,r.right-TIP_EDGE);}
+  const ax=pt?pt.x:ev.clientX;                      // anchor = the snapped point's column
+  let x, beside=true;
+  if(ax+TIP_GAP+w<=hi) x=ax+TIP_GAP;                // preferred side
+  else if(ax-TIP_GAP-w>=lo) x=ax-TIP_GAP-w;         // flip to the other side of the POINT
+  else {beside=false; x=Math.min(Math.max(ax-w/2,lo),Math.max(lo,hi-w));}   // neither side fits
+  // A finger covers what it points at, so on touch the bubble goes ABOVE the contact instead of
+  // beside it (22px ~= a fingertip's radius on the glass). Mouse: centred on the cursor.
+  let y=(ev.pointerType==='touch')?ev.clientY-h-22:ev.clientY-h/2;
+  // Keep it clear of the sticky header. The bubble is centred on the cursor, so a chart whose top
+  // has scrolled under the nav would otherwise have it painted across the site's own header (#ctip
+  // sits above the nav's z-index on purpose — being clipped by it would be worse). Measured off the
+  // nav rather than a hardcoded height, so a header that grows cannot silently break this.
+  const nav=document.getElementById('topnav');
+  const top=Math.max(TIP_EDGE,nav?nav.getBoundingClientRect().bottom+TIP_EDGE:TIP_EDGE);
+  const bot=Math.max(top,innerHeight-TIP_EDGE-h);
+  y=Math.min(Math.max(y,top),bot);
+  // The bubble is sitting in the point's own column (panel too narrow to go beside it) — so
+  // separate vertically instead. `ys` is every visible hover dot on this column: one on a single
+  // player, up to four in the compare view, which is why it is a list and not a scalar.
+  if(!beside&&pt&&pt.ys.length){
+    const dTop=Math.min(...pt.ys)-TIP_DOT, dBot=Math.max(...pt.ys)+TIP_DOT;
+    if(y<dBot&&y+h>dTop){                           // it really does overlap the dot band
+      const above=dTop-h;
+      y=(above>=top)?above:(dBot<=bot?dBot:y);      // prefer above, else below, else leave it
+    }
+  }
+  CTIP.style.left=x+'px';CTIP.style.top=y+'px';
+}
+// A fixed-position node does not travel with the chart it describes, so a scroll orphans it.
+addEventListener('scroll',tipHide,{passive:true});
+
+// ── y-axis: three domain ticks + an ALWAYS-DRAWN, ALWAYS-LABELLED zero line ──────────────────
+// Callers fold 0 into the y-domain pool (see `pool.push(0)` below), so Y(0) is always inside the
+// plot rect and the zero line is unconditional. It used to be drawn only when the series happened
+// to straddle 0, which left a player whose oSC never goes positive with no reference at all — the
+// reader had to decode "is this good" from the tick numbers.
+// The three ticks stay evenly spaced at the domain min/mid/max (they are what sets the scale), but
+// one of them is DROPPED for either of TWO reasons: it lands too close to the zero line to read as
+// a separate rule, or its own label rounds to the origin. The zero tick wins both collisions.
+//
+// (a) TOO CLOSE. An all-positive series puts 0 about 3% up from the floor (the 6% pad, halved by
+// centring), i.e. ~4px, and drawing a --grid rule + "-0.2" there as well as the --zero rule + "0"
+// reads as a rendering fault.
+// The threshold is 1.5x the tick font size, not 1x. MEASURED on the rendered face (IBM Plex Mono
+// 12px, via canvas measureText actualBoundingBox on "+0.0"): ink ascent 8.52px, ink descent 0.14px,
+// so a tick label's ink box is 8.66px tall and has no descender. At the old 1x=12px threshold a
+// surviving pair sits 12px apart baseline-to-baseline, i.e. 3.34px of white between ink — the two
+// labels clump and read as one four-line stack. At 1.5x=18px the white is 9.34px, slightly more
+// than the ink height itself, which is the same 1.5 leading the rest of the site's stacked small
+// type uses. MEASURED COST, replaying this exact arithmetic over all 250,558 published panels
+// (net + 6 factors x 4 modes for every player file, plus the 7 atom cells of every _atoms.json):
+// grid ticks drawn falls 573,440 -> 565,021, i.e. 2.289 -> 2.255 per panel, a net loss of 8,419
+// ticks (-1.5%). No panel drops below TWO grid ticks at 18px (distribution: 63,905 panels keep 3,
+// 186,653 keep 2, none keep fewer), so nothing is left with a zero rule and no scale.
+//
+// (b) LABEL IS THE ORIGIN. The pixel rule alone is not enough, and the gap it leaves is not rare.
+// A tick can sit 12-24px from the zero rule and still round to 0.0 — the panel then shows a --zero
+// line labelled "0" and, an inch away, a --grid line labelled "-0.0" or "+0.0". MEASURED on the
+// same 250,558 panels: 33,763 of them (13.5%) draw a surviving +-0.0 tick. LIVE EXAMPLE, read off
+// the DOM: ?p=1630169 (Haliburton) -> Pure -> dTS atoms -> the "Three rate" cell drew "+0.0" at
+// y=82 next to "0" at y=105.5, 23.5px apart. So the rule tests the FORMATTED LABEL — what the
+// reader actually sees — and not the value: "-0.0" is a nonsense axis label in any case.
+// AT MOST ONE TICK IS EVER LOST, to (a) and (b) combined. (a) alone can only take one: gridline
+// spacing is ph/2 — 69px on a factor cell, 89px on net — which is far more than 2x18. (b) alone can
+// only take one: two ticks both rounding to 0.0 would need the domain half-height under 0.05, and
+// the `half` floor two lines below Chart()'s pool.push(0) is 0.15. That they cannot BOTH fire on
+// one panel is not argued, it is measured — the 250,558-panel replay above returns exactly two
+// outcomes, 3 ticks or 2, and never 1 or 0.
+// --zero labels its own line — same ink for the mark and its name, and it is the one tick that
+// should out-read the others. MEASURED off the rendered PNG (a 1100px shot of ?p=1630169, the oSC
+// cell), sampling the line row and the darkest/brightest glyph pixel of the "0" against the cell
+// background: dark rgb(127,141,161) on rgb(14,20,29) = 5.48:1 line / 5.41:1 glyph; light
+// rgb(86,100,120) on white = 6.02:1 both. Over the 4.5:1 text floor in both themes, so it is
+// legible as a LABEL and not merely as a mark.
+// The zero line's y is SNAPPED to a half-pixel. svg{width:100%;height:auto} + a viewBox built from
+// the mount's own clientWidth makes one viewBox unit one CSS pixel, so a 1px stroke at an integer y
+// straddles two device rows at half alpha each. MEASURED on the rendered PNG before the snap: the
+// brightest row of the oSC zero line was rgb(82,92,109) on --panel = 2.74:1, i.e. the reference
+// line was UNDER the 3:1 mark floor while its token (#7f8da1, 5.48:1 on --panel) was comfortably
+// over it. Centring on x.5 makes it cover exactly one row at 1x and exactly two at 2x.
+const TICK_CLEAR=1.5;                        // drop threshold, in tick font sizes — see (a) above
+function gridZero(svg,padL,padR,W,ymin,ymax,Y,fs){
+  const yz=Math.round(Y(0))+0.5;
+  [0,.5,1].forEach(f=>{const yv=ymin+(ymax-ymin)*f, y=Y(yv);
+    const txt=(yv>=0?'+':'')+yv.toFixed(1);
+    if(Math.abs(y-yz)<fs*TICK_CLEAR) return;                  // (a) too close to the zero rule
+    if(txt==='+0.0'||txt==='-0.0') return;                    // (b) this tick IS the origin
+    svg.appendChild(el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'var(--grid)','stroke-width':1}));
+    const t=el('text',{x:padL-6,y:y+4,'font-size':fs,fill:'var(--faint)','text-anchor':'end'});
+    t.textContent=txt;svg.appendChild(t);});
+  svg.appendChild(el('line',{x1:padL,y1:yz,x2:W-padR,y2:yz,stroke:'var(--zero)','stroke-width':1}));
+  // "0", not "+0.0": the other ticks are signed magnitudes, this one is the origin.
+  const t0=el('text',{x:padL-6,y:yz+4,'font-size':fs,fill:'var(--zero)','text-anchor':'end'});
+  t0.textContent='0';svg.appendChild(t0);
+}
+
+// `extras`: optional [[rowKey, cssVar]...] drawn as additional lines on the SAME y-axis as `key`.
+// Used only by the net chart's plan49-W2 off/def toggle. No CI band and no hover dot is drawn for
+// them — see the band comment below for why inventing an SE here was refused.
+function Chart(mount,ser,key,proj,extras){
+  const SIDEC=sideColor(key);      // non-null only inside the 3x2 factor grid
+  const W=mount.clientWidth||320, H=mount===document.getElementById('c_net')?206:166;
+  const padL=41,padR=8,padT=9,padB=19, pw=W-padL-padR, ph=H-padT-padB;
+  const n=ser.length;
+  const v   = ser.map(s=>s[key]);
+  const se  = ser.map(s=>s[key+'_se']);
+  let pool=v.filter(x=>x!=null);
+  (extras||[]).forEach(([k])=>ser.forEach(s=>{if(s[k]!=null)pool.push(s[k]);}));   // widen y for the split lines
+  // forward projection: a 1-5yr TRAJECTORY {traj:[{val,se,season}...]}; widen the y-domain so every
+  // orange point + its 80% CI fits, and reserve a right-hand slice of the plot for the future path.
+  let PT=null;
+  if(proj && Array.isArray(proj.traj) && proj.traj.length){
+    PT=proj.traj.filter(t=>t&&t.val!=null&&t.se!=null);
+    if(!PT.length) PT=null;
+    else PT.forEach(t=>{pool.push(t.val+Z80*t.se); pool.push(t.val-Z80*t.se);});   // fold every ±80% CI in
+  }
+  // 0 is a member of the pool, so every panel contains its own zero line and panels are readable
+  // against each other instead of each inventing its own frame. MEASURED cost, on 1,000 players
+  // (the top 400 of players.json, who are the ones actually opened, + 600 sampled at random from
+  // the tail) x the 7 charts = 7,000 panels, replaying this exact arithmetic with and without the
+  // extra pool member: 49.9% of panels already spanned 0; 69.2% pay nothing at all (the 0.15 half
+  // floor below absorbs the rest); the series keeps >=75% of its old height in 84.7% and >=50% in
+  // 98.0%. The 1.4% that lose more than two thirds are all one shape — a deep-bench or college
+  // player parked near the replacement floor (median nearest end 2.1 away from 0) with a span of
+  // 0.16 — and in 100% of them that whole span is INSIDE the series' own 95% CI. So the range
+  // being given up there is measurement noise the old auto-scale was blowing up to full panel
+  // height, which is the same defect in the other direction. Only 12 panels in 7,000 (0.17%) lose
+  // half their height while carrying a span >=1.0 pts/100, and every one is a player sitting at
+  // -3: exactly the fact the old framing hid. No cap, therefore — the expensive cases are the
+  // cases the change is for.
+  // It also makes an all-null series (pool would have been empty -> Math.min() === Infinity ->
+  // NaN coordinates) degrade to an empty +-0.15 panel instead of a broken one.
+  pool.push(0);
+  let lo=Math.min(...pool), hi=Math.max(...pool), c=(lo+hi)/2, half=Math.max((hi-lo)/2*1.06,0.15);
+  const ymin=c-half, ymax=c+half;
+  const histW=PT?pw*0.60:pw;                           // history occupies the left; the future the right
+  const X=i=>padL+(n>1?i/(n-1):.5)*histW;
+  const Y=val=>padT+ph-(Math.max(ymin,Math.min(ymax,val))-ymin)/(ymax-ymin)*ph;
+  const futW=PT?(W-padR-(padL+histW)):0;               // px available to the right of history
+  const XP=h=>padL+histW+futW*(h+1)/PT.length;         // horizon h (0-based) placed across the future slice
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,preserveAspectRatio:'none'});
+  gridZero(svg,padL,padR,W,ymin,ymax,Y,12);
+  let py=ser[0].date.slice(0,4);
+  for(let i=1;i<n;i++){const yr=ser[i].date.slice(0,4);if(yr!==py){
+    svg.appendChild(el('line',{x1:X(i),y1:padT,x2:X(i),y2:padT+ph,stroke:'var(--line-2)','stroke-width':1}));
+    const t=el('text',{x:X(i),y:H-5,'font-size':11.5,fill:'var(--faint)','text-anchor':'middle'});t.textContent="’"+yr.slice(2);svg.appendChild(t);py=yr;}}
+  // CI band (95%, faint): the de-shrunk daily SE. This is a MEASUREMENT CI on the current estimate,
+  // NOT a forward band — see research/arp/cal2_band_audit.md (CAL-2). Read as a next-season forecast
+  // it covers 99.9% at nominal 95% (n=17,204): median se~3.13 vs median annual move ~0.54, i.e. ~4x
+  // too wide for starters and ~26x for rotation players. It is honest as labeled, so do NOT narrow,
+  // rescale or de-attenuate it (F1); the honest forward band is a separate artifact
+  // (out/conformal_bands.parquet, daily_v5/conformal.py) and is not rendered here yet.
+  // Drawn UNCLAMPED and clipped to the plot rect.
+  // Early-career SE is huge (±1.96·17 ≈ ±34); the old value-clamped envelope folded flat against
+  // the axis edge and, as SE wobbled day-to-day, tore into jagged dark blocks. Clipping lets the
+  // envelope run off-plot cleanly, so the band hugs the line and washes where uncertain.
+  // plan45 B3 (D3): suppress the band when a REAL latent sidecar is plotted — its SE is a Kalman
+  // smoothing SE (~29x tighter than the true ability CI), so a band there would be misleading.
+  // But when Latent is ALIASED to the prior board (single-league players, ~84% of the published set)
+  // the plotted series IS the prior series, so the prior's own SE is the correct band and is drawn.
+  // Suppressing it there would have hidden a valid band from most of the site once Latent became
+  // the default mode.
+  if(activeMode()!=='latent'||LATENT_ALIAS){const Yb=val=>padT+ph-(val-ymin)/(ymax-ymin)*ph;          // unclamped Y for the band envelope
+    const idx=[];for(let i=0;i<n;i++)if(v[i]!=null&&se[i]!=null)idx.push(i);
+    if(idx.length>1){
+      const cid='ciclip_'+key, clip=el('clipPath',{id:cid}), defs=el('defs');
+      clip.appendChild(el('rect',{x:padL,y:padT,width:W-padR-padL,height:ph}));
+      defs.appendChild(clip);svg.appendChild(defs);
+      let up='',dn='';
+      idx.forEach(i=>{up+=`${X(i).toFixed(1)},${Yb(v[i]+1.96*se[i]).toFixed(1)} `;});
+      for(let k=idx.length-1;k>=0;k--){const i=idx[k];dn+=`${X(i).toFixed(1)},${Yb(v[i]-1.96*se[i]).toFixed(1)} `;}
+      svg.appendChild(el('polygon',{points:up+dn,class:'ciband',stroke:'none','clip-path':`url(#${cid})`}));}}
+  // Latent mode: ONE continuous cross-league line, colored per-segment by the league the player
+  // was in that day (the DARKO fusion — no seam). Every other mode: one line PER league, no bridge.
+  if(activeMode()==='latent'){
+    for(let i=1;i<n;i++){if(v[i]==null||v[i-1]==null)continue;
+      // plan45 B5: dash the connector across a >30-day cross-league gap (rookie debut / league switch
+      // is information arrival, not smooth continuity) so a >1 net debut step reads as a gap, not a bug.
+      const bridge=((new Date(ser[i].date)-new Date(ser[i-1].date))/864e5>30)&&ser[i].lg!==ser[i-1].lg;
+      const a={x1:X(i-1).toFixed(1),y1:Y(v[i-1]).toFixed(1),x2:X(i).toFixed(1),y2:Y(v[i]).toFixed(1),
+        stroke:SIDEC||lgVar(ser[i].lg),'stroke-width':1.8,'stroke-linecap':'round'};
+      if(bridge){a['stroke-dasharray']='3,3';a['stroke-opacity']=0.5;}
+      svg.appendChild(el('line',a));}
+  }else{
+    // Break each league's polyline at every NULL. Until plan49 W3 no caller ever passed a null
+    // in this branch (build_site.py emits all six factors on every row), so the missing null
+    // check was invisible: Y(null) coerces null->0 inside Math.min/max and draws a FLAT
+    // FABRICATED line. Measured on SGA's college span with the atom series, which is NBA-only:
+    // 127 points, every one at y=85.4 == Y(0). The `extras` branch below already flushes on
+    // null; this makes the main line agree. No-op when the series has no nulls — verified by
+    // comparing every polyline's point-string length on the net + six factor charts before and
+    // after this change (identical).
+    [...new Set(ser.map(s=>s.lg))].forEach(lg=>{
+      let seg=[];
+      const flush=()=>{if(seg.length>1)svg.appendChild(el('polyline',{points:seg.join(' '),
+        fill:'none',stroke:SIDEC||lgVar(lg),'stroke-width':1.6,'stroke-linejoin':'round','stroke-linecap':'round'}));seg=[];};
+      for(let i=0;i<n;i++){if(ser[i].lg!==lg)continue;
+        if(v[i]==null){flush();continue;}
+        seg.push(`${X(i).toFixed(1)},${Y(v[i]).toFixed(1)}`);}
+      flush();});
+  }
+  // plan49 W6 played/carried per-board-day dots REMOVED (owner 2026-07-24: too much clutter). The
+  // decay TAIL itself still renders (site_active.trim carries it); only the per-point markers are gone.
+  // pg is still emitted in the base sidecar but no longer drawn.
+  // ── plan49 W2: extra series (ORAPM / DRAPM) on the SAME axis, in the W1 side colours ─────────────
+  // NO CONFIDENCE BAND, deliberately. se_ORAPM / se_DRAPM are not stored anywhere. The only way to
+  // manufacture one is to root-sum-square the three factor SEs and re-apply kappa=1.00917
+  // (priors/se_net_kappa.json, msolve.py:728) — but that kappa was calibrated on the SIX-factor sum,
+  // so on a three-factor sum it is an unvalidated number. Suppressed rather than invented.
+  // Segments break on a league change, matching the main line, so no phantom bridge is drawn.
+  (extras||[]).forEach(([k,cv])=>{const col='var('+cv+')';let seg=[],lastLg=null;
+    const flush=()=>{if(seg.length>1)svg.appendChild(el('polyline',{points:seg.join(' '),fill:'none',
+      stroke:col,'stroke-width':1.4,'stroke-linejoin':'round','stroke-linecap':'round','stroke-opacity':.85}));seg=[];};
+    for(let i=0;i<n;i++){const val=ser[i][k];
+      if(val==null){flush();lastLg=null;continue;}
+      if(lastLg!==null&&ser[i].lg!==lastLg)flush();
+      seg.push(`${X(i).toFixed(1)},${Y(val).toFixed(1)}`);lastLg=ser[i].lg;}
+    flush();});
+  // ── FORWARD projection overlay (1-5yr trajectory, opt-in, ORANGE = projected, NOT measured) ──────
+  // Drawn as a CONNECTED widening cone: a filled 80% band + one continuous dashed centre line + a dot
+  // per horizon. PTg holds each point's geometry so the crosshair/readout can hover the future too.
+  let PTg=null;
+  if(PT){
+    const lx=X(n-1), ly=Y(v[n-1]);                       // anchor at the live curve's last measured point
+    // widening 80% CI band (a filled cone) from the anchor out through every horizon
+    let up=`${lx.toFixed(1)},${ly.toFixed(1)} `, dn='';
+    PT.forEach((t,h)=>{const xp=XP(h);up+=`${xp.toFixed(1)},${Y(t.val+Z80*t.se).toFixed(1)} `;});
+    // lower edge back RIGHT->LEFT so the ring is anchor->top(L-R)->bottom(R-L); L->R here drew a bow-tie
+    for(let h=PT.length-1;h>=0;h--){const xp=XP(h);dn+=`${xp.toFixed(1)},${Y(PT[h].val-Z80*PT[h].se).toFixed(1)} `;}
+    svg.appendChild(el('polygon',{points:up+dn,fill:'var(--amber)','fill-opacity':.10,stroke:'none'}));
+    // one continuous dashed centre line through the anchor and every projected point
+    const mid=[`${lx.toFixed(1)},${ly.toFixed(1)}`].concat(PT.map((t,h)=>`${XP(h).toFixed(1)},${Y(t.val).toFixed(1)}`)).join(' ');
+    svg.appendChild(el('polyline',{class:'projconn',points:mid}));
+    // a dot + year tick at each horizon; keep the geometry for hover
+    PTg=PT.map((t,h)=>{const xp=XP(h), yc=Y(t.val);
+      // projection-horizon dot REMOVED (owner 2026-07-24: no dots). The dashed cone line + year tick remain.
+      if(t.season){const tk=el('text',{x:xp,y:H-4,'font-size':8,fill:'var(--amber)','text-anchor':'middle'});tk.textContent="’"+String(t.season).slice(2);svg.appendChild(tk);}
+      return {x:xp, y:yc, val:t.val, se:t.se, season:t.season};});
+  }
+  const cross=el('line',{class:'crosshair',x1:0,y1:padT,x2:0,y2:padT+ph,visibility:'hidden'});svg.appendChild(cross);
+  const dot=el('circle',{class:'hdot',r:3.2,visibility:'hidden'});svg.appendChild(dot);
+  const ov=el('rect',{x:0,y:0,width:W,height:H,fill:'transparent'});svg.appendChild(ov);
+  mount.innerHTML='';mount.appendChild(svg);
+  const obj={key,n,W,padL,pw,histW,futW,PTg,
+    setHover(i,line){
+      if(i>=n && PTg){                                   // projection-point hover (i-n = horizon 0..P-1)
+        const g=PTg[i-n];
+        if(!g){cross.setAttribute('visibility','hidden');dot.setAttribute('visibility','hidden');return;}
+        cross.setAttribute('x1',g.x);cross.setAttribute('x2',g.x);cross.setAttribute('visibility',line?'visible':'hidden');
+        dot.setAttribute('cx',g.x);dot.setAttribute('cy',g.y);dot.setAttribute('fill','var(--amber)');dot.setAttribute('visibility',line?'visible':'hidden');return;}
+      if(i<0||i>=n){cross.setAttribute('visibility','hidden');dot.setAttribute('visibility','hidden');return;}
+      cross.setAttribute('x1',X(i));cross.setAttribute('x2',X(i));cross.setAttribute('visibility',line?'visible':'hidden');
+      // Same null trap as the polyline above: Y(null) parks the dot at Y(0), which reads as a
+      // real measured point on a date this series has no value for. Hide it, keep the crosshair.
+      if(v[i]==null){dot.setAttribute('visibility','hidden');return;}
+      dot.setAttribute('cx',X(i));dot.setAttribute('cy',Y(v[i]));dot.setAttribute('fill',SIDEC||lgVar(ser[i].lg));dot.setAttribute('visibility',line?'visible':'hidden');},
+    valAt(i){return (i>=n&&PTg)?{v:PTg[i-n].val,se:PTg[i-n].se}:{v:v[i],se:se[i]};},
+    // THE FLIP BOUND: the bordered panel this chart lives in. .atomcell is listed FIRST and is the
+    // whole point — it is nested inside a .cell, and without it closest() walked straight past it to
+    // the expanded cell, so all seven atom charts claimed a 996px host and the flip never fired.
+    // MEASURED before the fix (1280, atoms open on oTS): hovering "Rim make" (cell 150-386) at
+    // x=378 placed the 162.2px bubble at 392-554.2 — entirely on top of the neighbouring "Rim rate"
+    // chart (398-634) while still labelled "Rim make".
+    host:mount.closest('.atomcell,.cell,.netcard')||mount,
+    // Where the SNAPPED point is on screen, for the bubble to hang off (see tipPlace). Client
+    // coords, so the svg's own rect does the viewBox->CSS scaling; preserveAspectRatio is 'none',
+    // so x and y scale independently and each needs its own factor. ys is a list because the
+    // compare view puts several dots on one column.
+    hoverPt(i){const r=svg.getBoundingClientRect(); if(!r.width)return null;
+      const sx=r.width/W, sy=r.height/H;
+      if(i>=n&&PTg){const g=PTg[i-n];                    // the projection cone draws no dot: x only
+        return g?{x:r.left+g.x*sx, ys:[]}:null;}
+      if(i<0||i>=n)return null;
+      return {x:r.left+X(i)*sx, ys:v[i]==null?[]:[r.top+Y(v[i])*sy]};},
+    // What the cursor bubble says for index i. Same numbers, same rounding and the same ± the
+    // panel header prints — this is a second PLACE to read them, never a second answer.
+    tipData(i){
+      const lab=tipLabel(key);
+      if(i>=n&&PTg){const g=PTg[i-n];                     // hovering the future: orange, and say so
+        return g?{date:'Projected '+(g.season||''),
+          rows:[{c:'var(--amber)',k:lab,v:tipSgn(g.val),e:'±'+(Z80*g.se).toFixed(2)}]}:null;}
+      if(i<0||i>=n||v[i]==null)return null;               // no value on this date -> no bubble
+      const s=ser[i];
+      const rows=[{c:SIDEC||lgVar(s.lg),k:lab,v:tipSgn(v[i]),
+                   e:se[i]!=null?'±'+(1.96*se[i]).toFixed(2):''}];
+      // the off/def split draws two more lines on this axis, so it gets two more rows, each in its
+      // own line colour — without the swatches a three-number bubble is unreadable.
+      (extras||[]).forEach(([k,cv])=>{if(s[k]!=null)rows.push({c:'var('+cv+')',k,v:tipSgn(s[k]),e:''});});
+      return {date:`${s.date} · ${LNAME[s.lg]||s.lg}`,rows};}};
+  const move=e=>{const r=svg.getBoundingClientRect();
+    const sx=(e.clientX-r.left)/r.width*W;
+    let i;
+    if(PTg && sx>padL+histW+2){                          // future slice -> nearest projected horizon
+      let h=Math.round((sx-(padL+histW))/futW*PTg.length-0.5);
+      h=Math.max(0,Math.min(PTg.length-1,h)); i=n+h;
+    } else {                                             // history -> nearest measured game-day
+      i=Math.round((sx-padL)/histW*(n-1)); i=Math.max(0,Math.min(n-1,i));
+    }
+    setHoverAll(i,true); tipShow(obj,e,i);};
+  // pointerdown as well as pointermove: a TAP moves no pointer, so on touch the move-only binding
+  // this had meant a tap put the crosshair nowhere. Same handler, so touch gets the same answer.
+  ['pointermove','pointerdown'].forEach(t=>ov.addEventListener(t,move));
+  // default: last actual game. tipHide is also in setHoverAll(_,false), which covers the re-render
+  // case — the SVG under the pointer is replaced, so no pointerleave ever fires on it.
+  ['pointerleave','pointercancel'].forEach(t=>ov.addEventListener(t,()=>setHoverAll(n-1,false)));
+  return obj;
+}
+
+function setHoverAll(i,line){
+  // UNCONDITIONAL, and that is the invariant: the bubble is only ever visible for the index the
+  // POINTER last set. tipShow() is the one thing that shows it and the pointer handler calls it
+  // immediately after this, in the same synchronous task, so there is no paint in between and no
+  // flicker. Every other driver — the waterfall scrub, Play's sweep, a re-render settling on the
+  // latest day — therefore clears it instead of leaving a frozen number under a moving crosshair.
+  tipHide();
+  CHARTS.forEach(c=>c.setHover(i,line));
+  const ro=document.getElementById('readout');
+  const p=projFor();
+  if(p&&Array.isArray(p.traj)&&i>=SER.length){          // projection-point readout (ORANGE = projected)
+    const h=i-SER.length, t=p.traj[h];
+    const fp=(val,sd)=>val==null?'—':`<b style="color:var(--amber)">${val>=0?'+':''}${val.toFixed(2)}</b> <span style="color:var(--faint)">±${(Z80*sd).toFixed(2)}</span>`;
+    ro.innerHTML=`<span style="color:var(--amber)">projected&nbsp;</span><b style="color:var(--amber)">${t[0]}</b>`;
+    document.getElementById('v_net').innerHTML=fp(t[1],t[2]);
+    const fok=Array.isArray(p.traj_f)&&Array.isArray(p.traj_f_se);
+    FAC.forEach(([f],k)=>{const e=document.getElementById('v_'+f);if(e)e.innerHTML=fok?fp(p.traj_f[h][k],p.traj_f_se[h][k]):'—';});
+    return;
+  }
+  if(i<0||!SER||!SER[i]){ro.innerHTML='';document.getElementById('v_net').innerHTML='';
+    FAC.forEach(([f])=>{const e=document.getElementById('v_'+f);if(e)e.innerHTML='';});return;}
+  const s=SER[i];
+  ro.innerHTML=`${line?'':'<span style="color:var(--faint)">latest&nbsp;</span>'}<b>${s.date}</b> · <span style="color:${LC[s.lg]}">${LNAME[s.lg]}</span>`;
+  const fmt=(val,sd)=>val==null?'—':`<b>${val>=0?'+':''}${val.toFixed(2)}</b> <span style="color:var(--faint)">±${(1.96*sd).toFixed(2)}</span>`;
+  // plan49 W2: when the split is drawn, print it too. The two parts sum to net only to within the
+  // exporter's 2dp rounding of each factor (build_site.py:113), so O+D can read 0.01-0.03 off net.
+  const odRead=s=>(!ODON||s.ORAPM==null||s.DRAPM==null)?'':
+    ` <span style="color:var(--off)">O ${s.ORAPM>=0?'+':''}${s.ORAPM.toFixed(2)}</span>`
+   +` <span style="color:var(--def)">D ${s.DRAPM>=0?'+':''}${s.DRAPM.toFixed(2)}</span>`;
+  document.getElementById('v_net').innerHTML=fmt(s.net,s.net_se)+odRead(s);
+  FAC.forEach(([f])=>{const e=document.getElementById('v_'+f);if(e)e.innerHTML=fmt(s[f],s[f+'_se']);});
+  // W3 atom readouts. No ± here: atom SEs exist on the board but are deliberately not exported —
+  // six overlapping bands on a 150px chart is unreadable, and a band is not what this panel is for.
+  if(ATOMOPEN&&ATOMS){const a=ATOMS.byDate[s.date];
+    ATOMK[ATOMOPEN].forEach(k=>{const e=document.getElementById('va_'+k);
+      if(e)e.innerHTML=(a&&a[k]!=null)?`<b>${a[k]>=0?'+':''}${a[k].toFixed(2)}</b>`:'—';});
+    // W3: baseline (calibration offset) readout — the 7th term that makes the six pieces sum to the factor.
+    const be=document.getElementById('va_BASE'),bo=ATOMS.off&&ATOMS.off[ATOMOPEN];
+    if(be)be.innerHTML=(a&&bo!=null)?`<b>${bo>=0?'+':''}${bo.toFixed(2)}</b>`:'—';}
+  if(!wfPlaying&&WFDOM&&i>=0&&i<SER.length)wfRenderAt(i);   // waterfall follows the hovered game-day
+}
+
+// ── player card (headshot + name + age + per-game box line) ──────────────────────────────────
+// Data rides in the base sidecar as prior.card (build_site.py + card_data.py). Absent -> render the
+// old text header instead (no crash). The card is basis-independent (box stats don't change with the
+// Pure/Prior/Box/Latent toggle), so it is painted once in show() and never from setMode/renderActive.
+function faceErr(img){                              // advance the CDN candidate chain; monogram at the end
+  let s;try{s=JSON.parse(img.dataset.srcs||'[]');}catch(e){s=[];}
+  const i=(+img.dataset.i||0)+1;
+  if(i<s.length){img.dataset.i=i;img.src=s[i];return;}
+  const m=document.createElement('span');m.className='pc-mono';m.textContent=img.dataset.mono||'';
+  img.replaceWith(m);
+}
+// Card ENABLED (2026-07-25): AST/STL/BLK for the ~20 box-parse-defect 2026-NBA stars (Doncic/Jokic)
+// are now sourced from a local hoopR mirror via card_data.py (_hoopr_ast_stl_blk, id-native bridge).
+// All card code (card_data.py, #pcard, faceErr) stays wired.
+const CARD_ENABLED=true;
+function renderCard(){
+  const box=document.getElementById('pcard'), pn=document.getElementById('pname');
+  const c=CARD_ENABLED&&RAW.prior&&RAW.prior.card;
+  if(!c){box.style.display='none';box.innerHTML='';pn.style.display='';return;}
+  pn.style.display='none';                          // the card owns the name
+  const initials=(PNAME.match(/\p{L}+/gu)||[PNAME]).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+  const faces=Array.isArray(c.face)?c.face:[];
+  const num=v=>v==null?'—':(v>=0?'':'')+v.toFixed(1);
+  const pct=v=>v==null?'—':(v*100).toFixed(1)+'%';
+  const cell=(v,l)=>`<div class="pc-cell"><span class="pc-val">${v}</span><span class="pc-lab">${l}</span></div>`;
+  const lg=SERIES.prior[SERIES.prior.length-1].lg;
+  // TEAM, next to the league (owner 2026-07-28). Guarded on c.team_league===lg on purpose: the
+  // label `lg` is the last day of the prior SERIES, while card_data derives the team from the
+  // latest BOX-PANEL game, and those two rules can pick different leagues for the same player.
+  // Rendering a team the label disagrees with would print "NCAA · Denver Nuggets". Silence is
+  // the correct failure here, and it is also what G-League players get: no id->name table for
+  // those 33 franchises exists anywhere on disk, so they are league-only by data, not by choice.
+  const teamOK=!!(c.team&&c.team_league===lg);
+  // TEAM COLOUR. Never the raw brand hex: card_data emits ESPN's own values, and of the 564
+  // (school, colour) pairs it ships ZERO clear 4.5:1 against BOTH themes' panel — the dark-theme
+  // median is 1.98 and three schools ship #ffffff as their primary. team_colors.js owns the
+  // lightness walk that fixes that, and it is the ONLY spelling of it on the site; through it all
+  // 564 clear 4.5:1 on both themes with their hue intact. NBA goes through the same file by abbr,
+  // which is also why no NBA hex is emitted — ESPN's NBA primaries disagree with the shipping
+  // palette on 18 of 30 franchises (ESPN calls Golden State gold, the palette calls it blue).
+  // A team with no legible hue of its own comes back brand=false wearing the site accent, exactly
+  // as the Nets and the Spurs already do — so `tint` is left null and the name reads as text.
+  let tint=null;
+  if(teamOK&&window.deriveHex){
+    const th=document.documentElement.dataset.theme==='light'?'light':'dark';
+    const d=(c.team_league==='wnba'&&c.team_abbr)
+      ? {hex:window.teamInk(c.team_abbr,th), brand:window.teamInkIsBrand(c.team_abbr,th)}
+      : (c.team_color ? window.deriveHex(c.team_color,c.team_color_alt,th,'ink') : null);
+    if(d&&d.brand) tint=d.hex;
+  }
+  const team=teamOK?`<span class="tm"${tint?` style="color:${tint}"`:''}>${c.team}</span>`:'';
+  const sub=[c.pos?`<span class="pos">${c.pos}</span>`:'',
+             `<span style="color:${LC[lg]};font-weight:700">${LNAME[lg]}</span>`, team,
+             c.age!=null?`Age ${c.age}`:''].filter(Boolean).join('<span style="color:var(--faint)">·</span>');
+  // The badge is gated on the SAME team_league check as the name — a logo names a team just as
+  // loudly as the string does. onerror removes it rather than leaving a broken-image box: 30
+  // college rows across 22 seasons have a null logo upstream, and the CDN is a third party.
+  const badge=(teamOK&&c.team_logo)
+    ? `<img class="pc-badge" src="${c.team_logo}" alt="" loading="lazy" decoding="async"
+         title="${c.team.replace(/"/g,'&quot;')}" onerror="this.remove()">` : '';
+  box.innerHTML=
+    `<div class="pc-shot"><img class="pc-face" alt="" loading="lazy" decoding="async"
+       src="${faces[0]||''}" data-srcs='${JSON.stringify(faces).replace(/'/g,'&#39;')}'
+       data-i="0" data-mono="${initials}" onerror="faceErr(this)">${badge}</div>`
+    // TWO rows, each one line of text on the left against its own stat group on the right:
+    //   name          PTS REB AST STL BLK
+    //   pos·league·age        FG% 3P% FT%
+    // Pairing them this way is what makes the block read as a grid rather than as three stacked
+    // things (owner 2026-07-26). The rows baseline-align, so the stat values sit on the name's
+    // baseline rather than floating between the two text lines.
+   +`<div class="pc-body">`
+   +`<div class="pc-row"><div class="pc-name">${PNAME}</div>`
+   +`<div class="pc-group">${cell(num(c.pts),'PTS')}${cell(num(c.reb),'REB')}${cell(num(c.ast),'AST')}${cell(num(c.stl),'STL')}${cell(num(c.blk),'BLK')}</div></div>`
+   +`<div class="pc-row"><div class="pc-sub">${sub}</div>`
+   +`<div class="pc-group pc-shoot">${cell(pct(c.fg),'FG%')}${cell(pct(c.tp),'3P%')}${cell(pct(c.ft),'FT%')}</div></div>`
+   +`</div></div>`;
+  if(!faces.length)faceErr(box.querySelector('.pc-face'));   // no candidates -> straight to monogram
+  box.style.display='flex';
+}
+// The team tint is DERIVED PER THEME (both floors are measured against that theme's panel), and
+// the card is painted once per player — so a theme flip would leave a dark-theme ink on the light
+// panel, which is the exact class of bug site.css:244-248 documents for the crosshair. Re-paint on
+// the attribute the toggle actually writes. Same pattern as team2027.html's observer; charts.js
+// owns the flip itself, so there is nothing to coordinate beyond re-running the render.
+new MutationObserver(()=>{ if(!MULTI&&RAW.prior) renderCard(); })
+  .observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+function show(){
+  document.getElementById('empty').style.display='none';
+  document.getElementById('player').style.display='block';
+  document.getElementById('pname').textContent=PNAME;
+  renderCard();
+  document.getElementById('modeseg').style.display='inline-flex';
+  document.getElementById('cmptray').style.display='flex';
+  // build the 6-factor grid cells once
+  const grid=document.getElementById('grid');grid.innerHTML='';
+  FAC.forEach(([f,t])=>{const cell=document.createElement('div');cell.className='cell';cell.id='cell_'+f;
+    // A distinct view-transition-name per cell is what lets the browser MORPH the expanding factor
+    // from its quarter-width rect to full width while the other five cross-fade out, instead of
+    // hard-cutting the whole grid. Set here rather than in CSS because the name must be unique per
+    // element and these are built in a loop.
+    cell.style.viewTransitionName='vt_'+f;
+    // W3: the drill-down affordance exists ONLY on the two factors that actually decompose,
+    // and only when this player HAS an atom sidecar on SOME board (NBA rows only). The button is
+    // deliberately not mode-gated -- the panel itself explains which boards decompose, which is
+    // more useful than an affordance that blinks out of existence when you switch to Box.
+    const drill=(ATOMK[f]&&(ATOMSRC.pure||ATOMSRC.prior))?`<button class="drill" id="dr_${f}" aria-expanded="false" aria-controls="ap_${f}">atoms</button>`:'';
+    cell.innerHTML=`<div class="ctitle"><span>${t} <span class="help" data-tip="${TIP[f]}">?</span>${drill}</span><span class="v" id="v_${f}"></span></div><div id="c_${f}"></div><div class="atompanel" id="ap_${f}"></div>`;
+    grid.appendChild(cell);});
+  applyAtomLayout();   // a fresh grid is always collapsed; clear any class left by the last player
+  Object.keys(ATOMK).forEach(f=>{const b=document.getElementById('dr_'+f);
+    if(b)b.addEventListener('click',()=>toggleAtoms(f));});
+  // projseg deliberately NOT revealed -- no WNBA player-trajectory projection exists.
+  document.getElementById('odseg').style.display='inline-flex';
+  syncProjSeg(); syncOdSeg();
+  syncSeg();
+  // if the toggle is already ON (persisted), load the projection data BEFORE the first paint
+  // so the orange overlay appears immediately; otherwise just paint the descriptive charts.
+  if(PROJON){ getProj().then(renderActive); }
+  else { renderActive(); }
+  renderProfile();   // production profile (single-player, latest day)
+  syncCmpList();
+  window.scrollTo({top:90,behavior:'smooth'});
+}
+function renderActive(){
+  SER=SERIES[activeMode()]; const last=SER[SER.length-1];
+  const lgset=[...new Set(SER.map(s=>s.lg))];
+  const badges=['wnba'].filter(l=>lgset.includes(l)).map(l=>`<span style="color:${LC[l]};font-weight:700">${LNAME[l]}</span>`).join(' · ');
+  document.getElementById('pmeta').innerHTML=`${SER[0].date} – ${last.date} · ${badges}`+` · <span style="color:var(--faint)">net chart: colour = league`
+    +(ODON?`, plus <span class="swoff">ORAPM</span> + <span class="swdef">DRAPM</span> (they add to the net line)`:``)
+    +` · factor grid: colour = <span class="swoff">offence</span> / <span class="swdef">defence</span> (for league, read the net chart above — same x-axis)</span>`;
+  const p=projFor();                                 // null unless toggle ON + pid has a projection
+  // Forward TRAJECTORY 1-5yr ahead (plan 25). NET chart -> {traj:[{val,se,season}...]}; factor i is the
+  // same shape sliced from traj_f/traj_f_se. Falls back to the single `next` point if traj is absent.
+  const trajOK=p&&Array.isArray(p.traj)&&p.traj.length>0;
+  const facTrajOK=trajOK&&Array.isArray(p.traj_f)&&Array.isArray(p.traj_f_se)&&p.traj_f.length===p.traj.length&&p.traj_f[0].length===FAC.length;
+  const netProj=trajOK?{traj:p.traj.map(t=>({season:t[0],val:t[1],se:t[2]}))}
+               :(p?{traj:[{val:p.next[1],se:p.next[2],season:p.next[0]}]}:null);
+  const facProj=i=>facTrajOK?{traj:p.traj.map((t,h)=>({season:t[0],val:p.traj_f[h][i],se:p.traj_f_se[h][i]}))}
+               :(p&&Array.isArray(p.next_f)&&p.next_f.length===FAC.length?{traj:[{val:p.next_f[i],se:p.next_f_se[i],season:p.next[0]}]}:null);
+  requestAnimationFrame(()=>{
+    CHARTS=[Chart(document.getElementById('c_net'),SER,'net',netProj,ODON?OD_EXTRAS:null)];
+    FAC.forEach(([f],i)=>CHARTS.push(Chart(document.getElementById('c_'+f),SER,f,facProj(i))));
+    renderAtoms();                                   // W3: (re)paint the expanded atom panel, if any
+    wfInit();                                        // (re)build the waterfall for this player/mode
+    setHoverAll(SER.length-1,false);                 // default readout = most recent day (also paints the waterfall)
+  });
+}
+// ── plan49 W3: factor -> atom drill-down ─────────────────────────────────────────────────────
+// WHICH MODES DECOMPOSE, AND WHY THE REST REFUSE TO DRAW RATHER THAN APPROXIMATE.
+// The identity the panel exists to show is  Σ(6 atoms) + factor_offset == factor.
+//   * pure    — closes EXACTLY (0.0) against out/nba + priors/v5_nba_calibration.json.
+//   * prior   — closes against out/nba_hybrid + priors/v5_nba_prior_calibration.json: per-player
+//               spread 8.9e-16, plus a global constant of 3.6e-6 (float residue from the
+//               2026-07-27 constant-patch repair), which is ~10,000x below the 2dp the sidecar
+//               ships at. Shipped 2026-07-28. It was withheld for two weeks before that because
+//               the same constant was 0.0593 — the calibration file had been rewritten 3h27m
+//               after the board was solved, and recovering the constant by fitting it from the
+//               board is self-consistency, which F15 forbids. The re-solve fixed the source.
+//   * latent  — only when it ALIASES to prior (a player who never changed leagues): then the
+//               curve on screen IS the prior board. For a real mover, latent is a state-space
+//               re-score of that board and the atoms do not reconstruct it.
+//   * box     — never. A different estimator whose LEAVES are the six factors; there is no atom
+//               layer under it, and box_panel_nba.parquet has no shot-location columns to build one.
+//   * college / G-League rows — aggregate.py publishes them through a per-FACTOR affine
+//               translation (ncaa->nba oTS slope 0.1588) that was never fitted at atom level.
+// So in a mode that does not decompose the panel draws NOTHING and offers a one-click switch.
+// Six atom curves that silently fail to add up to the line directly above them is the exact
+// "broken feature" this design is avoiding.
+// Expanded layout: the drilled factor takes the whole grid row and the other five step out, so the
+// seven component charts underneath get real width instead of a 150px sliver. Pure class toggling —
+// the CSS at :104-108 does the work.
+function applyAtomLayout(){
+  const grid=document.getElementById('grid');
+  if(!grid)return;
+  grid.classList.toggle('atoms-open', !!ATOMOPEN);
+  FAC.forEach(([f])=>{const c=document.getElementById('cell_'+f);
+    if(c)c.classList.toggle('atom-open', ATOMOPEN===f);});
+}
+function toggleAtoms(f){
+  const apply=()=>{
+    ATOMOPEN=(ATOMOPEN===f)?null:f;
+    Object.keys(ATOMK).forEach(k=>{const b=document.getElementById('dr_'+k);
+      if(b){b.classList.toggle('on',ATOMOPEN===k);b.setAttribute('aria-expanded',String(ATOMOPEN===k));}});
+    applyAtomLayout();
+    // Full renderActive, not just renderAtoms: every chart's viewBox is built from its mount's
+    // clientWidth, and five of the six just changed width or vanished. It sets SER synchronously
+    // and defers the drawing to a rAF.
+    renderActive();
+    // Then build the panel SYNCHRONOUSLY rather than leaving it to that rAF. rAF does not fire in a
+    // backgrounded or throttled tab, and this is the one interaction where a dropped frame leaves a
+    // visibly broken page: the grid is already collapsed to a single cell, so a panel that never
+    // arrives reads as "the drill-down is broken". The charts can afford to wait a frame (they are
+    // width:100% and just stretch); the panel cannot. renderActive's rAF calls renderAtoms again
+    // when it lands, which is idempotent -- it filters its own charts out of CHARTS first.
+    renderAtoms();
+    // Deliberately NOT returning a promise that waits for renderActive's rAF. A view transition
+    // suspends rendering until the update callback settles, so waiting on rAF inside it deadlocks:
+    // the frame cannot arrive until the promise resolves and the promise cannot resolve until the
+    // frame arrives. Chrome breaks the tie by timing the transition out ~4s later, which is how
+    // this first showed up -- the panel simply never opened. The charts therefore redraw one frame
+    // into the morph; invisible, because every chart SVG is width:100% and just stretches until it
+    // is repainted at the new width.
+  };
+  // The View Transitions API is the platform's own version of what a motion library would do here,
+  // and needs no bundler on a site that ships no JS build step. Unsupported (Firefox) or
+  // reduced-motion => the same instant swap this always did.
+  const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!reduce && document.startViewTransition) document.startViewTransition(apply);
+  else apply();
+}
+const ALLATOMS=new Set([].concat(ATOMK.oTS,ATOMK.dTS,['BASE']));   // 'BASE' = the baseline chart key (W3)
+function renderAtoms(){
+  // Drop any atom charts already in CHARTS before (re)building. toggleAtoms() calls this WITHOUT
+  // going through renderActive(), which is the only place CHARTS is rebuilt from scratch — so
+  // without this, open/close/open leaves setHoverAll driving detached SVG nodes forever.
+  CHARTS=CHARTS.filter(c=>!ALLATOMS.has(c.key));
+  Object.keys(ATOMK).forEach(k=>{const p=document.getElementById('ap_'+k);
+    if(p&&k!==ATOMOPEN){p.innerHTML='';p.style.display='none';}});
+  // ATOMS = whichever board's decomposition backs the mode on screen. Set here, from the mode, so
+  // there is exactly one place that answers "which atoms am I looking at" and the rest of this
+  // function never has to ask again.
+  ATOMS=atomsFor(activeMode());
+  if(!ATOMOPEN||!SER)return;
+  const f=ATOMOPEN, panel=document.getElementById('ap_'+f);
+  if(!panel)return;
+  panel.style.display='block';
+  if(!ATOMS){
+    // Two reasons to land here, and they are NOT the same, so do not collapse the copy: the mode
+    // has no atom layer at all (box, or latent on a real cross-league mover), or it has one and
+    // this player has no NBA rows on that board.
+    const why=(activeMode()==='box')
+      ? 'The <b>box prior</b> is a different estimator — the six factors are its leaves, so there is nothing underneath them to break out.'
+      : (activeMode()==='latent')
+      ? 'This player changed leagues, so <b>latent</b> is a state-space re-score of the board rather than a solve over the pieces — they would not add back up to the line above.'
+      : `No atom rows published for this player on the ${activeMode()==='pure'?'pure':'prior-informed'} board.`;
+    panel.innerHTML=`<div class="atomnote">${why} It breaks out on the <b>pure</b> and <b>prior-informed</b> boards, where the six pieces provably add back to ${f}. `
+      +`<button class="drill" id="ap_go">Show on the prior-informed board</button></div>`;
+    document.getElementById('ap_go').addEventListener('click',()=>setMode('prior'));
+    return;
+  }
+  const keys=ATOMK[f];
+  // W3 defect 2: the identity is Σ(6 atoms) + off[f] == factor, and off[oTS] (-0.47 pure, -0.99
+  // prior-informed) is NOT within display rounding — so the panel MUST show the offset as an
+  // explicit "baseline" term. Rendering it as a 7th cell makes the six pieces + baseline visibly
+  // sum to the factor line above (the honest, checkable presentation). off comes from the sidecar,
+  // whose SOURCE is that board's own calibration file — which is why the two boards differ here.
+  const off=(ATOMS.off&&ATOMS.off[f]!=null)?ATOMS.off[f]:0;
+  panel.innerHTML=`<div class="atomnote">${f==='oTS'?'Shot-making':'Shot suppression'} broken into its six solved pieces plus a fixed calibration <b>baseline</b> (${off>=0?'+':''}${off.toFixed(2)}) — points/100, same scale as the chart above. `
+    +`The six pieces and the baseline add back to ${f} to within display rounding (each is printed to 2dp). `
+    +`${f==='dTS'?'Positive = the opponent did worse.':''}</div><div class="atomgrid" id="ag_${f}"></div>`;
+  const g=document.getElementById('ag_'+f);
+  const cells=keys.concat(['BASE']);   // the six atoms + the baseline term
+  cells.forEach(k=>{const c=document.createElement('div');c.className='atomcell';
+    c.innerHTML=`<div class="atitle"><span>${k==='BASE'?'Baseline':alab(k)}</span><span class="v" id="va_${k}"></span></div><div id="ca_${k}"></div>`;
+    g.appendChild(c);});
+  // Build the atom series ALIGNED TO SER (same length, nulls where this player has no atom row).
+  // That alignment is what lets these charts join the shared CHARTS array: setHoverAll drives every
+  // chart with ONE index into SER, so a shorter atom array would silently read the wrong date.
+  // BASE carries the constant offset on the atom rows (null elsewhere) so it draws as a flat line.
+  const aser=SER.map(s=>{const o={date:s.date,lg:s.lg},a=ATOMS.byDate[s.date];
+    keys.forEach(k=>o[k]=(a&&a[k]!=null)?a[k]:null);o.BASE=a?off:null;return o;});
+  // Reuses Chart() unchanged: key starts with o/d so sideColor() gives it the W1 side colour, and
+  // there is no <key>_se in the rows, so Chart draws no band — correct, we do not export atom SEs.
+  // 'BASE' does not start with o/d, so it renders in the neutral colour — reading as "not a factor".
+  cells.forEach(k=>CHARTS.push(Chart(document.getElementById('ca_'+k),aser,k,null)));
+}
+window.addEventListener('resize',()=>{if(SER||MULTI)show_rerender();});
+let rt;function show_rerender(){clearTimeout(rt);rt=setTimeout(()=>{if(MULTI)renderMulti();else if(SER){renderActive();renderProfile();}},150);}
+
+// ===== Production profile (ported from profile.html, uses RC helpers) ================
+function renderProfile(){
+  const box=document.getElementById('profile');
+  if(MULTI){box.style.display='none';return;}
+  box.style.display='block';
+  // use the prior-informed series' latest day for percentiles
+  const ser=SERIES.prior; if(!ser){box.style.display='none';return;}
+  const last=ser[ser.length-1], lg=last.lg;
+  getQuant().then(()=>{
+    const lq=QUANT&&QUANT.leagues&&QUANT.leagues[lg];
+    if(!lq){
+      document.getElementById('off').innerHTML='';document.getElementById('def').innerHTML='';
+      document.getElementById('radar').innerHTML='';
+      document.getElementById('proflegend').innerHTML=`<span style="color:var(--box)">No quantile reference for ${LNAME[lg]||lg}.</span> Percentile bars hidden for this league.`;
+      return;
+    }
+    const accent=lgColor(lg);
+    renderBars(document.getElementById('off'),OFFF,last,lq.q,lg);
+    renderBars(document.getElementById('def'),DEFF,last,lq.q,lg);
+    const pcts={}; FACK.forEach(f=>pcts[f]=RC.pctile(lq.q[f],last[f]));
+    RC.radar(document.getElementById('radar'),FACK,pcts,accent);
+    document.getElementById('proflegend').innerHTML=`Within-${LNAME[lg]} percentile (pool n=${lq.n}) on ${last.date}.`;
+  });
+}
+function renderBars(mount,factors,row,q,lg){
+  mount.innerHTML='';
+  factors.forEach(f=>{
+    const v=row[f], pct=RC.pctile(q[f],v);
+    const r=document.createElement('div'); r.className='barrow';
+    const lab=document.createElement('span'); lab.className='lab'; lab.textContent=f;
+    const val=document.createElement('span'); val.className='val'; val.textContent=(v>=0?'+':'')+v.toFixed(2);
+    const wrap=document.createElement('div'); wrap.className='barwrap'; wrap.appendChild(RC.pctBar(v,pct,RC.redGreen(pct),f+' '+LNAME[lg]));
+    const pl=document.createElement('span'); pl.className='pctlab'; pl.textContent=Math.round(pct*100)+'%';
+    r.appendChild(lab);r.appendChild(val);r.appendChild(wrap);r.appendChild(pl);
+    mount.appendChild(r);
+  });
+}
+// ===== Add-to-compare tray (single-player) ==========================================
+const OKABE=['#0072B2','#E69F00','#009E73','#CC79A7'];
+let CMP=[];   // [{id,name}] staged for comparison
+function syncCmpList(){
+  const wrap=document.getElementById('cmplist'); wrap.innerHTML='';
+  CMP.forEach((c,k)=>{const sp=document.createElement('span'); sp.className='cmpchip';
+    sp.innerHTML=`<span class="sw" style="background:${OKABE[k%OKABE.length]}"></span><span>${c.name}</span><span class="x" title="remove">×</span>`;
+    sp.querySelector('.x').onclick=()=>{CMP=CMP.filter(x=>x.id!==c.id);syncCmpList();};
+    wrap.appendChild(sp);});
+  document.getElementById('cmpgo').disabled = CMP.length<2;
+}
+document.getElementById('cmpadd').addEventListener('click',()=>{
+  if(!CURID||CMP.find(c=>c.id===CURID)||CMP.length>=4)return;
+  CMP.push({id:CURID,name:PNAME}); syncCmpList();
+});
+document.getElementById('cmpgo').addEventListener('click',()=>{
+  if(CMP.length<2)return;
+  loadMulti(CMP.map(c=>c.id));
+});
+
+// ===== Multi-player comparison overlay ==============================================
+// ?p=id1,id2,...  overlays 2-4 players' LATENT series on net + each factor (owner 2026-07-28;
+// was prior-informed). Distinct CVD-safe (Okabe-Ito) colors AND a legend label per player — color
+// is never the sole encoder.
+//
+// TWO FETCHES PER PLAYER, not one. The latent sidecar carries the six factors + net + SEs but no
+// name (sidecars carry no id/name by design), and it does not exist at all for a player who never
+// changed leagues. So the base file is still fetched for the name and as the alias fallback —
+// which is the same rule the single-player view uses, and it means a comparison can legitimately
+// mix a fused curve with a board curve. That is disclosed in the subtitle rather than hidden.
+let MULTI=null;   // [{id,name,ser,net,se,alias}]
+function loadMulti(ids){
+  const opt=u=>fetch(u).then(r=>r.ok?r.json():null).catch(()=>null);
+  Promise.all(ids.map(id=>Promise.all([opt('data/'+id+'.json'), opt('data/'+id+'_latent.json')])))
+    .then(arr=>{
+      MULTI=arr.map(([d,lat],k)=>{ if(!d)return null; const s=lat||d;
+        return {id:ids[k],name:d.name||ids[k],ser:prep(s),color:OKABE[k%OKABE.length],alias:!lat,
+                net:s.net[s.net.length-1],se:s.net_se[s.net_se.length-1]||0.3}; })
+               .filter(Boolean);
+      // MULTI=[] is TRUTHY, so a zero-survivor compare used to leave an empty array behind and the
+      // next window resize hit `if(SER||MULTI)` -> renderMulti -> MDATES[0].slice on undefined.
+      // Null it before returning; the single-survivor path already redirects to that player.
+      if(MULTI.length<2){const one=MULTI[0];MULTI=null;if(one)load(one.id,one.name);return;}
+      history.replaceState(null,'','?p='+MULTI.map(m=>m.id).join(','));
+      CMP=MULTI.map(m=>({id:m.id,name:m.name}));
+      showMulti();
+    });
+}
+function showMulti(){
+  document.getElementById('empty').style.display='none';
+  document.getElementById('player').style.display='block';
+  document.getElementById('modeseg').style.display='none';
+  document.getElementById('projseg').style.display='none';
+  document.getElementById('odseg').style.display='none';   // off/def split is single-player only
+  document.getElementById('cmptray').style.display='none';
+  document.getElementById('pcard').style.display='none';    // card is single-player only
+  document.getElementById('pname').style.display='';        // restore the text header for the compare title
+  document.getElementById('profile').style.display='none';
+  wfStop();document.getElementById('waterfall').style.display='none';   // waterfall is single-player only
+  // The alias clause is DERIVED, not boilerplate: it renders only when a player in this particular
+  // comparison has no latent sidecar, and it names them. Without it the subtitle would claim a
+  // fused curve for someone who is being drawn on the prior-informed board.
+  const aliased=MULTI.filter(m=>m.alias).map(m=>m.name);
+  document.getElementById('modehint').textContent='Comparison overlay — latent net + 6 factors for '+MULTI.length+' players. Each player has a distinct color and legend label.'
+    +(aliased.length?' '+aliased.join(' and ')+' never changed leagues, so '+(aliased.length>1?'those curves are':'that curve is')+' the prior-informed board — which is what latent means for them.':'');
+  document.getElementById('pname').textContent='Comparison';
+  document.getElementById('pmeta').innerHTML=MULTI.map(m=>`<a href="index.html?p=${m.id}" style="color:${m.color};font-weight:700">${m.name}</a>`).join(' · ');
+  document.getElementById('readout').innerHTML='';
+  const grid=document.getElementById('grid');grid.innerHTML='';
+  FAC.forEach(([f,t])=>{const cell=document.createElement('div');cell.className='cell';
+    cell.innerHTML=`<div class="ctitle"><span>${t} <span class="help" data-tip="${TIP[f]}">?</span></span><span class="v" id="vm_${f}"></span></div><div id="cm_${f}"></div>`;
+    grid.appendChild(cell);});
+  renderMulti();
+  window.scrollTo({top:90,behavior:'smooth'});
+}
+let MCHARTS=[], MDATES=[];
+function renderMulti(){
+  const set=new Set();MULTI.forEach(m=>m.ser.forEach(s=>set.add(s.date)));
+  MDATES=[...set].sort();
+  MULTI.forEach(m=>{m.map={};m.ser.forEach(s=>m.map[s.date]=s);});
+  requestAnimationFrame(()=>{
+    MCHARTS=[ChartMulti(document.getElementById('c_net'),'net')];
+    FAC.forEach(([f])=>MCHARTS.push(ChartMulti(document.getElementById('cm_'+f),f)));
+    setHoverMulti(MDATES.length-1,false);
+  });
+}
+function ChartMulti(mount,key){
+  const W=mount.clientWidth||320, H=mount===document.getElementById('c_net')?206:166;
+  const padL=41,padR=8,padT=9,padB=19, pw=W-padL-padR, ph=H-padT-padB;
+  const n=MDATES.length;
+  let pool=[];MULTI.forEach(m=>MDATES.forEach(d=>{const s=m.map[d];if(s&&s[key]!=null)pool.push(s[key]);}));
+  pool.push(0);          // same always-in-domain zero as Chart() — see the cost measurement there.
+                         // Cheaper here than there: a compare-set pools several careers, so its span
+                         // is wider and 0 is more often inside it already.
+  let lo=Math.min(...pool), hi=Math.max(...pool), c=(lo+hi)/2, half=Math.max((hi-lo)/2*1.06,0.15);
+  const ymin=c-half, ymax=c+half;
+  const X=i=>padL+(n>1?i/(n-1):.5)*pw;
+  const Y=val=>padT+ph-(Math.max(ymin,Math.min(ymax,val))-ymin)/(ymax-ymin)*ph;
+  const svg=el('svg',{viewBox:`0 0 ${W} ${H}`,preserveAspectRatio:'none'});
+  gridZero(svg,padL,padR,W,ymin,ymax,Y,12);
+  let py=MDATES[0].slice(0,4);
+  for(let i=1;i<n;i++){const yr=MDATES[i].slice(0,4);if(yr!==py){
+    svg.appendChild(el('line',{x1:X(i),y1:padT,x2:X(i),y2:padT+ph,stroke:'var(--line-2)','stroke-width':1}));
+    const t=el('text',{x:X(i),y:H-5,'font-size':11.5,fill:'var(--faint)','text-anchor':'middle'});t.textContent="’"+yr.slice(2);svg.appendChild(t);py=yr;}}
+  // Draw each player's OWN consecutive points (break only on a league change). Players are
+  // downsampled independently, so their absolute dates rarely align — iterating the union and
+  // flushing on every interleaved date shattered each line into invisible 1-point segments.
+  // Connecting a player's own points (skipping union indices another player owns) keeps it whole.
+  MULTI.forEach(m=>{let seg=[],lastLg=null;
+    const flush=()=>{if(seg.length>1)svg.appendChild(el('polyline',{points:seg.join(' '),fill:'none',stroke:m.color,'stroke-width':1.6,'stroke-linejoin':'round','stroke-linecap':'round'}));seg=[];};
+    for(let i=0;i<n;i++){const s=m.map[MDATES[i]];if(!s||s[key]==null)continue;
+      if(lastLg!==null&&s.lg!==lastLg)flush();
+      seg.push(`${X(i).toFixed(1)},${Y(s[key]).toFixed(1)}`);lastLg=s.lg;}
+    flush();});
+  const cross=el('line',{class:'crosshair',x1:0,y1:padT,x2:0,y2:padT+ph,visibility:'hidden'});svg.appendChild(cross);
+  const dots=MULTI.map(()=>{const c=el('circle',{class:'hdot',r:3.2,visibility:'hidden'});svg.appendChild(c);return c;});
+  const ov=el('rect',{x:0,y:0,width:W,height:H,fill:'transparent'});svg.appendChild(ov);
+  mount.innerHTML='';mount.appendChild(svg);
+  // each player's last union-index with a value for this key (the default "latest" marker)
+  const lastIdx=MULTI.map(m=>{for(let i=n-1;i>=0;i--){const s=m.map[MDATES[i]];if(s&&s[key]!=null)return i;}return -1;});
+  const showDot=(k,i)=>{const s=m_at(k,i);if(s&&s[key]!=null){dots[k].setAttribute('cx',X(i));dots[k].setAttribute('cy',Y(s[key]));dots[k].setAttribute('fill',MULTI[k].color);dots[k].setAttribute('visibility','visible');}else dots[k].setAttribute('visibility','hidden');};
+  const m_at=(k,i)=>MULTI[k].map[MDATES[i]];
+  const obj={key,n,setHover(i,line){
+    if(line){
+      if(i<0||i>=n){cross.setAttribute('visibility','hidden');dots.forEach(d=>d.setAttribute('visibility','hidden'));return;}
+      cross.setAttribute('x1',X(i));cross.setAttribute('x2',X(i));cross.setAttribute('visibility','visible');
+      MULTI.forEach((m,k)=>showDot(k,i));
+    }else{                                    // at rest: clean lines, no dots (owner 2026-07-24) — dots appear on hover
+      cross.setAttribute('visibility','hidden');
+      dots.forEach(d=>d.setAttribute('visibility','hidden'));
+    }},
+    host:mount.closest('.atomcell,.cell,.netcard')||mount,   // same nesting rule as Chart()'s
+    // Every compared player's dot for this index, so the bubble can be lifted clear of ALL of them
+    // when the panel is too narrow to put it beside the column (tipPlace). Same client-coordinate
+    // conversion as Chart().hoverPt.
+    hoverPt(i){const r=svg.getBoundingClientRect(); if(!r.width||i<0||i>=n)return null;
+      const sx=r.width/W, sy=r.height/H, ys=[];
+      MULTI.forEach(m=>{const s=m.map[MDATES[i]]; if(s&&s[key]!=null)ys.push(r.top+Y(s[key])*sy);});
+      return {x:r.left+X(i)*sx, ys};},
+    // One row per compared player, each in that player's own line colour — the compare view is the
+    // case where an unlabelled bubble would be pure ambiguity. Players who have no row on this
+    // union date are simply absent, which is what their missing hover dot already says.
+    // No ±: the compare header prints none either (setHoverMulti's put()), and four bands' worth of
+    // ± in one bubble is noise.
+    tipData(i){
+      if(i<0||i>=n)return null;
+      const date=MDATES[i], rows=[];
+      MULTI.forEach(m=>{const s=m.map[date];
+        if(s&&s[key]!=null)rows.push({c:m.color,k:m.name,v:tipSgn(s[key]),e:''});});
+      return rows.length?{date,rows}:null;}};
+  const move=e=>{const r=svg.getBoundingClientRect();const sx=(e.clientX-r.left)/r.width*W;
+    let i=Math.round((sx-padL)/pw*(n-1));i=Math.max(0,Math.min(n-1,i));
+    setHoverMulti(i,true);tipShow(obj,e,i);};
+  ['pointermove','pointerdown'].forEach(t=>ov.addEventListener(t,move));   // tap, not just drag (touch)
+  ['pointerleave','pointercancel'].forEach(t=>ov.addEventListener(t,()=>setHoverMulti(n-1,false)));
+  return obj;
+}
+function setHoverMulti(i,line){
+  tipHide();                                   // same invariant as setHoverAll
+  MCHARTS.forEach(c=>c.setHover(i,line));
+  const lastVal=(m,key)=>{for(let j=m.ser.length-1;j>=0;j--){if(m.ser[j][key]!=null)return m.ser[j][key];}return null;};
+  const swatch=m=>`<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${m.color};margin-right:3px;vertical-align:middle"></span>`;
+  const put=(id,key,fn)=>{const e=document.getElementById(id);if(!e)return;
+    e.innerHTML=MULTI.map(m=>{const v=fn(m,key);
+      return `<span style="color:${m.color}">${v==null?'—':(v>=0?'+':'')+v.toFixed(2)}</span>`;}).join(' ');};
+  if(line){                                              // hover: snap to one shared date
+    const date=MDATES[i];
+    document.getElementById('readout').innerHTML=`<b>${date}</b>`;
+    const at=(m,key)=>{const s=m.map[date];return s?s[key]:null;};
+    put('v_net','net',at); FAC.forEach(([f])=>put('vm_'+f,f,at));
+  }else{                                                 // default: each player's OWN latest
+    document.getElementById('readout').innerHTML='<span style="color:var(--faint)">latest per player&nbsp;</span>'+MULTI.map(m=>swatch(m)+m.name).join(' · ');
+    put('v_net','net',lastVal); FAC.forEach(([f])=>put('vm_'+f,f,lastVal));
+  }
+}
+
+// ===== Impact waterfall (6 factors → off/def; Play morphs continuously across game-days) ==========
+// Renders the active-mode daily series (SER) as two waterfalls. It follows the line-chart hover, and
+// Play sweeps a single fractional position 0→last in one rAF loop, interpolating factors between the
+// two bracketing game-days — so the bars morph continuously with no per-step holds.
+const WF_OFF=['oTS','oTOV','oSC'], WF_DEF=['dTS','dTOV','dSC'];
+let WFDOM=null, wfPlaying=false, wfRAF=null, wfStart=0, wfPos=0, wfSweepMs=12000;
+const wfSign=v=>(v>=0?'+':'')+v.toFixed(2);
+const wfCls=v=>Math.abs(v)<0.005?'zero':(v>0?'pos':'neg');
+
+// stable y-domain per side across the whole series, so bars don't rescale during a sweep
+function wfComputeDomain(ser){
+  const dom={off:{min:0,max:0},def:{min:0,max:0}};
+  for(const s of ser){
+    for(const[side,facs]of[['off',WF_OFF],['def',WF_DEF]]){
+      let run=0;for(const f of facs){run+=s[f]||0;if(run<dom[side].min)dom[side].min=run;if(run>dom[side].max)dom[side].max=run;}
+    }
+  }
+  for(const side of['off','def']){
+    let{min,max}=dom[side];
+    if(max-min<1){const mid=(max+min)/2;min=mid-0.5;max=mid+0.5;}
+    const pad=Math.max(0.25,(max-min)*0.12);dom[side]={min:min-pad,max:max+pad};
+  }
+  return dom;
+}
+function wfInterp(i0,i1,t){const a=SER[i0],b=SER[i1]||a,r={};
+  for(const f of[...WF_OFF,...WF_DEF])r[f]=(a[f]||0)+(((b[f]||0)-(a[f]||0)))*t;return r;}
+
+function wfSvg(row,facs,title,dom){
+  const W=472,H=200,m={t:34,r:12,b:20,l:34},pw=W-m.l-m.r,ph=H-m.t-m.b;
+  const steps=facs.map(f=>({label:f,value:row[f]||0}));
+  const total=steps.reduce((a,s)=>a+s.value,0), rng=dom.max-dom.min, Y=v=>m.t+(dom.max-v)/rng*ph;
+  const count=steps.length+1, slot=pw/count, bw=Math.min(52,slot*0.5), cx=i=>m.l+slot*i+slot/2;
+  let ticks='';
+  // -0 is not a number anyone means. This axis is its OWN five-tick scale (not gridZero's, and it
+  // has no separate zero rule), so unlike there the tick is kept — only the sign is dropped. Found
+  // while fixing gridZero's "-0.0": ?p=1630169 in Pure was printing a "-0.0" tick here.
+  for(let k=0;k<5;k++){const tv=dom.min+rng*k/4,yy=Y(tv);
+    ticks+=`<line class="wfg" x1="${m.l}" x2="${W-m.r}" y1="${yy.toFixed(1)}" y2="${yy.toFixed(1)}"/><text class="wft" x="${m.l-6}" y="${(yy+3).toFixed(1)}" text-anchor="end">${(Math.abs(tv)<0.05?0:tv).toFixed(1)}</text>`;}
+  const drawBar=(x,v,cls,extra)=>{const y0=Y(0+(extra?extra.base:0)),y1=Y((extra?extra.base:0)+v);
+    const h=Math.max(2.5,Math.abs(y1-y0)),ry=Math.abs(y1-y0)<2.5?y1-h/2:Math.min(y0,y1);
+    const labY=v>=0?Math.max(13,ry-8):Math.min(H-m.b-2,ry+h+14);
+    return`<g><rect class="wfb ${extra&&extra.tot?'tot ':''}${cls}" x="${(x-bw/2).toFixed(1)}" y="${ry.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="3"><title>${extra&&extra.name||''} ${wfSign(v)}</title></rect>`
+      +`<text class="wfv ${cls}" x="${x.toFixed(1)}" y="${labY.toFixed(1)}" text-anchor="middle">${wfSign(v)}</text></g>`;};
+  let run=0,bars='',trace=[`${cx(0).toFixed(1)},${Y(0).toFixed(1)}`];
+  steps.forEach((s,i)=>{const x=cx(i);
+    bars+=drawBar(x,s.value,wfCls(s.value),{base:run,name:s.label})
+      +`<text class="wfl" x="${x.toFixed(1)}" y="${(H-8).toFixed(1)}" text-anchor="middle">${s.label}</text>`;
+    run+=s.value;trace.push(`${x.toFixed(1)},${Y(run).toFixed(1)}`);});
+  const tx=cx(steps.length);
+  bars+=drawBar(tx,total,wfCls(total),{base:0,tot:1,name:title})
+    +`<text class="wfl" x="${tx.toFixed(1)}" y="${(H-8).toFixed(1)}" text-anchor="middle">${title}</text>`;
+  const zeroY=Y(0);
+  return`<svg class="wfsvg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">${ticks}`
+    +`<line class="wfax" x1="${m.l}" x2="${W-m.r}" y1="${zeroY.toFixed(1)}" y2="${zeroY.toFixed(1)}"/>`
+    +`<polyline class="wftr" points="${trace.join(' ')}"/>${bars}</svg>`;
+}
+function wfRenderAt(pos){
+  if(!SER||!SER.length||!WFDOM)return;
+  const n=SER.length;pos=Math.max(0,Math.min(n-1,pos));
+  const i0=Math.floor(pos),i1=Math.min(n-1,Math.ceil(pos)),t=pos-i0;
+  const row=t===0?SER[i0]:wfInterp(i0,i1,t);
+  const off=odSum(row,WF_OFF), def=odSum(row,WF_DEF), net=off+def;   // same helper prep() uses
+  document.getElementById('wfstack').innerHTML=
+    `<div class="wfchart"><div class="wfhd"><span>OFFENSE</span><span class="${wfCls(off)}">${wfSign(off)}</span></div>${wfSvg(row,WF_OFF,'Off',WFDOM.off)}</div>`
+   +`<div class="wfchart"><div class="wfhd"><span>DEFENSE</span><span class="${wfCls(def)}">${wfSign(def)}</span></div>${wfSvg(row,WF_DEF,'Def',WFDOM.def)}</div>`;
+  const s=SER[Math.round(pos)];
+  document.getElementById('wfsum').innerHTML=
+    `<b>${s.date}</b> · <span style="color:${LC[s.lg]}">${LNAME[s.lg]}</span> · `
+   +`<span class="${wfCls(off)}">Off ${wfSign(off)}</span> · <span class="${wfCls(def)}">Def ${wfSign(def)}</span> → <span class="${wfCls(net)}">Net ${wfSign(net)}</span>`;
+  const sc=document.getElementById('wfscrub');if(sc&&document.activeElement!==sc)sc.value=String(Math.round(pos));
+}
+function wfSetBtn(p){const b=document.getElementById('wfplay');if(b){b.textContent=p?'❚❚ Pause':'▶ Play';b.classList.toggle('active',p);}}
+function wfStop(){wfPlaying=false;if(wfRAF)cancelAnimationFrame(wfRAF);wfRAF=null;wfSetBtn(false);}
+function wfLoop(now){
+  if(!wfPlaying)return;
+  const n=SER.length, frac=Math.min(1,(now-wfStart)/wfSweepMs);
+  wfPos=frac*(n-1);
+  wfRenderAt(wfPos);
+  setHoverAll(Math.round(wfPos),true);       // sweep the line-chart crosshair + readout in sync
+  if(frac<1){wfRAF=requestAnimationFrame(wfLoop);}
+  else{wfStop();wfPos=n-1;setHoverAll(n-1,false);}  // settle on the latest day
+}
+function wfPlay(){
+  if(!SER||SER.length<2)return;
+  if(wfPlaying){wfStop();return;}
+  const n=SER.length;
+  if(wfPos>=n-1)wfPos=0;                       // restart from the top if parked at the end
+  wfSweepMs=Math.max(6000,Math.min(16000,n*8));
+  wfPlaying=true;wfSetBtn(true);
+  wfStart=performance.now()-(wfPos/(n-1))*wfSweepMs;
+  wfRAF=requestAnimationFrame(wfLoop);
+}
+function wfInit(){                             // called from renderActive (single-player); setHoverAll paints it
+  const wf=document.getElementById('waterfall');
+  wfStop();
+  if(!SER||!SER.length){wf.style.display='none';return;}
+  wf.style.display='block';
+  WFDOM=wfComputeDomain(SER);
+  wfPos=SER.length-1;
+  const sc=document.getElementById('wfscrub');if(sc){sc.max=String(SER.length-1);sc.value=String(wfPos);}
+}
+document.getElementById('wfplay').addEventListener('click',wfPlay);
+document.getElementById('wfscrub').addEventListener('input',e=>{
+  wfStop();const i=Math.max(0,Math.min((SER?SER.length:1)-1,Math.round(Number(e.target.value)||0)));
+  wfPos=i;setHoverAll(i,true);
+});
+
+</script>
+</body></html>

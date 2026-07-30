@@ -115,6 +115,18 @@ h1 small{font-size:13.5px;color:var(--muted);font-weight:500;margin-left:6px}
 .topnav .tab:hover{color:var(--text)}
 .topnav .tab.active{color:var(--text);border-bottom-color:var(--accent)}
 .topnav .navspace{flex:1 1 auto}
+/* League switch (NBA | WNBA). Sits in the right-hand chrome cluster with search + theme, not in
+   the tab run: it selects a SITE, not a page, and beside the tabs it reads as a fifth tab.
+   Tokens only, so light theme comes free; .on pairs --text on --panel-3, which is the worst
+   surface in STYLEGUIDE's contrast rule and already certified for that pair. No league tint --
+   the two words are the encoder, and colour alone would fail the CVD rule anyway. */
+.topnav .leaguesw{display:inline-flex;align-items:center;gap:2px;margin-right:6px;padding:2px;
+  border:1px solid var(--line);border-radius:var(--r-1)}
+.topnav .leaguesw .lg{font-size:var(--fs-1);line-height:1;padding:5px 7px;white-space:nowrap;
+  color:var(--muted);text-decoration:none;border-radius:calc(var(--r-1) - 1px)}
+.topnav .leaguesw a.lg{cursor:pointer}
+.topnav .leaguesw a.lg:hover{color:var(--text)}
+.topnav .leaguesw .lg.on{background:var(--panel-3);color:var(--text);font-weight:600}
 .topnav .themebtn{cursor:pointer;background:none;border:1px solid var(--line);color:var(--muted);
   font:inherit;font-size:14px;line-height:1;padding:6px 9px;border-radius:var(--r-1);white-space:nowrap}
 .topnav .themebtn:hover{color:var(--text);border-color:var(--accent)}

@@ -1,0 +1,271 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Model — WNBA Daily RAPM</title>
+<link rel="stylesheet" href="site.css">
+<link rel="icon" href="favicon.svg"><link rel="manifest" href="manifest.webmanifest">
+<style>
+  /* Same one-column prose shell as the men's model page. Deliberately hand-written rather
+     than forked: that page's spine is its accuracy and closing-line panels, and this board
+     has neither. A fork would have been mostly deletions plus a misleading skeleton. */
+  .doc{max-width:var(--maxw);margin:0 auto;padding:var(--sp-5) 22px 80px}
+  .doc .lede{color:var(--muted);font-size:var(--fs-4);margin:8px 0 0;line-height:1.6;max-width:840px}
+  .prose{min-width:0;line-height:1.65}
+  .prose h2,.prose h3{scroll-margin-top:62px}
+  .prose h2{font-size:var(--fs-5);font-weight:700;margin:34px 0 8px;padding-top:16px;
+    border-top:1px solid var(--line);letter-spacing:-.2px;color:var(--text)}
+  .prose h2:first-of-type{border-top:0;padding-top:6px;margin-top:16px}
+  .prose h3{font-size:var(--fs-4);font-weight:700;margin:22px 0 6px;color:var(--text)}
+  .prose p,.prose li{color:var(--text);font-size:var(--fs-4);line-height:1.65;max-width:840px}
+  .prose p,.prose ul,.prose ol{margin:11px 0}
+  .prose ul,.prose ol{padding-left:22px}
+  .prose li{margin:5px 0}
+  .prose li::marker{color:var(--faint)}
+  .prose strong{color:var(--text);font-weight:700}
+  .prose em{color:var(--muted)}
+  .prose a{color:var(--accent);text-decoration:none}
+  .prose a:hover{color:var(--text);text-decoration:underline}
+  .prose code{background:var(--panel-3);border:1px solid var(--line);border-radius:var(--r-1);
+    padding:1px 5px;font-size:12px;color:var(--accent);font-family:var(--font-mono)}
+  .prose .scroll{margin:14px 0}
+  .prose p.cap,.prose p.foot{font-size:var(--fs-1);color:var(--faint)}
+  .prose .sub,.prose .sub li{font-size:var(--fs-2);color:var(--muted)}
+  .prose .callout{font-size:var(--fs-2)}
+  .prose>.scroll table.tbl td,.prose>.scroll table.tbl th{white-space:normal}
+  :root{--off:#2dd4bf;--def:#a78bfa}
+  :root[data-theme=light]{--off:#0e9e8c;--def:#7c3aed}
+  .swoff{color:var(--off);font-weight:700}.swdef{color:var(--def);font-weight:700}
+  @media(max-width:560px){ .doc{padding:18px 14px 60px} .prose h2{font-size:18px} }
+</style></head>
+<body>
+<nav id="topnav" data-active="model"></nav>
+<script src="charts.js"></script>
+<script src="nav.js"></script>
+
+<div class="doc">
+  <h1>The model <small>WNBA six-factor RAPM, re-solved every game-day</small></h1>
+  <p class="lede">Every WNBA possession from 2022 through 2026 goes into one regularized
+  plus-minus solve, re-run as of each game-day. The output is six factors that add up to a
+  single net rating, in points per 100 possessions. This page says what that number is, how
+  it is fit, and — at some length — what it cannot tell you.</p>
+
+  <div class="prose">
+
+    <h2 id="scale">This board is not on the NBA scale</h2>
+    <p>The men's version of this site puts NCAA, G-League and NBA players on one axis. It can
+    do that because thousands of players <em>move</em> between those leagues, and a player who
+    appears in two of them at known ability is what lets you fit the mapping between their
+    scales. The men's network is fit on 826 college&rarr;NBA movers and 795 G-League&rarr;NBA
+    movers.</p>
+    <p><strong>No player moves between the WNBA and the NBA.</strong> There is no mover
+    population, so there is nothing to fit a mapping from, and there never will be. That is a
+    structural fact about the two leagues, not a limitation of the data we happen to have.</p>
+    <p>So a WNBA <code>+5.0</code> on this site means &ldquo;five points per 100 possessions
+    better than an average <em>WNBA</em> opponent&rdquo;. It is not comparable to a <code>+5.0</code>
+    on the men's board, and the two are deliberately kept in separate files so that no
+    leaderboard can accidentally mix them.</p>
+
+    <h2 id="factors">The six factors</h2>
+    <p>Net rating is the sum of six pieces &mdash; three offensive, three defensive. They are
+    solved separately and add up exactly, with no residual term:</p>
+    <ul>
+      <li><span class="swoff">oTS</span> / <span class="swdef">dTS</span> &mdash; shooting.
+      Built from six underlying atoms: rim, mid-range and three-point conversion, rim and
+      three-point shot selection, and free throws.</li>
+      <li><span class="swoff">oTOV</span> / <span class="swdef">dTOV</span> &mdash; turnovers,
+      valued by what the lost possession was worth.</li>
+      <li><span class="swoff">oSC</span> / <span class="swdef">dSC</span> &mdash; second chances.
+      This is second-chance <em>value</em>, not a rebounding count.</li>
+    </ul>
+    <p>Defence is sign-flipped everywhere on this site, so positive always means good.</p>
+
+    <h2 id="shrinkage">How hard each factor is shrunk</h2>
+    <p>Plus-minus needs regularization or it hands a bench player a wild rating off fifty
+    possessions. Each factor carries its own penalty, and the relative strengths are inherited
+    from the men's model, where they were tuned against out-of-time scoring margin.</p>
+    <p>The open question was whether the WNBA wants those penalties scaled up or down as a
+    group. Smaller league, shorter seasons, fewer possessions per player &mdash; the intuition
+    says shrink harder. We measured it instead: <strong>seven forward-time cuts, 1,063
+    held-out games, multipliers from 0.125&times; to 16&times;</strong>. The curve has a clean
+    interior minimum at <strong>1.0&times;</strong> &mdash; the same penalties the men's model
+    uses &mdash; with game-margin RMSE of 12.61 there against 12.64 at 0.75&times; and 12.62 at
+    1.5&times;. Possession-level error agrees.</p>
+    <div class="callout"><strong>Honest reading:</strong> the curve is <em>flat</em> near its
+    minimum. A paired bootstrap of 1.0&times; against either neighbour crosses zero (4/7 and
+    3/7 folds). So the right statement is &ldquo;no evidence the WNBA wants a different
+    shrinkage&rdquo;, not &ldquo;the WNBA is proven to want exactly this&rdquo;. It is measured,
+    not assumed, and it is not resolved.</div>
+
+    <h2 id="modes">Three modes, and the one that is missing</h2>
+    <p><strong>Pure RAPM</strong> is the default: the lineup data with no prior at all.
+    <strong>Box prior</strong> is a separate box-score model of the same six factors, fit only
+    on WNBA box stats, shown at its own scale. <strong>Prior-informed</strong> is the solve run
+    with that box model as its shrinkage target instead of zero.</p>
+
+    <h3>What Prior-informed actually is</h3>
+    <p>Regularized plus-minus works by pulling every player toward a default. Ordinarily that
+    default is zero &mdash; &ldquo;assume average until the possessions say otherwise&rdquo;.
+    Prior-informed replaces zero with <em>what this player's box score predicts</em>, per factor,
+    per game-day. The prior goes <em>inside</em> the solve, not on top of it, so it is not a blend:
+    a player with a lot of on-court evidence has a likelihood strong enough to overrule their prior,
+    and a twenty-minute rookie does not.</p>
+    <p>That gradient is measurable, and it matters, because &ldquo;this board is mostly its
+    prior&rdquo; is a fair criticism of some public metrics. On the last game-day, sorting the 300
+    rated players into five equal groups by possession exposure, the share of each player's rating
+    that comes from the prior runs from <strong>0.66 for the least-exposed fifth down to 0.20 for
+    the most-exposed</strong> &mdash; <strong>0.285</strong> across the league weighted by exposure.
+    Worked ends: Alyssa Thomas, with 216 games of box score behind her, has a prior of
+    <code>+2.01</code> and the possessions shrink away half of it. A player with a hundred
+    possessions keeps almost all of hers.</p>
+    <p><strong>It predicts real games better.</strong> Same 42 walk-forward two-week blocks, same
+    1,026 held-out games, no leakage: out-of-time game-margin RMSE falls from <strong>12.551 to
+    12.483</strong>, with a game-clustered paired bootstrap of <strong>+0.068, 95% CI [0.019,
+    0.118]</strong>. That excludes zero, so the improvement is real &mdash; and it is also
+    <em>small</em> &mdash; the interval runs from about a fiftieth of a point of margin to about an
+    eighth &mdash; and it is one league, one corpus, one walk-forward. Accuracy on the winner goes
+    68.6% &rarr; 69.4%.</p>
+    <div class="callout"><strong>Two things about this board that look like bugs and are not.</strong>
+    <br>(1) <strong>It is not centred on zero.</strong> The box maps are fit weighted by possessions,
+    so their prediction for a rarely-used player sits below the possession-weighted average. The
+    league mean net moves from &minus;0.04 on Pure to &minus;0.18 here. Read the ordering, not the
+    level, and do not compute a replacement-level line off it.
+    <br>(2) <strong>The biggest movers are thin-exposure players moving DOWN</strong>, not stars
+    moving up. Cassandre Prosper goes from <code>+0.05</code> to <code>&minus;2.54</code> on 22
+    box games, because her box score is the worst in the corpus and there are not enough
+    possessions to argue. If a rookie looks harshly rated here, that is the prior, by
+    construction. Pure is one click away and has no opinion about her box score.</div>
+    <p>Two honest limits. <strong>It is box-only</strong> &mdash; the men's version of this mode
+    also folds in a commercial plus-minus metric, and no WNBA equivalent exists to fold in, so this
+    is a strictly thinner prior wearing the same name. And <strong>the defensive half barely
+    moves</strong>: of the eight underlying quantities the solve estimates, only two carry any
+    out-of-sample defensive signal in a box score (turnovers and free throws), so only those two
+    are wired up. Second-chance defence has a prior of nothing and is left shrinking toward zero,
+    which is why <code>dSC</code> is almost identical between Pure and Prior-informed. Nearly all
+    of the margin improvement above is offensive.</p>
+
+    <h3>The mode that is still missing</h3>
+    <p>The men's site has a fourth mode, <strong>Latent</strong>, which fuses a player's separate
+    league stints into one continuous curve. With a single league there is nothing to fuse; it
+    would be an identity function wearing a meaningful name. It is absent rather than aliased.</p>
+
+    <h2 id="accuracy">How accurate is it?</h2>
+    <p>The honest answer is that <strong>we do not know as well as we know it for the men's
+    board, and the gap is not close.</strong></p>
+    <p>The men's model is pulled on from four independent directions: a commercial plus-minus
+    metric, a second public one, Vegas closing lines, and twenty-five seasons of realized game
+    margins. When it drifts, something external disagrees and we find out.</p>
+    <p>This board has none of that. There is no public WNBA plus-minus metric we are licensed
+    to publish against, no odds ledger, no translation anchor, and five seasons of history.
+    The only accuracy statement that is fully ours to make is the one above: out-of-time
+    game-margin RMSE of <strong>12.61</strong> across seven forward cuts and 1,063 held-out
+    games, against <strong>14.14</strong> for predicting nothing. That is a real edge and it is
+    also the entire external check that exists. (A second, finer-grained harness &mdash; 42
+    two-week walk-forward blocks over 1,026 games &mdash; is what the Prior-informed comparison
+    above is measured on: 12.551 for Pure against 12.483 for Prior-informed. Two harnesses, two
+    slightly different numbers for the same board; neither is a third opinion about it.)</p>
+    <div class="callout"><strong>What this means for a reader:</strong> treat the ordering near
+    the top of the board as informative and the third decimal as noise. A wrong choice
+    somewhere in this pipeline would produce a board that still looked entirely plausible,
+    because nothing outside it is currently in a position to object.</div>
+
+    <h2 id="projection">Projecting the rest of 2026</h2>
+    <p>The <a href="projection.html">Rest of 2026</a> page simulates the <strong>128
+    regular-season games</strong> remaining after the board's last day (28 July &ndash; 24
+    September) plus the playoffs, <strong>10,000 times</strong>. The chain is short and every link
+    is measured on WNBA data only:</p>
+    <ul>
+      <li><strong>Team strength</strong> is the minute-weighted sum of the five on-floor board
+      ratings, with minutes taken from each team's last 10 games and normalized to 200
+      player-minutes per team per game &mdash; a WNBA game is 40 minutes with five on the floor,
+      not the NBA's 240. The published column is <strong>centred on the fifteen-team mean</strong>,
+      so 0.0 is an average 2026 team; the board's own level (+4.91) is subtracted. Only
+      <em>differences</em> reach the game model, so that shift changes nothing &mdash; rerun at the
+      same seed, every projected win and every title chance comes back bit-identical.</li>
+      <li><strong>The game model</strong> is fit on this board and borrows nothing from the men's:
+      home advantage <strong>+1.83</strong> points, a strength-to-margin slope of
+      <strong>1.071</strong>, and a residual sd of <strong>12.52</strong>. The slope above 1 is
+      expected &mdash; a shrunk board under-disperses against realised margins.</li>
+      <li><strong>The variance is split, not stacked.</strong> That 12.52 already contains the
+      board's own error about each team, so simulating a season with all of it as per-game noise
+      would make win totals too narrow. The persistent per-team piece is measured off weekly
+      forward cuts (52 team-seasons) at <strong>1.40 points</strong> and taken out, leaving
+      <strong>12.37</strong> per game. Single-game spread is preserved; season spread is not
+      understated.</li>
+      <li><strong>The bracket is assumed</strong>: an eight-team field out of fifteen, seeded
+      league-wide, best-of-3 / 5 / 7. The <em>format</em> is verified &mdash; of all 40,320
+      possible seedings of the 2025 field, three reproduce the 2025 playoffs game for game and all
+      three imply the correct champion &mdash; but that 2026 keeps an eight-team field in an
+      expansion year is an assumption, and the page says so above the table.</li>
+    </ul>
+    <!-- Quoted to one decimal, matching the Rest of 2026 page exactly. Two pages rounding the
+         same simulation differently ("38%" here against "37.6%" there) reads as two numbers. -->
+    <p>As of 22 July: <strong>Minnesota 33.1 projected wins and a 37.6% title chance</strong>, Las
+    Vegas 30.6 and 25.2%, Dallas 29.5 and 13.3%.</p>
+    <div class="callout"><strong>Three caveats, in order of how much they matter.</strong>
+    <br>(1) <strong>There is no injury or availability feed anywhere in this project.</strong> A
+    player who has missed their team's last ten games enters at nearly zero expected minutes even
+    if they are about to return. The loudest live case is Minnesota's Napheesa Collier, who has played
+    exactly one 2026 game. Rather than guess, the page publishes the exact derivative &mdash; what
+    ten more minutes per game is worth in wins &mdash; for every player the window is
+    under-crediting. For Collier that derivative is <strong>0.32 wins per ten minutes</strong>, so
+    restoring her whole 20-minute gap is about 0.64 wins.
+    <br>(2) <strong>Team strength is frozen at 22 July</strong> and does not drift, age or respond
+    to a trade over the remaining eight weeks.
+    <br>(3) <strong>The projection runs on the Prior-informed board</strong>, with a game model
+    <em>re-fit on that same board</em> &mdash; a less-shrunk board wants a smaller slope, and it got
+    one (1.144 &rarr; 1.071). Reusing the Pure slope instead would have widened every band by about
+    6%, so the two are now chosen from one key and the builder refuses to run a mismatched pair.
+    The gain is real but small, and it is not consistent: the Prior-informed board wins only
+    <strong>24 of the 42</strong> walk-forward blocks. Running the whole projection on Pure instead
+    moves no team's wins by more than <strong>0.4</strong> and changes neither the order nor the
+    favourite.</div>
+
+    <h2 id="data">The data</h2>
+    <p>2022&ndash;2026 regular season plus 2022&ndash;2025 playoffs: <strong>1,263 games,
+    208,082 possessions, 357 players</strong>, with lineups reconstructed from event-level
+    play-by-play. There is no 2026 postseason yet.</p>
+    <p>Earlier seasons are absent for a specific reason: WNBA play-by-play before 2022 has not
+    had its on-floor lineups reconstructed, and plus-minus without lineups is not possible.
+    That is a data-engineering project, not a modelling choice.</p>
+    <p>One consequence worth naming: the solve uses a five-year trailing window, and the whole
+    corpus is 1,538 days. So the window is currently <em>inert</em> &mdash; every day's solve
+    sees all prior history. It will start to bite once there is more than five years of it.</p>
+    <p class="foot">Possession counts run about 3% above the public reference. It is stable
+    across all five seasons, which is the signature of uniform dilution rather than a
+    concentrated defect, and it is absorbed by the WNBA-internal scale &mdash; but it does mean
+    raw per-100 <em>rates</em> from this board should not be quoted against another source's.</p>
+
+    <h2 id="limits">Limits</h2>
+    <ul>
+      <li><strong>No cross-league comparison, ever.</strong> See the first section.</li>
+      <li><strong>No minutes forecast.</strong> The projection uses a ten-game recency window in
+      place of one. Widening or narrowing that window is a measured dead end &mdash; every
+      alternative from three games to season-long lands inside the noise &mdash; so the missing
+      piece is an availability model, not a bigger window.</li>
+      <li><strong>No individual player projection.</strong> The men's site projects five years of
+      each player's trajectory. That needs an aging curve fit on far more league-seasons than five,
+      so there is no player forecast here, only a team one.</li>
+      <li><strong>The bands on the Explorer describe what already happened</strong>, not what
+      will. They are wide, and reading them as a forecast interval overstates them
+      substantially. (The win-total bands on the Rest of 2026 page are a different object &mdash;
+      those <em>are</em> forecast intervals, from the simulation.)</li>
+      <li><strong>Prior-informed carries the same error bars as Pure</strong>, to within 0.006
+      across the whole board. That is not a copy-paste bug: a ridge's posterior standard error
+      depends on how much evidence a player has, not on what the estimate was shrunk toward.
+      The prior moves the number, not the uncertainty about it.</li>
+      <li><strong>Defence is weakly identified</strong>, as it is in every plus-minus model.
+      Second-chance defence in particular carries close to no independent box signal.</li>
+      <li><strong>The board is refreshed in batches, not nightly.</strong> The current corpus
+      ends 22 July 2026.</li>
+      <li><strong>One factor is quarantined.</strong> The three-point shot-selection atom sits
+      on a different scale here than its men's counterpart, because the underlying feed bakes a
+      per-season constant into it. It cancels between offence and defence, so <em>net ratings
+      are unaffected</em> &mdash; but the oTS/dTS split can shift by up to about 0.13 for a
+      given player, and that atom should not be read as the same quantity as the men's.</li>
+    </ul>
+
+    <p class="foot">Built from the same six-factor decomposition and the same solver as the
+    men's board at <a href="https://andrewjparkus.github.io/">andrewjparkus.github.io</a>.
+    Event play-by-play with reconstructed lineups: gabriel1200/wnba.</p>
+  </div>
+</div>
+</body></html>
