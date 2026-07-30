@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "license": "CC-BY-4.0",
-  "generated": "20260729",
+  "generated": "20260730",
   "factors": {
     "oTS": "offensive true-shooting value (ALT_EFG_VALUE + ALT_FT), pts/100",
     "oTOV": "offensive ball security / turnover avoidance, pts/100",
@@ -18,9 +18,9 @@
     "gleague"
   ],
   "data_freshness": {
-    "nba": "20260729",
-    "college": "20260729",
-    "gleague": "20260729"
+    "nba": "20260730",
+    "college": "20260730",
+    "gleague": "20260730"
   },
   "minutes_source": "current",
   "minutes_provenance": {
@@ -42,8 +42,8 @@
     "gp_artifact_sha256": "a0fc4beb00cc80086f1ab512ff694cb2b1907bc08859c93fd274b7b01b7b51f8",
     "forward_model_artifact": "daily_v5/out/forward_xgb.parquet",
     "forward_model_artifact_sha256": "2e117e527891c6f1b305925a5fe817745d8c7d4b190b1b53059c9651516a6e11",
-    "forward_model_input_stamp": "e0c33bd2148c4db53f865dfbf8122e2ddbdfa63992bb5ca4644bbdf9f5740151",
-    "forward_model_input_stamp_written": "2026-07-29T19:24:46.570435+00:00",
+    "forward_model_input_stamp": "b98f9f9f244b95e618eb666f759b02a6dccb48b4cb40dc8acb813d7bdccc900d",
+    "forward_model_input_stamp_written": "2026-07-30T06:46:58.243076+00:00",
     "minutes_distribution_artifact": "daily_v5/out/minutes_distribution.parquet",
     "minutes_distribution_artifact_sha256": "cadf3f48fa1d450bf1f87f5151aa84f1ead7db756b4c7c1e56f1c4d0fb1ddb45",
     "depth_csv_artifact": "daily_v5/out/depthcharts_2026_27.csv",
@@ -78,7 +78,7 @@
   "changelog": [
     {
       "v": "1.0.0",
-      "date": "20260729",
+      "date": "20260730",
       "note": "initial public export"
     }
   ]

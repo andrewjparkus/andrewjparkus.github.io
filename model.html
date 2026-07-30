@@ -255,17 +255,22 @@
     <li><strong>Cross-league jumps stay uncertain.</strong> The college and G-League conversions are
     heavily attenuated, so draft bands are wide by construction.</li>
     <li><strong>Rookie projections are the weakest thing here.</strong> Turning a prospect's college
-    rating into a first NBA season improves on simply predicting the average rookie by 0.022 points
+    rating into a first NBA season improves on simply predicting the average rookie by 0.019 points
     of error: a real edge, but a small one. Treat a rookie band as a rough range, not a call.</li>
     <li><strong>Coverage gaps.</strong> No public play-by-play before 1996-97 (NBA) or 2016-17
     (G-League), and NBA feeds record no steals or blocks from 1997 to 2013.</li>
-    <li><strong>College starts at 2013-14.</strong> Earlier seasons exist upstream but are not
-    usable: the pre-2014 college feed files fouls and turnovers under one label, so every foul was
-    counted as a possession that ended in a turnover, about 175 possessions a game against a true
-    135. Fixing the labelling recovers 2009-13, but 2006-08 record no turnovers at all, and no
-    season before 2014 records which free throw in a trip a shot was, so we cut the era rather than
-    publish numbers built on invented possessions. The earliest college days are also thin, because
-    a five-year window has little history to draw on before about 2016.</li>
+    <li><strong>College starts at 2009-10.</strong> The pre-2014 feed carries two separate defects,
+    both now repaired. It filed fouls and turnovers under a single label, so every foul was counted
+    as a possession that ended in a turnover; and it never recorded which free throw in a trip a
+    shot was, so every made free throw ended a possession as well. Together those inflated the era
+    to about 150 possessions a game against a true 131. Free-throw trips are now reconstructed from
+    the game clock and the shooter, which is 99.5% accurate on the part possession counting actually
+    depends on, checked against 2013-14, where the feed does record it. The four recovered seasons
+    now run 130.7 to 132.9 possessions a game, against 130.9 to 131.3 for seasons that were never
+    broken. Seven games whose scoreboard is fabricated (one reaches 851-585 inside the first half)
+    are dropped. 2008-09 and earlier stay out for a reason no relabelling fixes: those feeds barely
+    record turnovers at all, and 2005-08 record none. The earliest college days are also thin,
+    because a five-year window has little history to draw on before about 2014.</li>
   </ul>
 
   <p class="foot">All values in points per 100 possessions on the NBA-equivalent scale. Measured
