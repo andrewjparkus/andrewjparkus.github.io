@@ -36,7 +36,7 @@
       "forward_model_input_stamp_written": "2026-07-30T06:46:58.243076+00:00",
       "minutes_distribution_artifact": "daily_v5/out/minutes_distribution.parquet",
       "minutes_distribution_artifact_sha256": "cadf3f48fa1d450bf1f87f5151aa84f1ead7db756b4c7c1e56f1c4d0fb1ddb45",
-      "depth_csv_artifact": "daily_v5/out/depthcharts_2026_27.csv",
+      "depth_csv_artifact": "priors/depthcharts_2026_27.csv",
       "depth_source": "owner",
       "v2_promotion_manifest": null,
       "v2_promotion_manifest_sha256": null,
