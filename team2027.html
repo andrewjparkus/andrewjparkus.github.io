@@ -924,21 +924,16 @@ function render(d){
   const repShare = allMin>0 ? (repMin/allMin)*100 : 0;
   html += '<section class="panel"><div class="phead"><h2>Roster</h2>'
     + '<span class="psub">'+roster.length+' players · grouped by position</span>'
-    // Why a listed CENTRE can sit under WINGS. The depth chart these minutes were allocated on files
-    // a roster as guards, wings and bigs, and that assignment disagrees with the listed position on
-    // 110 of the 444 published rows that carry both — so the reader meets the explanation at the
-    // grouping itself. The tip used to offer only the mild case ("a shooting guard who plays on the
-    // wing"), which does not prepare anyone for the three loud ones: NYK Andre Drummond (C, 20.8
-    // MPG) and OKC Jalen Williams (PG, 33.8) and ATL Devin Carter (PG, 19.8) all render under WINGS.
-    // New York is the worst of it, because taking its one wing-filed centre out of BIGS leaves that
-    // group with exactly one player (Karl-Anthony Towns) — the only one-player family group in the
-    // league, and a shape that reads as a broken join unless the reader was told to expect it. The
-    // tip now names the loud case and its consequence, in that order.
-    + ' <span class="help" data-tip="Groups are the depth chart\'s own — guards, wings and bigs —'
-    + ' not the five listed positions. The two disagree on 110 of the 444 rows carrying both,'
-    + ' sometimes loudly: a listed centre or point guard can be filed under WINGS, which can leave'
-    + ' BIGS with a single player. Each player\'s listed position, where he has one, sits beside his'
-    + ' role.">?</span>'
+    // The disagreement this tip used to explain is GONE (2026-08-06). The page grouped by the
+    // curated guard/wing/big slot while showing each player's listed position beside his name, and
+    // the two disagreed on 110 of the 444 rows carrying both — loudly enough that a listed centre
+    // rendered under WINGS and left New York's BIGS with one player. Both facts now come from the
+    // same cell of the owner's roster sheet, so a row cannot contradict its own heading and the tip
+    // no longer has to warn about it. What it must still say is that a position is a LISTING, not a
+    // measurement: nothing downstream of this page uses it.
+    + ' <span class="help" data-tip="Positions are listings from the roster sheet, not something'
+    + ' the model measures — a player grouped here under one position may spend his minutes at'
+    + ' another. Nothing in the projection depends on them; they organise the page only.">?</span>'
     + (thin ? ' <span class="badge b-g" data-tip="'+num(repShare,1)+'% of this roster\'s projected'
               + ' minutes go to players with no rated history, filled in at replacement level.">'
               + num(repShare,1)+'% replacement minutes</span>' : '')
@@ -1002,12 +997,12 @@ function render(d){
     + '<span class="help" data-tip="Each player\'s share of the team\'s projected wins. The group '
     + 'subtotals sum to the team total on the bar above.">?</span>.</p>';
 
-  // The family is a CURATED fact, read straight off the feed — the page does not re-derive one from
-  // `pos`. A row with no family is a row nothing in the data can place, never a row we declined to
-  // classify.
-  const groups = Object.fromEntries(FAMILIES.map(f=>[f[0],[]]));
+  // The position is a CURATED fact, read straight off the feed — the page does not derive one from
+  // ratings or minutes. A row with no position is a row nothing in the data can place, never a row
+  // we declined to classify.
+  const groups = Object.fromEntries(POSITIONS.map(f=>[f[0],[]]));
   const unplaced = [];
-  roster.forEach(p=>{ const f = p && p.pos_family; if(groups[f]) groups[f].push(p); else unplaced.push(p||{}); });
+  roster.forEach(p=>{ const f = p && p.pos; if(groups[f]) groups[f].push(p); else unplaced.push(p||{}); });
   const byContrib = (a,b)=>((b.proj_wins||0)-(a.proj_wins||0));
   // The share denominator is the team's OWN projected minutes, never 240 — see the .rot comment.
   const teamMin = roster.reduce((a,p)=>a+(Number(p && p.season_mpg)||0), 0);
@@ -1032,8 +1027,15 @@ function render(d){
     return h + '</div></div>';
   };
   html += '<div class="rot">';
-  FAMILIES.forEach(f=>{ html += emitGroup(f[1], groups[f[0]], null, false); });
-  // THE HEADING NAMES WHAT IS ACTUALLY TRUE OF THESE ROWS AND OF NO OTHERS (fixed 2026-07-27).
+  POSITIONS.forEach(f=>{ html += emitGroup(f[1], groups[f[0]], null, false); });
+  // THE HEADING NAMES WHAT IS ACTUALLY TRUE OF THESE ROWS AND OF NO OTHERS (fixed 2026-07-27,
+  // re-cut 2026-08-06 when the grouping moved from three families to five positions).
+  // A row lands here only when the owner's roster sheet has no position cell for it AND
+  // out/player_positions.parquet cannot supply one either — i.e. the player is on no chart the
+  // exporter reads. The historical note below is kept because the reasoning still governs the
+  // wording: name the CONJUNCTION, never just "no position listed", or the heading describes rows
+  // that are sitting happily inside the position groups too.
+  // --- pre-2026-08-06 measurement, when the page grouped by family: ---
   // It used to read NO POSITION LISTED, which is true of them — and of 75 rows that are NOT under
   // it: measured on the published feed, 94 of the 538 roster rows carry pos=null and 75 of those
   // (32 guard / 17 wing / 26 big) sit happily inside the three family groups on 29 of the 30 teams,
@@ -1051,10 +1053,10 @@ function render(d){
   // 19 of 538 across the league, on 11 of the 30 teams. Nothing is guessed into a group to make the
   // heading disappear.
   html += emitGroup('NOT ON THE DEPTH CHART · NO POSITION LISTED', unplaced,
-    'Not on the depth chart these groups come from, and no listed position anywhere either — so '
-    + 'nothing in the data can call them a guard, a wing or a big. A gap, not a position. A player '
-    + 'the chart also misses but who does have a listed position is filed by that instead, so he is '
-    + 'not here.', true);
+    'Not on the roster sheet these groups come from, and no listed position anywhere else either — '
+    + 'so nothing in the data can call them a guard, a forward or a centre. A gap, not a position. '
+    + 'A player the sheet also misses but who does have a listed position is filed by that instead, '
+    + 'so he is not here.', true);
   html += '</div>';   // /.rot
   html += '</div></section>';   // /.pbody /.panel
 
@@ -1227,7 +1229,13 @@ window.addEventListener('resize', ()=>{
 // chart the projection is built on had already filed 513 of the 538 as a guard, a wing or a big
 // (a further 6 are placed by their listed position; 19 by nothing, see the residual heading below).
 // The exporter does that join and ships `pos_family`; this page only renders it.
-const FAMILIES = [["guard","GUARDS"],["wing","WINGS"],["big","BIGS"]];
+// FIVE positions, not the three families this page used to render. The collapse existed because
+// the only position source that covered the whole chart was the curated slot letter (G/W/B); as of
+// 2026-08-06 the owner's roster sheet carries a real PG/SG/SF/PF/C cell for 520 of 520 rows, so the
+// richer fact is now the one with full coverage and there is nothing left to collapse for.
+// `pos_family` is still shipped in the feed and still drives nothing here.
+const POSITIONS = [["PG","POINT GUARDS"],["SG","SHOOTING GUARDS"],["SF","SMALL FORWARDS"],
+                   ["PF","POWER FORWARDS"],["C","CENTERS"]];
 // The feed's model_source is an internal id ("xgb"), and the tooltip was printing it raw as
 // "· source xgb". Reader words, or nothing — an id the reader cannot look up is worse than silence.
 const SRC_WORDS = { xgb:"from rated history", rookie:"from a rookie prior", replacement:"at replacement level" };
