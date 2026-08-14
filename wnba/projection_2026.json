@@ -4,6 +4,8 @@
   "season": 2026,
   "kind": "rest-of-season projection",
   "as_of": "2026-07-22",
+  "results_through": "2026-08-05",
+  "as_of_split": "standings are FACT through results_through (pbp finals, then the validated RTSS results supplement); team strength and minutes are as-of the board day. The stretch between results_through and today is simulated like any future game.",
   "board_kind": "hybrid",
   "board": "daily_v5/out/wnba_hybrid_daily.parquet (prior-informed board, in-ridge WNBA box prior, net == sum6)",
   "board_scale": "points per 100 possessions, WNBA-only scale (no NBA translation)",
@@ -77,28 +79,28 @@
     "biggest_movers": [
      {
       "team": "NYL",
-      "proj_wins": 25.6,
-      "proj_wins_all_available": 24.7
+      "proj_wins": 26.3,
+      "proj_wins_all_available": 25.7
      },
      {
       "team": "LVA",
-      "proj_wins": 30.6,
-      "proj_wins_all_available": 30.0
-     },
-     {
-      "team": "CHI",
-      "proj_wins": 17.2,
-      "proj_wins_all_available": 17.6
+      "proj_wins": 30.9,
+      "proj_wins_all_available": 30.4
      },
      {
       "team": "MIN",
-      "proj_wins": 33.1,
-      "proj_wins_all_available": 33.4
+      "proj_wins": 33.7,
+      "proj_wins_all_available": 34.0
      },
      {
-      "team": "PHX",
-      "proj_wins": 17.8,
-      "proj_wins_all_available": 18.2
+      "team": "ATL",
+      "proj_wins": 27.5,
+      "proj_wins_all_available": 27.9
+     },
+     {
+      "team": "PDX",
+      "proj_wins": 16.4,
+      "proj_wins_all_available": 16.1
      }
     ]
    },
@@ -392,8 +394,9 @@
    "file": "/Users/andrewpark/Downloads/wnba_decomp_repro_2022-2026_asof_2026-07-23/rapm/nba_pipeline/external/gabriel_wnba/data/wnba_game_dates.csv",
    "strength_of_schedule": "each team's remaining schedule.sos is the mean PUBLISHED (centred) strength of its remaining opponents, so positive = harder than average. Home-court is not folded in; the home/away split and per-side SOS are separate. sos_rank 1 = hardest remaining slate.",
    "games_played_in_corpus": 202,
-   "games_remaining": 128,
-   "remaining_first_date": "2026-07-28",
+   "games_played_total": 229,
+   "games_remaining": 101,
+   "remaining_first_date": "2026-08-06",
    "remaining_last_date": "2026-09-24",
    "non_regular_season_rows_dropped": [
     {
@@ -404,17 +407,42 @@
      "away": "Spoon"
     }
    ],
-   "gap_2026_07_23_to_07_27": {
-    "fixtures_in_window": 1,
-    "regular_season_in_window": 0,
-    "detail": [
-     {
-      "game_id": 1032600001,
-      "type": "All-Star",
-      "date": "2026-07-25"
-     }
+   "rtss_results_supplement": {
+    "n": 27,
+    "game_ids": [
+     1022600203,
+     1022600204,
+     1022600205,
+     1022600206,
+     1022600207,
+     1022600208,
+     1022600209,
+     1022600210,
+     1022600211,
+     1022600212,
+     1022600213,
+     1022600214,
+     1022600215,
+     1022600216,
+     1022600217,
+     1022600218,
+     1022600219,
+     1022600220,
+     1022600221,
+     1022600222,
+     1022600223,
+     1022600224,
+     1022600225,
+     1022600226,
+     1022600227,
+     1022600228,
+     1022600229
     ],
-    "verdict": "no regular-season coverage gap: the only fixture between the board's last day and the schedule's next game is the All-Star game, which is excluded"
+    "results_through": "2026-08-05",
+    "source": "Second Spectrum (RTSS) portal metadata homeScore/awayScore, from the staged 2026 tracking archive (synced 2026-08-06)",
+    "validation": "all 202 games shared with the pbp match it EXACTLY (score and home/away identity), and every admitted game's metadata final agrees with an independent chances-table reconstruction within 3 points per side; one mismatch anywhere aborts the build (rtss_results.py)",
+    "scope": "these games enter the STANDINGS and leave the simulated remainder only. Team strength, minutes and the board stay as-of the board day -- no tracking-derived possession ever reaches the RAPM solve.",
+    "coverage_check": "every RS fixture between the board day and results_through has a result on disk (asserted)"
    },
    "nickname_to_tricode": {
     "Aces": "LVA",
@@ -433,7 +461,7 @@
     "Valkyries": "GSV",
     "Wings": "DAL"
    },
-   "nickname_map_source": "DERIVED from the 201 played 2026 games (schedule nickname vs PBP location+teamtricode); home and away routes agree and each nickname resolves to one tricode",
+   "nickname_map_source": "DERIVED from the 202 pbp-covered 2026 games (schedule nickname vs PBP location+teamtricode); home and away routes agree and each nickname resolves to one tricode",
    "recovered_from_full": {
     "n": 1,
     "game_ids": [
@@ -734,7 +762,7 @@
    }
   },
   "score_derivation": {
-   "route": "max of the running home_score/away_score within a game_id, from the collaborator normalized PBP; team identity from location+teamtricode on the same rows",
+   "route": "max of the running home_score/away_score within a game_id, from the collaborator normalized PBP; team identity from location+teamtricode on the same rows. Games past the pbp: RTSS portal metadata finals (see rtss_results_supplement in schedule)",
    "crosscheck_vs_workstream_C_parquet_route": {
     "n_games_crosschecked": 201,
     "disagreements": 0,
@@ -744,7 +772,8 @@
   "caveats": [
    "No external benchmark exists for the WNBA \u2014 no closing line, no rival metric. Every number here is internal to this pipeline.",
    "There is no WNBA injury or availability feed. A player who has missed their team's last 10 games has an expected ~0 minutes here even if they are about to return; a player who just went down still carries their recent minutes. The loudest live case is MIN's Napheesa Collier, who played exactly ONE 2026 game (2026-07-22, 22.2 min) and so enters at 2.2 expected mpg. An \u2018if everyone were available\u2019 rebuild is reported alongside, and each team page carries its own minutes watchlist.",
-   "Team strength is frozen at the 2026-07-22 board and does not drift, improve or age over the remaining 8 weeks. Only the measured persistent rating error is resampled.",
+   "Team strength is frozen at the 2026-07-22 board and does not drift, improve or age over the remaining weeks. Only the measured persistent rating error is resampled.",
+   "Standings and team strength have DIFFERENT as-of days by construction: results are fact through results_through (the validated RTSS supplement), while ratings and minutes stop at the board day. The games in between are counted in the records but never influenced anyone's rating \u2014 the RAPM solve never sees them.",
    "The persistent-team-error variance is itself estimated from 52 team-seasons, so the width of the win-total bands carries real estimation error.",
    "Roster moves after 2026-07-22 (trades, signings, waivers) are invisible.",
    "The playoff bracket for 2026 is assumed, not published \u2014 the assumed bracket is stated above.",
@@ -755,16 +784,16 @@
  "standings_order": [
   "MIN",
   "LVA",
-  "DAL",
   "GSV",
+  "DAL",
   "ATL",
-  "IND",
   "NYL",
+  "IND",
   "WAS",
   "PHX",
-  "PDX",
   "CHI",
   "LAS",
+  "PDX",
   "TOR",
   "CON",
   "SEA"
@@ -774,12 +803,12 @@
    "abbr": "MIN",
    "name": "Minnesota Lynx",
    "nickname": "Lynx",
-   "w": 22,
+   "w": 25,
    "l": 6,
-   "gp": 28,
-   "games_remaining": 16,
+   "gp": 31,
+   "games_remaining": 13,
    "games_total": 44,
-   "point_diff": 243.0,
+   "point_diff": 290.0,
    "strength": 8.05,
    "strength_uncentred": 12.957,
    "strength_season_long": 8.516,
@@ -812,13 +841,13 @@
    "orapm": 4.642,
    "drapm": 3.408,
    "schedule_remaining": {
-    "n": 16,
-    "home": 8,
-    "away": 8,
-    "sos": 0.384,
-    "sos_home": 1.496,
-    "sos_away": -0.727,
-    "sos_rank": 5,
+    "n": 13,
+    "home": 6,
+    "away": 7,
+    "sos": 1.296,
+    "sos_home": 2.723,
+    "sos_away": 0.072,
+    "sos_rank": 2,
     "opponents": [
      "ATL",
      "CON",
@@ -829,28 +858,9 @@
      "LVA",
      "NYL",
      "PDX",
-     "TOR",
      "WAS"
     ],
     "games": [
-     {
-      "game_id": 1022600204,
-      "date": "2026-07-28",
-      "opp": "TOR",
-      "home": true
-     },
-     {
-      "game_id": 1022600210,
-      "date": "2026-07-30",
-      "opp": "TOR",
-      "home": false
-     },
-     {
-      "game_id": 1022600218,
-      "date": "2026-08-02",
-      "opp": "IND",
-      "home": true
-     },
      {
       "game_id": 1022600231,
       "date": "2026-08-06",
@@ -932,10 +942,10 @@
     ]
    },
    "board_minute_coverage": 1.0,
-   "proj_wins": 33.1,
-   "proj_losses": 10.9,
-   "proj_wins_season_long_minutes": 33.1,
-   "proj_wins_all_available": 33.4,
+   "proj_wins": 33.7,
+   "proj_losses": 10.3,
+   "proj_wins_season_long_minutes": 33.7,
+   "proj_wins_all_available": 34.0,
    "minutes_watchlist": [
     {
      "pid": 1643426,
@@ -946,7 +956,7 @@
      "appearances_in_window": 8,
      "window_games": 10,
      "net": 5.913,
-     "wins_per_10mpg": 0.415
+     "wins_per_10mpg": 0.337
     },
     {
      "pid": 1629483,
@@ -957,7 +967,7 @@
      "appearances_in_window": 1,
      "window_games": 10,
      "net": 5.485,
-     "wins_per_10mpg": 0.32
+     "wins_per_10mpg": 0.26
     },
     {
      "pid": 1641657,
@@ -968,13 +978,13 @@
      "appearances_in_window": 6,
      "window_games": 10,
      "net": -2.737,
-     "wins_per_10mpg": -0.619
+     "wins_per_10mpg": -0.503
     }
    ],
-   "p2_5": 29.0,
+   "p2_5": 30.0,
    "p10": 31.0,
-   "p50": 33.0,
-   "p90": 35.0,
+   "p50": 34.0,
+   "p90": 36.0,
    "p97_5": 37.0,
    "win_hist": [
     0.0,
@@ -1002,20 +1012,20 @@
     0.0,
     0.0,
     0.0,
-    0.0001,
-    0.0003,
-    0.0017,
-    0.0081,
-    0.0234,
-    0.0577,
-    0.1079,
-    0.1756,
-    0.2044,
-    0.1899,
-    0.139,
-    0.0668,
-    0.0214,
-    0.0037,
+    0.0,
+    0.0,
+    0.0005,
+    0.0014,
+    0.0062,
+    0.0299,
+    0.0684,
+    0.1311,
+    0.2103,
+    0.2261,
+    0.1815,
+    0.1018,
+    0.0368,
+    0.006,
     0.0,
     0.0,
     0.0,
@@ -1024,10 +1034,10 @@
     0.0
    ],
    "playoff_prob": 1.0,
-   "semis_prob": 0.8276,
-   "finals_prob": 0.576,
-   "title_prob": 0.376,
-   "avg_seed_if_qualified": 1.34,
+   "semis_prob": 0.8476,
+   "finals_prob": 0.5994,
+   "title_prob": 0.3872,
+   "avg_seed_if_qualified": 1.16,
    "roster": [
     {
      "pid": 203825,
@@ -1057,8 +1067,8 @@
       0.654
      ],
      "strength_contrib": 2.974,
-     "wins_contrib_remaining": 2.61,
-     "wins_per_10mpg": 0.241
+     "wins_contrib_remaining": 2.06,
+     "wins_per_10mpg": 0.196
     },
     {
      "pid": 1627675,
@@ -1088,8 +1098,8 @@
       0.667
      ],
      "strength_contrib": 2.035,
-     "wins_contrib_remaining": 2.09,
-     "wins_per_10mpg": 0.123
+     "wins_contrib_remaining": 1.65,
+     "wins_per_10mpg": 0.1
     },
     {
      "pid": 203827,
@@ -1119,8 +1129,8 @@
       0.711
      ],
      "strength_contrib": 2.139,
-     "wins_contrib_remaining": 2.08,
-     "wins_per_10mpg": 0.157
+     "wins_contrib_remaining": 1.64,
+     "wins_per_10mpg": 0.127
     },
     {
      "pid": 1643426,
@@ -1150,8 +1160,8 @@
       1.273
      ],
      "strength_contrib": 3.08,
-     "wins_contrib_remaining": 2.29,
-     "wins_per_10mpg": 0.415
+     "wins_contrib_remaining": 1.82,
+     "wins_per_10mpg": 0.337
     },
     {
      "pid": 1628269,
@@ -1181,8 +1191,8 @@
       0.931
      ],
      "strength_contrib": -1.033,
-     "wins_contrib_remaining": 0.48,
-     "wins_per_10mpg": -0.41
+     "wins_contrib_remaining": 0.35,
+     "wins_per_10mpg": -0.333
     },
     {
      "pid": 1630471,
@@ -1212,8 +1222,8 @@
       1.042
      ],
      "strength_contrib": -0.286,
-     "wins_contrib_remaining": 0.38,
-     "wins_per_10mpg": -0.289
+     "wins_contrib_remaining": 0.29,
+     "wins_per_10mpg": -0.235
     },
     {
      "pid": 1641657,
@@ -1243,8 +1253,8 @@
       1.45
      ],
      "strength_contrib": -1.082,
-     "wins_contrib_remaining": -0.03,
-     "wins_per_10mpg": -0.619
+     "wins_contrib_remaining": -0.05,
+     "wins_per_10mpg": -0.503
     },
     {
      "pid": 1643489,
@@ -1274,8 +1284,8 @@
       1.898
      ],
      "strength_contrib": -0.382,
-     "wins_contrib_remaining": 0.26,
-     "wins_per_10mpg": -0.343
+     "wins_contrib_remaining": 0.19,
+     "wins_per_10mpg": -0.279
     },
     {
      "pid": 1642797,
@@ -1305,8 +1315,8 @@
       1.937
      ],
      "strength_contrib": 0.605,
-     "wins_contrib_remaining": 0.6,
-     "wins_per_10mpg": 0.126
+     "wins_contrib_remaining": 0.47,
+     "wins_per_10mpg": 0.102
     },
     {
      "pid": 1643490,
@@ -1336,8 +1346,8 @@
       4.052
      ],
      "strength_contrib": -0.113,
-     "wins_contrib_remaining": 0.12,
-     "wins_per_10mpg": -0.29
+     "wins_contrib_remaining": 0.09,
+     "wins_per_10mpg": -0.236
     },
     {
      "pid": 1629483,
@@ -1367,8 +1377,8 @@
       0.836
      ],
      "strength_contrib": 0.25,
-     "wins_contrib_remaining": 0.19,
-     "wins_per_10mpg": 0.32
+     "wins_contrib_remaining": 0.15,
+     "wins_per_10mpg": 0.26
     },
     {
      "pid": 1642820,
@@ -1398,8 +1408,8 @@
       2.824
      ],
      "strength_contrib": -0.137,
-     "wins_contrib_remaining": 0.0,
-     "wins_per_10mpg": -0.554
+     "wins_contrib_remaining": -0.0,
+     "wins_per_10mpg": -0.45
     }
    ]
   },
@@ -1407,12 +1417,12 @@
    "abbr": "LVA",
    "name": "Las Vegas Aces",
    "nickname": "Aces",
-   "w": 18,
-   "l": 8,
-   "gp": 26,
-   "games_remaining": 18,
+   "w": 21,
+   "l": 9,
+   "gp": 30,
+   "games_remaining": 14,
    "games_total": 44,
-   "point_diff": 121.0,
+   "point_diff": 162.0,
    "strength": 7.053,
    "strength_uncentred": 11.959,
    "strength_season_long": 8.369,
@@ -1445,52 +1455,26 @@
    "orapm": 5.725,
    "drapm": 1.327,
    "schedule_remaining": {
-    "n": 18,
-    "home": 10,
-    "away": 8,
-    "sos": -0.717,
-    "sos_home": -1.75,
-    "sos_away": 0.574,
+    "n": 14,
+    "home": 8,
+    "away": 6,
+    "sos": -1.034,
+    "sos_home": -2.121,
+    "sos_away": 0.416,
     "sos_rank": 13,
     "opponents": [
      "ATL",
-     "CHI",
      "CON",
      "IND",
      "LAS",
      "MIN",
      "NYL",
-     "PDX",
      "PHX",
      "SEA",
      "TOR",
      "WAS"
     ],
     "games": [
-     {
-      "game_id": 1022600206,
-      "date": "2026-07-28",
-      "opp": "PDX",
-      "home": true
-     },
-     {
-      "game_id": 1022600212,
-      "date": "2026-07-30",
-      "opp": "NYL",
-      "home": true
-     },
-     {
-      "game_id": 1022600216,
-      "date": "2026-08-01",
-      "opp": "CHI",
-      "home": false
-     },
-     {
-      "game_id": 1022600222,
-      "date": "2026-08-03",
-      "opp": "ATL",
-      "home": false
-     },
      {
       "game_id": 1022600230,
       "date": "2026-08-06",
@@ -1578,10 +1562,10 @@
     ]
    },
    "board_minute_coverage": 1.0,
-   "proj_wins": 30.6,
-   "proj_losses": 13.4,
-   "proj_wins_season_long_minutes": 31.0,
-   "proj_wins_all_available": 30.0,
+   "proj_wins": 30.9,
+   "proj_losses": 13.1,
+   "proj_wins_season_long_minutes": 31.2,
+   "proj_wins_all_available": 30.4,
    "minutes_watchlist": [
     {
      "pid": 1628932,
@@ -1592,7 +1576,7 @@
      "appearances_in_window": 8,
      "window_games": 10,
      "net": 8.426,
-     "wins_per_10mpg": 0.846
+     "wins_per_10mpg": 0.658
     },
     {
      "pid": 1630389,
@@ -1603,7 +1587,7 @@
      "appearances_in_window": 3,
      "window_games": 10,
      "net": -4.015,
-     "wins_per_10mpg": -0.808
+     "wins_per_10mpg": -0.628
     },
     {
      "pid": 1630150,
@@ -1614,7 +1598,7 @@
      "appearances_in_window": 3,
      "window_games": 10,
      "net": 3.257,
-     "wins_per_10mpg": 0.109
+     "wins_per_10mpg": 0.085
     },
     {
      "pid": 1643495,
@@ -1625,11 +1609,11 @@
      "appearances_in_window": 3,
      "window_games": 10,
      "net": 0.46,
-     "wins_per_10mpg": -0.242
+     "wins_per_10mpg": -0.188
     }
    ],
    "p2_5": 27.0,
-   "p10": 28.0,
+   "p10": 29.0,
    "p50": 31.0,
    "p90": 33.0,
    "p97_5": 34.0,
@@ -1657,20 +1641,20 @@
     0.0,
     0.0,
     0.0,
+    0.0,
     0.0001,
-    0.0015,
-    0.0056,
-    0.0166,
-    0.0439,
-    0.0803,
-    0.1422,
-    0.1862,
-    0.1969,
-    0.1625,
-    0.1041,
-    0.0455,
-    0.0131,
-    0.0015,
+    0.0012,
+    0.0044,
+    0.0236,
+    0.057,
+    0.1242,
+    0.1947,
+    0.226,
+    0.2018,
+    0.1188,
+    0.0404,
+    0.0078,
+    0.0,
     0.0,
     0.0,
     0.0,
@@ -1681,10 +1665,10 @@
     0.0
    ],
    "playoff_prob": 1.0,
-   "semis_prob": 0.7074,
-   "finals_prob": 0.4509,
-   "title_prob": 0.252,
-   "avg_seed_if_qualified": 2.68,
+   "semis_prob": 0.7153,
+   "finals_prob": 0.465,
+   "title_prob": 0.2559,
+   "avg_seed_if_qualified": 2.33,
    "roster": [
     {
      "pid": 203833,
@@ -1714,8 +1698,8 @@
       0.653
      ],
      "strength_contrib": 3.565,
-     "wins_contrib_remaining": 3.26,
-     "wins_per_10mpg": 0.427
+     "wins_contrib_remaining": 2.55,
+     "wins_per_10mpg": 0.332
     },
     {
      "pid": 1629498,
@@ -1745,8 +1729,8 @@
       0.634
      ],
      "strength_contrib": 2.153,
-     "wins_contrib_remaining": 2.54,
-     "wins_per_10mpg": 0.182
+     "wins_contrib_remaining": 1.99,
+     "wins_per_10mpg": 0.142
     },
     {
      "pid": 204319,
@@ -1776,8 +1760,8 @@
       0.678
      ],
      "strength_contrib": 0.718,
-     "wins_contrib_remaining": 1.66,
-     "wins_per_10mpg": -0.06
+     "wins_contrib_remaining": 1.31,
+     "wins_per_10mpg": -0.046
     },
     {
      "pid": 1628932,
@@ -1807,8 +1791,8 @@
       0.642
      ],
      "strength_contrib": 4.584,
-     "wins_contrib_remaining": 3.37,
-     "wins_per_10mpg": 0.846
+     "wins_contrib_remaining": 2.63,
+     "wins_per_10mpg": 0.658
     },
     {
      "pid": 1631019,
@@ -1838,8 +1822,8 @@
       0.769
      ],
      "strength_contrib": -0.478,
-     "wins_contrib_remaining": 0.81,
-     "wins_per_10mpg": -0.312
+     "wins_contrib_remaining": 0.64,
+     "wins_per_10mpg": -0.242
     },
     {
      "pid": 203855,
@@ -1869,8 +1853,8 @@
       1.062
      ],
      "strength_contrib": -1.225,
-     "wins_contrib_remaining": 0.16,
-     "wins_per_10mpg": -0.579
+     "wins_contrib_remaining": 0.14,
+     "wins_per_10mpg": -0.45
     },
     {
      "pid": 204323,
@@ -1900,8 +1884,8 @@
       1.178
      ],
      "strength_contrib": -0.666,
-     "wins_contrib_remaining": 0.19,
-     "wins_per_10mpg": -0.487
+     "wins_contrib_remaining": 0.16,
+     "wins_per_10mpg": -0.379
     },
     {
      "pid": 1629488,
@@ -1931,8 +1915,8 @@
       1.106
      ],
      "strength_contrib": -0.422,
-     "wins_contrib_remaining": 0.22,
-     "wins_per_10mpg": -0.413
+     "wins_contrib_remaining": 0.18,
+     "wins_per_10mpg": -0.321
     },
     {
      "pid": 1631006,
@@ -1962,8 +1946,8 @@
       1.32
      ],
      "strength_contrib": -0.751,
-     "wins_contrib_remaining": -0.02,
-     "wins_per_10mpg": -0.675
+     "wins_contrib_remaining": -0.01,
+     "wins_per_10mpg": -0.525
     },
     {
      "pid": 1630389,
@@ -1993,8 +1977,8 @@
       0.992
      ],
      "strength_contrib": -0.617,
-     "wins_contrib_remaining": -0.08,
-     "wins_per_10mpg": -0.808
+     "wins_contrib_remaining": -0.06,
+     "wins_per_10mpg": -0.628
     },
     {
      "pid": 1630150,
@@ -2024,8 +2008,8 @@
       1.422
      ],
      "strength_contrib": 0.235,
-     "wins_contrib_remaining": 0.3,
-     "wins_per_10mpg": 0.109
+     "wins_contrib_remaining": 0.24,
+     "wins_per_10mpg": 0.085
     },
     {
      "pid": 1643495,
@@ -2055,613 +2039,8 @@
       6.121
      ],
      "strength_contrib": -0.043,
-     "wins_contrib_remaining": 0.13,
-     "wins_per_10mpg": -0.242
-    }
-   ]
-  },
-  "DAL": {
-   "abbr": "DAL",
-   "name": "Dallas Wings",
-   "nickname": "Wings",
-   "w": 18,
-   "l": 9,
-   "gp": 27,
-   "games_remaining": 17,
-   "games_total": 44,
-   "point_diff": 109.0,
-   "strength": 5.174,
-   "strength_uncentred": 10.081,
-   "strength_season_long": 4.707,
-   "strength_all_available": 4.594,
-   "strength_rank": 3,
-   "factors": {
-    "oTS": 3.768,
-    "oTOV": 2.689,
-    "oSC": 1.22,
-    "dTS": 1.363,
-    "dTOV": -0.015,
-    "dSC": 1.056
-   },
-   "factors_dev": {
-    "oTS": 2.045,
-    "oTOV": 2.26,
-    "oSC": 0.676,
-    "dTS": -0.132,
-    "dTOV": -0.554,
-    "dSC": 0.88
-   },
-   "factors_se": {
-    "oTS": 3.581,
-    "oTOV": 1.314,
-    "oSC": 1.784,
-    "dTS": 3.591,
-    "dTOV": 1.318,
-    "dSC": 1.789
-   },
-   "orapm": 4.981,
-   "drapm": 0.193,
-   "schedule_remaining": {
-    "n": 17,
-    "home": 10,
-    "away": 7,
-    "sos": -1.539,
-    "sos_home": -2.38,
-    "sos_away": -0.337,
-    "sos_rank": 15,
-    "opponents": [
-     "ATL",
-     "CON",
-     "GSV",
-     "IND",
-     "LAS",
-     "MIN",
-     "PDX",
-     "PHX",
-     "SEA",
-     "TOR",
-     "WAS"
-    ],
-    "games": [
-     {
-      "game_id": 1022600208,
-      "date": "2026-07-29",
-      "opp": "ATL",
-      "home": true
-     },
-     {
-      "game_id": 1022600214,
-      "date": "2026-07-31",
-      "opp": "WAS",
-      "home": false
-     },
-     {
-      "game_id": 1022600220,
-      "date": "2026-08-02",
-      "opp": "CON",
-      "home": true
-     },
-     {
-      "game_id": 1022600228,
-      "date": "2026-08-05",
-      "opp": "WAS",
-      "home": false
-     },
-     {
-      "game_id": 1022600235,
-      "date": "2026-08-07",
-      "opp": "GSV",
-      "home": true
-     },
-     {
-      "game_id": 1022600241,
-      "date": "2026-08-09",
-      "opp": "MIN",
-      "home": false
-     },
-     {
-      "game_id": 1022600248,
-      "date": "2026-08-12",
-      "opp": "TOR",
-      "home": true
-     },
-     {
-      "game_id": 1022600254,
-      "date": "2026-08-14",
-      "opp": "IND",
-      "home": false
-     },
-     {
-      "game_id": 1022600262,
-      "date": "2026-08-17",
-      "opp": "GSV",
-      "home": false
-     },
-     {
-      "game_id": 1022600269,
-      "date": "2026-08-20",
-      "opp": "IND",
-      "home": true
-     },
-     {
-      "game_id": 1022600278,
-      "date": "2026-08-23",
-      "opp": "SEA",
-      "home": true
-     },
-     {
-      "game_id": 1022600285,
-      "date": "2026-08-25",
-      "opp": "PDX",
-      "home": true
-     },
-     {
-      "game_id": 1022600300,
-      "date": "2026-08-30",
-      "opp": "CON",
-      "home": true
-     },
-     {
-      "game_id": 1022600303,
-      "date": "2026-09-17",
-      "opp": "LAS",
-      "home": true
-     },
-     {
-      "game_id": 1022600309,
-      "date": "2026-09-19",
-      "opp": "PHX",
-      "home": true
-     },
-     {
-      "game_id": 1022600318,
-      "date": "2026-09-21",
-      "opp": "PHX",
-      "home": false
-     },
-     {
-      "game_id": 1022600325,
-      "date": "2026-09-23",
-      "opp": "SEA",
-      "home": false
-     }
-    ]
-   },
-   "board_minute_coverage": 1.0,
-   "proj_wins": 29.5,
-   "proj_losses": 14.5,
-   "proj_wins_season_long_minutes": 29.3,
-   "proj_wins_all_available": 29.3,
-   "minutes_watchlist": [],
-   "p2_5": 26.0,
-   "p10": 27.0,
-   "p50": 30.0,
-   "p90": 32.0,
-   "p97_5": 33.0,
-   "win_hist": [
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0001,
-    0.0002,
-    0.0012,
-    0.005,
-    0.0157,
-    0.0432,
-    0.084,
-    0.143,
-    0.1873,
-    0.1967,
-    0.1647,
-    0.0981,
-    0.0451,
-    0.014,
-    0.0017,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0
-   ],
-   "playoff_prob": 1.0,
-   "semis_prob": 0.6039,
-   "finals_prob": 0.2873,
-   "title_prob": 0.1331,
-   "avg_seed_if_qualified": 3.36,
-   "roster": [
-    {
-     "pid": 1629491,
-     "gid": "w1629491",
-     "name": "Jessica Shepard",
-     "linkable": true,
-     "exp_mpg": 34.9,
-     "season_mpg": 33.3,
-     "mpg_when_available": 35.4,
-     "appearances_in_window": 10,
-     "net": 2.019,
-     "on_board": true,
-     "f": [
-      0.456,
-      0.088,
-      0.645,
-      1.303,
-      -0.65,
-      0.177
-     ],
-     "f_se": [
-      1.706,
-      0.626,
-      0.85,
-      1.71,
-      0.627,
-      0.852
-     ],
-     "strength_contrib": 0.906,
-     "wins_contrib_remaining": 2.02,
-     "wins_per_10mpg": 0.0
-    },
-    {
-     "pid": 1643425,
-     "gid": "w1643425",
-     "name": "Azzi Fudd",
-     "linkable": true,
-     "exp_mpg": 34.1,
-     "season_mpg": 30.4,
-     "mpg_when_available": 34.5,
-     "appearances_in_window": 10,
-     "net": 3.598,
-     "on_board": true,
-     "f": [
-      1.431,
-      0.791,
-      -0.121,
-      1.152,
-      0.131,
-      0.214
-     ],
-     "f_se": [
-      2.516,
-      0.923,
-      1.253,
-      2.528,
-      0.928,
-      1.259
-     ],
-     "strength_contrib": 2.229,
-     "wins_contrib_remaining": 2.59,
-     "wins_per_10mpg": 0.222
-    },
-    {
-     "pid": 1642784,
-     "gid": "w1642784",
-     "name": "Paige Bueckers",
-     "linkable": true,
-     "exp_mpg": 31.3,
-     "season_mpg": 31.1,
-     "mpg_when_available": 35.2,
-     "appearances_in_window": 9,
-     "net": 4.777,
-     "on_board": true,
-     "f": [
-      3.067,
-      1.48,
-      -0.123,
-      -0.41,
-      0.236,
-      0.526
-     ],
-     "f_se": [
-      1.81,
-      0.664,
-      0.902,
-      1.816,
-      0.666,
-      0.905
-     ],
-     "strength_contrib": 2.968,
-     "wins_contrib_remaining": 2.81,
-     "wins_per_10mpg": 0.38
-    },
-    {
-     "pid": 1629481,
-     "gid": "w1629481",
-     "name": "Arike Ogunbowale",
-     "linkable": true,
-     "exp_mpg": 29.9,
-     "season_mpg": 29.6,
-     "mpg_when_available": 30.2,
-     "appearances_in_window": 10,
-     "net": 0.731,
-     "on_board": true,
-     "f": [
-      0.321,
-      0.506,
-      1.042,
-      -1.358,
-      0.402,
-      -0.182
-     ],
-     "f_se": [
-      1.429,
-      0.524,
-      0.712,
-      1.428,
-      0.524,
-      0.711
-     ],
-     "strength_contrib": -0.187,
-     "wins_contrib_remaining": 1.28,
-     "wins_per_10mpg": -0.176
-    },
-    {
-     "pid": 1630386,
-     "gid": "w1630386",
-     "name": "Awak Kuier",
-     "linkable": true,
-     "exp_mpg": 16.5,
-     "season_mpg": 14.9,
-     "mpg_when_available": 16.7,
-     "appearances_in_window": 10,
-     "net": 1.562,
-     "on_board": true,
-     "f": [
-      -0.029,
-      -0.177,
-      -0.838,
-      2.372,
-      0.002,
-      0.231
-     ],
-     "f_se": [
-      2.983,
-      1.094,
-      1.486,
-      2.976,
-      1.092,
-      1.483
-     ],
-     "strength_contrib": 0.239,
-     "wins_contrib_remaining": 0.86,
-     "wins_per_10mpg": -0.058
-    },
-    {
-     "pid": 1641652,
-     "gid": "w1641652",
-     "name": "Maddy Siegrist",
-     "linkable": true,
-     "exp_mpg": 11.6,
-     "season_mpg": 13.5,
-     "mpg_when_available": 13.1,
-     "appearances_in_window": 9,
-     "net": 1.262,
-     "on_board": true,
-     "f": [
-      -0.043,
-      0.918,
-      1.547,
-      -0.879,
-      -0.416,
-      0.135
-     ],
-     "f_se": [
-      2.107,
-      0.773,
-      1.049,
-      2.113,
-      0.775,
-      1.053
-     ],
-     "strength_contrib": 0.082,
-     "wins_contrib_remaining": 0.57,
-     "wins_per_10mpg": -0.093
-    },
-    {
-     "pid": 203824,
-     "gid": "w203824",
-     "name": "Odyssey Sims",
-     "linkable": true,
-     "exp_mpg": 9.1,
-     "season_mpg": 9.7,
-     "mpg_when_available": 11.5,
-     "appearances_in_window": 8,
-     "net": -0.233,
-     "on_board": true,
-     "f": [
-      -0.195,
-      0.137,
-      -0.193,
-      -0.598,
-      0.546,
-      0.069
-     ],
-     "f_se": [
-      1.995,
-      0.732,
-      0.994,
-      1.993,
-      0.731,
-      0.993
-     ],
-     "strength_contrib": -0.276,
-     "wins_contrib_remaining": 0.29,
-     "wins_per_10mpg": -0.274
-    },
-    {
-     "pid": 1642793,
-     "gid": "w1642793",
-     "name": "Aziaha James",
-     "linkable": true,
-     "exp_mpg": 8.7,
-     "season_mpg": 11.7,
-     "mpg_when_available": 8.8,
-     "appearances_in_window": 10,
-     "net": 0.459,
-     "on_board": true,
-     "f": [
-      -1.206,
-      0.797,
-      0.144,
-      -0.149,
-      0.156,
-      0.717
-     ],
-     "f_se": [
-      2.593,
-      0.952,
-      1.292,
-      2.608,
-      0.957,
-      1.299
-     ],
-     "strength_contrib": -0.113,
-     "wins_contrib_remaining": 0.34,
-     "wins_per_10mpg": -0.189
-    },
-    {
-     "pid": 1629574,
-     "gid": "w1629574",
-     "name": "Li Yueru",
-     "linkable": true,
-     "exp_mpg": 8.4,
-     "season_mpg": 6.5,
-     "mpg_when_available": 10.6,
-     "appearances_in_window": 8,
-     "net": 0.92,
-     "on_board": true,
-     "f": [
-      0.174,
-      -0.07,
-      1.121,
-      0.108,
-      -0.708,
-      0.295
-     ],
-     "f_se": [
-      2.62,
-      0.961,
-      1.305,
-      2.64,
-      0.969,
-      1.315
-     ],
-     "strength_contrib": -0.013,
-     "wins_contrib_remaining": 0.38,
-     "wins_per_10mpg": -0.133
-    },
-    {
-     "pid": 1629501,
-     "gid": "w1629501",
-     "name": "Alanna Smith",
-     "linkable": true,
-     "exp_mpg": 5.7,
-     "season_mpg": 10.5,
-     "mpg_when_available": 11.5,
-     "appearances_in_window": 5,
-     "net": 0.57,
-     "on_board": true,
-     "f": [
-      -0.05,
-      0.047,
-      -0.351,
-      0.182,
-      0.591,
-      0.152
-     ],
-     "f_se": [
-      1.65,
-      0.605,
-      0.822,
-      1.651,
-      0.606,
-      0.822
-     ],
-     "strength_contrib": -0.058,
-     "wins_contrib_remaining": 0.23,
-     "wins_per_10mpg": -0.173
-    },
-    {
-     "pid": 1630134,
-     "gid": "w1630134",
-     "name": "Sug Sutton",
-     "linkable": true,
-     "exp_mpg": 5.3,
-     "season_mpg": 4.1,
-     "mpg_when_available": 7.7,
-     "appearances_in_window": 7,
-     "net": -1.44,
-     "on_board": true,
-     "f": [
-      -0.328,
-      0.207,
-      -0.759,
-      -0.865,
-      -0.019,
-      0.324
-     ],
-     "f_se": [
-      1.999,
-      0.734,
-      0.996,
-      2.005,
-      0.736,
-      0.999
-     ],
-     "strength_contrib": -0.321,
-     "wins_contrib_remaining": 0.09,
-     "wins_per_10mpg": -0.412
-    },
-    {
-     "pid": 202252,
-     "gid": "w202252",
-     "name": "Alysha Clark",
-     "linkable": true,
-     "exp_mpg": 4.7,
-     "season_mpg": 5.8,
-     "mpg_when_available": 7.9,
-     "appearances_in_window": 6,
-     "net": -1.421,
-     "on_board": true,
-     "f": [
-      -1.213,
-      -0.119,
-      -0.851,
-      0.793,
-      -0.132,
-      0.101
-     ],
-     "f_se": [
-      1.823,
-      0.669,
-      0.908,
-      1.826,
-      0.67,
-      0.91
-     ],
-     "strength_contrib": -0.281,
-     "wins_contrib_remaining": 0.08,
-     "wins_per_10mpg": -0.409
+     "wins_contrib_remaining": 0.1,
+     "wins_per_10mpg": -0.188
     }
    ]
   },
@@ -2669,12 +2048,12 @@
    "abbr": "GSV",
    "name": "Golden State Valkyries",
    "nickname": "Valkyries",
-   "w": 19,
-   "l": 8,
-   "gp": 27,
-   "games_remaining": 17,
+   "w": 21,
+   "l": 9,
+   "gp": 30,
+   "games_remaining": 14,
    "games_total": 44,
-   "point_diff": 149.0,
+   "point_diff": 175.0,
    "strength": 1.986,
    "strength_uncentred": 6.893,
    "strength_season_long": 2.355,
@@ -2707,13 +2086,13 @@
    "orapm": -2.069,
    "drapm": 4.056,
    "schedule_remaining": {
-    "n": 17,
-    "home": 7,
-    "away": 10,
-    "sos": -1.193,
-    "sos_home": -1.577,
-    "sos_away": -0.924,
-    "sos_rank": 14,
+    "n": 14,
+    "home": 5,
+    "away": 9,
+    "sos": -0.463,
+    "sos_home": 0.32,
+    "sos_away": -0.899,
+    "sos_rank": 9,
     "opponents": [
      "CHI",
      "CON",
@@ -2722,29 +2101,9 @@
      "MIN",
      "NYL",
      "PDX",
-     "PHX",
-     "SEA",
-     "TOR"
+     "SEA"
     ],
     "games": [
-     {
-      "game_id": 1022600209,
-      "date": "2026-07-29",
-      "opp": "PHX",
-      "home": false
-     },
-     {
-      "game_id": 1022600221,
-      "date": "2026-08-02",
-      "opp": "TOR",
-      "home": true
-     },
-     {
-      "game_id": 1022600225,
-      "date": "2026-08-04",
-      "opp": "TOR",
-      "home": true
-     },
      {
       "game_id": 1022600235,
       "date": "2026-08-07",
@@ -2832,8 +2191,8 @@
     ]
    },
    "board_minute_coverage": 0.9971,
-   "proj_wins": 28.8,
-   "proj_losses": 15.2,
+   "proj_wins": 28.7,
+   "proj_losses": 15.3,
    "proj_wins_season_long_minutes": 28.9,
    "proj_wins_all_available": 28.8,
    "minutes_watchlist": [],
@@ -2841,7 +2200,7 @@
    "p10": 26.0,
    "p50": 29.0,
    "p90": 31.0,
-   "p97_5": 33.0,
+   "p97_5": 32.0,
    "win_hist": [
     0.0,
     0.0,
@@ -2865,20 +2224,20 @@
     0.0,
     0.0,
     0.0,
-    0.0011,
-    0.0033,
-    0.0137,
-    0.0392,
-    0.0762,
-    0.1345,
-    0.1736,
-    0.1885,
-    0.166,
-    0.1084,
-    0.0628,
-    0.0243,
-    0.0073,
-    0.0011,
+    0.0002,
+    0.0019,
+    0.009,
+    0.0316,
+    0.0827,
+    0.1372,
+    0.1882,
+    0.202,
+    0.1765,
+    0.106,
+    0.0464,
+    0.016,
+    0.002,
+    0.0003,
     0.0,
     0.0,
     0.0,
@@ -2890,10 +2249,10 @@
     0.0
    ],
    "playoff_prob": 1.0,
-   "semis_prob": 0.4424,
-   "finals_prob": 0.1425,
-   "title_prob": 0.0392,
-   "avg_seed_if_qualified": 3.89,
+   "semis_prob": 0.435,
+   "finals_prob": 0.1408,
+   "title_prob": 0.0405,
+   "avg_seed_if_qualified": 3.88,
    "roster": [
     {
      "pid": 1631007,
@@ -2923,8 +2282,8 @@
       0.799
      ],
      "strength_contrib": 3.14,
-     "wins_contrib_remaining": 2.71,
-     "wins_per_10mpg": 0.55
+     "wins_contrib_remaining": 2.18,
+     "wins_per_10mpg": 0.453
     },
     {
      "pid": 203866,
@@ -2954,8 +2313,8 @@
       0.847
      ],
      "strength_contrib": -0.223,
-     "wins_contrib_remaining": 0.96,
-     "wins_per_10mpg": -0.102
+     "wins_contrib_remaining": 0.75,
+     "wins_per_10mpg": -0.084
     },
     {
      "pid": 204329,
@@ -2985,8 +2344,8 @@
       0.909
      ],
      "strength_contrib": -2.16,
-     "wins_contrib_remaining": 0.01,
-     "wins_per_10mpg": -0.549
+     "wins_contrib_remaining": -0.03,
+     "wins_per_10mpg": -0.452
     },
     {
      "pid": 1628931,
@@ -3016,8 +2375,8 @@
       0.806
      ],
      "strength_contrib": 1.172,
-     "wins_contrib_remaining": 1.5,
-     "wins_per_10mpg": 0.231
+     "wins_contrib_remaining": 1.2,
+     "wins_per_10mpg": 0.19
     },
     {
      "pid": 1642767,
@@ -3047,8 +2406,8 @@
       1.025
      ],
      "strength_contrib": 0.856,
-     "wins_contrib_remaining": 1.28,
-     "wins_per_10mpg": 0.17
+     "wins_contrib_remaining": 1.02,
+     "wins_per_10mpg": 0.14
     },
     {
      "pid": 1630097,
@@ -3078,8 +2437,8 @@
       1.19
      ],
      "strength_contrib": 0.396,
-     "wins_contrib_remaining": 1.04,
-     "wins_per_10mpg": 0.055
+     "wins_contrib_remaining": 0.82,
+     "wins_per_10mpg": 0.045
     },
     {
      "pid": 1628508,
@@ -3109,8 +2468,8 @@
       1.171
      ],
      "strength_contrib": -0.524,
-     "wins_contrib_remaining": 0.58,
-     "wins_per_10mpg": -0.195
+     "wins_contrib_remaining": 0.45,
+     "wins_per_10mpg": -0.16
     },
     {
      "pid": 203026,
@@ -3140,8 +2499,8 @@
       0.925
      ],
      "strength_contrib": 0.588,
-     "wins_contrib_remaining": 1.02,
-     "wins_per_10mpg": 0.126
+     "wins_contrib_remaining": 0.81,
+     "wins_per_10mpg": 0.104
     },
     {
      "pid": 1642822,
@@ -3171,8 +2530,8 @@
       1.54
      ],
      "strength_contrib": -0.697,
-     "wins_contrib_remaining": 0.34,
-     "wins_per_10mpg": -0.284
+     "wins_contrib_remaining": 0.25,
+     "wins_per_10mpg": -0.234
     },
     {
      "pid": 1641656,
@@ -3202,8 +2561,8 @@
       1.487
      ],
      "strength_contrib": -0.526,
-     "wins_contrib_remaining": 0.32,
-     "wins_per_10mpg": -0.255
+     "wins_contrib_remaining": 0.24,
+     "wins_per_10mpg": -0.21
     },
     {
      "pid": 1643686,
@@ -3233,8 +2592,8 @@
       0.0
      ],
      "strength_contrib": -0.014,
-     "wins_contrib_remaining": 0.02,
-     "wins_per_10mpg": -0.161
+     "wins_contrib_remaining": 0.01,
+     "wins_per_10mpg": -0.132
     },
     {
      "pid": 1642794,
@@ -3265,7 +2624,586 @@
      ],
      "strength_contrib": -0.022,
      "wins_contrib_remaining": 0.01,
-     "wins_per_10mpg": -0.285
+     "wins_per_10mpg": -0.235
+    }
+   ]
+  },
+  "DAL": {
+   "abbr": "DAL",
+   "name": "Dallas Wings",
+   "nickname": "Wings",
+   "w": 19,
+   "l": 12,
+   "gp": 31,
+   "games_remaining": 13,
+   "games_total": 44,
+   "point_diff": 118.0,
+   "strength": 5.174,
+   "strength_uncentred": 10.081,
+   "strength_season_long": 4.707,
+   "strength_all_available": 4.594,
+   "strength_rank": 3,
+   "factors": {
+    "oTS": 3.768,
+    "oTOV": 2.689,
+    "oSC": 1.22,
+    "dTS": 1.363,
+    "dTOV": -0.015,
+    "dSC": 1.056
+   },
+   "factors_dev": {
+    "oTS": 2.045,
+    "oTOV": 2.26,
+    "oSC": 0.676,
+    "dTS": -0.132,
+    "dTOV": -0.554,
+    "dSC": 0.88
+   },
+   "factors_se": {
+    "oTS": 3.581,
+    "oTOV": 1.314,
+    "oSC": 1.784,
+    "dTS": 3.591,
+    "dTOV": 1.318,
+    "dSC": 1.789
+   },
+   "orapm": 4.981,
+   "drapm": 0.193,
+   "schedule_remaining": {
+    "n": 13,
+    "home": 8,
+    "away": 5,
+    "sos": -1.278,
+    "sos_home": -2.846,
+    "sos_away": 1.23,
+    "sos_rank": 14,
+    "opponents": [
+     "CON",
+     "GSV",
+     "IND",
+     "LAS",
+     "MIN",
+     "PDX",
+     "PHX",
+     "SEA",
+     "TOR"
+    ],
+    "games": [
+     {
+      "game_id": 1022600235,
+      "date": "2026-08-07",
+      "opp": "GSV",
+      "home": true
+     },
+     {
+      "game_id": 1022600241,
+      "date": "2026-08-09",
+      "opp": "MIN",
+      "home": false
+     },
+     {
+      "game_id": 1022600248,
+      "date": "2026-08-12",
+      "opp": "TOR",
+      "home": true
+     },
+     {
+      "game_id": 1022600254,
+      "date": "2026-08-14",
+      "opp": "IND",
+      "home": false
+     },
+     {
+      "game_id": 1022600262,
+      "date": "2026-08-17",
+      "opp": "GSV",
+      "home": false
+     },
+     {
+      "game_id": 1022600269,
+      "date": "2026-08-20",
+      "opp": "IND",
+      "home": true
+     },
+     {
+      "game_id": 1022600278,
+      "date": "2026-08-23",
+      "opp": "SEA",
+      "home": true
+     },
+     {
+      "game_id": 1022600285,
+      "date": "2026-08-25",
+      "opp": "PDX",
+      "home": true
+     },
+     {
+      "game_id": 1022600300,
+      "date": "2026-08-30",
+      "opp": "CON",
+      "home": true
+     },
+     {
+      "game_id": 1022600303,
+      "date": "2026-09-17",
+      "opp": "LAS",
+      "home": true
+     },
+     {
+      "game_id": 1022600309,
+      "date": "2026-09-19",
+      "opp": "PHX",
+      "home": true
+     },
+     {
+      "game_id": 1022600318,
+      "date": "2026-09-21",
+      "opp": "PHX",
+      "home": false
+     },
+     {
+      "game_id": 1022600325,
+      "date": "2026-09-23",
+      "opp": "SEA",
+      "home": false
+     }
+    ]
+   },
+   "board_minute_coverage": 1.0,
+   "proj_wins": 27.8,
+   "proj_losses": 16.2,
+   "proj_wins_season_long_minutes": 27.5,
+   "proj_wins_all_available": 27.6,
+   "minutes_watchlist": [],
+   "p2_5": 24.0,
+   "p10": 26.0,
+   "p50": 28.0,
+   "p90": 30.0,
+   "p97_5": 31.0,
+   "win_hist": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0014,
+    0.0056,
+    0.0227,
+    0.0599,
+    0.1248,
+    0.202,
+    0.2364,
+    0.1936,
+    0.1108,
+    0.0376,
+    0.0052,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "playoff_prob": 1.0,
+   "semis_prob": 0.5619,
+   "finals_prob": 0.2541,
+   "title_prob": 0.1156,
+   "avg_seed_if_qualified": 4.44,
+   "roster": [
+    {
+     "pid": 1629491,
+     "gid": "w1629491",
+     "name": "Jessica Shepard",
+     "linkable": true,
+     "exp_mpg": 34.9,
+     "season_mpg": 33.3,
+     "mpg_when_available": 35.4,
+     "appearances_in_window": 10,
+     "net": 2.019,
+     "on_board": true,
+     "f": [
+      0.456,
+      0.088,
+      0.645,
+      1.303,
+      -0.65,
+      0.177
+     ],
+     "f_se": [
+      1.706,
+      0.626,
+      0.85,
+      1.71,
+      0.627,
+      0.852
+     ],
+     "strength_contrib": 0.906,
+     "wins_contrib_remaining": 1.54,
+     "wins_per_10mpg": 0.0
+    },
+    {
+     "pid": 1643425,
+     "gid": "w1643425",
+     "name": "Azzi Fudd",
+     "linkable": true,
+     "exp_mpg": 34.1,
+     "season_mpg": 30.4,
+     "mpg_when_available": 34.5,
+     "appearances_in_window": 10,
+     "net": 3.598,
+     "on_board": true,
+     "f": [
+      1.431,
+      0.791,
+      -0.121,
+      1.152,
+      0.131,
+      0.214
+     ],
+     "f_se": [
+      2.516,
+      0.923,
+      1.253,
+      2.528,
+      0.928,
+      1.259
+     ],
+     "strength_contrib": 2.229,
+     "wins_contrib_remaining": 1.98,
+     "wins_per_10mpg": 0.169
+    },
+    {
+     "pid": 1642784,
+     "gid": "w1642784",
+     "name": "Paige Bueckers",
+     "linkable": true,
+     "exp_mpg": 31.3,
+     "season_mpg": 31.1,
+     "mpg_when_available": 35.2,
+     "appearances_in_window": 9,
+     "net": 4.777,
+     "on_board": true,
+     "f": [
+      3.067,
+      1.48,
+      -0.123,
+      -0.41,
+      0.236,
+      0.526
+     ],
+     "f_se": [
+      1.81,
+      0.664,
+      0.902,
+      1.816,
+      0.666,
+      0.905
+     ],
+     "strength_contrib": 2.968,
+     "wins_contrib_remaining": 2.14,
+     "wins_per_10mpg": 0.291
+    },
+    {
+     "pid": 1629481,
+     "gid": "w1629481",
+     "name": "Arike Ogunbowale",
+     "linkable": true,
+     "exp_mpg": 29.9,
+     "season_mpg": 29.6,
+     "mpg_when_available": 30.2,
+     "appearances_in_window": 10,
+     "net": 0.731,
+     "on_board": true,
+     "f": [
+      0.321,
+      0.506,
+      1.042,
+      -1.358,
+      0.402,
+      -0.182
+     ],
+     "f_se": [
+      1.429,
+      0.524,
+      0.712,
+      1.428,
+      0.524,
+      0.711
+     ],
+     "strength_contrib": -0.187,
+     "wins_contrib_remaining": 0.97,
+     "wins_per_10mpg": -0.134
+    },
+    {
+     "pid": 1630386,
+     "gid": "w1630386",
+     "name": "Awak Kuier",
+     "linkable": true,
+     "exp_mpg": 16.5,
+     "season_mpg": 14.9,
+     "mpg_when_available": 16.7,
+     "appearances_in_window": 10,
+     "net": 1.562,
+     "on_board": true,
+     "f": [
+      -0.029,
+      -0.177,
+      -0.838,
+      2.372,
+      0.002,
+      0.231
+     ],
+     "f_se": [
+      2.983,
+      1.094,
+      1.486,
+      2.976,
+      1.092,
+      1.483
+     ],
+     "strength_contrib": 0.239,
+     "wins_contrib_remaining": 0.66,
+     "wins_per_10mpg": -0.044
+    },
+    {
+     "pid": 1641652,
+     "gid": "w1641652",
+     "name": "Maddy Siegrist",
+     "linkable": true,
+     "exp_mpg": 11.6,
+     "season_mpg": 13.5,
+     "mpg_when_available": 13.1,
+     "appearances_in_window": 9,
+     "net": 1.262,
+     "on_board": true,
+     "f": [
+      -0.043,
+      0.918,
+      1.547,
+      -0.879,
+      -0.416,
+      0.135
+     ],
+     "f_se": [
+      2.107,
+      0.773,
+      1.049,
+      2.113,
+      0.775,
+      1.053
+     ],
+     "strength_contrib": 0.082,
+     "wins_contrib_remaining": 0.43,
+     "wins_per_10mpg": -0.071
+    },
+    {
+     "pid": 203824,
+     "gid": "w203824",
+     "name": "Odyssey Sims",
+     "linkable": true,
+     "exp_mpg": 9.1,
+     "season_mpg": 9.7,
+     "mpg_when_available": 11.5,
+     "appearances_in_window": 8,
+     "net": -0.233,
+     "on_board": true,
+     "f": [
+      -0.195,
+      0.137,
+      -0.193,
+      -0.598,
+      0.546,
+      0.069
+     ],
+     "f_se": [
+      1.995,
+      0.732,
+      0.994,
+      1.993,
+      0.731,
+      0.993
+     ],
+     "strength_contrib": -0.276,
+     "wins_contrib_remaining": 0.22,
+     "wins_per_10mpg": -0.209
+    },
+    {
+     "pid": 1642793,
+     "gid": "w1642793",
+     "name": "Aziaha James",
+     "linkable": true,
+     "exp_mpg": 8.7,
+     "season_mpg": 11.7,
+     "mpg_when_available": 8.8,
+     "appearances_in_window": 10,
+     "net": 0.459,
+     "on_board": true,
+     "f": [
+      -1.206,
+      0.797,
+      0.144,
+      -0.149,
+      0.156,
+      0.717
+     ],
+     "f_se": [
+      2.593,
+      0.952,
+      1.292,
+      2.608,
+      0.957,
+      1.299
+     ],
+     "strength_contrib": -0.113,
+     "wins_contrib_remaining": 0.26,
+     "wins_per_10mpg": -0.145
+    },
+    {
+     "pid": 1629574,
+     "gid": "w1629574",
+     "name": "Li Yueru",
+     "linkable": true,
+     "exp_mpg": 8.4,
+     "season_mpg": 6.5,
+     "mpg_when_available": 10.6,
+     "appearances_in_window": 8,
+     "net": 0.92,
+     "on_board": true,
+     "f": [
+      0.174,
+      -0.07,
+      1.121,
+      0.108,
+      -0.708,
+      0.295
+     ],
+     "f_se": [
+      2.62,
+      0.961,
+      1.305,
+      2.64,
+      0.969,
+      1.315
+     ],
+     "strength_contrib": -0.013,
+     "wins_contrib_remaining": 0.29,
+     "wins_per_10mpg": -0.102
+    },
+    {
+     "pid": 1629501,
+     "gid": "w1629501",
+     "name": "Alanna Smith",
+     "linkable": true,
+     "exp_mpg": 5.7,
+     "season_mpg": 10.5,
+     "mpg_when_available": 11.5,
+     "appearances_in_window": 5,
+     "net": 0.57,
+     "on_board": true,
+     "f": [
+      -0.05,
+      0.047,
+      -0.351,
+      0.182,
+      0.591,
+      0.152
+     ],
+     "f_se": [
+      1.65,
+      0.605,
+      0.822,
+      1.651,
+      0.606,
+      0.822
+     ],
+     "strength_contrib": -0.058,
+     "wins_contrib_remaining": 0.18,
+     "wins_per_10mpg": -0.132
+    },
+    {
+     "pid": 1630134,
+     "gid": "w1630134",
+     "name": "Sug Sutton",
+     "linkable": true,
+     "exp_mpg": 5.3,
+     "season_mpg": 4.1,
+     "mpg_when_available": 7.7,
+     "appearances_in_window": 7,
+     "net": -1.44,
+     "on_board": true,
+     "f": [
+      -0.328,
+      0.207,
+      -0.759,
+      -0.865,
+      -0.019,
+      0.324
+     ],
+     "f_se": [
+      1.999,
+      0.734,
+      0.996,
+      2.005,
+      0.736,
+      0.999
+     ],
+     "strength_contrib": -0.321,
+     "wins_contrib_remaining": 0.07,
+     "wins_per_10mpg": -0.315
+    },
+    {
+     "pid": 202252,
+     "gid": "w202252",
+     "name": "Alysha Clark",
+     "linkable": true,
+     "exp_mpg": 4.7,
+     "season_mpg": 5.8,
+     "mpg_when_available": 7.9,
+     "appearances_in_window": 6,
+     "net": -1.421,
+     "on_board": true,
+     "f": [
+      -1.213,
+      -0.119,
+      -0.851,
+      0.793,
+      -0.132,
+      0.101
+     ],
+     "f_se": [
+      1.823,
+      0.669,
+      0.908,
+      1.826,
+      0.67,
+      0.91
+     ],
+     "strength_contrib": -0.281,
+     "wins_contrib_remaining": 0.06,
+     "wins_per_10mpg": -0.313
     }
    ]
   },
@@ -3273,12 +3211,12 @@
    "abbr": "ATL",
    "name": "Atlanta Dream",
    "nickname": "Dream",
-   "w": 16,
-   "l": 10,
-   "gp": 26,
-   "games_remaining": 18,
+   "w": 19,
+   "l": 11,
+   "gp": 30,
+   "games_remaining": 14,
    "games_total": 44,
-   "point_diff": 106.0,
+   "point_diff": 108.0,
    "strength": 3.849,
    "strength_uncentred": 8.756,
    "strength_season_long": 3.449,
@@ -3311,17 +3249,16 @@
    "orapm": 1.86,
    "drapm": 1.989,
    "schedule_remaining": {
-    "n": 18,
-    "home": 9,
-    "away": 9,
-    "sos": -0.258,
-    "sos_home": -0.771,
-    "sos_away": 0.255,
-    "sos_rank": 9,
+    "n": 14,
+    "home": 6,
+    "away": 8,
+    "sos": -0.788,
+    "sos_home": -1.359,
+    "sos_away": -0.36,
+    "sos_rank": 12,
     "opponents": [
      "CHI",
      "CON",
-     "DAL",
      "IND",
      "LAS",
      "LVA",
@@ -3329,35 +3266,10 @@
      "NYL",
      "PDX",
      "PHX",
-     "SEA",
      "TOR",
      "WAS"
     ],
     "games": [
-     {
-      "game_id": 1022600208,
-      "date": "2026-07-29",
-      "opp": "DAL",
-      "home": false
-     },
-     {
-      "game_id": 1022600213,
-      "date": "2026-07-31",
-      "opp": "SEA",
-      "home": true
-     },
-     {
-      "game_id": 1022600222,
-      "date": "2026-08-03",
-      "opp": "LVA",
-      "home": true
-     },
-     {
-      "game_id": 1022600226,
-      "date": "2026-08-05",
-      "opp": "PHX",
-      "home": true
-     },
      {
       "game_id": 1022600234,
       "date": "2026-08-07",
@@ -3445,10 +3357,10 @@
     ]
    },
    "board_minute_coverage": 1.0,
-   "proj_wins": 26.9,
-   "proj_losses": 17.1,
-   "proj_wins_season_long_minutes": 26.6,
-   "proj_wins_all_available": 27.3,
+   "proj_wins": 27.5,
+   "proj_losses": 16.5,
+   "proj_wins_season_long_minutes": 27.3,
+   "proj_wins_all_available": 27.9,
    "minutes_watchlist": [
     {
      "pid": 1628280,
@@ -3459,12 +3371,12 @@
      "appearances_in_window": 2,
      "window_games": 10,
      "net": 5.549,
-     "wins_per_10mpg": 0.474
+     "wins_per_10mpg": 0.369
     }
    ],
-   "p2_5": 23.0,
-   "p10": 24.0,
-   "p50": 27.0,
+   "p2_5": 24.0,
+   "p10": 25.0,
+   "p50": 28.0,
    "p90": 30.0,
    "p97_5": 31.0,
    "win_hist": [
@@ -3487,22 +3399,22 @@
     0.0,
     0.0,
     0.0,
-    0.0004,
-    0.0008,
-    0.0054,
-    0.0149,
-    0.0383,
-    0.0726,
-    0.1192,
-    0.1639,
-    0.1851,
-    0.1703,
-    0.1219,
-    0.069,
-    0.0295,
-    0.0069,
-    0.0016,
-    0.0002,
+    0.0001,
+    0.0,
+    0.0003,
+    0.0034,
+    0.0109,
+    0.0373,
+    0.0784,
+    0.1476,
+    0.202,
+    0.2102,
+    0.1691,
+    0.0941,
+    0.0367,
+    0.0093,
+    0.0006,
+    0.0,
     0.0,
     0.0,
     0.0,
@@ -3514,11 +3426,11 @@
     0.0,
     0.0
    ],
-   "playoff_prob": 0.9991,
-   "semis_prob": 0.4727,
-   "finals_prob": 0.1866,
-   "title_prob": 0.0711,
-   "avg_seed_if_qualified": 5.07,
+   "playoff_prob": 0.9996,
+   "semis_prob": 0.4817,
+   "finals_prob": 0.1855,
+   "title_prob": 0.0735,
+   "avg_seed_if_qualified": 4.84,
    "roster": [
     {
      "pid": 1631009,
@@ -3548,8 +3460,8 @@
       0.7
      ],
      "strength_contrib": 0.27,
-     "wins_contrib_remaining": 1.69,
-     "wins_per_10mpg": -0.068
+     "wins_contrib_remaining": 1.33,
+     "wins_per_10mpg": -0.053
     },
     {
      "pid": 1628886,
@@ -3579,8 +3491,8 @@
       0.78
      ],
      "strength_contrib": 2.098,
-     "wins_contrib_remaining": 2.56,
-     "wins_per_10mpg": 0.253
+     "wins_contrib_remaining": 2.0,
+     "wins_per_10mpg": 0.197
     },
     {
      "pid": 1628277,
@@ -3610,8 +3522,8 @@
       0.663
      ],
      "strength_contrib": 1.807,
-     "wins_contrib_remaining": 2.36,
-     "wins_per_10mpg": 0.213
+     "wins_contrib_remaining": 1.84,
+     "wins_per_10mpg": 0.166
     },
     {
      "pid": 1642291,
@@ -3641,8 +3553,8 @@
       0.843
      ],
      "strength_contrib": 0.791,
-     "wins_contrib_remaining": 1.61,
-     "wins_per_10mpg": 0.056
+     "wins_contrib_remaining": 1.26,
+     "wins_per_10mpg": 0.044
     },
     {
      "pid": 1631044,
@@ -3672,8 +3584,8 @@
       0.773
      ],
      "strength_contrib": 0.335,
-     "wins_contrib_remaining": 1.29,
-     "wins_per_10mpg": -0.033
+     "wins_contrib_remaining": 1.01,
+     "wins_per_10mpg": -0.026
     },
     {
      "pid": 1642302,
@@ -3703,8 +3615,8 @@
       1.988
      ],
      "strength_contrib": -0.429,
-     "wins_contrib_remaining": 0.42,
-     "wins_per_10mpg": -0.263
+     "wins_contrib_remaining": 0.34,
+     "wins_per_10mpg": -0.204
     },
     {
      "pid": 1643431,
@@ -3734,8 +3646,8 @@
       2.24
      ],
      "strength_contrib": -0.149,
-     "wins_contrib_remaining": 0.44,
-     "wins_per_10mpg": -0.168
+     "wins_contrib_remaining": 0.35,
+     "wins_per_10mpg": -0.131
     },
     {
      "pid": 1631021,
@@ -3765,8 +3677,8 @@
       1.956
      ],
      "strength_contrib": -0.539,
-     "wins_contrib_remaining": 0.09,
-     "wins_per_10mpg": -0.449
+     "wins_contrib_remaining": 0.07,
+     "wins_per_10mpg": -0.35
     },
     {
      "pid": 1642804,
@@ -3797,7 +3709,7 @@
      ],
      "strength_contrib": -0.556,
      "wins_contrib_remaining": 0.03,
-     "wins_per_10mpg": -0.517
+     "wins_per_10mpg": -0.402
     },
     {
      "pid": 1628280,
@@ -3827,8 +3739,8 @@
       0.903
      ],
      "strength_contrib": 0.345,
-     "wins_contrib_remaining": 0.31,
-     "wins_per_10mpg": 0.474
+     "wins_contrib_remaining": 0.24,
+     "wins_per_10mpg": 0.369
     },
     {
      "pid": 1643469,
@@ -3858,8 +3770,8 @@
       4.429
      ],
      "strength_contrib": -0.04,
-     "wins_contrib_remaining": 0.07,
-     "wins_per_10mpg": -0.198
+     "wins_contrib_remaining": 0.05,
+     "wins_per_10mpg": -0.154
     },
     {
      "pid": 1642320,
@@ -3889,8 +3801,8 @@
       3.215
      ],
      "strength_contrib": -0.062,
-     "wins_contrib_remaining": 0.03,
-     "wins_per_10mpg": -0.343
+     "wins_contrib_remaining": 0.02,
+     "wins_per_10mpg": -0.267
     },
     {
      "pid": 1642801,
@@ -3921,7 +3833,7 @@
      ],
      "strength_contrib": -0.023,
      "wins_contrib_remaining": 0.0,
-     "wins_per_10mpg": -0.52
+     "wins_per_10mpg": -0.405
     },
     {
      "pid": 1629539,
@@ -3952,7 +3864,7 @@
      ],
      "strength_contrib": 0.005,
      "wins_contrib_remaining": 0.01,
-     "wins_per_10mpg": 0.08
+     "wins_per_10mpg": 0.062
     },
     {
      "pid": 1628278,
@@ -3983,7 +3895,698 @@
      ],
      "strength_contrib": -0.006,
      "wins_contrib_remaining": 0.0,
-     "wins_per_10mpg": -0.41
+     "wins_per_10mpg": -0.319
+    }
+   ]
+  },
+  "NYL": {
+   "abbr": "NYL",
+   "name": "New York Liberty",
+   "nickname": "Liberty",
+   "w": 19,
+   "l": 13,
+   "gp": 32,
+   "games_remaining": 12,
+   "games_total": 44,
+   "point_diff": 82.0,
+   "strength": 4.654,
+   "strength_uncentred": 9.56,
+   "strength_season_long": 4.217,
+   "strength_all_available": 2.532,
+   "strength_rank": 4,
+   "factors": {
+    "oTS": 4.875,
+    "oTOV": 0.376,
+    "oSC": 1.042,
+    "dTS": 3.817,
+    "dTOV": -0.748,
+    "dSC": 0.198
+   },
+   "factors_dev": {
+    "oTS": 3.151,
+    "oTOV": -0.053,
+    "oSC": 0.498,
+    "dTS": 2.322,
+    "dTOV": -1.287,
+    "dSC": 0.023
+   },
+   "factors_se": {
+    "oTS": 3.498,
+    "oTOV": 1.283,
+    "oSC": 1.742,
+    "dTS": 3.484,
+    "dTOV": 1.278,
+    "dSC": 1.735
+   },
+   "orapm": 3.596,
+   "drapm": 1.058,
+   "schedule_remaining": {
+    "n": 12,
+    "home": 7,
+    "away": 5,
+    "sos": 0.791,
+    "sos_home": 1.779,
+    "sos_away": -0.593,
+    "sos_rank": 4,
+    "opponents": [
+     "ATL",
+     "CHI",
+     "CON",
+     "GSV",
+     "IND",
+     "LAS",
+     "LVA",
+     "MIN",
+     "TOR"
+    ],
+    "games": [
+     {
+      "game_id": 1022600239,
+      "date": "2026-08-09",
+      "opp": "LVA",
+      "home": true
+     },
+     {
+      "game_id": 1022600245,
+      "date": "2026-08-11",
+      "opp": "IND",
+      "home": false
+     },
+     {
+      "game_id": 1022600252,
+      "date": "2026-08-13",
+      "opp": "LAS",
+      "home": true
+     },
+     {
+      "game_id": 1022600256,
+      "date": "2026-08-15",
+      "opp": "CON",
+      "home": false
+     },
+     {
+      "game_id": 1022600265,
+      "date": "2026-08-18",
+      "opp": "CHI",
+      "home": false
+     },
+     {
+      "game_id": 1022600275,
+      "date": "2026-08-22",
+      "opp": "IND",
+      "home": true
+     },
+     {
+      "game_id": 1022600289,
+      "date": "2026-08-27",
+      "opp": "GSV",
+      "home": true
+     },
+     {
+      "game_id": 1022600295,
+      "date": "2026-08-29",
+      "opp": "CHI",
+      "home": true
+     },
+     {
+      "game_id": 1022600307,
+      "date": "2026-09-18",
+      "opp": "MIN",
+      "home": false
+     },
+     {
+      "game_id": 1022600313,
+      "date": "2026-09-20",
+      "opp": "TOR",
+      "home": false
+     },
+     {
+      "game_id": 1022600317,
+      "date": "2026-09-21",
+      "opp": "ATL",
+      "home": true
+     },
+     {
+      "game_id": 1022600324,
+      "date": "2026-09-23",
+      "opp": "ATL",
+      "home": true
+     }
+    ]
+   },
+   "board_minute_coverage": 1.0,
+   "proj_wins": 26.3,
+   "proj_losses": 17.7,
+   "proj_wins_season_long_minutes": 26.2,
+   "proj_wins_all_available": 25.7,
+   "minutes_watchlist": [
+    {
+     "pid": 1630142,
+     "name": "Leonie Fiebich",
+     "window_mpg": 12.9,
+     "mpg_when_available": 32.2,
+     "season_mpg": 15.1,
+     "appearances_in_window": 4,
+     "window_games": 10,
+     "net": 1.528,
+     "wins_per_10mpg": -0.034
+    },
+    {
+     "pid": 1630469,
+     "name": "Marine Fauthoux",
+     "window_mpg": 6.0,
+     "mpg_when_available": 20.1,
+     "season_mpg": 2.8,
+     "appearances_in_window": 3,
+     "window_games": 10,
+     "net": -0.993,
+     "wins_per_10mpg": -0.246
+    },
+    {
+     "pid": 204296,
+     "name": "Rebecca Allen",
+     "window_mpg": 9.3,
+     "mpg_when_available": 15.5,
+     "season_mpg": 6.3,
+     "appearances_in_window": 6,
+     "window_games": 10,
+     "net": -2.487,
+     "wins_per_10mpg": -0.378
+    },
+    {
+     "pid": 1630993,
+     "name": "Anneli Maley",
+     "window_mpg": 2.5,
+     "mpg_when_available": 12.4,
+     "season_mpg": 1.7,
+     "appearances_in_window": 2,
+     "window_games": 10,
+     "net": -1.077,
+     "wins_per_10mpg": -0.248
+    },
+    {
+     "pid": 1630149,
+     "name": "Satou Sabally",
+     "window_mpg": 0.8,
+     "mpg_when_available": 8.2,
+     "season_mpg": 8.1,
+     "appearances_in_window": 1,
+     "window_games": 10,
+     "net": 3.706,
+     "wins_per_10mpg": 0.148
+    }
+   ],
+   "p2_5": 23.0,
+   "p10": 24.0,
+   "p50": 26.0,
+   "p90": 28.0,
+   "p97_5": 29.0,
+   "win_hist": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0002,
+    0.0017,
+    0.0099,
+    0.0385,
+    0.092,
+    0.1656,
+    0.2315,
+    0.2124,
+    0.1512,
+    0.0732,
+    0.0205,
+    0.0033,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "playoff_prob": 0.9994,
+   "semis_prob": 0.4696,
+   "finals_prob": 0.2135,
+   "title_prob": 0.0909,
+   "avg_seed_if_qualified": 5.83,
+   "roster": [
+    {
+     "pid": 1629477,
+     "gid": "w1629477",
+     "name": "Sabrina Ionescu",
+     "linkable": true,
+     "exp_mpg": 32.1,
+     "season_mpg": 17.1,
+     "mpg_when_available": 32.5,
+     "appearances_in_window": 10,
+     "net": 2.732,
+     "on_board": true,
+     "f": [
+      1.114,
+      0.927,
+      0.316,
+      0.26,
+      -0.198,
+      0.314
+     ],
+     "f_se": [
+      1.433,
+      0.526,
+      0.714,
+      1.437,
+      0.527,
+      0.716
+     ],
+     "strength_contrib": 1.406,
+     "wins_contrib_remaining": 1.39,
+     "wins_per_10mpg": 0.08
+    },
+    {
+     "pid": 1627668,
+     "gid": "w1627668",
+     "name": "Breanna Stewart",
+     "linkable": true,
+     "exp_mpg": 30.8,
+     "season_mpg": 32.2,
+     "mpg_when_available": 34.7,
+     "appearances_in_window": 9,
+     "net": 6.369,
+     "on_board": true,
+     "f": [
+      2.322,
+      1.099,
+      0.346,
+      2.099,
+      0.119,
+      0.383
+     ],
+     "f_se": [
+      1.352,
+      0.496,
+      0.673,
+      1.354,
+      0.497,
+      0.675
+     ],
+     "strength_contrib": 4.149,
+     "wins_contrib_remaining": 2.25,
+     "wins_per_10mpg": 0.432
+    },
+    {
+     "pid": 1627673,
+     "gid": "w1627673",
+     "name": "Jonquel Jones",
+     "linkable": true,
+     "exp_mpg": 29.9,
+     "season_mpg": 28.6,
+     "mpg_when_available": 30.3,
+     "appearances_in_window": 10,
+     "net": 4.122,
+     "on_board": true,
+     "f": [
+      1.745,
+      -0.845,
+      1.437,
+      1.649,
+      -0.36,
+      0.496
+     ],
+     "f_se": [
+      1.441,
+      0.529,
+      0.718,
+      1.444,
+      0.53,
+      0.719
+     ],
+     "strength_contrib": 2.35,
+     "wins_contrib_remaining": 1.64,
+     "wins_per_10mpg": 0.213
+    },
+    {
+     "pid": 1631136,
+     "gid": "w1631136",
+     "name": "Pauline Astier",
+     "linkable": true,
+     "exp_mpg": 23.6,
+     "season_mpg": 24.2,
+     "mpg_when_available": 23.9,
+     "appearances_in_window": 10,
+     "net": 1.317,
+     "on_board": true,
+     "f": [
+      1.882,
+      -0.027,
+      -0.561,
+      0.235,
+      -0.032,
+      -0.179
+     ],
+     "f_se": [
+      2.85,
+      1.046,
+      1.42,
+      2.833,
+      1.039,
+      1.411
+     ],
+     "strength_contrib": 0.198,
+     "wins_contrib_remaining": 0.75,
+     "wins_per_10mpg": -0.055
+    },
+    {
+     "pid": 1629546,
+     "gid": "w1629546",
+     "name": "Marine Johann\u00e8s",
+     "linkable": true,
+     "exp_mpg": 15.1,
+     "season_mpg": 21.4,
+     "mpg_when_available": 19.1,
+     "appearances_in_window": 8,
+     "net": -1.871,
+     "on_board": true,
+     "f": [
+      0.511,
+      -0.376,
+      -0.077,
+      -0.425,
+      -0.288,
+      -1.216
+     ],
+     "f_se": [
+      1.935,
+      0.71,
+      0.964,
+      1.937,
+      0.711,
+      0.965
+     ],
+     "strength_contrib": -1.074,
+     "wins_contrib_remaining": 0.08,
+     "wins_per_10mpg": -0.336
+    },
+    {
+     "pid": 1630142,
+     "gid": "w1630142",
+     "name": "Leonie Fiebich",
+     "linkable": true,
+     "exp_mpg": 12.7,
+     "season_mpg": 15.1,
+     "mpg_when_available": 32.2,
+     "appearances_in_window": 4,
+     "net": 1.528,
+     "on_board": true,
+     "f": [
+      1.532,
+      -0.088,
+      -1.182,
+      1.119,
+      0.053,
+      0.094
+     ],
+     "f_se": [
+      1.798,
+      0.66,
+      0.896,
+      1.799,
+      0.66,
+      0.896
+     ],
+     "strength_contrib": 0.174,
+     "wins_contrib_remaining": 0.42,
+     "wins_per_10mpg": -0.034
+    },
+    {
+     "pid": 1629566,
+     "gid": "w1629566",
+     "name": "Han Xu",
+     "linkable": true,
+     "exp_mpg": 12.5,
+     "season_mpg": 12.5,
+     "mpg_when_available": 12.7,
+     "appearances_in_window": 10,
+     "net": 0.073,
+     "on_board": true,
+     "f": [
+      -1.275,
+      0.107,
+      0.337,
+      2.183,
+      -0.588,
+      -0.692
+     ],
+     "f_se": [
+      3.461,
+      1.27,
+      1.724,
+      3.445,
+      1.264,
+      1.716
+     ],
+     "strength_contrib": -0.284,
+     "wins_contrib_remaining": 0.27,
+     "wins_per_10mpg": -0.161
+    },
+    {
+     "pid": 203822,
+     "gid": "w203822",
+     "name": "Rebekah Gardner",
+     "linkable": true,
+     "exp_mpg": 10.4,
+     "season_mpg": 13.7,
+     "mpg_when_available": 13.2,
+     "appearances_in_window": 8,
+     "net": 0.054,
+     "on_board": true,
+     "f": [
+      -0.052,
+      -0.533,
+      -0.094,
+      0.6,
+      0.033,
+      0.1
+     ],
+     "f_se": [
+      2.464,
+      0.904,
+      1.227,
+      2.454,
+      0.9,
+      1.222
+     ],
+     "strength_contrib": -0.242,
+     "wins_contrib_remaining": 0.22,
+     "wins_per_10mpg": -0.161
+    },
+    {
+     "pid": 204296,
+     "gid": "w204296",
+     "name": "Rebecca Allen",
+     "linkable": true,
+     "exp_mpg": 9.2,
+     "season_mpg": 6.3,
+     "mpg_when_available": 15.5,
+     "appearances_in_window": 6,
+     "net": -2.487,
+     "on_board": true,
+     "f": [
+      -1.363,
+      -0.9,
+      0.305,
+      -0.349,
+      -0.264,
+      0.086
+     ],
+     "f_se": [
+      2.056,
+      0.754,
+      1.024,
+      2.05,
+      0.752,
+      1.021
+     ],
+     "strength_contrib": -0.798,
+     "wins_contrib_remaining": 0.0,
+     "wins_per_10mpg": -0.378
+    },
+    {
+     "pid": 204335,
+     "gid": "w204335",
+     "name": "Betnijah Laney",
+     "linkable": true,
+     "exp_mpg": 8.9,
+     "season_mpg": 10.6,
+     "mpg_when_available": 15.0,
+     "appearances_in_window": 6,
+     "net": -1.237,
+     "on_board": true,
+     "f": [
+      0.518,
+      -0.312,
+      -0.429,
+      -0.733,
+      -0.2,
+      -0.082
+     ],
+     "f_se": [
+      2.078,
+      0.763,
+      1.035,
+      2.084,
+      0.765,
+      1.038
+     ],
+     "strength_contrib": -0.493,
+     "wins_contrib_remaining": 0.1,
+     "wins_per_10mpg": -0.27
+    },
+    {
+     "pid": 1630469,
+     "gid": "w1630469",
+     "name": "Marine Fauthoux",
+     "linkable": false,
+     "exp_mpg": 6.0,
+     "season_mpg": 2.8,
+     "mpg_when_available": 20.1,
+     "appearances_in_window": 3,
+     "net": -0.993,
+     "on_board": true,
+     "f": [
+      -0.972,
+      -0.002,
+      0.165,
+      0.284,
+      -0.424,
+      -0.043
+     ],
+     "f_se": [
+      8.156,
+      2.993,
+      4.063,
+      8.107,
+      2.975,
+      4.038
+     ],
+     "strength_contrib": -0.294,
+     "wins_contrib_remaining": 0.08,
+     "wins_per_10mpg": -0.246
+    },
+    {
+     "pid": 1630384,
+     "gid": "w1630384",
+     "name": "Raquel Carrera",
+     "linkable": true,
+     "exp_mpg": 5.5,
+     "season_mpg": 3.1,
+     "mpg_when_available": 6.2,
+     "appearances_in_window": 9,
+     "net": -1.671,
+     "on_board": true,
+     "f": [
+      -0.752,
+      -0.322,
+      0.355,
+      -1.023,
+      0.083,
+      -0.012
+     ],
+     "f_se": [
+      7.778,
+      2.854,
+      3.874,
+      7.647,
+      2.806,
+      3.809
+     ],
+     "strength_contrib": -0.366,
+     "wins_contrib_remaining": 0.04,
+     "wins_per_10mpg": -0.302
+    },
+    {
+     "pid": 1630993,
+     "gid": "w1630993",
+     "name": "Anneli Maley",
+     "linkable": false,
+     "exp_mpg": 2.4,
+     "season_mpg": 1.7,
+     "mpg_when_available": 12.4,
+     "appearances_in_window": 2,
+     "net": -1.077,
+     "on_board": true,
+     "f": [
+      -0.989,
+      0.142,
+      0.503,
+      -1.399,
+      0.655,
+      0.012
+     ],
+     "f_se": [
+      9.301,
+      3.413,
+      4.633,
+      9.134,
+      3.352,
+      4.55
+     ],
+     "strength_contrib": -0.126,
+     "wins_contrib_remaining": 0.03,
+     "wins_per_10mpg": -0.248
+    },
+    {
+     "pid": 1630149,
+     "gid": "w1630149",
+     "name": "Satou Sabally",
+     "linkable": true,
+     "exp_mpg": 0.8,
+     "season_mpg": 8.1,
+     "mpg_when_available": 8.2,
+     "appearances_in_window": 1,
+     "net": 3.706,
+     "on_board": true,
+     "f": [
+      0.889,
+      1.011,
+      0.99,
+      0.615,
+      -0.346,
+      0.546
+     ],
+     "f_se": [
+      1.733,
+      0.636,
+      0.863,
+      1.734,
+      0.636,
+      0.864
+     ],
+     "strength_contrib": 0.055,
+     "wins_contrib_remaining": 0.04,
+     "wins_per_10mpg": 0.148
     }
    ]
   },
@@ -3991,12 +4594,12 @@
    "abbr": "IND",
    "name": "Indiana Fever",
    "nickname": "Fever",
-   "w": 17,
-   "l": 10,
-   "gp": 27,
-   "games_remaining": 17,
+   "w": 19,
+   "l": 11,
+   "gp": 30,
+   "games_remaining": 14,
    "games_total": 44,
-   "point_diff": 159.0,
+   "point_diff": 175.0,
    "strength": 1.947,
    "strength_uncentred": 6.853,
    "strength_season_long": 2.358,
@@ -4029,13 +4632,13 @@
    "orapm": 3.269,
    "drapm": -1.322,
    "schedule_remaining": {
-    "n": 17,
+    "n": 14,
     "home": 6,
-    "away": 11,
-    "sos": 1.15,
+    "away": 8,
+    "sos": 1.526,
     "sos_home": 2.632,
-    "sos_away": 0.341,
-    "sos_rank": 2,
+    "sos_away": 0.697,
+    "sos_rank": 1,
     "opponents": [
      "ATL",
      "CHI",
@@ -4044,30 +4647,10 @@
      "LVA",
      "MIN",
      "NYL",
-     "PDX",
-     "SEA",
      "TOR",
      "WAS"
     ],
     "games": [
-     {
-      "game_id": 1022600205,
-      "date": "2026-07-28",
-      "opp": "SEA",
-      "home": false
-     },
-     {
-      "game_id": 1022600215,
-      "date": "2026-07-31",
-      "opp": "PDX",
-      "home": false
-     },
-     {
-      "game_id": 1022600218,
-      "date": "2026-08-02",
-      "opp": "MIN",
-      "home": false
-     },
      {
       "game_id": 1022600230,
       "date": "2026-08-06",
@@ -4155,10 +4738,10 @@
     ]
    },
    "board_minute_coverage": 1.0,
-   "proj_wins": 25.6,
-   "proj_losses": 18.4,
-   "proj_wins_season_long_minutes": 25.8,
-   "proj_wins_all_available": 25.6,
+   "proj_wins": 26.0,
+   "proj_losses": 18.0,
+   "proj_wins_season_long_minutes": 26.2,
+   "proj_wins_all_available": 26.1,
    "minutes_watchlist": [
     {
      "pid": 1642286,
@@ -4169,11 +4752,11 @@
      "appearances_in_window": 7,
      "window_games": 10,
      "net": 2.332,
-     "wins_per_10mpg": 0.122
+     "wins_per_10mpg": 0.1
     }
    ],
    "p2_5": 22.0,
-   "p10": 23.0,
+   "p10": 24.0,
    "p50": 26.0,
    "p90": 28.0,
    "p97_5": 30.0,
@@ -4196,20 +4779,20 @@
     0.0,
     0.0,
     0.0,
-    0.0002,
-    0.0012,
-    0.0045,
-    0.0184,
-    0.0427,
-    0.0871,
-    0.1474,
-    0.1772,
-    0.1914,
-    0.1481,
-    0.1041,
-    0.0508,
-    0.0196,
-    0.0061,
+    0.0,
+    0.0001,
+    0.0009,
+    0.0063,
+    0.0206,
+    0.062,
+    0.1206,
+    0.1818,
+    0.1986,
+    0.1871,
+    0.1237,
+    0.0667,
+    0.0248,
+    0.0056,
     0.0011,
     0.0001,
     0.0,
@@ -4224,11 +4807,11 @@
     0.0,
     0.0
    ],
-   "playoff_prob": 0.997,
-   "semis_prob": 0.3544,
-   "finals_prob": 0.1234,
-   "title_prob": 0.0355,
-   "avg_seed_if_qualified": 5.83,
+   "playoff_prob": 0.9986,
+   "semis_prob": 0.3741,
+   "finals_prob": 0.1221,
+   "title_prob": 0.0344,
+   "avg_seed_if_qualified": 5.72,
    "roster": [
     {
      "pid": 1628909,
@@ -4258,8 +4841,8 @@
       0.649
      ],
      "strength_contrib": 1.536,
-     "wins_contrib_remaining": 1.94,
-     "wins_per_10mpg": 0.212
+     "wins_contrib_remaining": 1.59,
+     "wins_per_10mpg": 0.174
     },
     {
      "pid": 1641648,
@@ -4289,8 +4872,8 @@
       0.713
      ],
      "strength_contrib": 2.313,
-     "wins_contrib_remaining": 1.93,
-     "wins_per_10mpg": 0.493
+     "wins_contrib_remaining": 1.58,
+     "wins_per_10mpg": 0.406
     },
     {
      "pid": 1629482,
@@ -4320,8 +4903,8 @@
       0.813
      ],
      "strength_contrib": -1.088,
-     "wins_contrib_remaining": 0.34,
-     "wins_per_10mpg": -0.309
+     "wins_contrib_remaining": 0.28,
+     "wins_per_10mpg": -0.254
     },
     {
      "pid": 1628881,
@@ -4351,8 +4934,8 @@
       0.936
      ],
      "strength_contrib": -0.58,
-     "wins_contrib_remaining": 0.56,
-     "wins_per_10mpg": -0.191
+     "wins_contrib_remaining": 0.46,
+     "wins_per_10mpg": -0.157
     },
     {
      "pid": 1631086,
@@ -4382,8 +4965,8 @@
       0.795
      ],
      "strength_contrib": 0.079,
-     "wins_contrib_remaining": 0.83,
-     "wins_per_10mpg": -0.031
+     "wins_contrib_remaining": 0.68,
+     "wins_per_10mpg": -0.025
     },
     {
      "pid": 1630112,
@@ -4413,8 +4996,8 @@
       1.049
      ],
      "strength_contrib": 0.014,
-     "wins_contrib_remaining": 0.78,
-     "wins_per_10mpg": -0.047
+     "wins_contrib_remaining": 0.64,
+     "wins_per_10mpg": -0.038
     },
     {
      "pid": 1642286,
@@ -4444,8 +5027,8 @@
       0.906
      ],
      "strength_contrib": 0.568,
-     "wins_contrib_remaining": 0.91,
-     "wins_per_10mpg": 0.122
+     "wins_contrib_remaining": 0.75,
+     "wins_per_10mpg": 0.1
     },
     {
      "pid": 1642815,
@@ -4475,8 +5058,8 @@
       1.48
      ],
      "strength_contrib": 0.407,
-     "wins_contrib_remaining": 0.83,
-     "wins_per_10mpg": 0.074
+     "wins_contrib_remaining": 0.68,
+     "wins_per_10mpg": 0.061
     },
     {
      "pid": 1643433,
@@ -4506,8 +5089,8 @@
       1.924
      ],
      "strength_contrib": -0.703,
-     "wins_contrib_remaining": 0.08,
-     "wins_per_10mpg": -0.374
+     "wins_contrib_remaining": 0.06,
+     "wins_per_10mpg": -0.308
     },
     {
      "pid": 1628899,
@@ -4537,8 +5120,8 @@
       0.899
      ],
      "strength_contrib": -0.017,
-     "wins_contrib_remaining": 0.39,
-     "wins_per_10mpg": -0.056
+     "wins_contrib_remaining": 0.32,
+     "wins_per_10mpg": -0.046
     },
     {
      "pid": 203024,
@@ -4569,7 +5152,7 @@
      ],
      "strength_contrib": -0.346,
      "wins_contrib_remaining": -0.02,
-     "wins_per_10mpg": -0.508
+     "wins_per_10mpg": -0.419
     },
     {
      "pid": 1643453,
@@ -4600,7 +5183,7 @@
      ],
      "strength_contrib": -0.192,
      "wins_contrib_remaining": -0.0,
-     "wins_per_10mpg": -0.444
+     "wins_per_10mpg": -0.365
     },
     {
      "pid": 1642788,
@@ -4631,730 +5214,7 @@
      ],
      "strength_contrib": -0.045,
      "wins_contrib_remaining": 0.02,
-     "wins_per_10mpg": -0.24
-    }
-   ]
-  },
-  "NYL": {
-   "abbr": "NYL",
-   "name": "New York Liberty",
-   "nickname": "Liberty",
-   "w": 15,
-   "l": 12,
-   "gp": 27,
-   "games_remaining": 17,
-   "games_total": 44,
-   "point_diff": 63.0,
-   "strength": 4.654,
-   "strength_uncentred": 9.56,
-   "strength_season_long": 4.217,
-   "strength_all_available": 2.532,
-   "strength_rank": 4,
-   "factors": {
-    "oTS": 4.875,
-    "oTOV": 0.376,
-    "oSC": 1.042,
-    "dTS": 3.817,
-    "dTOV": -0.748,
-    "dSC": 0.198
-   },
-   "factors_dev": {
-    "oTS": 3.151,
-    "oTOV": -0.053,
-    "oSC": 0.498,
-    "dTS": 2.322,
-    "dTOV": -1.287,
-    "dSC": 0.023
-   },
-   "factors_se": {
-    "oTS": 3.498,
-    "oTOV": 1.283,
-    "oSC": 1.742,
-    "dTS": 3.484,
-    "dTOV": 1.278,
-    "dSC": 1.735
-   },
-   "orapm": 3.596,
-   "drapm": 1.058,
-   "schedule_remaining": {
-    "n": 17,
-    "home": 9,
-    "away": 8,
-    "sos": 0.092,
-    "sos_home": 0.344,
-    "sos_away": -0.193,
-    "sos_rank": 7,
-    "opponents": [
-     "ATL",
-     "CHI",
-     "CON",
-     "GSV",
-     "IND",
-     "LAS",
-     "LVA",
-     "MIN",
-     "PHX",
-     "SEA",
-     "TOR"
-    ],
-    "games": [
-     {
-      "game_id": 1022600207,
-      "date": "2026-07-28",
-      "opp": "LAS",
-      "home": false
-     },
-     {
-      "game_id": 1022600212,
-      "date": "2026-07-30",
-      "opp": "LVA",
-      "home": false
-     },
-     {
-      "game_id": 1022600217,
-      "date": "2026-08-01",
-      "opp": "PHX",
-      "home": false
-     },
-     {
-      "game_id": 1022600223,
-      "date": "2026-08-03",
-      "opp": "SEA",
-      "home": true
-     },
-     {
-      "game_id": 1022600227,
-      "date": "2026-08-05",
-      "opp": "SEA",
-      "home": true
-     },
-     {
-      "game_id": 1022600239,
-      "date": "2026-08-09",
-      "opp": "LVA",
-      "home": true
-     },
-     {
-      "game_id": 1022600245,
-      "date": "2026-08-11",
-      "opp": "IND",
-      "home": false
-     },
-     {
-      "game_id": 1022600252,
-      "date": "2026-08-13",
-      "opp": "LAS",
-      "home": true
-     },
-     {
-      "game_id": 1022600256,
-      "date": "2026-08-15",
-      "opp": "CON",
-      "home": false
-     },
-     {
-      "game_id": 1022600265,
-      "date": "2026-08-18",
-      "opp": "CHI",
-      "home": false
-     },
-     {
-      "game_id": 1022600275,
-      "date": "2026-08-22",
-      "opp": "IND",
-      "home": true
-     },
-     {
-      "game_id": 1022600289,
-      "date": "2026-08-27",
-      "opp": "GSV",
-      "home": true
-     },
-     {
-      "game_id": 1022600295,
-      "date": "2026-08-29",
-      "opp": "CHI",
-      "home": true
-     },
-     {
-      "game_id": 1022600307,
-      "date": "2026-09-18",
-      "opp": "MIN",
-      "home": false
-     },
-     {
-      "game_id": 1022600313,
-      "date": "2026-09-20",
-      "opp": "TOR",
-      "home": false
-     },
-     {
-      "game_id": 1022600317,
-      "date": "2026-09-21",
-      "opp": "ATL",
-      "home": true
-     },
-     {
-      "game_id": 1022600324,
-      "date": "2026-09-23",
-      "opp": "ATL",
-      "home": true
-     }
-    ]
-   },
-   "board_minute_coverage": 1.0,
-   "proj_wins": 25.6,
-   "proj_losses": 18.4,
-   "proj_wins_season_long_minutes": 25.2,
-   "proj_wins_all_available": 24.7,
-   "minutes_watchlist": [
-    {
-     "pid": 1630142,
-     "name": "Leonie Fiebich",
-     "window_mpg": 12.9,
-     "mpg_when_available": 32.2,
-     "season_mpg": 15.1,
-     "appearances_in_window": 4,
-     "window_games": 10,
-     "net": 1.528,
-     "wins_per_10mpg": -0.048
-    },
-    {
-     "pid": 1630469,
-     "name": "Marine Fauthoux",
-     "window_mpg": 6.0,
-     "mpg_when_available": 20.1,
-     "season_mpg": 2.8,
-     "appearances_in_window": 3,
-     "window_games": 10,
-     "net": -0.993,
-     "wins_per_10mpg": -0.348
-    },
-    {
-     "pid": 204296,
-     "name": "Rebecca Allen",
-     "window_mpg": 9.3,
-     "mpg_when_available": 15.5,
-     "season_mpg": 6.3,
-     "appearances_in_window": 6,
-     "window_games": 10,
-     "net": -2.487,
-     "wins_per_10mpg": -0.536
-    },
-    {
-     "pid": 1630993,
-     "name": "Anneli Maley",
-     "window_mpg": 2.5,
-     "mpg_when_available": 12.4,
-     "season_mpg": 1.7,
-     "appearances_in_window": 2,
-     "window_games": 10,
-     "net": -1.077,
-     "wins_per_10mpg": -0.352
-    },
-    {
-     "pid": 1630149,
-     "name": "Satou Sabally",
-     "window_mpg": 0.8,
-     "mpg_when_available": 8.2,
-     "season_mpg": 8.1,
-     "appearances_in_window": 1,
-     "window_games": 10,
-     "net": 3.706,
-     "wins_per_10mpg": 0.209
-    }
-   ],
-   "p2_5": 22.0,
-   "p10": 23.0,
-   "p50": 26.0,
-   "p90": 28.0,
-   "p97_5": 29.0,
-   "win_hist": [
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0003,
-    0.0018,
-    0.0051,
-    0.0176,
-    0.0451,
-    0.085,
-    0.1423,
-    0.1826,
-    0.1935,
-    0.1551,
-    0.1016,
-    0.0496,
-    0.0164,
-    0.0036,
-    0.0004,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0
-   ],
-   "playoff_prob": 0.995,
-   "semis_prob": 0.4612,
-   "finals_prob": 0.2088,
-   "title_prob": 0.0891,
-   "avg_seed_if_qualified": 5.95,
-   "roster": [
-    {
-     "pid": 1629477,
-     "gid": "w1629477",
-     "name": "Sabrina Ionescu",
-     "linkable": true,
-     "exp_mpg": 32.1,
-     "season_mpg": 17.1,
-     "mpg_when_available": 32.5,
-     "appearances_in_window": 10,
-     "net": 2.732,
-     "on_board": true,
-     "f": [
-      1.114,
-      0.927,
-      0.316,
-      0.26,
-      -0.198,
-      0.314
-     ],
-     "f_se": [
-      1.433,
-      0.526,
-      0.714,
-      1.437,
-      0.527,
-      0.716
-     ],
-     "strength_contrib": 1.406,
-     "wins_contrib_remaining": 2.0,
-     "wins_per_10mpg": 0.114
-    },
-    {
-     "pid": 1627668,
-     "gid": "w1627668",
-     "name": "Breanna Stewart",
-     "linkable": true,
-     "exp_mpg": 30.8,
-     "season_mpg": 32.2,
-     "mpg_when_available": 34.7,
-     "appearances_in_window": 9,
-     "net": 6.369,
-     "on_board": true,
-     "f": [
-      2.322,
-      1.099,
-      0.346,
-      2.099,
-      0.119,
-      0.383
-     ],
-     "f_se": [
-      1.352,
-      0.496,
-      0.673,
-      1.354,
-      0.497,
-      0.675
-     ],
-     "strength_contrib": 4.149,
-     "wins_contrib_remaining": 3.22,
-     "wins_per_10mpg": 0.612
-    },
-    {
-     "pid": 1627673,
-     "gid": "w1627673",
-     "name": "Jonquel Jones",
-     "linkable": true,
-     "exp_mpg": 29.9,
-     "season_mpg": 28.6,
-     "mpg_when_available": 30.3,
-     "appearances_in_window": 10,
-     "net": 4.122,
-     "on_board": true,
-     "f": [
-      1.745,
-      -0.845,
-      1.437,
-      1.649,
-      -0.36,
-      0.496
-     ],
-     "f_se": [
-      1.441,
-      0.529,
-      0.718,
-      1.444,
-      0.53,
-      0.719
-     ],
-     "strength_contrib": 2.35,
-     "wins_contrib_remaining": 2.35,
-     "wins_per_10mpg": 0.302
-    },
-    {
-     "pid": 1631136,
-     "gid": "w1631136",
-     "name": "Pauline Astier",
-     "linkable": true,
-     "exp_mpg": 23.6,
-     "season_mpg": 24.2,
-     "mpg_when_available": 23.9,
-     "appearances_in_window": 10,
-     "net": 1.317,
-     "on_board": true,
-     "f": [
-      1.882,
-      -0.027,
-      -0.561,
-      0.235,
-      -0.032,
-      -0.179
-     ],
-     "f_se": [
-      2.85,
-      1.046,
-      1.42,
-      2.833,
-      1.039,
-      1.411
-     ],
-     "strength_contrib": 0.198,
-     "wins_contrib_remaining": 1.08,
-     "wins_per_10mpg": -0.078
-    },
-    {
-     "pid": 1629546,
-     "gid": "w1629546",
-     "name": "Marine Johann\u00e8s",
-     "linkable": true,
-     "exp_mpg": 15.1,
-     "season_mpg": 21.4,
-     "mpg_when_available": 19.1,
-     "appearances_in_window": 8,
-     "net": -1.871,
-     "on_board": true,
-     "f": [
-      0.511,
-      -0.376,
-      -0.077,
-      -0.425,
-      -0.288,
-      -1.216
-     ],
-     "f_se": [
-      1.935,
-      0.71,
-      0.964,
-      1.937,
-      0.711,
-      0.965
-     ],
-     "strength_contrib": -1.074,
-     "wins_contrib_remaining": 0.13,
-     "wins_per_10mpg": -0.475
-    },
-    {
-     "pid": 1630142,
-     "gid": "w1630142",
-     "name": "Leonie Fiebich",
-     "linkable": true,
-     "exp_mpg": 12.7,
-     "season_mpg": 15.1,
-     "mpg_when_available": 32.2,
-     "appearances_in_window": 4,
-     "net": 1.528,
-     "on_board": true,
-     "f": [
-      1.532,
-      -0.088,
-      -1.182,
-      1.119,
-      0.053,
-      0.094
-     ],
-     "f_se": [
-      1.798,
-      0.66,
-      0.896,
-      1.799,
-      0.66,
-      0.896
-     ],
-     "strength_contrib": 0.174,
-     "wins_contrib_remaining": 0.61,
-     "wins_per_10mpg": -0.048
-    },
-    {
-     "pid": 1629566,
-     "gid": "w1629566",
-     "name": "Han Xu",
-     "linkable": true,
-     "exp_mpg": 12.5,
-     "season_mpg": 12.5,
-     "mpg_when_available": 12.7,
-     "appearances_in_window": 10,
-     "net": 0.073,
-     "on_board": true,
-     "f": [
-      -1.275,
-      0.107,
-      0.337,
-      2.183,
-      -0.588,
-      -0.692
-     ],
-     "f_se": [
-      3.461,
-      1.27,
-      1.724,
-      3.445,
-      1.264,
-      1.716
-     ],
-     "strength_contrib": -0.284,
-     "wins_contrib_remaining": 0.39,
-     "wins_per_10mpg": -0.228
-    },
-    {
-     "pid": 203822,
-     "gid": "w203822",
-     "name": "Rebekah Gardner",
-     "linkable": true,
-     "exp_mpg": 10.4,
-     "season_mpg": 13.7,
-     "mpg_when_available": 13.2,
-     "appearances_in_window": 8,
-     "net": 0.054,
-     "on_board": true,
-     "f": [
-      -0.052,
-      -0.533,
-      -0.094,
-      0.6,
-      0.033,
-      0.1
-     ],
-     "f_se": [
-      2.464,
-      0.904,
-      1.227,
-      2.454,
-      0.9,
-      1.222
-     ],
-     "strength_contrib": -0.242,
-     "wins_contrib_remaining": 0.33,
-     "wins_per_10mpg": -0.228
-    },
-    {
-     "pid": 204296,
-     "gid": "w204296",
-     "name": "Rebecca Allen",
-     "linkable": true,
-     "exp_mpg": 9.2,
-     "season_mpg": 6.3,
-     "mpg_when_available": 15.5,
-     "appearances_in_window": 6,
-     "net": -2.487,
-     "on_board": true,
-     "f": [
-      -1.363,
-      -0.9,
-      0.305,
-      -0.349,
-      -0.264,
-      0.086
-     ],
-     "f_se": [
-      2.056,
-      0.754,
-      1.024,
-      2.05,
-      0.752,
-      1.021
-     ],
-     "strength_contrib": -0.798,
-     "wins_contrib_remaining": 0.02,
-     "wins_per_10mpg": -0.536
-    },
-    {
-     "pid": 204335,
-     "gid": "w204335",
-     "name": "Betnijah Laney",
-     "linkable": true,
-     "exp_mpg": 8.9,
-     "season_mpg": 10.6,
-     "mpg_when_available": 15.0,
-     "appearances_in_window": 6,
-     "net": -1.237,
-     "on_board": true,
-     "f": [
-      0.518,
-      -0.312,
-      -0.429,
-      -0.733,
-      -0.2,
-      -0.082
-     ],
-     "f_se": [
-      2.078,
-      0.763,
-      1.035,
-      2.084,
-      0.765,
-      1.038
-     ],
-     "strength_contrib": -0.493,
-     "wins_contrib_remaining": 0.14,
-     "wins_per_10mpg": -0.383
-    },
-    {
-     "pid": 1630469,
-     "gid": "w1630469",
-     "name": "Marine Fauthoux",
-     "linkable": false,
-     "exp_mpg": 6.0,
-     "season_mpg": 2.8,
-     "mpg_when_available": 20.1,
-     "appearances_in_window": 3,
-     "net": -0.993,
-     "on_board": true,
-     "f": [
-      -0.972,
-      -0.002,
-      0.165,
-      0.284,
-      -0.424,
-      -0.043
-     ],
-     "f_se": [
-      8.156,
-      2.993,
-      4.063,
-      8.107,
-      2.975,
-      4.038
-     ],
-     "strength_contrib": -0.294,
-     "wins_contrib_remaining": 0.11,
-     "wins_per_10mpg": -0.348
-    },
-    {
-     "pid": 1630384,
-     "gid": "w1630384",
-     "name": "Raquel Carrera",
-     "linkable": true,
-     "exp_mpg": 5.5,
-     "season_mpg": 3.1,
-     "mpg_when_available": 6.2,
-     "appearances_in_window": 9,
-     "net": -1.671,
-     "on_board": true,
-     "f": [
-      -0.752,
-      -0.322,
-      0.355,
-      -1.023,
-      0.083,
-      -0.012
-     ],
-     "f_se": [
-      7.778,
-      2.854,
-      3.874,
-      7.647,
-      2.806,
-      3.809
-     ],
-     "strength_contrib": -0.366,
-     "wins_contrib_remaining": 0.06,
-     "wins_per_10mpg": -0.428
-    },
-    {
-     "pid": 1630993,
-     "gid": "w1630993",
-     "name": "Anneli Maley",
-     "linkable": false,
-     "exp_mpg": 2.4,
-     "season_mpg": 1.7,
-     "mpg_when_available": 12.4,
-     "appearances_in_window": 2,
-     "net": -1.077,
-     "on_board": true,
-     "f": [
-      -0.989,
-      0.142,
-      0.503,
-      -1.399,
-      0.655,
-      0.012
-     ],
-     "f_se": [
-      9.301,
-      3.413,
-      4.633,
-      9.134,
-      3.352,
-      4.55
-     ],
-     "strength_contrib": -0.126,
-     "wins_contrib_remaining": 0.04,
-     "wins_per_10mpg": -0.352
-    },
-    {
-     "pid": 1630149,
-     "gid": "w1630149",
-     "name": "Satou Sabally",
-     "linkable": true,
-     "exp_mpg": 0.8,
-     "season_mpg": 8.1,
-     "mpg_when_available": 8.2,
-     "appearances_in_window": 1,
-     "net": 3.706,
-     "on_board": true,
-     "f": [
-      0.889,
-      1.011,
-      0.99,
-      0.615,
-      -0.346,
-      0.546
-     ],
-     "f_se": [
-      1.733,
-      0.636,
-      0.863,
-      1.734,
-      0.636,
-      0.864
-     ],
-     "strength_contrib": 0.055,
-     "wins_contrib_remaining": 0.06,
-     "wins_per_10mpg": 0.209
+     "wins_per_10mpg": -0.198
     }
    ]
   },
@@ -5362,12 +5222,12 @@
    "abbr": "WAS",
    "name": "Washington Mystics",
    "nickname": "Mystics",
-   "w": 14,
+   "w": 17,
    "l": 12,
-   "gp": 26,
-   "games_remaining": 18,
+   "gp": 29,
+   "games_remaining": 15,
    "games_total": 44,
-   "point_diff": -61.0,
+   "point_diff": -43.0,
    "strength": -4.256,
    "strength_uncentred": 0.651,
    "strength_season_long": -4.704,
@@ -5400,18 +5260,17 @@
    "orapm": -6.162,
    "drapm": 1.907,
    "schedule_remaining": {
-    "n": 18,
-    "home": 10,
+    "n": 15,
+    "home": 7,
     "away": 8,
-    "sos": 0.061,
-    "sos_home": -0.123,
+    "sos": -0.291,
+    "sos_home": -0.956,
     "sos_away": 0.29,
     "sos_rank": 8,
     "opponents": [
      "ATL",
      "CHI",
      "CON",
-     "DAL",
      "IND",
      "LAS",
      "LVA",
@@ -5421,24 +5280,6 @@
      "TOR"
     ],
     "games": [
-     {
-      "game_id": 1022600203,
-      "date": "2026-07-28",
-      "opp": "CON",
-      "home": true
-     },
-     {
-      "game_id": 1022600214,
-      "date": "2026-07-31",
-      "opp": "DAL",
-      "home": true
-     },
-     {
-      "game_id": 1022600228,
-      "date": "2026-08-05",
-      "opp": "DAL",
-      "home": true
-     },
      {
       "game_id": 1022600234,
       "date": "2026-08-07",
@@ -5532,10 +5373,10 @@
     ]
    },
    "board_minute_coverage": 0.9999,
-   "proj_wins": 21.1,
-   "proj_losses": 22.9,
-   "proj_wins_season_long_minutes": 20.8,
-   "proj_wins_all_available": 21.3,
+   "proj_wins": 22.9,
+   "proj_losses": 21.1,
+   "proj_wins_season_long_minutes": 22.6,
+   "proj_wins_all_available": 23.0,
    "minutes_watchlist": [
     {
      "pid": 1642785,
@@ -5546,14 +5387,14 @@
      "appearances_in_window": 8,
      "window_games": 10,
      "net": 2.603,
-     "wins_per_10mpg": 0.349
+     "wins_per_10mpg": 0.291
     }
    ],
-   "p2_5": 17.0,
-   "p10": 18.0,
-   "p50": 21.0,
-   "p90": 24.0,
-   "p97_5": 25.0,
+   "p2_5": 19.0,
+   "p10": 20.0,
+   "p50": 23.0,
+   "p90": 25.0,
+   "p97_5": 27.0,
    "win_hist": [
     0.0,
     0.0,
@@ -5569,24 +5410,24 @@
     0.0,
     0.0,
     0.0,
-    0.0001,
+    0.0,
+    0.0,
+    0.0,
+    0.0006,
+    0.0055,
+    0.0253,
+    0.0704,
+    0.1288,
+    0.1923,
+    0.2053,
+    0.1726,
+    0.1103,
+    0.0579,
+    0.0226,
+    0.0066,
     0.0012,
-    0.009,
-    0.0263,
-    0.0676,
-    0.118,
-    0.1672,
-    0.1824,
-    0.1709,
-    0.1284,
-    0.0726,
-    0.0345,
-    0.0156,
-    0.0047,
-    0.0015,
-    0.0,
-    0.0,
-    0.0,
+    0.0005,
+    0.0001,
     0.0,
     0.0,
     0.0,
@@ -5601,11 +5442,11 @@
     0.0,
     0.0
    ],
-   "playoff_prob": 0.6622,
-   "semis_prob": 0.0766,
-   "finals_prob": 0.0115,
-   "title_prob": 0.0017,
-   "avg_seed_if_qualified": 7.81,
+   "playoff_prob": 0.8792,
+   "semis_prob": 0.0947,
+   "finals_prob": 0.0141,
+   "title_prob": 0.001,
+   "avg_seed_if_qualified": 7.75,
    "roster": [
     {
      "pid": 1631022,
@@ -5635,8 +5476,8 @@
       0.904
      ],
      "strength_contrib": 0.412,
-     "wins_contrib_remaining": 1.56,
-     "wins_per_10mpg": 0.204
+     "wins_contrib_remaining": 1.3,
+     "wins_per_10mpg": 0.17
     },
     {
      "pid": 1642792,
@@ -5666,8 +5507,8 @@
       0.973
      ],
      "strength_contrib": 0.627,
-     "wins_contrib_remaining": 1.65,
-     "wins_per_10mpg": 0.246
+     "wins_contrib_remaining": 1.37,
+     "wins_per_10mpg": 0.205
     },
     {
      "pid": 1630446,
@@ -5697,8 +5538,8 @@
       0.895
      ],
      "strength_contrib": -1.063,
-     "wins_contrib_remaining": 0.78,
-     "wins_per_10mpg": -0.093
+     "wins_contrib_remaining": 0.65,
+     "wins_per_10mpg": -0.078
     },
     {
      "pid": 1642785,
@@ -5728,8 +5569,8 @@
       0.889
      ],
      "strength_contrib": 1.041,
-     "wins_contrib_remaining": 1.7,
-     "wins_per_10mpg": 0.349
+     "wins_contrib_remaining": 1.41,
+     "wins_per_10mpg": 0.291
     },
     {
      "pid": 1642781,
@@ -5759,8 +5600,8 @@
       1.523
      ],
      "strength_contrib": -1.016,
-     "wins_contrib_remaining": 0.44,
-     "wins_per_10mpg": -0.157
+     "wins_contrib_remaining": 0.36,
+     "wins_per_10mpg": -0.13
     },
     {
      "pid": 1643430,
@@ -5790,8 +5631,8 @@
       1.66
      ],
      "strength_contrib": -1.625,
-     "wins_contrib_remaining": 0.08,
-     "wins_per_10mpg": -0.347
+     "wins_contrib_remaining": 0.07,
+     "wins_per_10mpg": -0.289
     },
     {
      "pid": 1643427,
@@ -5821,8 +5662,8 @@
       1.774
      ],
      "strength_contrib": -0.511,
-     "wins_contrib_remaining": 0.46,
-     "wins_per_10mpg": -0.064
+     "wins_contrib_remaining": 0.38,
+     "wins_per_10mpg": -0.053
     },
     {
      "pid": 1643644,
@@ -5852,8 +5693,8 @@
       2.153
      ],
      "strength_contrib": -0.759,
-     "wins_contrib_remaining": 0.28,
-     "wins_per_10mpg": -0.17
+     "wins_contrib_remaining": 0.23,
+     "wins_per_10mpg": -0.142
     },
     {
      "pid": 1643467,
@@ -5884,7 +5725,7 @@
      ],
      "strength_contrib": -0.71,
      "wins_contrib_remaining": 0.02,
-     "wins_per_10mpg": -0.342
+     "wins_per_10mpg": -0.285
     },
     {
      "pid": 1643455,
@@ -5914,8 +5755,8 @@
       2.129
      ],
      "strength_contrib": -0.297,
-     "wins_contrib_remaining": 0.11,
-     "wins_per_10mpg": -0.16
+     "wins_contrib_remaining": 0.09,
+     "wins_per_10mpg": -0.133
     },
     {
      "pid": 1642802,
@@ -5945,8 +5786,8 @@
       1.687
      ],
      "strength_contrib": -0.336,
-     "wins_contrib_remaining": 0.04,
-     "wins_per_10mpg": -0.28
+     "wins_contrib_remaining": 0.03,
+     "wins_per_10mpg": -0.233
     },
     {
      "pid": 1643450,
@@ -5976,8 +5817,8 @@
       4.375
      ],
      "strength_contrib": -0.019,
-     "wins_contrib_remaining": 0.01,
-     "wins_per_10mpg": -0.187
+     "wins_contrib_remaining": 0.0,
+     "wins_per_10mpg": -0.155
     },
     {
      "pid": 1643440,
@@ -6008,7 +5849,7 @@
      ],
      "strength_contrib": -0.001,
      "wins_contrib_remaining": 0.0,
-     "wins_per_10mpg": -0.016
+     "wins_per_10mpg": -0.013
     }
    ]
   },
@@ -6016,12 +5857,12 @@
    "abbr": "PHX",
    "name": "Phoenix Mercury",
    "nickname": "Mercury",
-   "w": 10,
-   "l": 18,
-   "gp": 28,
-   "games_remaining": 16,
+   "w": 12,
+   "l": 20,
+   "gp": 32,
+   "games_remaining": 12,
    "games_total": 44,
-   "point_diff": -100.0,
+   "point_diff": -109.0,
    "strength": -1.155,
    "strength_uncentred": 3.751,
    "strength_season_long": 0.741,
@@ -6054,51 +5895,24 @@
    "orapm": -1.909,
    "drapm": 0.754,
    "schedule_remaining": {
-    "n": 16,
-    "home": 9,
-    "away": 7,
-    "sos": -0.553,
-    "sos_home": 0.299,
-    "sos_away": -1.648,
-    "sos_rank": 11,
+    "n": 12,
+    "home": 7,
+    "away": 5,
+    "sos": -1.465,
+    "sos_home": -0.564,
+    "sos_away": -2.726,
+    "sos_rank": 15,
     "opponents": [
      "ATL",
-     "CHI",
      "CON",
      "DAL",
-     "GSV",
      "LAS",
      "LVA",
-     "NYL",
      "PDX",
      "TOR",
      "WAS"
     ],
     "games": [
-     {
-      "game_id": 1022600209,
-      "date": "2026-07-29",
-      "opp": "GSV",
-      "home": true
-     },
-     {
-      "game_id": 1022600217,
-      "date": "2026-08-01",
-      "opp": "NYL",
-      "home": true
-     },
-     {
-      "game_id": 1022600224,
-      "date": "2026-08-03",
-      "opp": "CHI",
-      "home": false
-     },
-     {
-      "game_id": 1022600226,
-      "date": "2026-08-05",
-      "opp": "ATL",
-      "home": false
-     },
      {
       "game_id": 1022600233,
       "date": "2026-08-07",
@@ -6174,10 +5988,10 @@
     ]
    },
    "board_minute_coverage": 0.9961,
-   "proj_wins": 17.8,
-   "proj_losses": 26.2,
-   "proj_wins_season_long_minutes": 18.7,
-   "proj_wins_all_available": 18.2,
+   "proj_wins": 18.2,
+   "proj_losses": 25.8,
+   "proj_wins_season_long_minutes": 18.9,
+   "proj_wins_all_available": 18.5,
    "minutes_watchlist": [
     {
      "pid": 1630442,
@@ -6188,7 +6002,7 @@
      "appearances_in_window": 2,
      "window_games": 10,
      "net": 4.375,
-     "wins_per_10mpg": 0.403
+     "wins_per_10mpg": 0.303
     },
     {
      "pid": 1628244,
@@ -6199,7 +6013,7 @@
      "appearances_in_window": 5,
      "window_games": 10,
      "net": 0.645,
-     "wins_per_10mpg": -0.012
+     "wins_per_10mpg": -0.009
     },
     {
      "pid": 1642768,
@@ -6210,7 +6024,7 @@
      "appearances_in_window": 3,
      "window_games": 10,
      "net": -3.406,
-     "wins_per_10mpg": -0.461
+     "wins_per_10mpg": -0.346
     },
     {
      "pid": 1643470,
@@ -6221,11 +6035,11 @@
      "appearances_in_window": 1,
      "window_games": 10,
      "net": null,
-     "wins_per_10mpg": -0.082
+     "wins_per_10mpg": -0.062
     }
    ],
-   "p2_5": 14.0,
-   "p10": 15.0,
+   "p2_5": 15.0,
+   "p10": 16.0,
    "p50": 18.0,
    "p90": 20.0,
    "p97_5": 22.0,
@@ -6240,23 +6054,23 @@
     0.0,
     0.0,
     0.0,
-    0.0001,
-    0.0004,
+    0.0,
+    0.0,
+    0.0,
     0.0019,
-    0.0114,
-    0.0356,
-    0.0758,
-    0.1328,
-    0.1749,
-    0.1924,
-    0.1682,
-    0.115,
-    0.0591,
-    0.0228,
-    0.0078,
-    0.0014,
-    0.0003,
-    0.0001,
+    0.0093,
+    0.0436,
+    0.1017,
+    0.1788,
+    0.2265,
+    0.1999,
+    0.1412,
+    0.0691,
+    0.0221,
+    0.0055,
+    0.0004,
+    0.0,
+    0.0,
     0.0,
     0.0,
     0.0,
@@ -6276,11 +6090,11 @@
     0.0,
     0.0
    ],
-   "playoff_prob": 0.1347,
-   "semis_prob": 0.025,
-   "finals_prob": 0.0075,
-   "title_prob": 0.0014,
-   "avg_seed_if_qualified": 7.96,
+   "playoff_prob": 0.0559,
+   "semis_prob": 0.0108,
+   "finals_prob": 0.0033,
+   "title_prob": 0.0006,
+   "avg_seed_if_qualified": 7.99,
    "roster": [
     {
      "pid": 1627674,
@@ -6310,8 +6124,8 @@
       0.701
      ],
      "strength_contrib": -0.628,
-     "wins_contrib_remaining": 1.09,
-     "wins_per_10mpg": -0.07
+     "wins_contrib_remaining": 0.88,
+     "wins_per_10mpg": -0.052
     },
     {
      "pid": 203826,
@@ -6341,8 +6155,8 @@
       0.633
      ],
      "strength_contrib": 2.835,
-     "wins_contrib_remaining": 2.51,
-     "wins_per_10mpg": 0.509
+     "wins_contrib_remaining": 1.94,
+     "wins_per_10mpg": 0.382
     },
     {
      "pid": 201886,
@@ -6372,8 +6186,8 @@
       0.7
      ],
      "strength_contrib": 0.106,
-     "wins_contrib_remaining": 1.28,
-     "wins_per_10mpg": 0.048
+     "wins_contrib_remaining": 1.02,
+     "wins_per_10mpg": 0.036
     },
     {
      "pid": 204468,
@@ -6403,8 +6217,8 @@
       1.874
      ],
      "strength_contrib": -0.953,
-     "wins_contrib_remaining": 0.56,
-     "wins_per_10mpg": -0.173
+     "wins_contrib_remaining": 0.46,
+     "wins_per_10mpg": -0.13
     },
     {
      "pid": 1631118,
@@ -6434,8 +6248,8 @@
       1.314
      ],
      "strength_contrib": -0.803,
-     "wins_contrib_remaining": 0.52,
-     "wins_per_10mpg": -0.16
+     "wins_contrib_remaining": 0.43,
+     "wins_per_10mpg": -0.12
     },
     {
      "pid": 1643493,
@@ -6465,8 +6279,8 @@
       1.483
      ],
      "strength_contrib": -0.29,
-     "wins_contrib_remaining": 0.72,
-     "wins_per_10mpg": -0.041
+     "wins_contrib_remaining": 0.58,
+     "wins_per_10mpg": -0.031
     },
     {
      "pid": 1642777,
@@ -6496,8 +6310,8 @@
       1.077
      ],
      "strength_contrib": -0.869,
-     "wins_contrib_remaining": 0.39,
-     "wins_per_10mpg": -0.2
+     "wins_contrib_remaining": 0.32,
+     "wins_per_10mpg": -0.15
     },
     {
      "pid": 1643438,
@@ -6527,8 +6341,8 @@
       3.511
      ],
      "strength_contrib": -0.333,
-     "wins_contrib_remaining": 0.16,
-     "wins_per_10mpg": -0.179
+     "wins_contrib_remaining": 0.13,
+     "wins_per_10mpg": -0.135
     },
     {
      "pid": 1628244,
@@ -6558,8 +6372,8 @@
       0.918
      ],
      "strength_contrib": -0.06,
-     "wins_contrib_remaining": 0.27,
-     "wins_per_10mpg": -0.012
+     "wins_contrib_remaining": 0.22,
+     "wins_per_10mpg": -0.009
     },
     {
      "pid": 1630442,
@@ -6589,8 +6403,8 @@
       1.033
      ],
      "strength_contrib": 0.295,
-     "wins_contrib_remaining": 0.27,
-     "wins_per_10mpg": 0.403
+     "wins_contrib_remaining": 0.21,
+     "wins_per_10mpg": 0.303
     },
     {
      "pid": 1642768,
@@ -6620,8 +6434,8 @@
       2.656
      ],
      "strength_contrib": -0.316,
-     "wins_contrib_remaining": -0.02,
-     "wins_per_10mpg": -0.461
+     "wins_contrib_remaining": -0.01,
+     "wins_per_10mpg": -0.346
     },
     {
      "pid": 1643487,
@@ -6651,8 +6465,8 @@
       3.953
      ],
      "strength_contrib": -0.12,
-     "wins_contrib_remaining": 0.05,
-     "wins_per_10mpg": -0.193
+     "wins_contrib_remaining": 0.04,
+     "wins_per_10mpg": -0.145
     },
     {
      "pid": 1643470,
@@ -6683,666 +6497,7 @@
      ],
      "strength_contrib": -0.019,
      "wins_contrib_remaining": 0.02,
-     "wins_per_10mpg": -0.082
-    }
-   ]
-  },
-  "PDX": {
-   "abbr": "PDX",
-   "name": "Portland Fire",
-   "nickname": "Fire",
-   "w": 11,
-   "l": 16,
-   "gp": 27,
-   "games_remaining": 17,
-   "games_total": 44,
-   "point_diff": -142.0,
-   "strength": -5.19,
-   "strength_uncentred": -0.283,
-   "strength_season_long": -5.968,
-   "strength_all_available": -6.035,
-   "strength_rank": 14,
-   "factors": {
-    "oTS": 2.283,
-    "oTOV": -0.777,
-    "oSC": -0.437,
-    "dTS": -0.132,
-    "dTOV": 0.623,
-    "dSC": -1.843
-   },
-   "factors_dev": {
-    "oTS": 0.56,
-    "oTOV": -1.206,
-    "oSC": -0.981,
-    "dTS": -1.628,
-    "dTOV": 0.084,
-    "dSC": -2.019
-   },
-   "factors_se": {
-    "oTS": 4.186,
-    "oTOV": 1.536,
-    "oSC": 2.085,
-    "dTS": 4.162,
-    "dTOV": 1.527,
-    "dSC": 2.073
-   },
-   "orapm": -1.627,
-   "drapm": -3.563,
-   "schedule_remaining": {
-    "n": 17,
-    "home": 9,
-    "away": 8,
-    "sos": -0.322,
-    "sos_home": -0.768,
-    "sos_away": 0.179,
-    "sos_rank": 10,
-    "opponents": [
-     "ATL",
-     "DAL",
-     "GSV",
-     "IND",
-     "LAS",
-     "LVA",
-     "MIN",
-     "PHX",
-     "SEA",
-     "TOR",
-     "WAS"
-    ],
-    "games": [
-     {
-      "game_id": 1022600206,
-      "date": "2026-07-28",
-      "opp": "LVA",
-      "home": false
-     },
-     {
-      "game_id": 1022600215,
-      "date": "2026-07-31",
-      "opp": "IND",
-      "home": true
-     },
-     {
-      "game_id": 1022600219,
-      "date": "2026-08-02",
-      "opp": "LAS",
-      "home": true
-     },
-     {
-      "game_id": 1022600232,
-      "date": "2026-08-06",
-      "opp": "TOR",
-      "home": true
-     },
-     {
-      "game_id": 1022600238,
-      "date": "2026-08-08",
-      "opp": "SEA",
-      "home": true
-     },
-     {
-      "game_id": 1022600250,
-      "date": "2026-08-12",
-      "opp": "MIN",
-      "home": true
-     },
-     {
-      "game_id": 1022600255,
-      "date": "2026-08-14",
-      "opp": "SEA",
-      "home": false
-     },
-     {
-      "game_id": 1022600260,
-      "date": "2026-08-16",
-      "opp": "PHX",
-      "home": false
-     },
-     {
-      "game_id": 1022600274,
-      "date": "2026-08-21",
-      "opp": "TOR",
-      "home": false
-     },
-     {
-      "game_id": 1022600280,
-      "date": "2026-08-23",
-      "opp": "WAS",
-      "home": true
-     },
-     {
-      "game_id": 1022600285,
-      "date": "2026-08-25",
-      "opp": "DAL",
-      "home": false
-     },
-     {
-      "game_id": 1022600291,
-      "date": "2026-08-28",
-      "opp": "ATL",
-      "home": false
-     },
-     {
-      "game_id": 1022600299,
-      "date": "2026-08-30",
-      "opp": "GSV",
-      "home": true
-     },
-     {
-      "game_id": 1022600304,
-      "date": "2026-09-17",
-      "opp": "PHX",
-      "home": true
-     },
-     {
-      "game_id": 1022600308,
-      "date": "2026-09-18",
-      "opp": "GSV",
-      "home": false
-     },
-     {
-      "game_id": 1022600315,
-      "date": "2026-09-20",
-      "opp": "LAS",
-      "home": false
-     },
-     {
-      "game_id": 1022600323,
-      "date": "2026-09-22",
-      "opp": "GSV",
-      "home": true
-     }
-    ]
-   },
-   "board_minute_coverage": 1.0,
-   "proj_wins": 17.5,
-   "proj_losses": 26.5,
-   "proj_wins_season_long_minutes": 16.8,
-   "proj_wins_all_available": 17.2,
-   "minutes_watchlist": [
-    {
-     "pid": 1630143,
-     "name": "Luisa Geisels\u00f6der",
-     "window_mpg": 4.7,
-     "mpg_when_available": 11.8,
-     "season_mpg": 12.1,
-     "appearances_in_window": 4,
-     "window_games": 10,
-     "net": -1.898,
-     "wins_per_10mpg": -0.219
-    },
-    {
-     "pid": 1643527,
-     "name": "Jordan Harrison",
-     "window_mpg": 3.0,
-     "mpg_when_available": 9.9,
-     "season_mpg": 1.5,
-     "appearances_in_window": 3,
-     "window_games": 10,
-     "net": -1.639,
-     "wins_per_10mpg": -0.186
-    }
-   ],
-   "p2_5": 14.0,
-   "p10": 15.0,
-   "p50": 17.0,
-   "p90": 20.0,
-   "p97_5": 21.0,
-   "win_hist": [
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0002,
-    0.0026,
-    0.0176,
-    0.0453,
-    0.1036,
-    0.1529,
-    0.1934,
-    0.1877,
-    0.1384,
-    0.0859,
-    0.0478,
-    0.0189,
-    0.0045,
-    0.0008,
-    0.0002,
-    0.0002,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0,
-    0.0
-   ],
-   "playoff_prob": 0.0637,
-   "semis_prob": 0.0062,
-   "finals_prob": 0.0006,
-   "title_prob": 0.0,
-   "avg_seed_if_qualified": 7.95,
-   "roster": [
-    {
-     "pid": 1629524,
-     "gid": "w1629524",
-     "name": "Bridget Carleton",
-     "linkable": true,
-     "exp_mpg": 30.7,
-     "season_mpg": 28.2,
-     "mpg_when_available": 32.2,
-     "appearances_in_window": 10,
-     "net": 2.215,
-     "on_board": true,
-     "f": [
-      0.964,
-      0.14,
-      -0.397,
-      1.471,
-      0.516,
-      -0.478
-     ],
-     "f_se": [
-      1.428,
-      0.524,
-      0.711,
-      1.427,
-      0.524,
-      0.711
-     ],
-     "strength_contrib": 0.946,
-     "wins_contrib_remaining": 1.8,
-     "wins_per_10mpg": 0.312
-    },
-    {
-     "pid": 1642304,
-     "gid": "w1642304",
-     "name": "Carla Leite",
-     "linkable": true,
-     "exp_mpg": 27.2,
-     "season_mpg": 23.2,
-     "mpg_when_available": 28.5,
-     "appearances_in_window": 10,
-     "net": 3.028,
-     "on_board": true,
-     "f": [
-      3.211,
-      0.151,
-      -0.79,
-      0.811,
-      0.207,
-      -0.562
-     ],
-     "f_se": [
-      2.241,
-      0.822,
-      1.116,
-      2.238,
-      0.821,
-      1.115
-     ],
-     "strength_contrib": 1.391,
-     "wins_contrib_remaining": 1.85,
-     "wins_per_10mpg": 0.415
-    },
-    {
-     "pid": 1631083,
-     "gid": "w1631083",
-     "name": "Emily Engstler",
-     "linkable": true,
-     "exp_mpg": 24.0,
-     "season_mpg": 23.3,
-     "mpg_when_available": 25.2,
-     "appearances_in_window": 10,
-     "net": 0.072,
-     "on_board": true,
-     "f": [
-      -0.063,
-      -0.135,
-      0.329,
-      0.014,
-      0.25,
-      -0.324
-     ],
-     "f_se": [
-      2.022,
-      0.742,
-      1.007,
-      2.018,
-      0.74,
-      1.005
-     ],
-     "strength_contrib": -0.545,
-     "wins_contrib_remaining": 0.81,
-     "wins_per_10mpg": 0.017
-    },
-    {
-     "pid": 1642782,
-     "gid": "w1642782",
-     "name": "Sarah Ashlee Barker",
-     "linkable": true,
-     "exp_mpg": 22.6,
-     "season_mpg": 23.0,
-     "mpg_when_available": 26.4,
-     "appearances_in_window": 9,
-     "net": -1.171,
-     "on_board": true,
-     "f": [
-      -0.559,
-      -0.565,
-      -0.223,
-      0.147,
-      0.13,
-      -0.1
-     ],
-     "f_se": [
-      2.373,
-      0.871,
-      1.182,
-      2.369,
-      0.869,
-      1.18
-     ],
-     "strength_contrib": -1.217,
-     "wins_contrib_remaining": 0.44,
-     "wins_per_10mpg": -0.146
-    },
-    {
-     "pid": 1629484,
-     "gid": "w1629484",
-     "name": "Megan Gustafson",
-     "linkable": true,
-     "exp_mpg": 22.2,
-     "season_mpg": 20.6,
-     "mpg_when_available": 29.2,
-     "appearances_in_window": 8,
-     "net": -2.064,
-     "on_board": true,
-     "f": [
-      -0.237,
-      0.108,
-      0.172,
-      -1.148,
-      -0.293,
-      -0.665
-     ],
-     "f_se": [
-      2.115,
-      0.776,
-      1.054,
-      2.117,
-      0.777,
-      1.054
-     ],
-     "strength_contrib": -1.693,
-     "wins_contrib_remaining": 0.2,
-     "wins_per_10mpg": -0.262
-    },
-    {
-     "pid": 1643494,
-     "gid": "w1643494",
-     "name": "Frieda Buhner",
-     "linkable": true,
-     "exp_mpg": 16.2,
-     "season_mpg": 12.6,
-     "mpg_when_available": 17.0,
-     "appearances_in_window": 10,
-     "net": -1.769,
-     "on_board": true,
-     "f": [
-      0.483,
-      -0.388,
-      0.459,
-      -1.17,
-      -0.544,
-      -0.609
-     ],
-     "f_se": [
-      3.963,
-      1.454,
-      1.974,
-      3.95,
-      1.449,
-      1.967
-     ],
-     "strength_contrib": -1.114,
-     "wins_contrib_remaining": 0.2,
-     "wins_per_10mpg": -0.216
-    },
-    {
-     "pid": 1642296,
-     "gid": "w1642296",
-     "name": "Nyadiew Puoch",
-     "linkable": true,
-     "exp_mpg": 13.9,
-     "season_mpg": 15.3,
-     "mpg_when_available": 14.6,
-     "appearances_in_window": 10,
-     "net": -2.9,
-     "on_board": true,
-     "f": [
-      -1.699,
-      -0.342,
-      0.319,
-      -0.932,
-      -0.079,
-      -0.167
-     ],
-     "f_se": [
-      3.602,
-      1.322,
-      1.794,
-      3.607,
-      1.323,
-      1.797
-     ],
-     "strength_contrib": -1.346,
-     "wins_contrib_remaining": -0.01,
-     "wins_per_10mpg": -0.355
-    },
-    {
-     "pid": 1643436,
-     "gid": "w1643436",
-     "name": "Serah Williams",
-     "linkable": true,
-     "exp_mpg": 12.9,
-     "season_mpg": 9.9,
-     "mpg_when_available": 13.5,
-     "appearances_in_window": 10,
-     "net": -0.362,
-     "on_board": true,
-     "f": [
-      1.185,
-      -0.668,
-      0.071,
-      -1.502,
-      0.263,
-      0.289
-     ],
-     "f_se": [
-      4.518,
-      1.658,
-      2.251,
-      4.427,
-      1.624,
-      2.205
-     ],
-     "strength_contrib": -0.433,
-     "wins_contrib_remaining": 0.37,
-     "wins_per_10mpg": -0.038
-    },
-    {
-     "pid": 1643506,
-     "gid": "w1643506",
-     "name": "Teja Oblak",
-     "linkable": true,
-     "exp_mpg": 11.1,
-     "season_mpg": 9.6,
-     "mpg_when_available": 11.7,
-     "appearances_in_window": 10,
-     "net": 0.114,
-     "on_board": true,
-     "f": [
-      -1.041,
-      -0.35,
-      0.716,
-      0.936,
-      0.396,
-      -0.544
-     ],
-     "f_se": [
-      4.637,
-      1.701,
-      2.31,
-      4.6,
-      1.688,
-      2.291
-     ],
-     "strength_contrib": -0.241,
-     "wins_contrib_remaining": 0.38,
-     "wins_per_10mpg": 0.021
-    },
-    {
-     "pid": 1628317,
-     "gid": "w1628317",
-     "name": "Karlie Samuelson",
-     "linkable": true,
-     "exp_mpg": 7.9,
-     "season_mpg": 7.4,
-     "mpg_when_available": 13.8,
-     "appearances_in_window": 6,
-     "net": 0.055,
-     "on_board": true,
-     "f": [
-      1.773,
-      -0.242,
-      -1.119,
-      -0.394,
-      0.446,
-      -0.409
-     ],
-     "f_se": [
-      2.494,
-      0.915,
-      1.242,
-      2.491,
-      0.914,
-      1.241
-     ],
-     "strength_contrib": -0.183,
-     "wins_contrib_remaining": 0.27,
-     "wins_per_10mpg": 0.014
-    },
-    {
-     "pid": 1630143,
-     "gid": "w1630143",
-     "name": "Luisa Geisels\u00f6der",
-     "linkable": true,
-     "exp_mpg": 4.5,
-     "season_mpg": 12.1,
-     "mpg_when_available": 11.8,
-     "appearances_in_window": 4,
-     "net": -1.898,
-     "on_board": true,
-     "f": [
-      -1.835,
-      0.204,
-      -0.557,
-      0.425,
-      0.122,
-      -0.256
-     ],
-     "f_se": [
-      2.698,
-      0.99,
-      1.344,
-      2.697,
-      0.99,
-      1.343
-     ],
-     "strength_contrib": -0.323,
-     "wins_contrib_remaining": 0.05,
-     "wins_per_10mpg": -0.219
-    },
-    {
-     "pid": 1641683,
-     "gid": "w1641683",
-     "name": "Holly Winterburn",
-     "linkable": true,
-     "exp_mpg": 4.0,
-     "season_mpg": 4.0,
-     "mpg_when_available": 6.0,
-     "appearances_in_window": 7,
-     "net": -1.468,
-     "on_board": true,
-     "f": [
-      0.475,
-      -0.565,
-      -0.199,
-      -1.102,
-      -0.15,
-      0.073
-     ],
-     "f_se": [
-      7.0,
-      2.569,
-      3.487,
-      6.819,
-      2.502,
-      3.397
-     ],
-     "strength_contrib": -0.247,
-     "wins_contrib_remaining": 0.06,
-     "wins_per_10mpg": -0.167
-    },
-    {
-     "pid": 1643527,
-     "gid": "w1643527",
-     "name": "Jordan Harrison",
-     "linkable": false,
-     "exp_mpg": 2.8,
-     "season_mpg": 1.5,
-     "mpg_when_available": 9.9,
-     "appearances_in_window": 3,
-     "net": -1.639,
-     "on_board": true,
-     "f": [
-      -0.623,
-      0.343,
-      0.317,
-      -1.441,
-      -0.102,
-      -0.133
-     ],
-     "f_se": [
-      10.997,
-      4.035,
-      5.478,
-      10.708,
-      3.929,
-      5.334
-     ],
-     "strength_contrib": -0.185,
-     "wins_contrib_remaining": 0.04,
-     "wins_per_10mpg": -0.186
+     "wins_per_10mpg": -0.062
     }
    ]
   },
@@ -7350,12 +6505,12 @@
    "abbr": "CHI",
    "name": "Chicago Sky",
    "nickname": "Sky",
-   "w": 9,
-   "l": 18,
-   "gp": 27,
-   "games_remaining": 17,
+   "w": 12,
+   "l": 19,
+   "gp": 31,
+   "games_remaining": 13,
    "games_total": 44,
-   "point_diff": -60.0,
+   "point_diff": -51.0,
    "strength": -1.757,
    "strength_uncentred": 3.15,
    "strength_season_long": -2.38,
@@ -7388,51 +6543,24 @@
    "orapm": -0.722,
    "drapm": -1.035,
    "schedule_remaining": {
-    "n": 17,
-    "home": 10,
+    "n": 13,
+    "home": 6,
     "away": 7,
-    "sos": -0.677,
-    "sos_home": -0.35,
+    "sos": -0.619,
+    "sos_home": -0.007,
     "sos_away": -1.144,
-    "sos_rank": 12,
+    "sos_rank": 10,
     "opponents": [
      "ATL",
      "CON",
      "GSV",
      "IND",
-     "LAS",
-     "LVA",
      "NYL",
-     "PHX",
      "SEA",
      "TOR",
      "WAS"
     ],
     "games": [
-     {
-      "game_id": 1022600211,
-      "date": "2026-07-30",
-      "opp": "CON",
-      "home": true
-     },
-     {
-      "game_id": 1022600216,
-      "date": "2026-08-01",
-      "opp": "LVA",
-      "home": true
-     },
-     {
-      "game_id": 1022600224,
-      "date": "2026-08-03",
-      "opp": "PHX",
-      "home": true
-     },
-     {
-      "game_id": 1022600229,
-      "date": "2026-08-05",
-      "opp": "LAS",
-      "home": true
-     },
      {
       "game_id": 1022600237,
       "date": "2026-08-08",
@@ -7514,10 +6642,10 @@
     ]
    },
    "board_minute_coverage": 1.0,
-   "proj_wins": 17.2,
-   "proj_losses": 26.8,
-   "proj_wins_season_long_minutes": 16.9,
-   "proj_wins_all_available": 17.6,
+   "proj_wins": 18.0,
+   "proj_losses": 26.0,
+   "proj_wins_season_long_minutes": 17.9,
+   "proj_wins_all_available": 18.3,
    "minutes_watchlist": [
     {
      "pid": 203400,
@@ -7528,7 +6656,7 @@
      "appearances_in_window": 3,
      "window_games": 10,
      "net": 2.894,
-     "wins_per_10mpg": 0.274
+     "wins_per_10mpg": 0.21
     },
     {
      "pid": 1631064,
@@ -7539,7 +6667,7 @@
      "appearances_in_window": 3,
      "window_games": 10,
      "net": 1.048,
-     "wins_per_10mpg": 0.049
+     "wins_per_10mpg": 0.038
     },
     {
      "pid": 1642818,
@@ -7550,14 +6678,14 @@
      "appearances_in_window": 1,
      "window_games": 10,
      "net": -3.35,
-     "wins_per_10mpg": -0.464
+     "wins_per_10mpg": -0.355
     }
    ],
-   "p2_5": 13.0,
-   "p10": 14.0,
-   "p50": 17.0,
+   "p2_5": 15.0,
+   "p10": 16.0,
+   "p50": 18.0,
    "p90": 20.0,
-   "p97_5": 21.0,
+   "p97_5": 22.0,
    "win_hist": [
     0.0,
     0.0,
@@ -7569,22 +6697,22 @@
     0.0,
     0.0,
     0.0,
-    0.0001,
-    0.0022,
-    0.0084,
-    0.0286,
-    0.0623,
-    0.1134,
-    0.1641,
-    0.1798,
-    0.1697,
-    0.1351,
-    0.0776,
-    0.0391,
-    0.0142,
-    0.0039,
-    0.0012,
+    0.0,
+    0.0,
     0.0003,
+    0.0039,
+    0.0184,
+    0.0538,
+    0.1214,
+    0.191,
+    0.2153,
+    0.1848,
+    0.1222,
+    0.0605,
+    0.0231,
+    0.0047,
+    0.0004,
+    0.0002,
     0.0,
     0.0,
     0.0,
@@ -7605,11 +6733,11 @@
     0.0,
     0.0
    ],
-   "playoff_prob": 0.0886,
-   "semis_prob": 0.0156,
-   "finals_prob": 0.0037,
-   "title_prob": 0.0008,
-   "avg_seed_if_qualified": 7.93,
+   "playoff_prob": 0.0489,
+   "semis_prob": 0.008,
+   "finals_prob": 0.002,
+   "title_prob": 0.0003,
+   "avg_seed_if_qualified": 7.97,
    "roster": [
     {
      "pid": 1628922,
@@ -7639,8 +6767,8 @@
       0.813
      ],
      "strength_contrib": -2.122,
-     "wins_contrib_remaining": 0.32,
-     "wins_per_10mpg": -0.35
+     "wins_contrib_remaining": 0.21,
+     "wins_per_10mpg": -0.267
     },
     {
      "pid": 204333,
@@ -7670,7 +6798,7 @@
       0.701
      ],
      "strength_contrib": -0.254,
-     "wins_contrib_remaining": 1.18,
+     "wins_contrib_remaining": 0.87,
      "wins_per_10mpg": -0.0
     },
     {
@@ -7701,8 +6829,8 @@
       1.565
      ],
      "strength_contrib": 1.207,
-     "wins_contrib_remaining": 1.69,
-     "wins_per_10mpg": 0.302
+     "wins_contrib_remaining": 1.27,
+     "wins_per_10mpg": 0.231
     },
     {
      "pid": 1642289,
@@ -7732,8 +6860,8 @@
       0.858
      ],
      "strength_contrib": -0.269,
-     "wins_contrib_remaining": 0.93,
-     "wins_per_10mpg": -0.014
+     "wins_contrib_remaining": 0.69,
+     "wins_per_10mpg": -0.011
     },
     {
      "pid": 202664,
@@ -7763,8 +6891,8 @@
       1.027
      ],
      "strength_contrib": 1.043,
-     "wins_contrib_remaining": 1.3,
-     "wins_per_10mpg": 0.341
+     "wins_contrib_remaining": 0.97,
+     "wins_per_10mpg": 0.261
     },
     {
      "pid": 1642292,
@@ -7794,8 +6922,8 @@
       0.963
      ],
      "strength_contrib": -0.921,
-     "wins_contrib_remaining": 0.37,
-     "wins_per_10mpg": -0.221
+     "wins_contrib_remaining": 0.26,
+     "wins_per_10mpg": -0.169
     },
     {
      "pid": 1643447,
@@ -7825,8 +6953,8 @@
       1.577
      ],
      "strength_contrib": -0.061,
-     "wins_contrib_remaining": 0.74,
-     "wins_per_10mpg": 0.026
+     "wins_contrib_remaining": 0.55,
+     "wins_per_10mpg": 0.02
     },
     {
      "pid": 204322,
@@ -7856,8 +6984,8 @@
       0.913
      ],
      "strength_contrib": -0.321,
-     "wins_contrib_remaining": 0.53,
-     "wins_per_10mpg": -0.062
+     "wins_contrib_remaining": 0.39,
+     "wins_per_10mpg": -0.048
     },
     {
      "pid": 203400,
@@ -7887,8 +7015,8 @@
       0.772
      ],
      "strength_contrib": 0.402,
-     "wins_contrib_remaining": 0.56,
-     "wins_per_10mpg": 0.274
+     "wins_contrib_remaining": 0.42,
+     "wins_per_10mpg": 0.21
     },
     {
      "pid": 1627671,
@@ -7918,8 +7046,8 @@
       0.936
      ],
      "strength_contrib": -0.64,
-     "wins_contrib_remaining": 0.01,
-     "wins_per_10mpg": -0.407
+     "wins_contrib_remaining": 0.0,
+     "wins_per_10mpg": -0.311
     },
     {
      "pid": 1642786,
@@ -7949,8 +7077,8 @@
       2.504
      ],
      "strength_contrib": 0.258,
-     "wins_contrib_remaining": 0.4,
-     "wins_per_10mpg": 0.24
+     "wins_contrib_remaining": 0.3,
+     "wins_per_10mpg": 0.183
     },
     {
      "pid": 1631064,
@@ -7980,8 +7108,8 @@
       3.057
      ],
      "strength_contrib": 0.005,
-     "wins_contrib_remaining": 0.15,
-     "wins_per_10mpg": 0.049
+     "wins_contrib_remaining": 0.11,
+     "wins_per_10mpg": 0.038
     },
     {
      "pid": 1642818,
@@ -8012,7 +7140,7 @@
      ],
      "strength_contrib": -0.084,
      "wins_contrib_remaining": -0.0,
-     "wins_per_10mpg": -0.464
+     "wins_per_10mpg": -0.355
     }
    ]
   },
@@ -8020,12 +7148,12 @@
    "abbr": "LAS",
    "name": "Los Angeles Sparks",
    "nickname": "Sparks",
-   "w": 10,
-   "l": 16,
-   "gp": 26,
-   "games_remaining": 18,
+   "w": 11,
+   "l": 18,
+   "gp": 29,
+   "games_remaining": 15,
    "games_total": 44,
-   "point_diff": -132.0,
+   "point_diff": -138.0,
    "strength": -4.473,
    "strength_uncentred": 0.433,
    "strength_season_long": -2.634,
@@ -8058,16 +7186,15 @@
    "orapm": -1.96,
    "drapm": -2.513,
    "schedule_remaining": {
-    "n": 18,
-    "home": 9,
-    "away": 9,
-    "sos": 0.278,
-    "sos_home": 0.093,
-    "sos_away": 0.463,
-    "sos_rank": 6,
+    "n": 15,
+    "home": 8,
+    "away": 7,
+    "sos": 0.487,
+    "sos_home": -0.477,
+    "sos_away": 1.588,
+    "sos_rank": 5,
     "opponents": [
      "ATL",
-     "CHI",
      "CON",
      "DAL",
      "GSV",
@@ -8080,24 +7207,6 @@
      "WAS"
     ],
     "games": [
-     {
-      "game_id": 1022600207,
-      "date": "2026-07-28",
-      "opp": "NYL",
-      "home": true
-     },
-     {
-      "game_id": 1022600219,
-      "date": "2026-08-02",
-      "opp": "PDX",
-      "home": false
-     },
-     {
-      "game_id": 1022600229,
-      "date": "2026-08-05",
-      "opp": "CHI",
-      "home": false
-     },
      {
       "game_id": 1022600231,
       "date": "2026-08-06",
@@ -8191,10 +7300,10 @@
     ]
    },
    "board_minute_coverage": 1.0,
-   "proj_wins": 16.8,
-   "proj_losses": 27.2,
-   "proj_wins_season_long_minutes": 17.8,
-   "proj_wins_all_available": 16.6,
+   "proj_wins": 16.7,
+   "proj_losses": 27.3,
+   "proj_wins_season_long_minutes": 17.5,
+   "proj_wins_all_available": 16.5,
    "minutes_watchlist": [
     {
      "pid": 1642287,
@@ -8205,7 +7314,7 @@
      "appearances_in_window": 4,
      "window_games": 10,
      "net": -0.932,
-     "wins_per_10mpg": -0.13
+     "wins_per_10mpg": -0.108
     },
     {
      "pid": 1643461,
@@ -8216,14 +7325,14 @@
      "appearances_in_window": 2,
      "window_games": 10,
      "net": 0.401,
-     "wins_per_10mpg": 0.039
+     "wins_per_10mpg": 0.033
     }
    ],
    "p2_5": 13.0,
    "p10": 14.0,
    "p50": 17.0,
-   "p90": 20.0,
-   "p97_5": 21.0,
+   "p90": 19.0,
+   "p97_5": 20.0,
    "win_hist": [
     0.0,
     0.0,
@@ -8235,22 +7344,22 @@
     0.0,
     0.0,
     0.0,
-    0.0005,
-    0.0029,
-    0.0114,
-    0.0383,
-    0.0849,
-    0.1336,
-    0.1779,
-    0.1798,
-    0.1592,
-    0.1086,
-    0.0592,
-    0.0276,
-    0.0121,
-    0.0034,
-    0.0004,
+    0.0,
+    0.0009,
+    0.008,
+    0.0311,
+    0.084,
+    0.1444,
+    0.2004,
+    0.1993,
+    0.1629,
+    0.0956,
+    0.0491,
+    0.0186,
+    0.0041,
+    0.0014,
     0.0002,
+    0.0,
     0.0,
     0.0,
     0.0,
@@ -8271,11 +7380,11 @@
     0.0,
     0.0
    ],
-   "playoff_prob": 0.051,
-   "semis_prob": 0.0058,
-   "finals_prob": 0.0011,
+   "playoff_prob": 0.0114,
+   "semis_prob": 0.0008,
+   "finals_prob": 0.0002,
    "title_prob": 0.0001,
-   "avg_seed_if_qualified": 7.96,
+   "avg_seed_if_qualified": 7.97,
    "roster": [
     {
      "pid": 1630996,
@@ -8305,8 +7414,8 @@
       0.95
      ],
      "strength_contrib": -1.078,
-     "wins_contrib_remaining": 0.87,
-     "wins_per_10mpg": -0.073
+     "wins_contrib_remaining": 0.72,
+     "wins_per_10mpg": -0.06
     },
     {
      "pid": 203014,
@@ -8336,8 +7445,8 @@
       0.694
      ],
      "strength_contrib": 1.031,
-     "wins_contrib_remaining": 1.88,
-     "wins_per_10mpg": 0.326
+     "wins_contrib_remaining": 1.57,
+     "wins_per_10mpg": 0.272
     },
     {
      "pid": 204324,
@@ -8367,8 +7476,8 @@
       0.704
      ],
      "strength_contrib": -0.08,
-     "wins_contrib_remaining": 1.3,
-     "wins_per_10mpg": 0.114
+     "wins_contrib_remaining": 1.09,
+     "wins_per_10mpg": 0.095
     },
     {
      "pid": 1628878,
@@ -8398,8 +7507,8 @@
       0.78
      ],
      "strength_contrib": 0.944,
-     "wins_contrib_remaining": 1.75,
-     "wins_per_10mpg": 0.318
+     "wins_contrib_remaining": 1.46,
+     "wins_per_10mpg": 0.265
     },
     {
      "pid": 204365,
@@ -8429,8 +7538,8 @@
       0.775
      ],
      "strength_contrib": -1.264,
-     "wins_contrib_remaining": 0.65,
-     "wins_per_10mpg": -0.129
+     "wins_contrib_remaining": 0.54,
+     "wins_per_10mpg": -0.108
     },
     {
      "pid": 1630148,
@@ -8460,8 +7569,8 @@
       2.428
      ],
      "strength_contrib": -1.205,
-     "wins_contrib_remaining": -0.06,
-     "wins_per_10mpg": -0.421
+     "wins_contrib_remaining": -0.05,
+     "wins_per_10mpg": -0.35
     },
     {
      "pid": 1630461,
@@ -8491,8 +7600,8 @@
       2.004
      ],
      "strength_contrib": -0.725,
-     "wins_contrib_remaining": 0.12,
-     "wins_per_10mpg": -0.237
+     "wins_contrib_remaining": 0.1,
+     "wins_per_10mpg": -0.197
     },
     {
      "pid": 1643462,
@@ -8522,8 +7631,8 @@
       2.224
      ],
      "strength_contrib": -0.991,
-     "wins_contrib_remaining": -0.1,
-     "wins_per_10mpg": -0.484
+     "wins_contrib_remaining": -0.09,
+     "wins_per_10mpg": -0.403
     },
     {
      "pid": 1642287,
@@ -8553,8 +7662,8 @@
       1.436
      ],
      "strength_contrib": -0.348,
-     "wins_contrib_remaining": 0.16,
-     "wins_per_10mpg": -0.13
+     "wins_contrib_remaining": 0.13,
+     "wins_per_10mpg": -0.108
     },
     {
      "pid": 1628242,
@@ -8584,8 +7693,8 @@
       1.897
      ],
      "strength_contrib": -0.254,
-     "wins_contrib_remaining": 0.18,
-     "wins_per_10mpg": -0.079
+     "wins_contrib_remaining": 0.15,
+     "wins_per_10mpg": -0.065
     },
     {
      "pid": 1642324,
@@ -8616,7 +7725,7 @@
      ],
      "strength_contrib": -0.262,
      "wins_contrib_remaining": -0.01,
-     "wins_per_10mpg": -0.375
+     "wins_per_10mpg": -0.312
     },
     {
      "pid": 1643461,
@@ -8646,8 +7755,8 @@
       6.242
      ],
      "strength_contrib": -0.028,
-     "wins_contrib_remaining": 0.07,
-     "wins_per_10mpg": 0.039
+     "wins_contrib_remaining": 0.06,
+     "wins_per_10mpg": 0.033
     },
     {
      "pid": 1642293,
@@ -8678,7 +7787,7 @@
      ],
      "strength_contrib": -0.163,
      "wins_contrib_remaining": 0.0,
-     "wins_per_10mpg": -0.344
+     "wins_per_10mpg": -0.286
     },
     {
      "pid": 1643444,
@@ -8708,8 +7817,647 @@
       4.851
      ],
      "strength_contrib": -0.051,
-     "wins_contrib_remaining": 0.02,
-     "wins_per_10mpg": -0.155
+     "wins_contrib_remaining": 0.01,
+     "wins_per_10mpg": -0.129
+    }
+   ]
+  },
+  "PDX": {
+   "abbr": "PDX",
+   "name": "Portland Fire",
+   "nickname": "Fire",
+   "w": 11,
+   "l": 19,
+   "gp": 30,
+   "games_remaining": 14,
+   "games_total": 44,
+   "point_diff": -176.0,
+   "strength": -5.19,
+   "strength_uncentred": -0.283,
+   "strength_season_long": -5.968,
+   "strength_all_available": -6.035,
+   "strength_rank": 14,
+   "factors": {
+    "oTS": 2.283,
+    "oTOV": -0.777,
+    "oSC": -0.437,
+    "dTS": -0.132,
+    "dTOV": 0.623,
+    "dSC": -1.843
+   },
+   "factors_dev": {
+    "oTS": 0.56,
+    "oTOV": -1.206,
+    "oSC": -0.981,
+    "dTS": -1.628,
+    "dTOV": 0.084,
+    "dSC": -2.019
+   },
+   "factors_se": {
+    "oTS": 4.186,
+    "oTOV": 1.536,
+    "oSC": 2.085,
+    "dTS": 4.162,
+    "dTOV": 1.527,
+    "dSC": 2.073
+   },
+   "orapm": -1.627,
+   "drapm": -3.563,
+   "schedule_remaining": {
+    "n": 14,
+    "home": 7,
+    "away": 7,
+    "sos": -0.714,
+    "sos_home": -0.627,
+    "sos_away": -0.802,
+    "sos_rank": 11,
+    "opponents": [
+     "ATL",
+     "DAL",
+     "GSV",
+     "LAS",
+     "MIN",
+     "PHX",
+     "SEA",
+     "TOR",
+     "WAS"
+    ],
+    "games": [
+     {
+      "game_id": 1022600232,
+      "date": "2026-08-06",
+      "opp": "TOR",
+      "home": true
+     },
+     {
+      "game_id": 1022600238,
+      "date": "2026-08-08",
+      "opp": "SEA",
+      "home": true
+     },
+     {
+      "game_id": 1022600250,
+      "date": "2026-08-12",
+      "opp": "MIN",
+      "home": true
+     },
+     {
+      "game_id": 1022600255,
+      "date": "2026-08-14",
+      "opp": "SEA",
+      "home": false
+     },
+     {
+      "game_id": 1022600260,
+      "date": "2026-08-16",
+      "opp": "PHX",
+      "home": false
+     },
+     {
+      "game_id": 1022600274,
+      "date": "2026-08-21",
+      "opp": "TOR",
+      "home": false
+     },
+     {
+      "game_id": 1022600280,
+      "date": "2026-08-23",
+      "opp": "WAS",
+      "home": true
+     },
+     {
+      "game_id": 1022600285,
+      "date": "2026-08-25",
+      "opp": "DAL",
+      "home": false
+     },
+     {
+      "game_id": 1022600291,
+      "date": "2026-08-28",
+      "opp": "ATL",
+      "home": false
+     },
+     {
+      "game_id": 1022600299,
+      "date": "2026-08-30",
+      "opp": "GSV",
+      "home": true
+     },
+     {
+      "game_id": 1022600304,
+      "date": "2026-09-17",
+      "opp": "PHX",
+      "home": true
+     },
+     {
+      "game_id": 1022600308,
+      "date": "2026-09-18",
+      "opp": "GSV",
+      "home": false
+     },
+     {
+      "game_id": 1022600315,
+      "date": "2026-09-20",
+      "opp": "LAS",
+      "home": false
+     },
+     {
+      "game_id": 1022600323,
+      "date": "2026-09-22",
+      "opp": "GSV",
+      "home": true
+     }
+    ]
+   },
+   "board_minute_coverage": 1.0,
+   "proj_wins": 16.4,
+   "proj_losses": 27.6,
+   "proj_wins_season_long_minutes": 15.9,
+   "proj_wins_all_available": 16.1,
+   "minutes_watchlist": [
+    {
+     "pid": 1630143,
+     "name": "Luisa Geisels\u00f6der",
+     "window_mpg": 4.7,
+     "mpg_when_available": 11.8,
+     "season_mpg": 12.1,
+     "appearances_in_window": 4,
+     "window_games": 10,
+     "net": -1.898,
+     "wins_per_10mpg": -0.18
+    },
+    {
+     "pid": 1643527,
+     "name": "Jordan Harrison",
+     "window_mpg": 3.0,
+     "mpg_when_available": 9.9,
+     "season_mpg": 1.5,
+     "appearances_in_window": 3,
+     "window_games": 10,
+     "net": -1.639,
+     "wins_per_10mpg": -0.154
+    }
+   ],
+   "p2_5": 13.0,
+   "p10": 14.0,
+   "p50": 16.0,
+   "p90": 19.0,
+   "p97_5": 20.0,
+   "win_hist": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.001,
+    0.0115,
+    0.0469,
+    0.1024,
+    0.1675,
+    0.2085,
+    0.1972,
+    0.141,
+    0.0755,
+    0.0353,
+    0.0092,
+    0.0036,
+    0.0003,
+    0.0001,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "playoff_prob": 0.0066,
+   "semis_prob": 0.0005,
+   "finals_prob": 0.0,
+   "title_prob": 0.0,
+   "avg_seed_if_qualified": 8.0,
+   "roster": [
+    {
+     "pid": 1629524,
+     "gid": "w1629524",
+     "name": "Bridget Carleton",
+     "linkable": true,
+     "exp_mpg": 30.7,
+     "season_mpg": 28.2,
+     "mpg_when_available": 32.2,
+     "appearances_in_window": 10,
+     "net": 2.215,
+     "on_board": true,
+     "f": [
+      0.964,
+      0.14,
+      -0.397,
+      1.471,
+      0.516,
+      -0.478
+     ],
+     "f_se": [
+      1.428,
+      0.524,
+      0.711,
+      1.427,
+      0.524,
+      0.711
+     ],
+     "strength_contrib": 0.946,
+     "wins_contrib_remaining": 1.49,
+     "wins_per_10mpg": 0.257
+    },
+    {
+     "pid": 1642304,
+     "gid": "w1642304",
+     "name": "Carla Leite",
+     "linkable": true,
+     "exp_mpg": 27.2,
+     "season_mpg": 23.2,
+     "mpg_when_available": 28.5,
+     "appearances_in_window": 10,
+     "net": 3.028,
+     "on_board": true,
+     "f": [
+      3.211,
+      0.151,
+      -0.79,
+      0.811,
+      0.207,
+      -0.562
+     ],
+     "f_se": [
+      2.241,
+      0.822,
+      1.116,
+      2.238,
+      0.821,
+      1.115
+     ],
+     "strength_contrib": 1.391,
+     "wins_contrib_remaining": 1.53,
+     "wins_per_10mpg": 0.342
+    },
+    {
+     "pid": 1631083,
+     "gid": "w1631083",
+     "name": "Emily Engstler",
+     "linkable": true,
+     "exp_mpg": 24.0,
+     "season_mpg": 23.3,
+     "mpg_when_available": 25.2,
+     "appearances_in_window": 10,
+     "net": 0.072,
+     "on_board": true,
+     "f": [
+      -0.063,
+      -0.135,
+      0.329,
+      0.014,
+      0.25,
+      -0.324
+     ],
+     "f_se": [
+      2.022,
+      0.742,
+      1.007,
+      2.018,
+      0.74,
+      1.005
+     ],
+     "strength_contrib": -0.545,
+     "wins_contrib_remaining": 0.67,
+     "wins_per_10mpg": 0.014
+    },
+    {
+     "pid": 1642782,
+     "gid": "w1642782",
+     "name": "Sarah Ashlee Barker",
+     "linkable": true,
+     "exp_mpg": 22.6,
+     "season_mpg": 23.0,
+     "mpg_when_available": 26.4,
+     "appearances_in_window": 9,
+     "net": -1.171,
+     "on_board": true,
+     "f": [
+      -0.559,
+      -0.565,
+      -0.223,
+      0.147,
+      0.13,
+      -0.1
+     ],
+     "f_se": [
+      2.373,
+      0.871,
+      1.182,
+      2.369,
+      0.869,
+      1.18
+     ],
+     "strength_contrib": -1.217,
+     "wins_contrib_remaining": 0.36,
+     "wins_per_10mpg": -0.12
+    },
+    {
+     "pid": 1629484,
+     "gid": "w1629484",
+     "name": "Megan Gustafson",
+     "linkable": true,
+     "exp_mpg": 22.2,
+     "season_mpg": 20.6,
+     "mpg_when_available": 29.2,
+     "appearances_in_window": 8,
+     "net": -2.064,
+     "on_board": true,
+     "f": [
+      -0.237,
+      0.108,
+      0.172,
+      -1.148,
+      -0.293,
+      -0.665
+     ],
+     "f_se": [
+      2.115,
+      0.776,
+      1.054,
+      2.117,
+      0.777,
+      1.054
+     ],
+     "strength_contrib": -1.693,
+     "wins_contrib_remaining": 0.17,
+     "wins_per_10mpg": -0.216
+    },
+    {
+     "pid": 1643494,
+     "gid": "w1643494",
+     "name": "Frieda Buhner",
+     "linkable": true,
+     "exp_mpg": 16.2,
+     "season_mpg": 12.6,
+     "mpg_when_available": 17.0,
+     "appearances_in_window": 10,
+     "net": -1.769,
+     "on_board": true,
+     "f": [
+      0.483,
+      -0.388,
+      0.459,
+      -1.17,
+      -0.544,
+      -0.609
+     ],
+     "f_se": [
+      3.963,
+      1.454,
+      1.974,
+      3.95,
+      1.449,
+      1.967
+     ],
+     "strength_contrib": -1.114,
+     "wins_contrib_remaining": 0.17,
+     "wins_per_10mpg": -0.178
+    },
+    {
+     "pid": 1642296,
+     "gid": "w1642296",
+     "name": "Nyadiew Puoch",
+     "linkable": true,
+     "exp_mpg": 13.9,
+     "season_mpg": 15.3,
+     "mpg_when_available": 14.6,
+     "appearances_in_window": 10,
+     "net": -2.9,
+     "on_board": true,
+     "f": [
+      -1.699,
+      -0.342,
+      0.319,
+      -0.932,
+      -0.079,
+      -0.167
+     ],
+     "f_se": [
+      3.602,
+      1.322,
+      1.794,
+      3.607,
+      1.323,
+      1.797
+     ],
+     "strength_contrib": -1.346,
+     "wins_contrib_remaining": -0.01,
+     "wins_per_10mpg": -0.292
+    },
+    {
+     "pid": 1643436,
+     "gid": "w1643436",
+     "name": "Serah Williams",
+     "linkable": true,
+     "exp_mpg": 12.9,
+     "season_mpg": 9.9,
+     "mpg_when_available": 13.5,
+     "appearances_in_window": 10,
+     "net": -0.362,
+     "on_board": true,
+     "f": [
+      1.185,
+      -0.668,
+      0.071,
+      -1.502,
+      0.263,
+      0.289
+     ],
+     "f_se": [
+      4.518,
+      1.658,
+      2.251,
+      4.427,
+      1.624,
+      2.205
+     ],
+     "strength_contrib": -0.433,
+     "wins_contrib_remaining": 0.31,
+     "wins_per_10mpg": -0.031
+    },
+    {
+     "pid": 1643506,
+     "gid": "w1643506",
+     "name": "Teja Oblak",
+     "linkable": true,
+     "exp_mpg": 11.1,
+     "season_mpg": 9.6,
+     "mpg_when_available": 11.7,
+     "appearances_in_window": 10,
+     "net": 0.114,
+     "on_board": true,
+     "f": [
+      -1.041,
+      -0.35,
+      0.716,
+      0.936,
+      0.396,
+      -0.544
+     ],
+     "f_se": [
+      4.637,
+      1.701,
+      2.31,
+      4.6,
+      1.688,
+      2.291
+     ],
+     "strength_contrib": -0.241,
+     "wins_contrib_remaining": 0.32,
+     "wins_per_10mpg": 0.017
+    },
+    {
+     "pid": 1628317,
+     "gid": "w1628317",
+     "name": "Karlie Samuelson",
+     "linkable": true,
+     "exp_mpg": 7.9,
+     "season_mpg": 7.4,
+     "mpg_when_available": 13.8,
+     "appearances_in_window": 6,
+     "net": 0.055,
+     "on_board": true,
+     "f": [
+      1.773,
+      -0.242,
+      -1.119,
+      -0.394,
+      0.446,
+      -0.409
+     ],
+     "f_se": [
+      2.494,
+      0.915,
+      1.242,
+      2.491,
+      0.914,
+      1.241
+     ],
+     "strength_contrib": -0.183,
+     "wins_contrib_remaining": 0.22,
+     "wins_per_10mpg": 0.011
+    },
+    {
+     "pid": 1630143,
+     "gid": "w1630143",
+     "name": "Luisa Geisels\u00f6der",
+     "linkable": true,
+     "exp_mpg": 4.5,
+     "season_mpg": 12.1,
+     "mpg_when_available": 11.8,
+     "appearances_in_window": 4,
+     "net": -1.898,
+     "on_board": true,
+     "f": [
+      -1.835,
+      0.204,
+      -0.557,
+      0.425,
+      0.122,
+      -0.256
+     ],
+     "f_se": [
+      2.698,
+      0.99,
+      1.344,
+      2.697,
+      0.99,
+      1.343
+     ],
+     "strength_contrib": -0.323,
+     "wins_contrib_remaining": 0.04,
+     "wins_per_10mpg": -0.18
+    },
+    {
+     "pid": 1641683,
+     "gid": "w1641683",
+     "name": "Holly Winterburn",
+     "linkable": true,
+     "exp_mpg": 4.0,
+     "season_mpg": 4.0,
+     "mpg_when_available": 6.0,
+     "appearances_in_window": 7,
+     "net": -1.468,
+     "on_board": true,
+     "f": [
+      0.475,
+      -0.565,
+      -0.199,
+      -1.102,
+      -0.15,
+      0.073
+     ],
+     "f_se": [
+      7.0,
+      2.569,
+      3.487,
+      6.819,
+      2.502,
+      3.397
+     ],
+     "strength_contrib": -0.247,
+     "wins_contrib_remaining": 0.05,
+     "wins_per_10mpg": -0.138
+    },
+    {
+     "pid": 1643527,
+     "gid": "w1643527",
+     "name": "Jordan Harrison",
+     "linkable": false,
+     "exp_mpg": 2.8,
+     "season_mpg": 1.5,
+     "mpg_when_available": 9.9,
+     "appearances_in_window": 3,
+     "net": -1.639,
+     "on_board": true,
+     "f": [
+      -0.623,
+      0.343,
+      0.317,
+      -1.441,
+      -0.102,
+      -0.133
+     ],
+     "f_se": [
+      10.997,
+      4.035,
+      5.478,
+      10.708,
+      3.929,
+      5.334
+     ],
+     "strength_contrib": -0.185,
+     "wins_contrib_remaining": 0.03,
+     "wins_per_10mpg": -0.154
     }
    ]
   },
@@ -8718,11 +8466,11 @@
    "name": "Toronto Tempo",
    "nickname": "Tempo",
    "w": 10,
-   "l": 16,
-   "gp": 26,
-   "games_remaining": 18,
+   "l": 20,
+   "gp": 30,
+   "games_remaining": 14,
    "games_total": 44,
-   "point_diff": -115.0,
+   "point_diff": -182.0,
    "strength": -6.321,
    "strength_uncentred": -1.414,
    "strength_season_long": -4.422,
@@ -8755,22 +8503,20 @@
    "orapm": -0.878,
    "drapm": -5.443,
    "schedule_remaining": {
-    "n": 18,
-    "home": 6,
-    "away": 12,
-    "sos": 1.369,
-    "sos_home": 3.077,
-    "sos_away": 0.515,
-    "sos_rank": 1,
+    "n": 14,
+    "home": 5,
+    "away": 9,
+    "sos": 0.326,
+    "sos_home": 2.082,
+    "sos_away": -0.649,
+    "sos_rank": 6,
     "opponents": [
      "ATL",
      "CHI",
      "CON",
      "DAL",
-     "GSV",
      "IND",
      "LVA",
-     "MIN",
      "NYL",
      "PDX",
      "PHX",
@@ -8778,30 +8524,6 @@
      "WAS"
     ],
     "games": [
-     {
-      "game_id": 1022600204,
-      "date": "2026-07-28",
-      "opp": "MIN",
-      "home": false
-     },
-     {
-      "game_id": 1022600210,
-      "date": "2026-07-30",
-      "opp": "MIN",
-      "home": true
-     },
-     {
-      "game_id": 1022600221,
-      "date": "2026-08-02",
-      "opp": "GSV",
-      "home": false
-     },
-     {
-      "game_id": 1022600225,
-      "date": "2026-08-04",
-      "opp": "GSV",
-      "home": false
-     },
      {
       "game_id": 1022600232,
       "date": "2026-08-06",
@@ -8889,10 +8611,10 @@
     ]
    },
    "board_minute_coverage": 0.9948,
-   "proj_wins": 15.2,
-   "proj_losses": 28.8,
-   "proj_wins_season_long_minutes": 16.1,
-   "proj_wins_all_available": 15.3,
+   "proj_wins": 14.4,
+   "proj_losses": 29.6,
+   "proj_wins_season_long_minutes": 15.1,
+   "proj_wins_all_available": 14.6,
    "minutes_watchlist": [
     {
      "pid": 1627701,
@@ -8903,14 +8625,14 @@
      "appearances_in_window": 5,
      "window_games": 10,
      "net": -1.725,
-     "wins_per_10mpg": -0.185
+     "wins_per_10mpg": -0.144
     }
    ],
-   "p2_5": 12.0,
-   "p10": 13.0,
-   "p50": 15.0,
-   "p90": 18.0,
-   "p97_5": 19.0,
+   "p2_5": 11.0,
+   "p10": 12.0,
+   "p50": 14.0,
+   "p90": 17.0,
+   "p97_5": 18.0,
    "win_hist": [
     0.0,
     0.0,
@@ -8922,20 +8644,20 @@
     0.0,
     0.0,
     0.0,
-    0.0032,
-    0.0174,
-    0.0609,
-    0.1219,
-    0.1703,
-    0.1992,
-    0.1783,
-    0.1297,
-    0.0663,
-    0.0342,
-    0.0131,
-    0.0042,
+    0.0065,
+    0.0323,
+    0.0932,
+    0.1747,
+    0.22,
+    0.2125,
+    0.1421,
+    0.076,
+    0.0297,
+    0.0102,
+    0.002,
     0.0008,
-    0.0005,
+    0.0,
+    0.0,
     0.0,
     0.0,
     0.0,
@@ -8958,11 +8680,11 @@
     0.0,
     0.0
    ],
-   "playoff_prob": 0.0076,
-   "semis_prob": 0.0012,
-   "finals_prob": 0.0001,
+   "playoff_prob": 0.0004,
+   "semis_prob": 0.0,
+   "finals_prob": 0.0,
    "title_prob": 0.0,
-   "avg_seed_if_qualified": 7.95,
+   "avg_seed_if_qualified": 8.0,
    "roster": [
     {
      "pid": 1629576,
@@ -8992,8 +8714,8 @@
       1.355
      ],
      "strength_contrib": -2.961,
-     "wins_contrib_remaining": -0.15,
-     "wins_per_10mpg": -0.364
+     "wins_contrib_remaining": -0.05,
+     "wins_per_10mpg": -0.283
     },
     {
      "pid": 1627700,
@@ -9023,8 +8745,8 @@
       0.993
      ],
      "strength_contrib": 1.771,
-     "wins_contrib_remaining": 2.1,
-     "wins_per_10mpg": 0.528
+     "wins_contrib_remaining": 1.69,
+     "wins_per_10mpg": 0.411
     },
     {
      "pid": 1629497,
@@ -9054,8 +8776,8 @@
       0.716
      ],
      "strength_contrib": -0.383,
-     "wins_contrib_remaining": 0.99,
-     "wins_per_10mpg": 0.104
+     "wins_contrib_remaining": 0.82,
+     "wins_per_10mpg": 0.081
     },
     {
      "pid": 204330,
@@ -9085,8 +8807,8 @@
       1.143
      ],
      "strength_contrib": -2.243,
-     "wins_contrib_remaining": -0.06,
-     "wins_per_10mpg": -0.325
+     "wins_contrib_remaining": 0.0,
+     "wins_per_10mpg": -0.252
     },
     {
      "pid": 1643420,
@@ -9116,8 +8838,8 @@
       1.45
      ],
      "strength_contrib": 1.252,
-     "wins_contrib_remaining": 1.63,
-     "wins_per_10mpg": 0.465
+     "wins_contrib_remaining": 1.31,
+     "wins_per_10mpg": 0.362
     },
     {
      "pid": 1631055,
@@ -9147,8 +8869,8 @@
       1.213
      ],
      "strength_contrib": -0.045,
-     "wins_contrib_remaining": 0.7,
-     "wins_per_10mpg": 0.156
+     "wins_contrib_remaining": 0.57,
+     "wins_per_10mpg": 0.121
     },
     {
      "pid": 1628915,
@@ -9178,8 +8900,8 @@
       0.94
      ],
      "strength_contrib": -1.783,
-     "wins_contrib_remaining": -0.25,
-     "wins_per_10mpg": -0.458
+     "wins_contrib_remaining": -0.16,
+     "wins_per_10mpg": -0.356
     },
     {
      "pid": 1643647,
@@ -9209,8 +8931,8 @@
       2.689
      ],
      "strength_contrib": -0.889,
-     "wins_contrib_remaining": 0.04,
-     "wins_per_10mpg": -0.235
+     "wins_contrib_remaining": 0.06,
+     "wins_per_10mpg": -0.182
     },
     {
      "pid": 1627701,
@@ -9241,7 +8963,7 @@
      ],
      "strength_contrib": -0.555,
      "wins_contrib_remaining": 0.07,
-     "wins_per_10mpg": -0.185
+     "wins_per_10mpg": -0.144
     },
     {
      "pid": 203405,
@@ -9272,7 +8994,7 @@
      ],
      "strength_contrib": -0.254,
      "wins_contrib_remaining": 0.04,
-     "wins_per_10mpg": -0.163
+     "wins_per_10mpg": -0.127
     },
     {
      "pid": 1643457,
@@ -9303,7 +9025,7 @@
      ],
      "strength_contrib": -0.204,
      "wins_contrib_remaining": 0.05,
-     "wins_per_10mpg": -0.117
+     "wins_per_10mpg": -0.091
     },
     {
      "pid": 1643706,
@@ -9334,7 +9056,7 @@
      ],
      "strength_contrib": -0.026,
      "wins_contrib_remaining": 0.03,
-     "wins_per_10mpg": 0.035
+     "wins_per_10mpg": 0.027
     }
    ]
   },
@@ -9343,11 +9065,11 @@
    "name": "Connecticut Sun",
    "nickname": "Sun",
    "w": 7,
-   "l": 20,
-   "gp": 27,
-   "games_remaining": 17,
+   "l": 23,
+   "gp": 30,
+   "games_remaining": 14,
    "games_total": 44,
-   "point_diff": -191.0,
+   "point_diff": -225.0,
    "strength": -4.885,
    "strength_uncentred": 0.022,
    "strength_season_long": -6.911,
@@ -9380,13 +9102,13 @@
    "orapm": -4.969,
    "drapm": 0.084,
    "schedule_remaining": {
-    "n": 17,
+    "n": 14,
     "home": 8,
-    "away": 9,
-    "sos": 0.782,
+    "away": 6,
+    "sos": 1.009,
     "sos_home": 0.604,
-    "sos_away": 0.94,
-    "sos_rank": 4,
+    "sos_away": 1.549,
+    "sos_rank": 3,
     "opponents": [
      "ATL",
      "CHI",
@@ -9402,24 +9124,6 @@
      "WAS"
     ],
     "games": [
-     {
-      "game_id": 1022600203,
-      "date": "2026-07-28",
-      "opp": "WAS",
-      "home": false
-     },
-     {
-      "game_id": 1022600211,
-      "date": "2026-07-30",
-      "opp": "CHI",
-      "home": false
-     },
-     {
-      "game_id": 1022600220,
-      "date": "2026-08-02",
-      "opp": "DAL",
-      "home": false
-     },
      {
       "game_id": 1022600233,
       "date": "2026-08-07",
@@ -9507,10 +9211,10 @@
     ]
    },
    "board_minute_coverage": 1.0,
-   "proj_wins": 13.0,
-   "proj_losses": 31.0,
-   "proj_wins_season_long_minutes": 12.1,
-   "proj_wins_all_available": 12.8,
+   "proj_wins": 12.0,
+   "proj_losses": 32.0,
+   "proj_wins_season_long_minutes": 11.2,
+   "proj_wins_all_available": 11.8,
    "minutes_watchlist": [
     {
      "pid": 203398,
@@ -9521,7 +9225,7 @@
      "appearances_in_window": 7,
      "window_games": 10,
      "net": 1.775,
-     "wins_per_10mpg": 0.227
+     "wins_per_10mpg": 0.187
     },
     {
      "pid": 1642809,
@@ -9532,7 +9236,7 @@
      "appearances_in_window": 6,
      "window_games": 10,
      "net": -0.528,
-     "wins_per_10mpg": -0.065
+     "wins_per_10mpg": -0.053
     },
     {
      "pid": 1642800,
@@ -9543,14 +9247,14 @@
      "appearances_in_window": 3,
      "window_games": 10,
      "net": -2.448,
-     "wins_per_10mpg": -0.29
+     "wins_per_10mpg": -0.239
     }
    ],
    "p2_5": 9.0,
    "p10": 10.0,
-   "p50": 13.0,
-   "p90": 16.0,
-   "p97_5": 17.0,
+   "p50": 12.0,
+   "p90": 14.0,
+   "p97_5": 16.0,
    "win_hist": [
     0.0,
     0.0,
@@ -9559,21 +9263,21 @@
     0.0,
     0.0,
     0.0,
-    0.0007,
-    0.0069,
-    0.0282,
-    0.0691,
-    0.1265,
-    0.182,
-    0.1954,
-    0.1657,
-    0.115,
-    0.0676,
-    0.0294,
-    0.0096,
-    0.0028,
-    0.001,
-    0.0001,
+    0.0023,
+    0.0178,
+    0.0574,
+    0.1256,
+    0.1927,
+    0.2115,
+    0.1837,
+    0.1163,
+    0.0611,
+    0.0238,
+    0.0055,
+    0.0021,
+    0.0002,
+    0.0,
+    0.0,
     0.0,
     0.0,
     0.0,
@@ -9598,11 +9302,11 @@
     0.0,
     0.0
    ],
-   "playoff_prob": 0.0011,
+   "playoff_prob": 0.0,
    "semis_prob": 0.0,
    "finals_prob": 0.0,
    "title_prob": 0.0,
-   "avg_seed_if_qualified": 8.0,
+   "avg_seed_if_qualified": null,
    "roster": [
     {
      "pid": 1643449,
@@ -9632,8 +9336,8 @@
       1.48
      ],
      "strength_contrib": -1.558,
-     "wins_contrib_remaining": 0.48,
-     "wins_per_10mpg": -0.157
+     "wins_contrib_remaining": 0.41,
+     "wins_per_10mpg": -0.13
     },
     {
      "pid": 1642303,
@@ -9663,8 +9367,8 @@
       1.168
      ],
      "strength_contrib": 2.705,
-     "wins_contrib_remaining": 2.44,
-     "wins_per_10mpg": 0.644
+     "wins_contrib_remaining": 2.03,
+     "wins_per_10mpg": 0.53
     },
     {
      "pid": 1631135,
@@ -9694,8 +9398,8 @@
       0.965
      ],
      "strength_contrib": -0.022,
-     "wins_contrib_remaining": 1.05,
-     "wins_per_10mpg": 0.125
+     "wins_contrib_remaining": 0.87,
+     "wins_per_10mpg": 0.103
     },
     {
      "pid": 1641649,
@@ -9725,8 +9429,8 @@
       1.042
      ],
      "strength_contrib": -2.536,
-     "wins_contrib_remaining": -0.16,
-     "wins_per_10mpg": -0.414
+     "wins_contrib_remaining": -0.12,
+     "wins_per_10mpg": -0.341
     },
     {
      "pid": 1629568,
@@ -9756,8 +9460,8 @@
       0.973
      ],
      "strength_contrib": -1.134,
-     "wins_contrib_remaining": 0.43,
-     "wins_per_10mpg": -0.129
+     "wins_contrib_remaining": 0.37,
+     "wins_per_10mpg": -0.106
     },
     {
      "pid": 203398,
@@ -9787,8 +9491,8 @@
       0.919
      ],
      "strength_contrib": 0.374,
-     "wins_contrib_remaining": 0.95,
-     "wins_per_10mpg": 0.227
+     "wins_contrib_remaining": 0.79,
+     "wins_per_10mpg": 0.187
     },
     {
      "pid": 1642290,
@@ -9818,8 +9522,8 @@
       1.122
      ],
      "strength_contrib": -1.183,
-     "wins_contrib_remaining": 0.11,
-     "wins_per_10mpg": -0.252
+     "wins_contrib_remaining": 0.1,
+     "wins_per_10mpg": -0.207
     },
     {
      "pid": 1642809,
@@ -9849,8 +9553,8 @@
       1.046
      ],
      "strength_contrib": -0.347,
-     "wins_contrib_remaining": 0.22,
-     "wins_per_10mpg": -0.065
+     "wins_contrib_remaining": 0.18,
+     "wins_per_10mpg": -0.053
     },
     {
      "pid": 1643448,
@@ -9880,8 +9584,8 @@
       2.313
      ],
      "strength_contrib": -0.414,
-     "wins_contrib_remaining": 0.14,
-     "wins_per_10mpg": -0.131
+     "wins_contrib_remaining": 0.12,
+     "wins_per_10mpg": -0.108
     },
     {
      "pid": 1643441,
@@ -9911,8 +9615,8 @@
       2.428
      ],
      "strength_contrib": -0.107,
-     "wins_contrib_remaining": 0.23,
-     "wins_per_10mpg": 0.042
+     "wins_contrib_remaining": 0.2,
+     "wins_per_10mpg": 0.035
     },
     {
      "pid": 1643429,
@@ -9942,8 +9646,8 @@
       2.72
      ],
      "strength_contrib": -0.255,
-     "wins_contrib_remaining": 0.07,
-     "wins_per_10mpg": -0.152
+     "wins_contrib_remaining": 0.06,
+     "wins_per_10mpg": -0.125
     },
     {
      "pid": 1642800,
@@ -9974,7 +9678,7 @@
      ],
      "strength_contrib": -0.293,
      "wins_contrib_remaining": 0.01,
-     "wins_per_10mpg": -0.29
+     "wins_per_10mpg": -0.239
     },
     {
      "pid": 1642817,
@@ -10004,8 +9708,8 @@
       1.827
      ],
      "strength_contrib": -0.081,
-     "wins_contrib_remaining": 0.02,
-     "wins_per_10mpg": -0.181
+     "wins_contrib_remaining": 0.01,
+     "wins_per_10mpg": -0.149
     },
     {
      "pid": 1643437,
@@ -10036,7 +9740,7 @@
      ],
      "strength_contrib": -0.032,
      "wins_contrib_remaining": 0.01,
-     "wins_per_10mpg": -0.169
+     "wins_per_10mpg": -0.139
     }
    ]
   },
@@ -10045,11 +9749,11 @@
    "name": "Seattle Storm",
    "nickname": "Storm",
    "w": 6,
-   "l": 23,
-   "gp": 29,
-   "games_remaining": 15,
+   "l": 27,
+   "gp": 33,
+   "games_remaining": 11,
    "games_total": 44,
-   "point_diff": -149.0,
+   "point_diff": -186.0,
    "strength": -4.677,
    "strength_uncentred": 0.229,
    "strength_season_long": -6.322,
@@ -10082,50 +9786,23 @@
    "orapm": -3.777,
    "drapm": -0.9,
    "schedule_remaining": {
-    "n": 15,
-    "home": 8,
-    "away": 7,
-    "sos": 1.124,
-    "sos_home": -0.665,
-    "sos_away": 3.169,
-    "sos_rank": 3,
+    "n": 11,
+    "home": 7,
+    "away": 4,
+    "sos": 0.159,
+    "sos_home": -1.039,
+    "sos_away": 2.256,
+    "sos_rank": 7,
     "opponents": [
-     "ATL",
      "CHI",
      "DAL",
      "GSV",
-     "IND",
      "LAS",
      "LVA",
-     "NYL",
      "PDX",
      "TOR"
     ],
     "games": [
-     {
-      "game_id": 1022600205,
-      "date": "2026-07-28",
-      "opp": "IND",
-      "home": true
-     },
-     {
-      "game_id": 1022600213,
-      "date": "2026-07-31",
-      "opp": "ATL",
-      "home": false
-     },
-     {
-      "game_id": 1022600223,
-      "date": "2026-08-03",
-      "opp": "NYL",
-      "home": false
-     },
-     {
-      "game_id": 1022600227,
-      "date": "2026-08-05",
-      "opp": "NYL",
-      "home": false
-     },
      {
       "game_id": 1022600238,
       "date": "2026-08-08",
@@ -10195,10 +9872,10 @@
     ]
    },
    "board_minute_coverage": 1.0,
-   "proj_wins": 11.4,
-   "proj_losses": 32.6,
-   "proj_wins_season_long_minutes": 10.8,
-   "proj_wins_all_available": 11.6,
+   "proj_wins": 10.4,
+   "proj_losses": 33.6,
+   "proj_wins_season_long_minutes": 9.9,
+   "proj_wins_all_available": 10.5,
    "minutes_watchlist": [
     {
      "pid": 1629496,
@@ -10209,14 +9886,14 @@
      "appearances_in_window": 4,
      "window_games": 10,
      "net": 2.178,
-     "wins_per_10mpg": 0.225
+     "wins_per_10mpg": 0.165
     }
    ],
-   "p2_5": 8.0,
-   "p10": 9.0,
-   "p50": 11.0,
-   "p90": 14.0,
-   "p97_5": 15.0,
+   "p2_5": 7.0,
+   "p10": 8.0,
+   "p50": 10.0,
+   "p90": 12.0,
+   "p97_5": 14.0,
    "win_hist": [
     0.0,
     0.0,
@@ -10224,19 +9901,19 @@
     0.0,
     0.0,
     0.0,
-    0.0012,
-    0.0115,
-    0.0437,
-    0.0952,
-    0.1747,
-    0.2135,
-    0.1862,
-    0.1431,
-    0.0808,
-    0.0344,
-    0.012,
-    0.0032,
+    0.0041,
+    0.0299,
+    0.0907,
+    0.1782,
+    0.2369,
+    0.2265,
+    0.1424,
+    0.0659,
+    0.0203,
+    0.0045,
     0.0005,
+    0.0001,
+    0.0,
     0.0,
     0.0,
     0.0,
@@ -10298,8 +9975,8 @@
       0.748
      ],
      "strength_contrib": 0.068,
-     "wins_contrib_remaining": 1.15,
-     "wins_per_10mpg": 0.124
+     "wins_contrib_remaining": 0.9,
+     "wins_per_10mpg": 0.091
     },
     {
      "pid": 1643443,
@@ -10329,8 +10006,8 @@
       1.357
      ],
      "strength_contrib": -0.511,
-     "wins_contrib_remaining": 0.89,
-     "wins_per_10mpg": 0.031
+     "wins_contrib_remaining": 0.71,
+     "wins_per_10mpg": 0.022
     },
     {
      "pid": 1643428,
@@ -10360,8 +10037,8 @@
       1.244
      ],
      "strength_contrib": 1.297,
-     "wins_contrib_remaining": 1.63,
-     "wins_per_10mpg": 0.322
+     "wins_contrib_remaining": 1.25,
+     "wins_per_10mpg": 0.236
     },
     {
      "pid": 1631141,
@@ -10391,8 +10068,8 @@
       0.9
      ],
      "strength_contrib": -1.701,
-     "wins_contrib_remaining": 0.23,
-     "wins_per_10mpg": -0.204
+     "wins_contrib_remaining": 0.22,
+     "wins_per_10mpg": -0.15
     },
     {
      "pid": 1642798,
@@ -10422,8 +10099,8 @@
       1.133
      ],
      "strength_contrib": 0.818,
-     "wins_contrib_remaining": 1.26,
-     "wins_per_10mpg": 0.261
+     "wins_contrib_remaining": 0.98,
+     "wins_per_10mpg": 0.191
     },
     {
      "pid": 1629478,
@@ -10453,8 +10130,8 @@
       1.273
      ],
      "strength_contrib": -2.083,
-     "wins_contrib_remaining": -0.31,
-     "wins_per_10mpg": -0.515
+     "wins_contrib_remaining": -0.2,
+     "wins_per_10mpg": -0.378
     },
     {
      "pid": 1641651,
@@ -10484,7 +10161,7 @@
       1.128
      ],
      "strength_contrib": -0.316,
-     "wins_contrib_remaining": 0.35,
+     "wins_contrib_remaining": 0.29,
      "wins_per_10mpg": -0.002
     },
     {
@@ -10515,8 +10192,8 @@
       1.232
      ],
      "strength_contrib": -1.677,
-     "wins_contrib_remaining": -0.23,
-     "wins_per_10mpg": -0.487
+     "wins_contrib_remaining": -0.15,
+     "wins_per_10mpg": -0.357
     },
     {
      "pid": 203828,
@@ -10546,8 +10223,8 @@
       0.921
      ],
      "strength_contrib": -0.539,
-     "wins_contrib_remaining": 0.17,
-     "wins_per_10mpg": -0.116
+     "wins_contrib_remaining": 0.15,
+     "wins_per_10mpg": -0.085
     },
     {
      "pid": 1629496,
@@ -10577,8 +10254,8 @@
       0.841
      ],
      "strength_contrib": 0.16,
-     "wins_contrib_remaining": 0.26,
-     "wins_per_10mpg": 0.225
+     "wins_contrib_remaining": 0.2,
+     "wins_per_10mpg": 0.165
     },
     {
      "pid": 1642814,
@@ -10609,7 +10286,7 @@
      ],
      "strength_contrib": -0.081,
      "wins_contrib_remaining": 0.01,
-     "wins_per_10mpg": -0.214
+     "wins_per_10mpg": -0.157
     },
     {
      "pid": 1642307,
@@ -10640,7 +10317,7 @@
      ],
      "strength_contrib": -0.11,
      "wins_contrib_remaining": -0.01,
-     "wins_per_10mpg": -0.408
+     "wins_per_10mpg": -0.299
     }
    ]
   }

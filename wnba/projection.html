@@ -513,6 +513,8 @@ function buildHero(M, order, T) {
       + '</div><div class="x">' + k[2] + "</div></div>").join("") + "</div>"
     + '<div class="locks">'
     + lock("Board as of", shortDay(M.as_of), esc(M.as_of))
+    + (M.results_through ? lock("Results through", shortDay(M.results_through),
+        "standings are fact to here") : "")
     + lock("Games left", String(M.schedule.games_remaining),
         shortDay(M.schedule.remaining_first_date) + " → " + shortDay(M.schedule.remaining_last_date))
     + lock("Simulations", M.n_sims.toLocaleString(), "seed " + M.seed)
@@ -769,7 +771,10 @@ function render() {
     "A Monte-Carlo of the <b>" + M.schedule.games_remaining + "</b> remaining regular-season games "
     + "and the playoffs, run <b>" + M.n_sims.toLocaleString() + "</b> times from the "
     + '<span class="wn">prior-informed</span> board as of ' + esc(M.as_of)
-    + ". Every number here is simulated; none of it has happened."
+    + (M.results_through
+       ? ", with standings counted as fact through <b>" + shortDay(M.results_through) + "</b>"
+       : "")
+    + ". Every number after that is simulated; none of it has happened."
     + (staleDays > 0
        ? ' <span class="stalewarn">This projection is ' + staleDays + " day"
          + (staleDays === 1 ? "" : "s") + " behind: games from "
